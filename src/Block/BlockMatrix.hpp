@@ -14,6 +14,15 @@ struct BlockMatrixTraits
 	typedef unsigned Index ;
 } ;
 
+struct BlockMatrixFlags
+{
+	enum {
+		NONE = 0,
+		COMPRESSED = 0x1,
+		SYMMETRIC = 0x2
+	} ;
+} ;
+
 template < typename Derived >
 class BlockMatrixBase
 {

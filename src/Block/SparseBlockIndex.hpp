@@ -9,26 +9,22 @@ namespace bogus
 {
 
 
-template < typename BlockT, bool Compressed >
+template < typename BlockT, bool Compressed = false >
 struct SparseBlockIndex
 {
 	typedef typename BlockMatrixTraits< SparseBlockIndex< BlockT, Compressed > >::Index Index ;
 	typedef Index BlockPtr ;
 
-	SparseBlockIndex(
-		const std::vector< Index > &innerOffsets_,
-		const std::vector< Index > &outerOffsets_ )
-		: innerOffsets( innerOffsets_ ), outerOffsets( outerOffsets_ )
+	SparseBlockIndex( const std::vector< Index > &innerOffsets_ )
+		: innerOffsets( innerOffsets_ )
 	{}
 
 	typedef const std::vector< BlockT >& Blocks ;
 	typedef std::vector < std::pair< Index, BlockPtr > > Inner ;
 	typedef std::vector < Inner > Outer ;
 
-	Inner inner ;
 	Outer outer ;
 	const std::vector< Index > &innerOffsets ;
-	const std::vector< Index > &outerOffsets ;
 
 	void resizeOuter( Index size )
 	{
@@ -38,6 +34,15 @@ struct SparseBlockIndex
 	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
 	{
 		outer[ outIdx ].push_back( std::make_pair( inIdx, ptr ) ) ;
+	}
+
+	void finalize()
+	{
+	}
+
+	void assign( SparseBlockIndex< BlockT > &uncompressed, BlockPtr )
+	{
+		outer.swap( uncompressed.outer ) ;
 	}
 
 	struct InnerIterator
@@ -65,6 +70,18 @@ struct SparseBlockIndex
 		typename Inner::const_iterator m_it ;
 		typename Inner::const_iterator m_end ;
 	} ;
+
+	template < typename VecT >
+	typename VecT::SegmentReturnType innerSegment( VecT& v, Index idx ) const
+	{
+		return v.segment( innerOffsets[ idx ], innerOffsets[ idx + 1 ] - innerOffsets[ idx ] ) ;
+	}
+	template < typename VecT >
+	typename VecT::ConstSegmentReturnType innerSegment( const VecT& v, Index idx ) const
+	{
+		return v.segment( innerOffsets[ idx ], innerOffsets[ idx + 1 ] - innerOffsets[ idx ] ) ;
+	}
+
 } ;
 
 template < typename BlockT >
@@ -73,10 +90,8 @@ struct SparseBlockIndex< BlockT, true >
 	typedef typename BlockMatrixTraits< SparseBlockIndex< BlockT, true > >::Index Index ;
 	typedef Index BlockPtr ;
 
-	SparseBlockIndex(
-		const std::vector< Index > &innerOffsets_,
-		const std::vector< Index > &outerOffsets_ )
-		: innerOffsets( innerOffsets_ ), outerOffsets( outerOffsets_ )
+	SparseBlockIndex( const std::vector< Index > &innerOffsets_ )
+		: base(0), innerOffsets( innerOffsets_ )
 	{}
 
 	typedef std::vector< Index > Inner ;
@@ -84,8 +99,8 @@ struct SparseBlockIndex< BlockT, true >
 
 	Inner inner ;
 	Outer outer ;
+	BlockPtr base ;
 	const std::vector< Index > &innerOffsets ;
-	const std::vector< Index > &outerOffsets ;
 
 	void resizeOuter( Index size )
 	{
@@ -94,7 +109,7 @@ struct SparseBlockIndex< BlockT, true >
 
 	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
 	{
-		assert( ptr == inner.size() ) ;
+		assert( ptr == base + inner.size() ) ;
 		(void) ptr ;
 		++outer[ outIdx+1 ] ;
 		inner.push_back( inIdx ) ;
@@ -108,11 +123,29 @@ struct SparseBlockIndex< BlockT, true >
 		}
 	}
 
+	void assign( SparseBlockIndex< BlockT > &uncompressed, BlockPtr base_ptr )
+	{
+		base = base_ptr ;
+
+		resizeOuter( uncompressed.outer.size() ) ;
+
+		for( unsigned i = 0 ; i < uncompressed.outer.size() ; ++i )
+		{
+			for( typename SparseBlockIndex< BlockT >::InnerIterator it( uncompressed, i ) ;
+				 it ; ++ it )
+			{
+				insertBack( i, it.inner(), base+inner.size() ) ;
+			}
+		}
+
+		finalize() ;
+	}
+
 	struct InnerIterator
 	{
 		InnerIterator( const SparseBlockIndex& index, Index outer )
 			: m_it( index.outer[ outer ] ), m_end( index.outer[ outer + 1] ),
-			  m_inner( index.inner )
+			  m_base( index.base ), m_inner( index.inner )
 		{
 		}
 
@@ -128,13 +161,25 @@ struct SparseBlockIndex< BlockT, true >
 		}
 
 		Index inner() const { return m_inner[ m_it ] ; }
-		BlockPtr ptr() const { return m_it ; }
+		BlockPtr ptr() const { return m_it + m_base ; }
 
 	private:
 		Index m_it ;
 		Index m_end ;
+		BlockPtr m_base ;
 		const Inner& m_inner ;
 	} ;
+
+	template < typename VecT >
+	typename VecT::SegmentReturnType innerSegment( VecT& v, Index idx ) const
+	{
+		return v.segment( innerOffsets[ idx ], innerOffsets[ idx + 1 ] - innerOffsets[ idx ] ) ;
+	}
+	template < typename VecT >
+	typename VecT::ConstSegmentReturnType innerSegment( const VecT& v, Index idx ) const
+	{
+		return v.segment( innerOffsets[ idx ], innerOffsets[ idx + 1 ] - innerOffsets[ idx ] ) ;
+	}
 } ;
 
 

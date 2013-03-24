@@ -14,12 +14,15 @@ class SparseBlockMatrixBase : public BlockMatrixBase< Derived >
 {
 
 public:
-	typedef typename BlockMatrixTraits< Derived >::SparseIndexType SparseIndexType ;
+	typedef BlockMatrixTraits< Derived > Traits ;
+	typedef typename Traits::SparseIndexType SparseIndexType ;
+	typedef typename Traits::BlockType BlockType ;
 	typedef typename SparseIndexType::BlockPtr BlockPtr ;
-	typedef typename BlockMatrixBase< Derived >::BlockType BlockType ;
 
 	SparseBlockMatrixBase()
-		: m_nBlocks(0), m_rowMajorIndex( m_colOffsets, m_rowOffsets )
+		: m_nBlocks(0),
+		  m_rowMajorIndex( m_colOffsets ),
+		  m_colMajorComputed( false ), m_colMajorIndex( m_rowOffsets )
 	{}
 
 	void setRows( const std::vector< Index > &rowsPerBlocks ) ;
@@ -27,11 +30,19 @@ public:
 	{
 		setRows( std::vector< Index >( n_blocks, rows_per_block ) ) ;
 	}
+	void setRows( Index n_blocks )
+	{
+		setRows( n_blocks, BlockType::RowsAtCompileTime ) ;
+	}
 
 	void setCols( const std::vector< Index > &colsPerBlocks ) ;
 	void setCols( Index n_blocks, Index cols_per_block )
 	{
 		setCols( std::vector< Index >( n_blocks, cols_per_block ) ) ;
+	}
+	void setCols( Index n_blocks )
+	{
+		setCols( n_blocks, BlockType::ColsAtCompileTime ) ;
 	}
 
 	Index rowsOfBlocks() const { return m_rowOffsets.size() - 1 ; }
@@ -52,14 +63,13 @@ public:
 
 	BlockType& insertBack( Index row, Index col )
 	{
-		m_rowMajorIndex.insertBack( row, col, m_nBlocks ) ;
+		m_rowMajorIndex.insertBack( row, col, m_nBlocks++ ) ;
 		return allocateBlock() ;
 	}
 
-	void finalize()
-	{
-		this->derived().finalize() ;
-	}
+	void finalize() ;
+	// Only relevant if Traits::is_symmetric
+	void computeColMajorIndex() ;
 
 	std::size_t nBlocks() const { return m_nBlocks ; }
 
@@ -89,7 +99,6 @@ public:
 protected:
 	BlockType& allocateBlock()
 	{
-		++m_nBlocks ;
 		this->m_blocks.push_back( BlockType() ) ;
 		return this->m_blocks.back() ;
 	}
@@ -97,36 +106,32 @@ protected:
 	template < typename VecT >
 	typename VecT::SegmentReturnType rowSegment( VecT& v, Index rowBlockIdx ) const
 	{
-		return v.segment( m_rowOffsets[ rowBlockIdx ],
-						m_rowOffsets[ rowBlockIdx + 1 ] - m_rowOffsets[ rowBlockIdx ] ) ;
+		return v.segment( m_rowOffsets[ rowBlockIdx ], blockRows( rowBlockIdx ) ) ;
 	}
 
 	template < typename VecT >
 	typename VecT::ConstSegmentReturnType rowSegment( const VecT& v, Index rowBlockIdx ) const
 	{
-		return v.segment( m_rowOffsets[ rowBlockIdx ],
-						  blockRows( rowBlockIdx ) ) ;
+		return v.segment( m_rowOffsets[ rowBlockIdx ], blockRows( rowBlockIdx ) ) ;
 	}
 
 	template < typename VecT >
 	typename VecT::SegmentReturnType colSegment( VecT& v, Index colBlockIdx ) const
 	{
-		return v.segment( m_colOffsets[ colBlockIdx ],
-						 blockCols( colBlockIdx ) ) ;
+		return v.segment( m_colOffsets[ colBlockIdx ], blockCols( colBlockIdx ) ) ;
 	}
 
 	template < typename VecT >
 	typename VecT::ConstSegmentReturnType colSegment( const VecT& v, Index colBlockIdx ) const
 	{
-		return v.segment( m_colOffsets[ colBlockIdx ],
-						m_colOffsets[ colBlockIdx + 1 ] - m_colOffsets[ colBlockIdx ] ) ;
+		return v.segment( m_colOffsets[ colBlockIdx ], blockCols( colBlockIdx ) ) ;
 	}
 
 	template < typename RhsT, typename ResT >
-	void rowMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
+	void innerMultiply( const SparseIndexType &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
 
 	template < typename RhsT, typename ResT >
-	void colMultiply( const Index col, const RhsT& rhs, ResT& res ) const ;
+	void innerTransposedMultiply( const SparseIndexType &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
 
 	std::size_t m_nBlocks ;
 	std::vector< Index > m_rowOffsets ;
@@ -134,24 +139,29 @@ protected:
 
 	SparseIndexType m_rowMajorIndex ;
 
+	bool m_colMajorComputed ;
+	// For a symmetric matrix, do not store diagonal block in col-major index
+	SparseIndexType m_colMajorIndex ;
 } ;
 
 template < typename Derived >
 std::ostream& operator<<( std::ostream &out, const SparseBlockMatrixBase< Derived > &sbm ) ;
 
-template < typename BlockT, bool Compressed = false >
+template < typename BlockT, int Flags = BlockMatrixFlags::NONE >
 class SparseBlockMatrix  ;
 
-template < typename BlockT, bool Compressed >
-struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Compressed > >
+template < typename BlockT, int Flags >
+struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
 {
 	typedef BlockT BlockType ;
-	typedef SparseBlockIndex< BlockT, Compressed > SparseIndexType ;
-	typedef typename BlockMatrixTraits< SparseIndexType >::Index Index ;
 
-	struct is_compressed {
-		enum { value = Compressed } ;
+	enum {
+		is_compressed = Flags & BlockMatrixFlags::COMPRESSED,
+		is_symmetric  = Flags & BlockMatrixFlags::SYMMETRIC
 	} ;
+
+	typedef SparseBlockIndex< BlockT, is_compressed > SparseIndexType ;
+	typedef typename BlockMatrixTraits< SparseIndexType >::Index Index ;
 } ;
 
 }
