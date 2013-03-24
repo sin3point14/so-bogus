@@ -29,11 +29,13 @@ int main()
 	sbm.multiply( rhs, res ) ;
 
 	std::cout << res.transpose() << std::endl ;
+	std::cout << ( sbm*rhs ).transpose() << std::endl ;
 
 	rhs.setZero() ;
 	sbm.multiply( res, rhs, true ) ;
 
 	std::cout << rhs.transpose() << std::endl ;
+	std::cout << ( res.transpose() * sbm ) << std::endl ;
 
 	return 0;
 }

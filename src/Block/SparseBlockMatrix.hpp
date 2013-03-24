@@ -34,8 +34,8 @@ public:
 		setCols( std::vector< Index >( n_blocks, cols_per_block ) ) ;
 	}
 
-	Index blockRows() const { return m_rowOffsets.size() - 1 ; }
-	Index blockCols() const { return m_colOffsets.size() - 1 ; }
+	Index rowsOfBlocks() const { return m_rowOffsets.size() - 1 ; }
+	Index colsOfBlocks() const { return m_colOffsets.size() - 1 ; }
 	Index blockRows( Index row ) const { return m_rowOffsets[ row + 1 ] - m_rowOffsets[ row ] ; }
 	Index blockCols( Index col ) const { return m_colOffsets[ col + 1 ] - m_colOffsets[ col ] ; }
 

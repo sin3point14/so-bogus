@@ -7,4 +7,6 @@
 #include "Block/BlockMatrix.impl.hpp"
 #include "Block/SparseBlockMatrix.impl.hpp"
 
+#include "Block/EigenBindings.hpp"
+
 #endif

@@ -41,13 +41,13 @@ void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res, boo
 {
 	if( transposed )
 	{
-		for( Index i = 0 ; i < blockRows() ; ++i )
+		for( Index i = 0 ; i < rowsOfBlocks() ; ++i )
 		{
-			typename ResT::ConstSegmentReturnType seg( rowSegment( rhs, i ) ) ;
+			typename RhsT::ConstSegmentReturnType seg( rowSegment( rhs, i ) ) ;
 			colMultiply( i, seg, res ) ;
 		}
 	} else {
-		for( Index i = 0 ; i < blockRows() ; ++i )
+		for( Index i = 0 ; i < rowsOfBlocks() ; ++i )
 		{
 			typename ResT::SegmentReturnType seg( rowSegment( res, i ) ) ;
 			rowMultiply( i, rhs, seg ) ;
@@ -81,7 +81,7 @@ template < typename Derived >
 std::ostream& operator<<( std::ostream &out, const SparseBlockMatrixBase< Derived > &sbm )
 {
 	out << " Total rows: " << sbm.rows() << " / cols: " << sbm.cols() << std::endl ;
-	for ( unsigned i = 0 ; i < sbm.blockRows() ; ++ i )
+	for ( unsigned i = 0 ; i < sbm.rowsOfBlocks() ; ++ i )
 	{
 		out << i << ": " ;
 		for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( sbm.rowMajorIndex(), i ) ;
