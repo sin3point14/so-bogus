@@ -36,6 +36,8 @@ public:
 
 	Index blockRows() const { return m_rowOffsets.size() - 1 ; }
 	Index blockCols() const { return m_colOffsets.size() - 1 ; }
+	Index blockRows( Index row ) const { return m_rowOffsets[ row + 1 ] - m_rowOffsets[ row ] ; }
+	Index blockCols( Index col ) const { return m_colOffsets[ col + 1 ] - m_colOffsets[ col ] ; }
 
 	void reserve( std::size_t nBlocks )
 	{
@@ -52,6 +54,11 @@ public:
 	{
 		m_rowMajorIndex.insertBack( row, col, m_nBlocks ) ;
 		return allocateBlock() ;
+	}
+
+	void finalize()
+	{
+		this->derived().finalize() ;
 	}
 
 	std::size_t nBlocks() const { return m_nBlocks ; }
@@ -71,6 +78,12 @@ public:
 		return m_rowMajorIndex ;
 	}
 
+	template < typename RhsT, typename ResT >
+	void multiply( const RhsT& rhs, ResT& res, bool transposed = false ) const ;
+
+	template < typename RhsT, typename ResT >
+	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res, bool transposed = false ) const ;
+
 protected:
 	BlockType& allocateBlock()
 	{
@@ -79,6 +92,39 @@ protected:
 		return this->m_blocks.back() ;
 	}
 
+	template < typename VecT >
+	typename VecT::SegmentReturnType rowSegment( VecT& v, Index rowBlockIdx ) const
+	{
+		return v.segment( m_rowOffsets[ rowBlockIdx ],
+						m_rowOffsets[ rowBlockIdx + 1 ] - m_rowOffsets[ rowBlockIdx ] ) ;
+	}
+
+	template < typename VecT >
+	typename VecT::ConstSegmentReturnType rowSegment( const VecT& v, Index rowBlockIdx ) const
+	{
+		return v.segment( m_rowOffsets[ rowBlockIdx ],
+						  blockRows( rowBlockIdx ) ) ;
+	}
+
+	template < typename VecT >
+	typename VecT::SegmentReturnType colSegment( VecT& v, Index colBlockIdx ) const
+	{
+		return v.segment( m_colOffsets[ colBlockIdx ],
+						 blockCols( colBlockIdx ) ) ;
+	}
+
+	template < typename VecT >
+	typename VecT::ConstSegmentReturnType colSegment( const VecT& v, Index colBlockIdx ) const
+	{
+		return v.segment( m_colOffsets[ colBlockIdx ],
+						m_colOffsets[ colBlockIdx + 1 ] - m_colOffsets[ colBlockIdx ] ) ;
+	}
+
+	template < typename RhsT, typename ResT >
+	void rowMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
+
+	template < typename RhsT, typename ResT >
+	void colMultiply( const Index col, const RhsT& rhs, ResT& res ) const ;
 
 	std::size_t m_nBlocks ;
 	std::vector< Index > m_rowOffsets ;
@@ -91,39 +137,8 @@ protected:
 template < typename Derived >
 std::ostream& operator<<( std::ostream &out, const SparseBlockMatrixBase< Derived > &sbm ) ;
 
-
 template < typename BlockT, bool Compressed = false >
-class SparseBlockMatrix : public SparseBlockMatrixBase< SparseBlockMatrix< BlockT, Compressed > >
-{
-	typedef typename BlockMatrixTraits< SparseBlockMatrix< BlockT, Compressed > >::SparseIndexType SparseIndexType ;
-	typedef typename SparseIndexType::BlockPtr BlockPtr ;
-public:
-	void finalize() { }
-
-	template < typename RhsT, typename ResT >
-	void multiply( const RhsT& rhs, ResT& res, bool transposed = false ) const ;
-
-	template < typename RhsT, typename ResT >
-	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res, bool transposed = false ) const ;
-
-} ;
-
-template < typename BlockT >
-class SparseBlockMatrix< BlockT, true > : public SparseBlockMatrixBase< SparseBlockMatrix< BlockT, true > >
-{
-	typedef typename BlockMatrixTraits< SparseBlockMatrix< BlockT, true > >::SparseIndexType SparseIndexType ;
-	typedef typename SparseIndexType::BlockPtr BlockPtr ;
-public:
-
-	void finalize() { this->m_rowMajorIndex.finalize() ; }
-
-	template < typename RhsT, typename ResT >
-	void multiply( const RhsT& rhs, ResT& res, bool transposed = false ) const ;
-
-	template < typename RhsT, typename ResT >
-	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res, bool transposed = false ) const ;
-
-} ;
+class SparseBlockMatrix  ;
 
 template < typename BlockT, bool Compressed >
 struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Compressed > >

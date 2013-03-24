@@ -1,6 +1,7 @@
 #ifndef SPARSE_BLOCK_INDEX_IMPL_HPP
 #define SPARSE_BLOCK_INDEX_IMPL_HPP
 
+
 #include "SparseBlockMatrix.hpp"
 
 namespace bogus {
@@ -35,6 +36,48 @@ void SparseBlockMatrixBase< Derived >::setCols(
 }
 
 template < typename Derived >
+template < typename RhsT, typename ResT >
+void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res, bool transposed ) const
+{
+	if( transposed )
+	{
+		for( Index i = 0 ; i < blockRows() ; ++i )
+		{
+			typename ResT::ConstSegmentReturnType seg( rowSegment( rhs, i ) ) ;
+			colMultiply( i, seg, res ) ;
+		}
+	} else {
+		for( Index i = 0 ; i < blockRows() ; ++i )
+		{
+			typename ResT::SegmentReturnType seg( rowSegment( res, i ) ) ;
+			rowMultiply( i, rhs, seg ) ;
+		}
+	}
+}
+
+template < typename Derived >
+template < typename RhsT, typename ResT >
+void SparseBlockMatrixBase< Derived >::rowMultiply( const Index row, const RhsT& rhs, ResT& res ) const
+{
+	for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( rowMajorIndex(), row ) ;
+		 it ; ++ it )
+	{
+		res += block( it.ptr() ) * colSegment( rhs, it.inner() ) ;
+	}
+}
+
+template < typename Derived >
+template < typename RhsT, typename ResT >
+void SparseBlockMatrixBase< Derived >::colMultiply( const Index col, const RhsT& rhs, ResT& res ) const
+{
+	for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( rowMajorIndex(), col ) ;
+		 it ; ++ it )
+	{
+		colSegment( res, it.inner() ) += block( it.ptr() ).transpose() * rhs  ;
+	}
+}
+
+template < typename Derived >
 std::ostream& operator<<( std::ostream &out, const SparseBlockMatrixBase< Derived > &sbm )
 {
 	out << " Total rows: " << sbm.rows() << " / cols: " << sbm.cols() << std::endl ;
@@ -56,6 +99,28 @@ std::ostream& operator<<( std::ostream &out, const SparseBlockMatrixBase< Derive
 	}
 	return out ;
 }
+
+template < typename BlockT, bool Compressed >
+class SparseBlockMatrix : public SparseBlockMatrixBase< SparseBlockMatrix< BlockT, Compressed > >
+{
+	typedef typename BlockMatrixTraits< SparseBlockMatrix< BlockT, Compressed > >::SparseIndexType SparseIndexType ;
+	typedef typename SparseIndexType::BlockPtr BlockPtr ;
+public:
+	void finalize() { }
+
+} ;
+
+template < typename BlockT >
+class SparseBlockMatrix< BlockT, true > : public SparseBlockMatrixBase< SparseBlockMatrix< BlockT, true > >
+{
+	typedef typename BlockMatrixTraits< SparseBlockMatrix< BlockT, true > >::SparseIndexType SparseIndexType ;
+	typedef typename SparseIndexType::BlockPtr BlockPtr ;
+public:
+
+	void finalize() { this->m_rowMajorIndex.finalize() ; }
+
+} ;
+
 
 
 }
