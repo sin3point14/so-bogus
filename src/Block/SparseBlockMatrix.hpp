@@ -73,6 +73,8 @@ public:
 		return this->m_blocks[ ptr ] ;
 	}
 
+	const BlockType& diagonal( const Index row ) const ;
+
 	const SparseIndexType& rowMajorIndex() const
 	{
 		return m_rowMajorIndex ;
@@ -82,7 +84,7 @@ public:
 	void multiply( const RhsT& rhs, ResT& res, bool transposed = false ) const ;
 
 	template < typename RhsT, typename ResT >
-	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res, bool transposed = false ) const ;
+	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
 
 protected:
 	BlockType& allocateBlock()

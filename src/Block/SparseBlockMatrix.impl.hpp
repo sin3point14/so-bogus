@@ -67,6 +67,30 @@ void SparseBlockMatrixBase< Derived >::rowMultiply( const Index row, const RhsT&
 }
 
 template < typename Derived >
+const typename SparseBlockMatrixBase< Derived >::BlockType& SparseBlockMatrixBase< Derived >::diagonal( const Index row ) const
+{
+	for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( rowMajorIndex(), row ) ;
+		 it ; ++ it )
+	{
+		if( it.inner() == row )
+			return this->m_blocks( it.ptr() ) ;
+	}
+	assert( 0 && "No diagonal block" ) ;
+	return this->m_blocks[ (BlockPtr)-1 ] ;
+}
+template < typename Derived >
+template < typename RhsT, typename ResT >
+void SparseBlockMatrixBase< Derived >::splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const
+{
+	for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( rowMajorIndex(), row ) ;
+		 it ; ++ it )
+	{
+		if( it.inner() != row )
+			res += block( it.ptr() ) * colSegment( rhs, it.inner() ) ;
+	}
+}
+
+template < typename Derived >
 template < typename RhsT, typename ResT >
 void SparseBlockMatrixBase< Derived >::colMultiply( const Index col, const RhsT& rhs, ResT& res ) const
 {
