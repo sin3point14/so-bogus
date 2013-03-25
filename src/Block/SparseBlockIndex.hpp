@@ -15,8 +15,7 @@ struct SparseBlockIndex
 	typedef typename BlockMatrixTraits< SparseBlockIndex< BlockT, Compressed > >::Index Index ;
 	typedef Index BlockPtr ;
 
-	SparseBlockIndex( const std::vector< Index > &innerOffsets_ )
-		: innerOffsets( innerOffsets_ )
+	SparseBlockIndex()
 	{}
 
 	typedef const std::vector< BlockT >& Blocks ;
@@ -24,7 +23,7 @@ struct SparseBlockIndex
 	typedef std::vector < Inner > Outer ;
 
 	Outer outer ;
-	const std::vector< Index > &innerOffsets ;
+	std::vector< Index > innerOffsets ;
 
 	void resizeOuter( Index size )
 	{
@@ -90,8 +89,8 @@ struct SparseBlockIndex< BlockT, true >
 	typedef typename BlockMatrixTraits< SparseBlockIndex< BlockT, true > >::Index Index ;
 	typedef Index BlockPtr ;
 
-	SparseBlockIndex( const std::vector< Index > &innerOffsets_ )
-		: base(0), innerOffsets( innerOffsets_ )
+	SparseBlockIndex( )
+		: base(0)
 	{}
 
 	typedef std::vector< Index > Inner ;
@@ -100,7 +99,7 @@ struct SparseBlockIndex< BlockT, true >
 	Inner inner ;
 	Outer outer ;
 	BlockPtr base ;
-	const std::vector< Index > &innerOffsets ;
+	std::vector< Index > innerOffsets ;
 
 	void resizeOuter( Index size )
 	{

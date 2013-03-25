@@ -66,6 +66,10 @@ int main()
 		std::cout << res.transpose() << std::endl ;
 	}
 
+
+	bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::BlockMatrixFlags::SYMMETRIC | bogus::BlockMatrixFlags::COMPRESSED > ssbm_copy = ssbm ;
+	std::cout << ssbm_copy << std::endl ;
+
 	return 0;
 }
 

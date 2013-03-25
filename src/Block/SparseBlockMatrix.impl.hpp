@@ -10,14 +10,8 @@ template < typename Derived >
 void SparseBlockMatrixBase< Derived >::setRows(
 		const std::vector< Index > &rowsPerBlocks )
 {
-	m_rowOffsets.resize( rowsPerBlocks.size() + 1 ) ;
-	m_rowOffsets[0] = 0 ;
-	for ( unsigned i = 0 ; i < rowsPerBlocks.size() ; ++ i )
-	{
-		m_rowOffsets[ i+1 ] = m_rowOffsets[ i ] + rowsPerBlocks[i] ;
-	}
-
-	this->m_rows = m_rowOffsets.back() ;
+	setInnerOffets( m_colMajorIndex, rowsPerBlocks );
+	this->m_rows = m_colMajorIndex.innerOffsets.back() ;
 	m_rowMajorIndex.resizeOuter( rowsPerBlocks.size() ) ;
 
 	if( Traits::is_symmetric ) setCols( rowsPerBlocks ) ;
@@ -27,13 +21,22 @@ template < typename Derived >
 void SparseBlockMatrixBase< Derived >::setCols(
 		const std::vector< Index > &colsPerBlocks )
 {
-	m_colOffsets.resize( colsPerBlocks.size() + 1 ) ;
-	m_colOffsets[0] = 0 ;
-	for ( unsigned i = 0 ; i < colsPerBlocks.size() ; ++ i )
+	setInnerOffets( m_rowMajorIndex, colsPerBlocks );
+	this->m_cols = m_rowMajorIndex.innerOffsets.back() ;
+
+	m_colMajorIndex.resizeOuter( colsPerBlocks.size() ) ;
+}
+
+template < typename Derived >
+void SparseBlockMatrixBase< Derived >::setInnerOffets(
+		SparseIndexType &index, const std::vector<Index> &blockSizes)
+{
+	index.innerOffsets.resize( blockSizes.size() + 1 ) ;
+	index.innerOffsets[0] = 0 ;
+	for ( unsigned i = 0 ; i < blockSizes.size() ; ++ i )
 	{
-		m_colOffsets[ i+1 ] = m_colOffsets[ i ] + colsPerBlocks[i] ;
+		index.innerOffsets[ i+1 ] = index.innerOffsets[ i ] + blockSizes[i] ;
 	}
-	this->m_cols = m_colOffsets.back() ;
 }
 
 template < typename Derived >
@@ -49,7 +52,7 @@ void SparseBlockMatrixBase< Derived >::computeColMajorIndex()
 
 	this->m_blocks.reserve( 2*m_nBlocks ) ;
 
-	SparseBlockIndex< BlockType > cmIndex( m_rowOffsets ) ;
+	SparseBlockIndex< BlockType > cmIndex ;
 	cmIndex.resizeOuter( colsOfBlocks() );
 
 	for ( unsigned i = 0 ; i < rowsOfBlocks() ; ++ i )

@@ -21,8 +21,7 @@ public:
 
 	SparseBlockMatrixBase()
 		: m_nBlocks(0),
-		  m_rowMajorIndex( m_colOffsets ),
-		  m_colMajorComputed( false ), m_colMajorIndex( m_rowOffsets )
+		  m_colMajorComputed( false )
 	{}
 
 	void setRows( const std::vector< Index > &rowsPerBlocks ) ;
@@ -45,10 +44,8 @@ public:
 		setCols( n_blocks, BlockType::ColsAtCompileTime ) ;
 	}
 
-	Index rowsOfBlocks() const { return m_rowOffsets.size() - 1 ; }
-	Index colsOfBlocks() const { return m_colOffsets.size() - 1 ; }
-	Index blockRows( Index row ) const { return m_rowOffsets[ row + 1 ] - m_rowOffsets[ row ] ; }
-	Index blockCols( Index col ) const { return m_colOffsets[ col + 1 ] - m_colOffsets[ col ] ; }
+	Index rowsOfBlocks() const { return rowOffsets().size() - 1 ; }
+	Index colsOfBlocks() const { return colOffsets().size() - 1 ; }
 
 	void reserve( std::size_t nBlocks )
 	{
@@ -103,28 +100,35 @@ protected:
 		return this->m_blocks.back() ;
 	}
 
+	Index blockRows( Index row ) const { return rowOffsets()[ row + 1 ] - rowOffsets()[ row ] ; }
+	Index blockCols( Index col ) const { return colOffsets()[ col + 1 ] - colOffsets()[ col ] ; }
+	Index rowOffset( Index row ) const { return rowOffsets()[row] ; }
+	Index colOffset( Index col ) const { return colOffsets()[col] ; }
+	const std::vector< Index >& rowOffsets() const { return m_colMajorIndex.innerOffsets ; }
+	const std::vector< Index >& colOffsets() const { return m_rowMajorIndex.innerOffsets ; }
+
 	template < typename VecT >
 	typename VecT::SegmentReturnType rowSegment( VecT& v, Index rowBlockIdx ) const
 	{
-		return v.segment( m_rowOffsets[ rowBlockIdx ], blockRows( rowBlockIdx ) ) ;
+		return v.segment( rowOffset( rowBlockIdx ), blockRows( rowBlockIdx ) ) ;
 	}
 
 	template < typename VecT >
 	typename VecT::ConstSegmentReturnType rowSegment( const VecT& v, Index rowBlockIdx ) const
 	{
-		return v.segment( m_rowOffsets[ rowBlockIdx ], blockRows( rowBlockIdx ) ) ;
+		return v.segment( rowOffset( rowBlockIdx ), blockRows( rowBlockIdx ) ) ;
 	}
 
 	template < typename VecT >
 	typename VecT::SegmentReturnType colSegment( VecT& v, Index colBlockIdx ) const
 	{
-		return v.segment( m_colOffsets[ colBlockIdx ], blockCols( colBlockIdx ) ) ;
+		return v.segment( colOffset( colBlockIdx ), blockCols( colBlockIdx ) ) ;
 	}
 
 	template < typename VecT >
 	typename VecT::ConstSegmentReturnType colSegment( const VecT& v, Index colBlockIdx ) const
 	{
-		return v.segment( m_colOffsets[ colBlockIdx ], blockCols( colBlockIdx ) ) ;
+		return v.segment( colOffset( colBlockIdx ), blockCols( colBlockIdx ) ) ;
 	}
 
 	template < typename RhsT, typename ResT >
@@ -133,10 +137,9 @@ protected:
 	template < typename RhsT, typename ResT >
 	void innerTransposedMultiply( const SparseIndexType &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
 
-	std::size_t m_nBlocks ;
-	std::vector< Index > m_rowOffsets ;
-	std::vector< Index > m_colOffsets ;
+	void setInnerOffets( SparseIndexType& index, const std::vector< Index > &blockSizes ) ;
 
+	std::size_t m_nBlocks ;
 	SparseIndexType m_rowMajorIndex ;
 
 	bool m_colMajorComputed ;
