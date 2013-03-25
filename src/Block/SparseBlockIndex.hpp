@@ -39,9 +39,14 @@ struct SparseBlockIndex
 	{
 	}
 
-	void assign( SparseBlockIndex< BlockT > &uncompressed, BlockPtr )
+	void assign( SparseBlockIndex< BlockT > &uncompressed )
 	{
 		outer.swap( uncompressed.outer ) ;
+	}
+
+	const SparseBlockIndex< BlockT > &asUncompressed ()
+	{
+		return *this ;
 	}
 
 	struct InnerIterator
@@ -65,10 +70,16 @@ struct SparseBlockIndex
 		Index inner() const { return m_it->first ; }
 		BlockPtr ptr() const { return m_it->second ; }
 
+		typename Inner::const_iterator asStdIterator() const { return m_it ; }
 	private:
 		typename Inner::const_iterator m_it ;
 		typename Inner::const_iterator m_end ;
 	} ;
+
+	void setPtr( const InnerIterator& it, BlockPtr ptr )
+	{
+		const_cast< BlockPtr& >( it.asStdIterator()->second ) = ptr ;
+	}
 
 	template < typename VecT >
 	typename VecT::SegmentReturnType innerSegment( VecT& v, Index idx ) const
@@ -122,10 +133,8 @@ struct SparseBlockIndex< BlockT, true >
 		}
 	}
 
-	void assign( SparseBlockIndex< BlockT > &uncompressed, BlockPtr base_ptr )
+	void assign( SparseBlockIndex< BlockT > &uncompressed )
 	{
-		base = base_ptr ;
-
 		resizeOuter( uncompressed.outer.size() ) ;
 
 		for( unsigned i = 0 ; i < uncompressed.outer.size() ; ++i )
@@ -138,6 +147,12 @@ struct SparseBlockIndex< BlockT, true >
 		}
 
 		finalize() ;
+	}
+
+	const SparseBlockIndex< BlockT > &asUncompressed ()
+	{
+		assert( 0 && "as Uncompressed should never be called on this object, segfaulting" ) ;
+		return *static_cast< const SparseBlockIndex< BlockT > * > ( 0 ) ;
 	}
 
 	struct InnerIterator
@@ -162,12 +177,19 @@ struct SparseBlockIndex< BlockT, true >
 		Index inner() const { return m_inner[ m_it ] ; }
 		BlockPtr ptr() const { return m_it + m_base ; }
 
+		BlockPtr rawIndex() const { return m_it ; }
 	private:
 		Index m_it ;
 		Index m_end ;
 		BlockPtr m_base ;
 		const Inner& m_inner ;
 	} ;
+
+	void setPtr( const InnerIterator& it, BlockPtr ptr )
+	{
+		base = ptr - it.rawIndex() ;
+		std::cout << base << std::endl ;
+	}
 
 	template < typename VecT >
 	typename VecT::SegmentReturnType innerSegment( VecT& v, Index idx ) const

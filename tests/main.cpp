@@ -37,7 +37,7 @@ int main()
 	std::cout << rhs.transpose() << std::endl ;
 	std::cout << ( res.transpose() * sbm ) << std::endl ;
 
-	sbm.computeColMajorIndex();
+	sbm.cacheTranspose();
 	std::cout << ( res.transpose() * sbm ) << std::endl ;
 
 	bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::BlockMatrixFlags::SYMMETRIC | bogus::BlockMatrixFlags::COMPRESSED > ssbm ;
@@ -54,7 +54,7 @@ int main()
 
 	std::cout << ( ssbm * rhs ).transpose() << std::endl ;
 
-	ssbm.computeColMajorIndex() ;
+	ssbm.cacheTranspose() ;
 
 	std::cout << ( ssbm * rhs ).transpose() << std::endl ;
 	res.resize( 3 ) ;
@@ -69,6 +69,36 @@ int main()
 
 	bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::BlockMatrixFlags::SYMMETRIC | bogus::BlockMatrixFlags::COMPRESSED > ssbm_copy = ssbm ;
 	std::cout << ssbm_copy << std::endl ;
+
+	bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::BlockMatrixFlags::SYMMETRIC > ussbm ;
+	ussbm.setRows( 3 ) ;
+
+	ussbm.insertBack( 0, 0 ) = 3*Eigen::Matrix3d::Ones() ;
+	ussbm.insertBack( 2, 0 ) = 2*Eigen::Matrix3d::Ones() ;
+	ussbm.insertBack( 2, 2 ) = 1*Eigen::Matrix3d::Ones() ;
+
+	ussbm.finalize() ;
+
+	rhs.resize( ussbm.rows() ) ;
+	rhs.setOnes() ;
+
+	assert( ussbm.computeColMajorIndex() ) ;
+
+	for( unsigned k = 0 ; k < 3 ; ++ k )
+	{
+		res.setZero() ;
+		ussbm.splitRowMultiply( k, rhs, res ) ;
+		std::cout << res.transpose() << std::endl ;
+	}
+
+	ussbm.cacheTranspose() ;
+
+	for( unsigned k = 0 ; k < 3 ; ++ k )
+	{
+		res.setZero() ;
+		ussbm.splitRowMultiply( k, rhs, res ) ;
+		std::cout << res.transpose() << std::endl ;
+	}
 
 	return 0;
 }

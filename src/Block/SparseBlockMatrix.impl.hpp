@@ -46,13 +46,22 @@ void SparseBlockMatrixBase< Derived >::finalize()
 }
 
 template < typename Derived >
-void SparseBlockMatrixBase< Derived >::computeColMajorIndex()
+bool SparseBlockMatrixBase< Derived >::computeColMajorIndex()
 {
-	if ( m_colMajorComputed ) return ;
-
-	this->m_blocks.reserve( 2*m_nBlocks ) ;
-
 	SparseBlockIndex< BlockType > cmIndex ;
+	computeColMajorIndex( cmIndex ) ;
+
+	return m_colMajorValid ;
+}
+
+template < typename Derived >
+void SparseBlockMatrixBase< Derived >::computeColMajorIndex(SparseBlockIndex< BlockType > &cmIndex)
+{
+	if ( m_colMajorValid ) return ;
+
+	// Warning if Traits::is_compressed, the col major index will not be
+	// valid unless the transpose Matrix is cached as well
+
 	cmIndex.resizeOuter( colsOfBlocks() );
 
 	for ( unsigned i = 0 ; i < rowsOfBlocks() ; ++ i )
@@ -64,19 +73,35 @@ void SparseBlockMatrixBase< Derived >::computeColMajorIndex()
 			cmIndex.insertBack( it.inner(), i, it.ptr() );
 		}
 	}
+
+	m_colMajorIndex.assign( cmIndex ) ;
+	m_colMajorValid = ! Traits::is_compressed ;
+}
+
+template < typename Derived >
+void SparseBlockMatrixBase< Derived >::cacheTranspose()
+{
+	if ( m_transposeCached ) return ;
+
+	SparseBlockIndex< BlockType > cmIndex ;
+	computeColMajorIndex( cmIndex ) ;
+
+	this->m_blocks.reserve( 2*m_nBlocks ) ;
+
 	for ( unsigned i = 0 ; i < colsOfBlocks() ; ++ i )
 	{
-		unsigned k = 0 ;
-		for( typename SparseBlockIndex< BlockType >::InnerIterator it( cmIndex, i ) ;
-			 it ; ++ it, ++k )
+		typename SparseBlockIndex< BlockType >::InnerIterator uncompressed_it
+			 ( m_colMajorValid ? m_colMajorIndex.asUncompressed() : cmIndex, i ) ;
+		for( typename SparseIndexType::InnerIterator it( m_colMajorIndex, i ) ;
+			 it ; ++ it, ++uncompressed_it )
 		{
-			allocateBlock() = block( it.ptr() ).transpose() ;
-			cmIndex.outer[i][k].second = ( BlockPtr ) ( this->m_blocks.size() - 1 )  ;
+			allocateBlock() = block( uncompressed_it.ptr() ).transpose() ;
+			m_colMajorIndex.setPtr( it, ( BlockPtr ) ( this->m_blocks.size() - 1 )  ) ;
 		}
 	}
 
-	m_colMajorIndex.assign( cmIndex, ( BlockPtr) m_nBlocks ) ;
-	m_colMajorComputed = true ;
+	m_colMajorValid   = true ;
+	m_transposeCached = true ;
 }
 
 template < typename Derived >
@@ -85,7 +110,7 @@ void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res, boo
 {
 	if( Traits::is_symmetric )
 	{
-		if( m_colMajorComputed )
+		if( m_transposeCached )
 		{
 			for( Index i = 0 ; i < rowsOfBlocks() ; ++i )
 			{
@@ -111,7 +136,7 @@ void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res, boo
 
 	} else if( transposed )
 	{
-		if( m_colMajorComputed )
+		if( m_transposeCached )
 		{
 			for( Index i = 0 ; i < colsOfBlocks() ; ++i )
 			{
@@ -158,8 +183,17 @@ void SparseBlockMatrixBase< Derived >::splitRowMultiply( const Index row, const 
 	}
 	if( Traits::is_symmetric )
 	{
-		assert( m_colMajorComputed ) ;
-		innerMultiply( m_colMajorIndex, row, rhs, res ) ;
+		if( m_transposeCached )
+		{
+			innerMultiply( m_colMajorIndex, row, rhs, res ) ;
+		} else {
+			assert( m_colMajorValid ) ;
+			for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( m_colMajorIndex, row ) ;
+				 it ; ++ it )
+			{
+				res  += block( it.ptr() ).transpose() * m_colMajorIndex.innerSegment( rhs, it.inner() )  ;
+			}
+		}
 	}
 }
 

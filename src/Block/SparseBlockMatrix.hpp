@@ -21,7 +21,8 @@ public:
 
 	SparseBlockMatrixBase()
 		: m_nBlocks(0),
-		  m_colMajorComputed( false )
+		  m_colMajorValid( false ),
+		  m_transposeCached( false )
 	{}
 
 	void setRows( const std::vector< Index > &rowsPerBlocks ) ;
@@ -65,8 +66,8 @@ public:
 	}
 
 	void finalize() ;
-	// Only relevant if Traits::is_symmetric
-	void computeColMajorIndex() ;
+	void cacheTranspose() ;
+	bool computeColMajorIndex() ;
 
 	std::size_t nBlocks() const { return m_nBlocks ; }
 
@@ -99,6 +100,8 @@ protected:
 		this->m_blocks.push_back( BlockType() ) ;
 		return this->m_blocks.back() ;
 	}
+
+	void computeColMajorIndex(SparseBlockIndex< BlockType > &cmIndex) ;
 
 	Index blockRows( Index row ) const { return rowOffsets()[ row + 1 ] - rowOffsets()[ row ] ; }
 	Index blockCols( Index col ) const { return colOffsets()[ col + 1 ] - colOffsets()[ col ] ; }
@@ -140,11 +143,14 @@ protected:
 	void setInnerOffets( SparseIndexType& index, const std::vector< Index > &blockSizes ) ;
 
 	std::size_t m_nBlocks ;
-	SparseIndexType m_rowMajorIndex ;
 
-	bool m_colMajorComputed ;
+	bool m_colMajorValid ;
+	bool m_transposeCached ;
+
+	SparseIndexType m_rowMajorIndex ;
 	// For a symmetric matrix, do not store diagonal block in col-major index
 	SparseIndexType m_colMajorIndex ;
+
 } ;
 
 template < typename Derived >
