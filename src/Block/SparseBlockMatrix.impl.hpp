@@ -48,14 +48,14 @@ void SparseBlockMatrixBase< Derived >::finalize()
 template < typename Derived >
 bool SparseBlockMatrixBase< Derived >::computeColMajorIndex()
 {
-	SparseBlockIndex< BlockType > cmIndex ;
+	SparseBlockIndex< > cmIndex ;
 	computeColMajorIndex( cmIndex ) ;
 
 	return m_colMajorValid ;
 }
 
 template < typename Derived >
-void SparseBlockMatrixBase< Derived >::computeColMajorIndex(SparseBlockIndex< BlockType > &cmIndex)
+void SparseBlockMatrixBase< Derived >::computeColMajorIndex(SparseBlockIndex< > &cmIndex)
 {
 	if ( m_colMajorValid ) return ;
 
@@ -83,14 +83,14 @@ void SparseBlockMatrixBase< Derived >::cacheTranspose()
 {
 	if ( m_transposeCached ) return ;
 
-	SparseBlockIndex< BlockType > cmIndex ;
+	SparseBlockIndex< > cmIndex ;
 	computeColMajorIndex( cmIndex ) ;
 
 	this->m_blocks.reserve( 2*m_nBlocks ) ;
 
 	for ( unsigned i = 0 ; i < colsOfBlocks() ; ++ i )
 	{
-		typename SparseBlockIndex< BlockType >::InnerIterator uncompressed_it
+		typename SparseBlockIndex< >::InnerIterator uncompressed_it
 			 ( m_colMajorValid ? m_colMajorIndex.asUncompressed() : cmIndex, i ) ;
 		for( typename SparseIndexType::InnerIterator it( m_colMajorIndex, i ) ;
 			 it ; ++ it, ++uncompressed_it )

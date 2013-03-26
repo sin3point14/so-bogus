@@ -9,16 +9,15 @@ namespace bogus
 {
 
 
-template < typename BlockT, bool Compressed = false >
+template < bool Compressed = false >
 struct SparseBlockIndex
 {
-	typedef typename BlockMatrixTraits< SparseBlockIndex< BlockT, Compressed > >::Index Index ;
+	typedef unsigned Index ;
 	typedef Index BlockPtr ;
 
 	SparseBlockIndex()
 	{}
 
-	typedef const std::vector< BlockT >& Blocks ;
 	typedef std::vector < std::pair< Index, BlockPtr > > Inner ;
 	typedef std::vector < Inner > Outer ;
 
@@ -39,12 +38,12 @@ struct SparseBlockIndex
 	{
 	}
 
-	void assign( SparseBlockIndex< BlockT > &uncompressed )
+	void assign( SparseBlockIndex< > &uncompressed )
 	{
 		outer.swap( uncompressed.outer ) ;
 	}
 
-	const SparseBlockIndex< BlockT > &asUncompressed ()
+	const SparseBlockIndex< > &asUncompressed ()
 	{
 		return *this ;
 	}
@@ -94,10 +93,10 @@ struct SparseBlockIndex
 
 } ;
 
-template < typename BlockT >
-struct SparseBlockIndex< BlockT, true >
+template<>
+struct SparseBlockIndex< true >
 {
-	typedef typename BlockMatrixTraits< SparseBlockIndex< BlockT, true > >::Index Index ;
+	typedef unsigned Index ;
 	typedef Index BlockPtr ;
 
 	SparseBlockIndex( )
@@ -133,13 +132,13 @@ struct SparseBlockIndex< BlockT, true >
 		}
 	}
 
-	void assign( SparseBlockIndex< BlockT > &uncompressed )
+	void assign( SparseBlockIndex< > &uncompressed )
 	{
 		resizeOuter( uncompressed.outer.size() ) ;
 
 		for( unsigned i = 0 ; i < uncompressed.outer.size() ; ++i )
 		{
-			for( typename SparseBlockIndex< BlockT >::InnerIterator it( uncompressed, i ) ;
+			for( typename SparseBlockIndex< >::InnerIterator it( uncompressed, i ) ;
 				 it ; ++ it )
 			{
 				insertBack( i, it.inner(), base+inner.size() ) ;
@@ -149,10 +148,10 @@ struct SparseBlockIndex< BlockT, true >
 		finalize() ;
 	}
 
-	const SparseBlockIndex< BlockT > &asUncompressed ()
+	const SparseBlockIndex< > &asUncompressed ()
 	{
 		assert( 0 && "as Uncompressed should never be called on this object, segfaulting" ) ;
-		return *static_cast< const SparseBlockIndex< BlockT > * > ( 0 ) ;
+		return *static_cast< const SparseBlockIndex< > * > ( 0 ) ;
 	}
 
 	struct InnerIterator

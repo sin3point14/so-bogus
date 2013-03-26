@@ -101,7 +101,7 @@ protected:
 		return this->m_blocks.back() ;
 	}
 
-	void computeColMajorIndex(SparseBlockIndex< BlockType > &cmIndex) ;
+	void computeColMajorIndex(SparseBlockIndex< > &cmIndex) ;
 
 	Index blockRows( Index row ) const { return rowOffsets()[ row + 1 ] - rowOffsets()[ row ] ; }
 	Index blockCols( Index col ) const { return colOffsets()[ col + 1 ] - colOffsets()[ col ] ; }
@@ -169,8 +169,8 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
 		is_symmetric  = Flags & BlockMatrixFlags::SYMMETRIC
 	} ;
 
-	typedef SparseBlockIndex< BlockT, is_compressed > SparseIndexType ;
-	typedef typename BlockMatrixTraits< SparseIndexType >::Index Index ;
+	typedef SparseBlockIndex< is_compressed > SparseIndexType ;
+	typedef typename SparseIndexType::Index Index ;
 } ;
 
 }
