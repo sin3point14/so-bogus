@@ -9,6 +9,9 @@
 namespace bogus
 {
 
+template < typename BlockT, int Flags = BlockMatrixFlags::NONE >
+class SparseBlockMatrix  ;
+
 template < typename Derived >
 class SparseBlockMatrixBase : public BlockMatrixBase< Derived >
 {
@@ -87,12 +90,20 @@ public:
 	{
 		return m_rowMajorIndex ;
 	}
+	const SparseIndexType& colMajorIndex() const
+	{
+		return m_rowMajorIndex ;
+	}
 
 	template < typename RhsT, typename ResT >
 	void multiply( const RhsT& rhs, ResT& res, bool transposed = false ) const ;
 
 	template < typename RhsT, typename ResT >
 	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
+
+	template < typename BlockT2 >
+	void cloneStructure( const SparseBlockMatrix< BlockT2, Traits::flags > &source ) ;
+
 
 protected:
 	BlockType& allocateBlock()
@@ -156,9 +167,6 @@ protected:
 template < typename Derived >
 std::ostream& operator<<( std::ostream &out, const SparseBlockMatrixBase< Derived > &sbm ) ;
 
-template < typename BlockT, int Flags = BlockMatrixFlags::NONE >
-class SparseBlockMatrix  ;
-
 template < typename BlockT, int Flags >
 struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
 {
@@ -167,6 +175,9 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
 	enum {
 		is_compressed = Flags & BlockMatrixFlags::COMPRESSED,
 		is_symmetric  = Flags & BlockMatrixFlags::SYMMETRIC
+	} ;
+	enum {
+		flags         = Flags
 	} ;
 
 	typedef SparseBlockIndex< is_compressed > SparseIndexType ;

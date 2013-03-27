@@ -100,6 +100,10 @@ int main()
 		std::cout << res.transpose() << std::endl ;
 	}
 
+	bogus::SparseBlockMatrix< Eigen::RowVector4d > copyofsbm ;
+	copyofsbm.cloneStructure( sbm ) ;
+	std::cout << copyofsbm << std::endl;
+
 	return 0;
 }
 

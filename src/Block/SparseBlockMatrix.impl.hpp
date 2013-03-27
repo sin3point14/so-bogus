@@ -242,6 +242,21 @@ std::ostream& operator<<( std::ostream &out, const SparseBlockMatrixBase< Derive
 	return out ;
 }
 
+template < typename Derived >
+template < typename BlockT2 >
+void SparseBlockMatrixBase<Derived>::cloneStructure( const SparseBlockMatrix< BlockT2, SparseBlockMatrixBase<Derived>::Traits::flags > &source )
+{
+	m_nBlocks = source.nBlocks() ;
+	m_rowMajorIndex = source.rowMajorIndex() ;
+	m_colMajorIndex = source.colMajorIndex() ;
+	m_colMajorValid = false ;
+	m_transposeCached = false ;
+
+	this->m_cols = source.cols() ;
+	this->m_rows = source.cols() ;
+	this->m_blocks.resize( m_nBlocks ) ;
+}
+
 template < typename BlockT, int Flags >
 class SparseBlockMatrix : public SparseBlockMatrixBase< SparseBlockMatrix< BlockT, Flags > >
 {
