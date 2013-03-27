@@ -43,7 +43,7 @@ struct SparseBlockIndex
 		outer.swap( uncompressed.outer ) ;
 	}
 
-	const SparseBlockIndex< > &asUncompressed ()
+	const SparseBlockIndex< > &asUncompressed () const
 	{
 		return *this ;
 	}
@@ -148,7 +148,7 @@ struct SparseBlockIndex< true >
 		finalize() ;
 	}
 
-	const SparseBlockIndex< > &asUncompressed ()
+	const SparseBlockIndex< > &asUncompressed () const
 	{
 		assert( 0 && "as Uncompressed should never be called on this object, segfaulting" ) ;
 		return *static_cast< const SparseBlockIndex< > * > ( 0 ) ;

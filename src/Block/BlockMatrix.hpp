@@ -57,6 +57,7 @@ public:
 
 	Index rows() const { return m_rows ; }
 	Index cols() const { return m_cols ; }
+	const std::vector< BlockType >& blocks() const { return  m_blocks ; }
 
 	const Derived& derived() const ;
 	Derived& derived() ;

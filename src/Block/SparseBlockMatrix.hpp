@@ -70,7 +70,9 @@ public:
 
 	void finalize() ;
 	void cacheTranspose() ;
+
 	bool computeColMajorIndex() ;
+	const SparseBlockIndex< > & getUncompressedColMajorIndex(SparseBlockIndex< > &cmIndex) const ;
 
 	std::size_t nBlocks() const { return m_nBlocks ; }
 
@@ -104,6 +106,11 @@ public:
 	template < typename BlockT2 >
 	void cloneStructure( const SparseBlockMatrix< BlockT2, Traits::flags > &source ) ;
 
+	template < typename LhsDerived, typename RhsDerived >
+	void setFromProduct( const SparseBlockMatrixBase< LhsDerived >& lhs,
+						 const SparseBlockMatrixBase< RhsDerived >& rhs,
+						 bool lhsTransposed = false, bool rhsTransposed = false
+						 ) ;
 
 protected:
 	BlockType& allocateBlock()
@@ -112,7 +119,7 @@ protected:
 		return this->m_blocks.back() ;
 	}
 
-	void computeColMajorIndex(SparseBlockIndex< > &cmIndex) ;
+	void computeColMajorIndex(SparseBlockIndex< > &cmIndex) const ;
 
 	Index blockRows( Index row ) const { return rowOffsets()[ row + 1 ] - rowOffsets()[ row ] ; }
 	Index blockCols( Index col ) const { return colOffsets()[ col + 1 ] - colOffsets()[ col ] ; }
@@ -152,6 +159,14 @@ protected:
 	void innerTransposedMultiply( const SparseIndexType &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
 
 	void setInnerOffets( SparseIndexType& index, const std::vector< Index > &blockSizes ) ;
+
+	template < typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock  >
+	void setFromProduct( const LhsIndex &lhsIdx,
+						 const RhsIndex &rhsIdx,
+						 const std::vector< LhsBlock > &lhsData,
+						 const std::vector< RhsBlock > &rhsData,
+						 bool transposeLhs, bool transposeRhs
+						  ) ;
 
 	std::size_t m_nBlocks ;
 
