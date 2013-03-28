@@ -19,7 +19,8 @@ struct BlockMatrixFlags
 	enum {
 		NONE = 0,
 		COMPRESSED = 0x1,
-		SYMMETRIC = 0x2
+		COL_MAJOR = 0x2,
+		SYMMETRIC = 0x4
 	} ;
 } ;
 

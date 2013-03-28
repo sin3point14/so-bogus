@@ -24,7 +24,7 @@ public:
 
 	SparseBlockMatrixBase()
 		: m_nBlocks(0),
-		  m_colMajorValid( false ),
+		  m_minorIndexValid( false ),
 		  m_transposeCached( false )
 	{}
 
@@ -64,15 +64,19 @@ public:
 
 	BlockType& insertBack( Index row, Index col )
 	{
-		m_rowMajorIndex.insertBack( row, col, m_nBlocks++ ) ;
+		if( Traits::is_col_major )
+			m_majorIndex.insertBack( col, row, m_nBlocks++ ) ;
+		else
+			m_majorIndex.insertBack( row, col, m_nBlocks++ ) ;
+
 		return allocateBlock() ;
 	}
 
 	void finalize() ;
 	void cacheTranspose() ;
 
-	bool computeColMajorIndex() ;
-	const SparseBlockIndex< > & getUncompressedColMajorIndex(SparseBlockIndex< > &cmIndex) const ;
+	bool computeMinorIndex() ;
+	const SparseBlockIndex< > & getUncompressedMinorIndex(SparseBlockIndex< > &cmIndex) const ;
 
 	std::size_t nBlocks() const { return m_nBlocks ; }
 
@@ -88,13 +92,13 @@ public:
 
 	const BlockType& diagonal( const Index row ) const ;
 
-	const SparseIndexType& rowMajorIndex() const
-	{
-		return m_rowMajorIndex ;
-	}
 	const SparseIndexType& colMajorIndex() const
 	{
-		return m_rowMajorIndex ;
+		return Traits::is_col_major ? m_majorIndex : m_minorIndex ;
+	}
+	const SparseIndexType& rowMajorIndex() const
+	{
+		return Traits::is_col_major ? m_minorIndex : m_majorIndex ;
 	}
 
 	template < typename RhsT, typename ResT >
@@ -119,14 +123,21 @@ protected:
 		return this->m_blocks.back() ;
 	}
 
-	void computeColMajorIndex(SparseBlockIndex< > &cmIndex) const ;
+	void computeMinorIndex(SparseBlockIndex< > &cmIndex) const ;
 
 	Index blockRows( Index row ) const { return rowOffsets()[ row + 1 ] - rowOffsets()[ row ] ; }
 	Index blockCols( Index col ) const { return colOffsets()[ col + 1 ] - colOffsets()[ col ] ; }
 	Index rowOffset( Index row ) const { return rowOffsets()[row] ; }
 	Index colOffset( Index col ) const { return colOffsets()[col] ; }
-	const std::vector< Index >& rowOffsets() const { return m_colMajorIndex.innerOffsets ; }
-	const std::vector< Index >& colOffsets() const { return m_rowMajorIndex.innerOffsets ; }
+	const std::vector< Index >& rowOffsets() const { return colMajorIndex().innerOffsets ; }
+	const std::vector< Index >& colOffsets() const { return rowMajorIndex().innerOffsets ; }
+
+	SparseIndexType& colMajorIndex() {
+		return Traits::is_col_major ? m_majorIndex : m_minorIndex ;
+	}
+	SparseIndexType& rowMajorIndex() {
+		return Traits::is_col_major ? m_minorIndex : m_majorIndex ;
+	}
 
 	template < typename VecT >
 	typename VecT::SegmentReturnType rowSegment( VecT& v, Index rowBlockIdx ) const
@@ -153,10 +164,13 @@ protected:
 	}
 
 	template < typename RhsT, typename ResT >
-	void innerMultiply( const SparseIndexType &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
-
+	void innerRowMultiply( const SparseIndexType &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
 	template < typename RhsT, typename ResT >
-	void innerTransposedMultiply( const SparseIndexType &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
+	void innerColMultiply( const SparseIndexType &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
+	template < typename RhsT, typename ResT >
+	void innerRowTransposedMultiply( const SparseIndexType &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
+	template < typename RhsT, typename ResT >
+	void innerColTransposedMultiply( const SparseIndexType &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
 
 	void setInnerOffets( SparseIndexType& index, const std::vector< Index > &blockSizes ) ;
 
@@ -164,7 +178,13 @@ protected:
 		NoTranspose,
 		TransposeAll,
 		TransposeAfterDiag
-	} ;
+	};
+
+	SparseBlockIndexBase& getIndex( const bool transpose, const bool rowWise,
+									TransposeMode &indexTransposeMode,
+									SparseBlockIndex< >& aux ) const ;
+
+
 
 	template < typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock  >
 	void setFromProduct( const LhsIndex &lhsIdx,
@@ -176,12 +196,12 @@ protected:
 
 	std::size_t m_nBlocks ;
 
-	bool m_colMajorValid ;
+	bool m_minorIndexValid ;
 	bool m_transposeCached ;
 
-	SparseIndexType m_rowMajorIndex ;
-	// For a symmetric matrix, do not store diagonal block in col-major index
-	SparseIndexType m_colMajorIndex ;
+	SparseIndexType m_majorIndex ;
+	// For a symmetric matrix, do not store diagonal block in minor index
+	SparseIndexType m_minorIndex ;
 } ;
 
 template < typename Derived >
@@ -194,7 +214,8 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
 
 	enum {
 		is_compressed = Flags & BlockMatrixFlags::COMPRESSED,
-		is_symmetric  = Flags & BlockMatrixFlags::SYMMETRIC
+		is_symmetric  = Flags & BlockMatrixFlags::SYMMETRIC,
+		is_col_major  = Flags & BlockMatrixFlags::COL_MAJOR
 	} ;
 	enum {
 		flags         = Flags

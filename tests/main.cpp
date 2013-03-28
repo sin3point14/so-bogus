@@ -82,7 +82,7 @@ int main()
 	rhs.resize( ussbm.rows() ) ;
 	rhs.setOnes() ;
 
-	assert( ussbm.computeColMajorIndex() ) ;
+	assert( ussbm.computeMinorIndex() ) ;
 
 	for( unsigned k = 0 ; k < 3 ; ++ k )
 	{
