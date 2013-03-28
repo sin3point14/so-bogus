@@ -281,59 +281,67 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const SparseBlockMatrixBase
 {
 	typedef BlockMatrixTraits< LhsDerived > LhsTraits ;
 	typedef BlockMatrixTraits< RhsDerived > RhsTraits ;
-	SparseBlockIndex< > cmIndex ;
+
+	const SparseBlockIndexBase *lhsIdx = NULL ;
+	const SparseBlockIndexBase *rhsIdx = NULL;
+
+	TransposeMode transposeModeLhs ; TransposeMode transposeModeRhs ;
+	SparseBlockIndex< > auxIndexLhs, auxIndexRhs ;
 
 	assert( ! LhsTraits::is_symmetric ) ;
 	assert( ! RhsTraits::is_symmetric ) ;
 
-	if( !lhsTransposed )
+	if( rhsTransposed )
 	{
-		if( rhsTransposed )
+		rhsIdx = &rhs.rowMajorIndex() ;
+		transposeModeRhs = TransposeAll ;
+	} else {
+		if ( rhs.m_transposeCached )
 		{
-			setFromProduct( lhs.rowMajorIndex(), rhs.rowMajorIndex(),
-							lhs.blocks(), rhs.blocks(), false, true ) ;
+			rhsIdx = &rhs.colMajorIndex() ;
+			transposeModeRhs = TransposeAll ;
 		} else {
-			if ( rhs.m_transposeCached )
-			{
-				setFromProduct( lhs.rowMajorIndex(), rhs.colMajorIndex(),
-								lhs.blocks(), rhs.blocks(), false, true ) ;
-			} else {
-				setFromProduct( lhs.rowMajorIndex(), getUncompressedColMajorIndex(cmIndex),
-								lhs.blocks(), rhs.blocks(), false, false ) ;
-			}
+			getUncompressedColMajorIndex(auxIndexRhs) ;
+			rhsIdx = &auxIndexRhs ;
+			transposeModeRhs = NoTranspose ;
 		}
-	} else if( lhs.m_transposeCached ) {
-		if( rhsTransposed )
+	}
+
+	if( lhsTransposed )
+	{
+		if ( lhs.m_transposeCached )
 		{
-			setFromProduct( lhs.colMajorIndex(), rhs.rowMajorIndex(),
-							lhs.blocks(), rhs.blocks(), false, true ) ;
+			lhsIdx = &lhs.colMajorIndex() ;
+			transposeModeLhs = NoTranspose ;
 		} else {
-			if ( rhs.m_transposeCached )
-			{
-				setFromProduct( lhs.colMajorIndex(), rhs.colMajorIndex(),
-								lhs.blocks(), rhs.blocks(), false, true ) ;
-			} else {
-				setFromProduct( lhs.colMajorIndex(), getUncompressedColMajorIndex(cmIndex),
-								lhs.blocks(), rhs.blocks(), false, false ) ;
-			}
+			getUncompressedColMajorIndex(auxIndexLhs) ;
+			lhsIdx = &auxIndexLhs ;
+			transposeModeLhs = TransposeAll ;
 		}
 	} else {
-		SparseBlockIndex< > cmIndexL ;
-		SparseBlockIndex< > &lhsIndex = getUncompressedColMajorIndex( cmIndexL ) ;
+		lhsIdx = &lhs.rowMajorIndex() ;
+		transposeModeLhs = NoTranspose ;
+	}
 
-		if( rhsTransposed )
+
+	if( lhsIdx->isCompressed() )
+	{
+		if( rhsIdx->isCompressed() )
 		{
-			setFromProduct( lhsIndex, rhs.rowMajorIndex(),
-							lhs.blocks(), rhs.blocks(), true, true ) ;
+			setFromProduct( lhsIdx->asCompressed(), rhsIdx->asCompressed(),
+							lhs.blocks(), rhs.blocks(), transposeModeLhs, transposeModeRhs ) ;
 		} else {
-			if ( rhs.m_transposeCached )
-			{
-				setFromProduct( lhsIndex, rhs.colMajorIndex(),
-								lhs.blocks(), rhs.blocks(), true, true ) ;
-			} else {
-				setFromProduct( lhsIndex, getUncompressedColMajorIndex(cmIndex),
-								lhs.blocks(), rhs.blocks(), true, false ) ;
-			}
+			setFromProduct( lhsIdx->asCompressed(), rhsIdx->asUncompressed(),
+							lhs.blocks(), rhs.blocks(), transposeModeLhs, transposeModeRhs ) ;
+		}
+	} else {
+		if( rhsIdx->isCompressed() )
+		{
+			setFromProduct( lhsIdx->asUncompressed(), rhsIdx->asCompressed(),
+							lhs.blocks(), rhs.blocks(), transposeModeLhs, transposeModeRhs ) ;
+		} else {
+			setFromProduct( lhsIdx->asUncompressed(), rhsIdx->asUncompressed(),
+							lhs.blocks(), rhs.blocks(), transposeModeLhs, transposeModeRhs ) ;
 		}
 	}
 
@@ -346,7 +354,7 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(
 		const RhsIndex &rhsIdx,
 		const std::vector< LhsBlock > &lhsData,
 		const std::vector< RhsBlock > &rhsData,
-		bool transposeLhs, bool transposeRhs
+		TransposeMode transposeLhs, TransposeMode transposeRhs
 		)
 {
 	(void) lhsIdx ;

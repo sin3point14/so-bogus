@@ -8,9 +8,18 @@
 namespace bogus
 {
 
-
 template < bool Compressed = false >
-struct SparseBlockIndex
+struct SparseBlockIndex ;
+
+struct SparseBlockIndexBase
+{
+	virtual bool isCompressed() const = 0 ;
+	virtual const SparseBlockIndex<true>& asCompressed() const = 0 ;
+	virtual const SparseBlockIndex<>& asUncompressed() const = 0 ;
+} ;
+
+template < bool Compressed  >
+struct SparseBlockIndex : public SparseBlockIndexBase
 {
 	typedef unsigned Index ;
 	typedef Index BlockPtr ;
@@ -43,9 +52,17 @@ struct SparseBlockIndex
 		outer.swap( uncompressed.outer ) ;
 	}
 
+	bool isCompressed() const { return false ; }
+
 	const SparseBlockIndex< > &asUncompressed () const
 	{
 		return *this ;
+	}
+
+	const SparseBlockIndex< true > &asCompressed () const
+	{
+		assert( 0 && "as Uncompressed should never be called on this object, segfaulting" ) ;
+		return *static_cast< const SparseBlockIndex< true > * > ( 0 ) ;
 	}
 
 	struct InnerIterator
@@ -94,7 +111,7 @@ struct SparseBlockIndex
 } ;
 
 template<>
-struct SparseBlockIndex< true >
+struct SparseBlockIndex< true > : public SparseBlockIndexBase
 {
 	typedef unsigned Index ;
 	typedef Index BlockPtr ;
@@ -146,6 +163,13 @@ struct SparseBlockIndex< true >
 		}
 
 		finalize() ;
+	}
+
+	bool isCompressed() const { return true ; }
+
+	const SparseBlockIndex< true > &asCompressed () const
+	{
+		return *this ;
 	}
 
 	const SparseBlockIndex< > &asUncompressed () const

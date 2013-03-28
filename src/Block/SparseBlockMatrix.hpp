@@ -109,7 +109,7 @@ public:
 	template < typename LhsDerived, typename RhsDerived >
 	void setFromProduct( const SparseBlockMatrixBase< LhsDerived >& lhs,
 						 const SparseBlockMatrixBase< RhsDerived >& rhs,
-						 bool lhsTransposed = false, bool rhsTransposed = false
+						 bool transposeLhs = false, bool transposeRhs = false
 						 ) ;
 
 protected:
@@ -160,12 +160,18 @@ protected:
 
 	void setInnerOffets( SparseIndexType& index, const std::vector< Index > &blockSizes ) ;
 
+	enum TransposeMode {
+		NoTranspose,
+		TransposeAll,
+		TransposeAfterDiag
+	} ;
+
 	template < typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock  >
 	void setFromProduct( const LhsIndex &lhsIdx,
 						 const RhsIndex &rhsIdx,
 						 const std::vector< LhsBlock > &lhsData,
 						 const std::vector< RhsBlock > &rhsData,
-						 bool transposeLhs, bool transposeRhs
+						 TransposeMode transposeLhs, TransposeMode transposeRhs
 						  ) ;
 
 	std::size_t m_nBlocks ;
@@ -176,7 +182,6 @@ protected:
 	SparseIndexType m_rowMajorIndex ;
 	// For a symmetric matrix, do not store diagonal block in col-major index
 	SparseIndexType m_colMajorIndex ;
-
 } ;
 
 template < typename Derived >
