@@ -34,6 +34,9 @@ public:
 	template < typename OtherDerived >
 	Derived& operator= ( const Transpose< SparseBlockMatrixBase< OtherDerived > > &source ) ;
 
+	template < typename LhsT, typename RhsT >
+	Derived& operator= ( const Product< LhsT, RhsT > &prod ) ;
+
 	void setRows( const std::vector< Index > &rowsPerBlocks ) ;
 	void setRows( Index n_blocks, Index rows_per_block )
 	{
@@ -136,7 +139,8 @@ public:
 	template < typename LhsDerived, typename RhsDerived >
 	void setFromProduct( const SparseBlockMatrixBase< LhsDerived >& lhs,
 						 const SparseBlockMatrixBase< RhsDerived >& rhs,
-						 bool transposeLhs = false, bool transposeRhs = false
+						 bool transposeLhs = false, bool transposeRhs = false,
+						 double scale = 1.
 						 ) ;
 
 protected:
@@ -203,7 +207,7 @@ protected:
 		TransposeAfterDiag
 	};
 
-	SparseBlockIndexBase& getIndex( const bool transpose, const bool rowWise,
+	const SparseBlockIndexBase& getIndex( const bool transpose, const bool rowWise,
 									TransposeMode &indexTransposeMode,
 									SparseBlockIndex< >& aux ) const ;
 
@@ -214,7 +218,8 @@ protected:
 						 const RhsIndex &rhsIdx,
 						 const std::vector< LhsBlock > &lhsData,
 						 const std::vector< RhsBlock > &rhsData,
-						 TransposeMode transposeLhs, TransposeMode transposeRhs
+						 TransposeMode transposeLhs, TransposeMode transposeRhs,
+						 double scale = 1.
 						  ) ;
 
 	std::size_t m_nBlocks ;
@@ -245,6 +250,7 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
 
 	typedef SparseBlockIndex< is_compressed > SparseIndexType ;
 	typedef typename SparseIndexType::Index Index ;
+	typedef SparseBlockMatrix< BlockT, Flags > PlainObjectType ;
 } ;
 
 }

@@ -128,7 +128,7 @@ void SparseBlockMatrixBase< Derived >::cacheTranspose()
 }
 
 template < typename Derived >
-SparseBlockIndexBase& SparseBlockMatrixBase< Derived >::getIndex(
+const SparseBlockIndexBase& SparseBlockMatrixBase< Derived >::getIndex(
 		const bool transpose, const bool colWise,
 		TransposeMode &indexTransposeMode,
 		SparseBlockIndex< >& aux ) const

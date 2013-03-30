@@ -1,36 +1,63 @@
 #ifndef BOGUS_BLOCK_EXPRESSIONS_HPP
 #define BOGUS_BLOCK_EXPRESSIONS_HPP
 
+#include "BlockMatrix.hpp"
+
 namespace bogus
 {
 
 template <typename MatrixT>
-struct Transpose
+struct Transpose : public BlockObjectBase< Transpose< MatrixT > >
 {
-	const MatrixT &matrix ;
-	Transpose( const MatrixT& m ) : matrix( m ) {}
+	typedef typename MatrixT::PlainObjectType PlainObjectType ;
+	const PlainObjectType &matrix ;
+
+	Transpose( const PlainObjectType &m ) : matrix( m.derived() ) {}
+
+	const PlainObjectType& transpose() { return matrix ; }
+} ;
+
+template < typename Derived >
+class SparseBlockMatrixBase ;
+
+template <typename MatrixT>
+struct Transpose< SparseBlockMatrixBase< MatrixT > > : public Transpose< BlockMatrixBase< MatrixT > >
+{
+	Transpose( const SparseBlockMatrixBase< MatrixT > &m )
+		: Transpose< BlockMatrixBase< MatrixT > > ( m.derived() )
+	{}
 } ;
 
 template < typename MatrixT >
 struct TransposeTraits
 {
 	enum { do_transpose = false } ;
+	typedef MatrixT MatrixType ;
+
+	static const MatrixType &get( const MatrixT &m ) { return m ; }
 } ;
 template < typename MatrixT >
 struct TransposeTraits< Transpose< MatrixT > >
 {
 	enum { do_transpose = true } ;
+	typedef typename MatrixT::PlainObjectType MatrixType ;
+
+	static const MatrixType &get( const Transpose< MatrixT > &m ) { return m.matrix.derived() ; }
 } ;
 
 template <typename LhsMatrixT, typename RhsMatrixT>
 struct Product
 {
-	const LhsMatrixT &lhs ;
-	const RhsMatrixT &rhs ;
-	enum { transposeLhs = TransposeTraits< LhsMatrixT >::do_transpose };
-	enum { transposeRhs = TransposeTraits< RhsMatrixT >::do_transpose };
+	typedef TransposeTraits< LhsMatrixT > LhsTraits ;
+	typedef TransposeTraits< RhsMatrixT > RhsTraits ;
+	const typename LhsTraits::MatrixType &lhs ;
+	const typename RhsTraits::MatrixType &rhs ;
+	enum { transposeLhs = LhsTraits::do_transpose };
+	enum { transposeRhs = RhsTraits::do_transpose };
 
-	Product( const LhsMatrixT& l, const LhsMatrixT &r ) : lhs( l ), rhs ( r ) {}
+	Product( const BlockObjectBase< LhsMatrixT >& l, const BlockObjectBase< RhsMatrixT > &r )
+		: lhs( LhsTraits::get( l.derived() ) ), rhs ( RhsTraits::get( r.derived() ) )
+	{}
 } ;
 
 }

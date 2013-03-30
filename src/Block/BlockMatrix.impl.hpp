@@ -7,13 +7,13 @@ namespace bogus
 {
 
 template < typename Derived >
-const Derived& BlockMatrixBase< Derived >::derived() const
+const Derived& BlockObjectBase< Derived >::derived() const
 {
 	return static_cast< const Derived& >( *this ) ;
 }
 
 template < typename Derived >
-Derived& BlockMatrixBase< Derived >::derived() {
+Derived& BlockObjectBase< Derived >::derived() {
 	return static_cast< Derived& >( *this ) ;
 }
 

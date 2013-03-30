@@ -8,10 +8,24 @@ namespace bogus
 
 typedef unsigned Index ;
 
+
+template < typename Derived >
+struct BlockObjectBase
+{
+	typedef Derived PlainObjectType ;
+
+	const Derived& derived() const ;
+	Derived& derived() ;
+};
+
 template< typename Derived >
 struct BlockMatrixTraits
-{
+{ } ;
+
+template< typename Derived >
+struct BlockMatrixTraits< BlockObjectBase< Derived > > {
 	typedef unsigned Index ;
+	typedef Derived PlainObjectType ;
 } ;
 
 struct BlockMatrixFlags
@@ -24,8 +38,9 @@ struct BlockMatrixFlags
 	} ;
 } ;
 
+
 template < typename Derived >
-class BlockMatrixBase
+class BlockMatrixBase : public BlockObjectBase< Derived >
 {
 public:
 	typedef typename BlockMatrixTraits< Derived >::BlockType BlockType ;
@@ -41,27 +56,24 @@ public:
 	template < typename RhsT, typename ResT >
 	void multiply( const RhsT& rhs, ResT& res, bool transposed = false ) const
 	{
-		derived().multiply( rhs, res, transposed ) ;
+		this->derived().multiply( rhs, res, transposed ) ;
 	}
 
 	template < typename RhsT, typename ResT >
 	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const
 	{
-		derived().splitRowMultiply( row, rhs, res ) ;
+		this->derived().splitRowMultiply( row, rhs, res ) ;
 	}
 
 
 	const BlockType& diagonal( const Index row ) const
 	{
-		return derived().diagonal( row );
+		return this->derived().diagonal( row );
 	}
 
 	Index rows() const { return m_rows ; }
 	Index cols() const { return m_cols ; }
 	const std::vector< BlockType >& blocks() const { return  m_blocks ; }
-
-	const Derived& derived() const ;
-	Derived& derived() ;
 
 protected:
 	Index m_rows ;

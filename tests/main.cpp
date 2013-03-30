@@ -36,6 +36,8 @@ int main()
 
 	std::cout << rhs.transpose() << std::endl ;
 	std::cout << ( res.transpose() * sbm ) << std::endl ;
+	std::cout << ( sbm.transpose() * res ).transpose() << std::endl ;
+	std::cout << rhs.transpose() * sbm.transpose() << std::endl ;
 
 	sbm.cacheTranspose();
 	std::cout << ( res.transpose() * sbm ) << std::endl ;
@@ -109,6 +111,8 @@ int main()
 
 	std::cout << oldRes.transpose() << std::endl ;
 	std::cout << (sbm * oldRes).transpose() << std::endl ;
+
+	bogus::SparseBlockMatrix< Eigen::MatrixXd > prod( sbm.transpose() * copyofsbm.transpose() );
 
 	return 0;
 }
