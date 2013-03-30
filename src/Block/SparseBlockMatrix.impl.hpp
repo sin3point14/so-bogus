@@ -365,7 +365,10 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 		this->m_blocks.resize( source.blocks().size() ) ;
 		std::copy( source.blocks().begin(), source.blocks().end(), this->m_blocks.begin() ) ;
 	} else {
-		// If we're here, this means that one matrix is column major, the other row major
+		// If we're here, this means that :
+		//  - either one matrix is column major, the other row major
+		//  - either they share the same ordering, but with different index compression
+		// FIXME compressed indexes
 
 		clear() ;
 		this->m_blocks.reserve( source.blocks().size() ) ;
@@ -378,6 +381,7 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 			for( typename SourceIndexType::InnerIterator src_it( sourceIndex, i ) ;
 				 src_it ; ++ src_it )
 			{
+				std::cout << i << " " << src_it.inner() << std::endl ;
 				insertBackOuterInner( src_it.inner(), i ) = source.block( src_it.ptr() ) ;
 			}
 		}

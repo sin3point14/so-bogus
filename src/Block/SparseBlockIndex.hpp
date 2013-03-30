@@ -47,6 +47,7 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 
 	void finalize()
 	{
+		valid = true ;
 	}
 
 	void clear()

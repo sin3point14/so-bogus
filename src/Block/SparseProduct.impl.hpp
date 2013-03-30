@@ -80,7 +80,7 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(const LhsIndex &lhsIdx,
 	(void) transposeLhs;
 	(void) transposeRhs;
 	(void) scale;
-	std::cout << "hey " << std::endl ;
+	std::cout << "hey " << transposeLhs << " / " << transposeRhs << std::endl ;
 }
 
 

@@ -2,7 +2,10 @@ Block.hpp
 Block/BlockMatrix.hpp
 Block/BlockMatrix.impl.hpp
 Block/EigenBindings.hpp
+Block/Expressions.hpp
 Block/SparseBlockIndex.hpp
 Block/SparseBlockMatrix.hpp
 Block/SparseBlockMatrix.impl.hpp
+Block/SparseProduct.impl.hpp
+Block/SparseTranspose.impl.hpp
 empty.cpp
