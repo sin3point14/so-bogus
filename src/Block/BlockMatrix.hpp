@@ -1,5 +1,5 @@
-#ifndef BLOCKMATRIX_HPP
-#define BLOCKMATRIX_HPP
+#ifndef BOGUS_BLOCKMATRIX_HPP
+#define BOGUS_BLOCKMATRIX_HPP
 
 #include <vector>
 
@@ -69,6 +69,7 @@ protected:
 
 	std::vector< BlockType > m_blocks ;
 } ;
+
 
 }
 
