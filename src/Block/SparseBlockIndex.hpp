@@ -32,11 +32,13 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 
 	Outer outer ;
 	std::vector< Index > innerOffsets ;
+	bool valid ;
 
 	void resizeOuter( Index size )
 	{
 		outer.resize( size ) ;
 	}
+	Index outerSize( ) const { return outer.size() ; }
 
 	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
 	{
@@ -47,10 +49,27 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 	{
 	}
 
-	void assign( SparseBlockIndex< > &uncompressed )
+	SparseBlockIndex< Compressed > &operator=( const SparseBlockIndex< Compressed > &o )
+	{
+		if( &o != this )
+		{
+			outer = o.outer ;
+			valid = o.valid ;
+			innerOffsets = o.innerOffsets ;
+		}
+		return *this ;
+	}
+
+	SparseBlockIndex< Compressed > &operator=( SparseBlockIndex< > &uncompressed )
 	{
 		outer.swap( uncompressed.outer ) ;
+		innerOffsets.swap( uncompressed.innerOffsets ) ;
+		valid = uncompressed.valid ;
+		uncompressed.valid = false ;
+		return *this ;
 	}
+
+	SparseBlockIndex< Compressed > &operator=( const SparseBlockIndex< true > &compressed ) ;
 
 	bool isCompressed() const { return false ; }
 
@@ -117,7 +136,7 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 	typedef Index BlockPtr ;
 
 	SparseBlockIndex( )
-		: base(0)
+		: base(0), valid( false )
 	{}
 
 	typedef std::vector< Index > Inner ;
@@ -127,11 +146,13 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 	Outer outer ;
 	BlockPtr base ;
 	std::vector< Index > innerOffsets ;
+	bool valid ;
 
 	void resizeOuter( Index size )
 	{
 		outer.resize( size+1 ) ;
 	}
+	Index outerSize( ) const { return outer.size() - 1 ; }
 
 	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
 	{
@@ -147,15 +168,31 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 		{
 			outer[i] += outer[i-1] ;
 		}
+		valid = true ;
 	}
 
-	void assign( SparseBlockIndex< > &uncompressed )
+	SparseBlockIndex< true > &operator=( const SparseBlockIndex< true > &compressed )
 	{
-		resizeOuter( uncompressed.outer.size() ) ;
-
-		for( unsigned i = 0 ; i < uncompressed.outer.size() ; ++i )
+		if( &compressed != this )
 		{
-			for( typename SparseBlockIndex< >::InnerIterator it( uncompressed, i ) ;
+			outer = compressed.outer ;
+			inner = compressed.inner ;
+			innerOffsets = compressed.innerOffsets ;
+			base  = compressed.base ;
+			valid = compressed.valid ;
+		}
+		return *this ;
+	}
+
+	SparseBlockIndex< true > &operator=( const SparseBlockIndex< > &uncompressed )
+	{
+		resizeOuter( uncompressed.outerSize() ) ;
+		inner.clear() ;
+		innerOffsets = uncompressed.innerOffsets ;
+
+		for( unsigned i = 0 ; i < uncompressed.outerSize() ; ++i )
+		{
+			for( SparseBlockIndex< >::InnerIterator it( uncompressed, i ) ;
 				 it ; ++ it )
 			{
 				insertBack( i, it.inner(), base+inner.size() ) ;
@@ -163,6 +200,9 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 		}
 
 		finalize() ;
+		valid = false ;
+
+		return *this ;
 	}
 
 	bool isCompressed() const { return true ; }
@@ -211,7 +251,7 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 	void setPtr( const InnerIterator& it, BlockPtr ptr )
 	{
 		base = ptr - it.rawIndex() ;
-		std::cout << base << std::endl ;
+		valid = true ;
 	}
 
 	template < typename VecT >
@@ -226,6 +266,27 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 	}
 } ;
 
+template < bool Compressed  >
+SparseBlockIndex< Compressed > & SparseBlockIndex< Compressed >::operator=(
+		const SparseBlockIndex< true > &compressed )
+{
+	resizeOuter( compressed.outerSize() ) ;
+
+	for( unsigned i = 0 ; i < compressed.outerSize() ; ++i )
+	{
+		for( typename SparseBlockIndex< true >::InnerIterator it( compressed, i ) ;
+			 it ; ++ it )
+		{
+			insertBack( i, it.inner(), it.ptr() ) ;
+		}
+	}
+
+	finalize() ;
+	valid = compressed.valid ;
+	innerOffsets = compressed.innerOffsets ;
+
+	return *this ;
+}
 
 }
 

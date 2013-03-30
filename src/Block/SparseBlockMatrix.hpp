@@ -24,9 +24,11 @@ public:
 
 	SparseBlockMatrixBase()
 		: m_nBlocks(0),
-		  m_minorIndexValid( false ),
 		  m_transposeCached( false )
 	{}
+
+	template < typename OtherDerived >
+	Derived& operator= ( const SparseBlockMatrixBase< OtherDerived > &source ) ;
 
 	void setRows( const std::vector< Index > &rowsPerBlocks ) ;
 	void setRows( Index n_blocks, Index rows_per_block )
@@ -68,12 +70,14 @@ public:
 			m_majorIndex.insertBack( col, row, m_nBlocks++ ) ;
 		else
 			m_majorIndex.insertBack( row, col, m_nBlocks++ ) ;
+		m_minorIndex.valid = false ;
 
 		return allocateBlock() ;
 	}
 
 	void finalize() ;
 	void cacheTranspose() ;
+	bool transposeCached() const { return m_transposeCached ; }
 
 	bool computeMinorIndex() ;
 	const SparseBlockIndex< > & getUncompressedMinorIndex(SparseBlockIndex< > &cmIndex) const ;
@@ -92,6 +96,14 @@ public:
 
 	const BlockType& diagonal( const Index row ) const ;
 
+	const SparseIndexType& majorIndex() const
+	{
+		return m_majorIndex ;
+	}
+	const SparseIndexType& minorIndex() const
+	{
+		return m_minorIndex ;
+	}
 	const SparseIndexType& colMajorIndex() const
 	{
 		return Traits::is_col_major ? m_majorIndex : m_minorIndex ;
@@ -196,7 +208,6 @@ protected:
 
 	std::size_t m_nBlocks ;
 
-	bool m_minorIndexValid ;
 	bool m_transposeCached ;
 
 	SparseIndexType m_majorIndex ;
