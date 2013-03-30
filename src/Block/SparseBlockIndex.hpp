@@ -24,7 +24,7 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 	typedef unsigned Index ;
 	typedef Index BlockPtr ;
 
-	SparseBlockIndex()
+	SparseBlockIndex() : valid( true )
 	{}
 
 	typedef std::vector < std::pair< Index, BlockPtr > > Inner ;
@@ -47,6 +47,11 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 
 	void finalize()
 	{
+	}
+
+	void clear()
+	{
+		std::vector< Inner >( outer.size() ).swap( outer ) ;
 	}
 
 	SparseBlockIndex< Compressed > &operator=( const SparseBlockIndex< Compressed > &o )
@@ -150,7 +155,7 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 
 	void resizeOuter( Index size )
 	{
-		outer.resize( size+1 ) ;
+		outer.assign( size+1, 0 ) ;
 	}
 	Index outerSize( ) const { return outer.size() - 1 ; }
 
@@ -160,6 +165,7 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 		(void) ptr ;
 		++outer[ outIdx+1 ] ;
 		inner.push_back( inIdx ) ;
+		valid = false ;
 	}
 
 	void finalize()
@@ -169,6 +175,15 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 			outer[i] += outer[i-1] ;
 		}
 		valid = true ;
+	}
+
+	void clear()
+	{
+		outer.assign( outer.size(), 0 ) ;
+		inner.clear() ;
+
+		valid = true ;
+		base = 0 ;
 	}
 
 	SparseBlockIndex< true > &operator=( const SparseBlockIndex< true > &compressed )

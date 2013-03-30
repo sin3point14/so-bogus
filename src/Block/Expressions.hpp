@@ -7,8 +7,8 @@ namespace bogus
 template <typename MatrixT>
 struct Transpose
 {
-	MatrixT &matrix ;
-	Transpose( MatrixT& m ) : matrix( m ) {}
+	const MatrixT &matrix ;
+	Transpose( const MatrixT& m ) : matrix( m ) {}
 } ;
 
 template < typename MatrixT >
@@ -25,12 +25,12 @@ struct TransposeTraits< Transpose< MatrixT > >
 template <typename LhsMatrixT, typename RhsMatrixT>
 struct Product
 {
-	LhsMatrixT &lhs ;
-	RhsMatrixT &rhs ;
+	const LhsMatrixT &lhs ;
+	const RhsMatrixT &rhs ;
 	enum { transposeLhs = TransposeTraits< LhsMatrixT >::do_transpose };
 	enum { transposeRhs = TransposeTraits< RhsMatrixT >::do_transpose };
 
-	Product( LhsMatrixT& l, LhsMatrixT &r ) : lhs( l ), rhs ( r ) {}
+	Product( const LhsMatrixT& l, const LhsMatrixT &r ) : lhs( l ), rhs ( r ) {}
 } ;
 
 }

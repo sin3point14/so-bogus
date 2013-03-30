@@ -3,6 +3,7 @@
 
 #include "BlockMatrix.hpp"
 #include "SparseBlockIndex.hpp"
+#include "Expressions.hpp"
 
 #include <iosfwd>
 
@@ -29,6 +30,9 @@ public:
 
 	template < typename OtherDerived >
 	Derived& operator= ( const SparseBlockMatrixBase< OtherDerived > &source ) ;
+
+	template < typename OtherDerived >
+	Derived& operator= ( const Transpose< SparseBlockMatrixBase< OtherDerived > > &source ) ;
 
 	void setRows( const std::vector< Index > &rowsPerBlocks ) ;
 	void setRows( Index n_blocks, Index rows_per_block )
@@ -64,18 +68,23 @@ public:
 		m_nBlocks = nBlocks ;
 	}
 
-	BlockType& insertBack( Index row, Index col )
+	BlockType& insertBackOuterInner( Index outer, Index inner )
 	{
-		if( Traits::is_col_major )
-			m_majorIndex.insertBack( col, row, m_nBlocks++ ) ;
-		else
-			m_majorIndex.insertBack( row, col, m_nBlocks++ ) ;
+		m_majorIndex.insertBack( outer, inner, m_nBlocks++ ) ;
 		m_minorIndex.valid = false ;
 
 		return allocateBlock() ;
 	}
+	BlockType& insertBack( Index row, Index col )
+	{
+		if( Traits::is_col_major )
+			return insertBackOuterInner( col, row ) ;
+		else
+			return insertBackOuterInner( row, col ) ;
+	}
 
 	void finalize() ;
+	void clear() ;
 	void cacheTranspose() ;
 	bool transposeCached() const { return m_transposeCached ; }
 
@@ -112,6 +121,8 @@ public:
 	{
 		return Traits::is_col_major ? m_minorIndex : m_majorIndex ;
 	}
+
+	Transpose< SparseBlockMatrixBase< Derived > > transpose() const { return Transpose< SparseBlockMatrixBase< Derived > >( *this ) ; }
 
 	template < typename RhsT, typename ResT >
 	void multiply( const RhsT& rhs, ResT& res, bool transposed = false ) const ;

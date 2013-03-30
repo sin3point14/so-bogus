@@ -39,6 +39,7 @@ int main()
 
 	sbm.cacheTranspose();
 	std::cout << ( res.transpose() * sbm ) << std::endl ;
+	Eigen::VectorXd oldRes = res ;
 
 	bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::BlockMatrixFlags::SYMMETRIC | bogus::BlockMatrixFlags::COMPRESSED > ssbm ;
 	ssbm.setRows( 3 ) ;
@@ -100,10 +101,14 @@ int main()
 		std::cout << res.transpose() << std::endl ;
 	}
 
-	bogus::SparseBlockMatrix< Eigen::Matrix< double, 3, 4> > copyofsbm ;
+	bogus::SparseBlockMatrix< Eigen::MatrixXd > copyofsbm ;
 	copyofsbm.cloneStructure( sbm ) ;
 	copyofsbm = sbm ;
-	std::cout << copyofsbm << std::endl;
+	sbm = copyofsbm.transpose() ;
+	std::cout << sbm << std::endl;
+
+	std::cout << oldRes.transpose() << std::endl ;
+	std::cout << (sbm * oldRes).transpose() << std::endl ;
 
 	return 0;
 }

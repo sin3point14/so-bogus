@@ -46,6 +46,15 @@ void SparseBlockMatrixBase< Derived >::finalize()
 }
 
 template < typename Derived >
+void SparseBlockMatrixBase< Derived >::clear()
+{
+	m_majorIndex.clear() ;
+	m_minorIndex.clear() ;
+	m_nBlocks = 0 ;
+	this->m_blocks.clear() ;
+}
+
+template < typename Derived >
 bool SparseBlockMatrixBase< Derived >::computeMinorIndex()
 {
 	// Warning if Traits::is_compressed, the col major index will not be
@@ -333,6 +342,8 @@ template < typename Derived >
 template < typename OtherDerived >
 Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase< OtherDerived > &source )
 {
+	if( static_cast< const void* >( this ) == static_cast< const void* >( &source ) ) return this->derived() ;
+
 	m_nBlocks = source.nBlocks() ;
 
 	if( Traits::is_symmetric )
@@ -346,32 +357,31 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 
 	this->m_cols = source.cols() ;
 	this->m_rows = source.rows() ;
-	this->m_blocks.clear() ;
-	this->m_blocks.reserve( source.blocks().size() ) ;
 
 	if( m_majorIndex.valid )
 	{
 		m_transposeCached = m_minorIndex.valid && source.transposeCached() ;
 
+		this->m_blocks.resize( source.blocks().size() ) ;
 		std::copy( source.blocks().begin(), source.blocks().end(), this->m_blocks.begin() ) ;
 	} else {
-		m_transposeCached = false ;
-		m_minorIndex.valid = false ;
+		// If we're here, this means that one matrix is column major, the other row major
+
+		clear() ;
+		this->m_blocks.reserve( source.blocks().size() ) ;
 
 		typedef typename BlockMatrixTraits< OtherDerived >::SparseIndexType SourceIndexType ;
-		const SourceIndexType & sourceIndex = Traits::is_col_major
-				? source.colMajorIndex() : source.rowMajorIndex() ;
+		const SourceIndexType & sourceIndex = source.majorIndex() ;
 
 		for( unsigned i = 0 ; i < sourceIndex.outerSize() ; ++i )
 		{
-			typename SourceIndexType::InnerIterator src_it( sourceIndex, i ) ;
-			for( typename SparseIndexType::InnerIterator it( m_majorIndex, i ) ;
-				 it ; ++ it, ++ src_it )
+			for( typename SourceIndexType::InnerIterator src_it( sourceIndex, i ) ;
+				 src_it ; ++ src_it )
 			{
-				allocateBlock() = source.block( src_it.ptr() ) ;
-				m_majorIndex.setPtr( it, ( BlockPtr ) ( this->m_blocks.size() - 1 )  ) ;
+				insertBackOuterInner( src_it.inner(), i ) = source.block( src_it.ptr() ) ;
 			}
 		}
+		finalize() ;
 	}
 
 	return this->derived();
