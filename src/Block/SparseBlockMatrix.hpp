@@ -136,12 +136,8 @@ public:
 	template < typename BlockT2 >
 	void cloneStructure( const SparseBlockMatrix< BlockT2, Traits::flags > &source ) ;
 
-	template < typename LhsDerived, typename RhsDerived >
-	void setFromProduct( const SparseBlockMatrixBase< LhsDerived >& lhs,
-						 const SparseBlockMatrixBase< RhsDerived >& rhs,
-						 bool transposeLhs = false, bool transposeRhs = false,
-						 double scale = 1.
-						 ) ;
+	template < typename LhsT, typename RhsT >
+	void setFromProduct( const Product< LhsT, RhsT > &prod , double scale = 1. ) ;
 
 protected:
 	BlockType& allocateBlock()
@@ -201,24 +197,17 @@ protected:
 
 	void setInnerOffets( SparseIndexType& index, const std::vector< Index > &blockSizes ) ;
 
-	enum TransposeMode {
-		NoTranspose,
-		TransposeAll,
-		TransposeAfterDiag
-	};
-
-	const SparseBlockIndexBase& getIndex( const bool transpose, const bool rowWise,
-									TransposeMode &indexTransposeMode,
+	const SparseBlockIndexBase& getIndex( const bool transpose, const bool colWise,
 									SparseBlockIndex< >& aux ) const ;
 
 
-
-	template < typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock  >
+	template < typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock, typename LhsGetter, typename RhsGetter  >
 	void setFromProduct( const LhsIndex &lhsIdx,
 						 const RhsIndex &rhsIdx,
 						 const std::vector< LhsBlock > &lhsData,
 						 const std::vector< RhsBlock > &rhsData,
-						 TransposeMode transposeLhs, TransposeMode transposeRhs,
+						 const LhsGetter &lhsGetter,
+						 const RhsGetter &rhsGetter,
 						 double scale = 1.
 						  ) ;
 

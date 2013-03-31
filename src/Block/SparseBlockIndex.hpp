@@ -62,7 +62,8 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 		{
 			outer = o.outer ;
 			valid = o.valid ;
-			innerOffsets = o.innerOffsets ;
+			if( !o.innerOffsets.empty() )
+				innerOffsets = o.innerOffsets ;
 		}
 		return *this ;
 	}
@@ -70,7 +71,8 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 	SparseBlockIndex< Compressed > &operator=( SparseBlockIndex< > &uncompressed )
 	{
 		outer.swap( uncompressed.outer ) ;
-		innerOffsets.swap( uncompressed.innerOffsets ) ;
+		if( !uncompressed.innerOffsets.empty() )
+			innerOffsets.swap( uncompressed.innerOffsets ) ;
 		valid = uncompressed.valid ;
 		uncompressed.valid = false ;
 		return *this ;
@@ -211,7 +213,22 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 		{
 			outer = compressed.outer ;
 			inner = compressed.inner ;
-			innerOffsets = compressed.innerOffsets ;
+			if( !compressed.innerOffsets.empty() )
+				innerOffsets = compressed.innerOffsets ;
+			base  = compressed.base ;
+			valid = compressed.valid ;
+		}
+		return *this ;
+	}
+
+	SparseBlockIndex< true > &operator=( SparseBlockIndex< true > &compressed )
+	{
+		if( &compressed != this )
+		{
+			outer.swap( compressed.outer );
+			inner.swap( compressed.inner );
+			if( !compressed.innerOffsets.empty() )
+				innerOffsets.swap( compressed.innerOffsets ) ;
 			base  = compressed.base ;
 			valid = compressed.valid ;
 		}
@@ -222,7 +239,8 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 	{
 		resizeOuter( uncompressed.outerSize() ) ;
 		inner.clear() ;
-		innerOffsets = uncompressed.innerOffsets ;
+		if( !uncompressed.innerOffsets.empty() )
+			innerOffsets = uncompressed.innerOffsets ;
 		valid = uncompressed.valid ;
 
 		for( unsigned i = 0 ; i < uncompressed.outerSize() ; ++i )
@@ -319,7 +337,8 @@ SparseBlockIndex< Compressed > & SparseBlockIndex< Compressed >::operator=(
 
 	finalize() ;
 	valid = compressed.valid ;
-	innerOffsets = compressed.innerOffsets ;
+	if( !compressed.innerOffsets.empty() )
+		innerOffsets = compressed.innerOffsets ;
 
 	return *this ;
 }

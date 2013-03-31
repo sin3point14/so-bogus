@@ -129,25 +129,15 @@ void SparseBlockMatrixBase< Derived >::cacheTranspose()
 }
 
 template < typename Derived >
-const SparseBlockIndexBase& SparseBlockMatrixBase< Derived >::getIndex(
-		const bool transpose, const bool colWise,
-		TransposeMode &indexTransposeMode,
+const SparseBlockIndexBase& SparseBlockMatrixBase< Derived >::getIndex(const bool transpose, const bool colWise,
 		SparseBlockIndex< >& aux ) const
 {
 	if ( (colWise ^ transpose) == Traits::is_col_major )
 	{
 		// Native order
-		indexTransposeMode = transpose ? TransposeAll : NoTranspose ;
 		return m_majorIndex ;
 	} else {
 		// Minor order
-		if( m_transposeCached )
-		{
-			indexTransposeMode = transpose ? NoTranspose : TransposeAll ;
-			return m_minorIndex ;
-		}
-
-		indexTransposeMode = transpose ? TransposeAll : NoTranspose ;
 		return getUncompressedMinorIndex( aux ) ;
 	}
 }

@@ -60,6 +60,31 @@ struct Product
 	{}
 } ;
 
+template < bool Symmetric, bool DoTranspose >
+struct BlockTranspose{
+	template < typename BlockT >
+	static const BlockT& get( const BlockT& src, bool )
+	{ return src ; }
+} ;
+template <  >
+struct BlockTranspose< false, true > {
+	template < typename BlockT >
+	static typename BlockT::ConstTransposeReturnType get( const BlockT& src, bool )
+	{ return src.transpose() ; }
+} ;
+template < >
+struct BlockTranspose< true, true > {
+	template < typename BlockT >
+	static BlockT get( const BlockT& src, bool afterDiag )
+	{ return afterDiag ? src : src.transpose() ; }
+} ;
+template < >
+struct BlockTranspose< true, false > {
+	template < typename BlockT >
+	static BlockT get( const BlockT& src, bool afterDiag )
+	{ return afterDiag ? src.transpose() : src ; }
+} ;
+
 }
 
 #endif // EXPRESSIONS_HPP
