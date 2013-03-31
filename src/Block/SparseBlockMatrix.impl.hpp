@@ -75,7 +75,7 @@ void SparseBlockMatrixBase< Derived >::computeMinorIndex(SparseBlockIndex< > &cm
 {
 
 	cmIndex.innerOffsets = m_minorIndex.innerOffsets ;
-	cmIndex.resizeOuter( m_majorIndex.innerOffsets.size() - 1 );
+	cmIndex.resizeOuter( m_majorIndex.innerSize() );
 
 	for ( unsigned i = 0 ; i < m_majorIndex.outerSize() ; ++ i )
 	{
@@ -87,6 +87,7 @@ void SparseBlockMatrixBase< Derived >::computeMinorIndex(SparseBlockIndex< > &cm
 		}
 	}
 
+	cmIndex.finalize() ;
 }
 
 template < typename Derived >
@@ -367,22 +368,27 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 	} else {
 		// If we're here, this means that :
 		//  - either one matrix is column major, the other row major
-		//  - either they share the same ordering, but with different index compression
-		// FIXME compressed indexes
+		//  -     or the major index of the destination iscompressed and cannot accomodate the source
 
 		clear() ;
 		this->m_blocks.reserve( source.blocks().size() ) ;
 
-		typedef typename BlockMatrixTraits< OtherDerived >::SparseIndexType SourceIndexType ;
-		const SourceIndexType & sourceIndex = source.majorIndex() ;
+		assert( source.majorIndex().valid ) ;
 
-		for( unsigned i = 0 ; i < sourceIndex.outerSize() ; ++i )
+		SparseBlockIndex< > uncompressed ;
+		if( Traits::is_col_major == BlockMatrixTraits< OtherDerived >::is_col_major )
 		{
-			for( typename SourceIndexType::InnerIterator src_it( sourceIndex, i ) ;
+			uncompressed = source.majorIndex() ;
+		} else {
+			uncompressed.setToTranspose( source.majorIndex() ) ;
+		}
+
+		for( unsigned i = 0 ; i < uncompressed.outerSize() ; ++i )
+		{
+			for( typename SparseBlockIndex<>::InnerIterator src_it( uncompressed, i ) ;
 				 src_it ; ++ src_it )
 			{
-				std::cout << i << " " << src_it.inner() << std::endl ;
-				insertBackOuterInner( src_it.inner(), i ) = source.block( src_it.ptr() ) ;
+				insertBackOuterInner( i, src_it.inner() ) = source.block( src_it.ptr() ) ;
 			}
 		}
 		finalize() ;

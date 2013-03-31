@@ -44,16 +44,40 @@ TEST( SparseBlock, MatrixVector )
 	EXPECT_EQ( expected_2, ( sbm.transpose() * res )  ) ;
 	EXPECT_EQ( expected_3, ( rhs.transpose() * sbm.transpose() ).transpose()  ) ;
 
+	bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::BlockMatrixFlags::COMPRESSED > csbm( sbm ) ;
+	EXPECT_EQ( expected_2, ( res.transpose() * csbm ).transpose() ) ;
+	EXPECT_EQ( expected_2, ( csbm.transpose() * res )  ) ;
+	EXPECT_EQ( expected_3, ( rhs.transpose() * csbm.transpose() ).transpose()  ) ;
+
 	sbm.cacheTranspose();
 	EXPECT_EQ( expected_2, ( res.transpose() * sbm ).transpose() ) ;
 	EXPECT_EQ( expected_2, ( sbm.transpose() * res )  ) ;
 
-	bogus::SparseBlockMatrix< Eigen::MatrixXd > copyofsbm ;
-	copyofsbm.cloneStructure( sbm ) ;
-	copyofsbm = sbm ;
-	sbm = copyofsbm.transpose() ;
-	//std::cout << sbm << std::endl;
+	bogus::SparseBlockMatrix< Eigen::MatrixXd > structofsbm ;
+	structofsbm.cloneStructure( sbm ) ;
+	EXPECT_EQ( true, structofsbm.majorIndex().valid ) ;
+	EXPECT_EQ( false, structofsbm.transposeCached() ) ;
+	EXPECT_EQ( false, structofsbm.minorIndex().valid ) ;
+	structofsbm = sbm ;
 
+	bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::BlockMatrixFlags::COMPRESSED > copyofsbm ;
+	copyofsbm = sbm ;
+	EXPECT_EQ( true, copyofsbm.majorIndex().valid ) ;
+	EXPECT_EQ( true, copyofsbm.transposeCached() ) ;
+	EXPECT_EQ( true, copyofsbm.minorIndex().valid ) ;
+
+	rhs.setOnes() ;
+	EXPECT_EQ( expected_1, copyofsbm * rhs ) ;
+	EXPECT_EQ( expected_2, ( copyofsbm.transpose() * res )  ) ;
+
+	sbm = copyofsbm.transpose() ;
+	EXPECT_EQ( true, sbm.majorIndex().valid ) ;
+	EXPECT_EQ( expected_1, sbm.transpose() * rhs ) ;
+	EXPECT_EQ( expected_2, ( sbm * res )  ) ;
+
+	sbm = structofsbm.transpose() ;
+	EXPECT_EQ( true, sbm.majorIndex().valid ) ;
+	EXPECT_EQ( expected_1, sbm.transpose() * rhs ) ;
 	EXPECT_EQ( expected_2, ( sbm * res )  ) ;
 
 	bogus::SparseBlockMatrix< Eigen::MatrixXd > prod( sbm.transpose() * copyofsbm );
@@ -145,6 +169,8 @@ TEST( SparseBlock, ColMajor )
 {
 	Eigen::VectorXd expected_1(12) ;
 	expected_1 << 13, 14, 15, 0, 0, 0, 0, 0, 0, 49, 54, 59 ;
+	Eigen::RowVectorXd expected_2(8) ;
+	expected_2 << 6, 4, 2, 12, 21, 17, 13, 51 ;
 
 	typedef Eigen::MatrixXd BlockT ;
 	bogus::SparseBlockMatrix< BlockT, bogus::BlockMatrixFlags::COL_MAJOR > sbm ;
@@ -159,32 +185,65 @@ TEST( SparseBlock, ColMajor )
 	sbm.insertBack( 3, 1 ) = 3 * baseBlock ;
 
 	Eigen::VectorXd rhs( sbm.cols() ) ;
+	Eigen::RowVectorXd lhs( sbm.rows() ) ;
 	EXPECT_EQ( 8, rhs.rows() ) ;
+	EXPECT_EQ( 12, lhs.cols() ) ;
 	rhs << 1, 2, 3, 4, 5, 6, 7, 8 ;
+	lhs << 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 ;
 
 	EXPECT_EQ( expected_1, sbm * rhs ) ;
-	std::cout << ( sbm * rhs ).transpose() << std::endl ;
+//	std::cout << sbm << std::endl ;
 	bogus::SparseBlockMatrix< BlockT, bogus::BlockMatrixFlags::COMPRESSED > rsbm ( sbm );
 	EXPECT_EQ( 4u, rsbm.rowsOfBlocks() ) ;
 	EXPECT_EQ( 4u, rsbm.majorIndex().outerSize() ) ;
 	EXPECT_EQ( true, rsbm.majorIndex().valid ) ;
 	EXPECT_EQ( 2u, rsbm.colsOfBlocks() ) ;
-	std::cout << rsbm << std::endl ;
-	std::cout << ( rsbm*rhs ) .transpose() << std::endl ;
 	EXPECT_EQ( expected_1, rsbm * rhs ) ;
+	bogus::SparseBlockMatrix< BlockT > ursbm ( sbm );
+	EXPECT_EQ( 4u, ursbm.rowsOfBlocks() ) ;
+	EXPECT_EQ( 4u, ursbm.majorIndex().outerSize() ) ;
+	EXPECT_EQ( true, ursbm.majorIndex().valid ) ;
+	EXPECT_EQ( 2u, ursbm.colsOfBlocks() ) ;
+	EXPECT_EQ( expected_1, ursbm * rhs ) ;
 	bogus::SparseBlockMatrix< BlockT, bogus::BlockMatrixFlags::COL_MAJOR > tsbm ( rsbm.transpose() );
 	EXPECT_EQ( 8u, tsbm.rows() ) ;
 	EXPECT_EQ( 12u, tsbm.cols() ) ;
 	EXPECT_EQ( 2u, tsbm.rowsOfBlocks() ) ;
 	EXPECT_EQ( 4u, tsbm.colsOfBlocks() ) ;
 	EXPECT_EQ( expected_1, tsbm.transpose() * rhs ) ;
-
-	bogus::SparseBlockMatrix< BlockT, bogus::BlockMatrixFlags::COL_MAJOR > ttsbm ( tsbm.transpose() );
+	bogus::SparseBlockMatrix< BlockT, bogus::BlockMatrixFlags::COL_MAJOR | bogus::BlockMatrixFlags::COMPRESSED > ttsbm ( tsbm.transpose() );
 	EXPECT_EQ( 12u, ttsbm.rows() ) ;
 	EXPECT_EQ( 8u, ttsbm.cols() ) ;
 	EXPECT_EQ( 4u, ttsbm.rowsOfBlocks() ) ;
 	EXPECT_EQ( 2u, ttsbm.colsOfBlocks() ) ;
 	EXPECT_EQ( expected_1, ttsbm * rhs ) ;
+	bogus::SparseBlockMatrix< BlockT, bogus::BlockMatrixFlags::COL_MAJOR > uttsbm ( tsbm.transpose() );
+	EXPECT_EQ( 12u, uttsbm.rows() ) ;
+	EXPECT_EQ( 8u, uttsbm.cols() ) ;
+	EXPECT_EQ( 4u, uttsbm.rowsOfBlocks() ) ;
+	EXPECT_EQ( 2u, uttsbm.colsOfBlocks() ) ;
+	EXPECT_EQ( expected_1, uttsbm * rhs ) ;
+
+	EXPECT_EQ( expected_2, lhs * uttsbm ) ;
+	EXPECT_EQ( expected_2, lhs * ttsbm ) ;
+	EXPECT_EQ( expected_2, lhs * tsbm.transpose() ) ;
+	EXPECT_EQ( expected_2, lhs * ursbm ) ;
+	EXPECT_EQ( expected_2, lhs * rsbm ) ;
+	EXPECT_EQ( expected_2, lhs * sbm ) ;
+
+	uttsbm.cacheTranspose();
+	ttsbm.cacheTranspose();
+	tsbm.cacheTranspose();
+	ursbm.cacheTranspose();
+	rsbm.cacheTranspose();
+	sbm.cacheTranspose();
+
+	EXPECT_EQ( expected_2, lhs * uttsbm ) ;
+	EXPECT_EQ( expected_2, lhs * ttsbm ) ;
+	EXPECT_EQ( expected_2, lhs * tsbm.transpose() ) ;
+	EXPECT_EQ( expected_2, lhs * ursbm ) ;
+	EXPECT_EQ( expected_2, lhs * rsbm ) ;
+	EXPECT_EQ( expected_2, lhs * sbm ) ;
 
 }
 

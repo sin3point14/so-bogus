@@ -39,6 +39,7 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 		outer.resize( size ) ;
 	}
 	Index outerSize( ) const { return outer.size() ; }
+	Index innerSize( ) const { return innerOffsets.size() - 1 ; }
 
 	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
 	{
@@ -76,6 +77,25 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 	}
 
 	SparseBlockIndex< Compressed > &operator=( const SparseBlockIndex< true > &compressed ) ;
+
+	template < bool OtherCompressed >
+	SparseBlockIndex< Compressed >& setToTranspose( const SparseBlockIndex< OtherCompressed > &source )
+	{
+		clear() ;
+		resizeOuter( source.innerSize() ) ;
+		valid = source.valid ;
+
+		for( unsigned i = 0 ; i < source.outerSize() ; ++i )
+		{
+			// For a symmetric matrix, do not store diagonal block in col-major index
+			for( typename SparseBlockIndex< OtherCompressed >::InnerIterator it( source, i ) ;
+				 it ; ++ it )
+			{
+				insertBack( it.inner(), i, it.ptr() ) ;
+			}
+		}
+		return *this ;
+	}
 
 	bool isCompressed() const { return false ; }
 
@@ -142,7 +162,7 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 	typedef Index BlockPtr ;
 
 	SparseBlockIndex( )
-		: base(0), valid( false )
+		: base(0), valid( true )
 	{}
 
 	typedef std::vector< Index > Inner ;
@@ -159,14 +179,13 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 		outer.assign( size+1, 0 ) ;
 	}
 	Index outerSize( ) const { return outer.size() - 1 ; }
+	Index innerSize( ) const { return innerOffsets.size() - 1 ; }
 
 	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
 	{
-		assert( ptr == base + inner.size() ) ;
-		(void) ptr ;
+		if ( ptr != base + inner.size() ) valid = false ;
 		++outer[ outIdx+1 ] ;
 		inner.push_back( inIdx ) ;
-		valid = false ;
 	}
 
 	void finalize()
@@ -175,7 +194,6 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 		{
 			outer[i] += outer[i-1] ;
 		}
-		valid = true ;
 	}
 
 	void clear()
@@ -205,18 +223,19 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 		resizeOuter( uncompressed.outerSize() ) ;
 		inner.clear() ;
 		innerOffsets = uncompressed.innerOffsets ;
+		valid = uncompressed.valid ;
 
 		for( unsigned i = 0 ; i < uncompressed.outerSize() ; ++i )
 		{
 			for( SparseBlockIndex< >::InnerIterator it( uncompressed, i ) ;
 				 it ; ++ it )
 			{
-				insertBack( i, it.inner(), base+inner.size() ) ;
+				if( inner.empty() ) base = it.ptr() ;
+				insertBack( i, it.inner(), it.ptr() ) ;
 			}
 		}
 
 		finalize() ;
-		valid = false ;
 
 		return *this ;
 	}
@@ -286,6 +305,7 @@ template < bool Compressed  >
 SparseBlockIndex< Compressed > & SparseBlockIndex< Compressed >::operator=(
 		const SparseBlockIndex< true > &compressed )
 {
+	clear() ;
 	resizeOuter( compressed.outerSize() ) ;
 
 	for( unsigned i = 0 ; i < compressed.outerSize() ; ++i )

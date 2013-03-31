@@ -44,20 +44,29 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 			}
 		}
 	} else {
-		// If we're here, this means that the matrices are either both row-major or both column-Major
+		// If we're here, this means that :
+		//  - either both matrices have the same ordering
+		//  -     or the major index of the destination iscompressed and cannot accomodate the source
 
 		clear() ;
 		this->m_blocks.reserve( source.blocks().size() ) ;
 
-		typedef typename BlockMatrixTraits< OtherDerived >::SparseIndexType SourceIndexType ;
-		const SourceIndexType & sourceIndex = source.majorIndex() ;
+		assert( source.majorIndex().valid ) ;
 
-		for( unsigned i = 0 ; i < sourceIndex.outerSize() ; ++i )
+		SparseBlockIndex< > uncompressed ;
+		if( Traits::is_col_major == BlockMatrixTraits< OtherDerived >::is_col_major )
 		{
-			for( typename SourceIndexType::InnerIterator src_it( sourceIndex, i ) ;
+			uncompressed.setToTranspose( source.majorIndex() ) ;
+		} else {
+			uncompressed = source.majorIndex() ;
+		}
+
+		for( unsigned i = 0 ; i < uncompressed.outerSize() ; ++i )
+		{
+			for( typename SparseBlockIndex<>::InnerIterator src_it( uncompressed, i ) ;
 				 src_it ; ++ src_it )
 			{
-				insertBackOuterInner( src_it.inner(), i ) = source.block( src_it.ptr() ).transpose() ;
+				insertBackOuterInner( i, src_it.inner() ) = source.block( src_it.ptr() ).transpose() ;
 			}
 		}
 		finalize() ;
