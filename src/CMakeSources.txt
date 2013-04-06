@@ -8,4 +8,7 @@ Block/SparseBlockMatrix.hpp
 Block/SparseBlockMatrix.impl.hpp
 Block/SparseProduct.impl.hpp
 Block/SparseTranspose.impl.hpp
+GaussSeidel.hpp
+GaussSeidel/GaussSeidel.impl.hpp
+GaussSeidel/LocalProblem.hpp
 empty.cpp
