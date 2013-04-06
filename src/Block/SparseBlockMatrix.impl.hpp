@@ -1,8 +1,9 @@
 #ifndef BOGUS_SPARSE_BLOCK_MATRIX_IMPL_HPP
 #define BOGUS_SPARSE_BLOCK_MATRIX_IMPL_HPP
 
-
 #include "SparseBlockMatrix.hpp"
+
+#include <iostream>
 
 namespace bogus {
 

@@ -26,7 +26,10 @@ public:
 	SparseBlockMatrixBase()
 		: m_nBlocks(0),
 		  m_transposeCached( false )
-	{}
+	{
+		setRows( 0, 0 ) ;
+		setCols( 0, 0 ) ;
+	}
 
 	template < typename OtherDerived >
 	Derived& operator= ( const SparseBlockMatrixBase< OtherDerived > &source ) ;

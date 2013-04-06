@@ -9,35 +9,56 @@ namespace bogus
 
 template < typename BlockMatrixType >
 GaussSeidel< BlockMatrixType >::GaussSeidel( const BlockMatrixBase< BlockMatrixType > & M )
-	: m_matrix( m ), m_maxIters( 1000 )
+	: m_matrix( M ), m_maxIters( 1000 ), m_tol( 1.e-6 ),
+	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 )
 {
+	const unsigned d = ProblemTraits::dimension ;
 	const unsigned n = M.rowsOfBlocks() ;
-	m_localProblems.resize( n ) ;
+	m_localMatrices.resize( n ) ;
+	m_scaling.resize( n*d ) ;
 
 	for( unsigned i = 0 ; i < n ; ++i )
 	{
-		m_localProblems[i].A = M.diagonal( i ) ;
-		m_localProblems[i].scaling = m_localProblems[i].trace() ;
+		m_localMatrices[i] = M.diagonal( i ) ;
+		ProblemTraits::segment( i, m_scaling )
+				.setConstant( std::max( 1., m_localMatrices[i].trace() ) );
 	}
 
 }
 
 template < typename BlockMatrixType >
 template < typename NSLaw, typename Derived, typename OtherDerived >
-NSLaw::ErrorType GaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
+typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
 							const Eigen::MatrixBase< Derived >&b,
 							Eigen::MatrixBase< OtherDerived > &x ) const
 {
 	const unsigned d = ProblemTraits::dimension ;
-	const unsigned n = m_localProblems.size() ;
+	const unsigned n = m_localMatrices.size() ;
 	assert( n*d == b.rows() ) ;
 	assert( n*d == x.rows() ) ;
 
+	typename ProblemTraits::DynVector y ( b + m_matrix*x ) ;
+	typename ProblemTraits::DynVector x_best( ProblemTraits::DynVector::Zero( x.rows() ) ) ;
+	typename ProblemTraits::DynVector x_scaled( x.array() * m_scaling.array() ) ;
+
+	const Scalar err_init = law.eval( x_scaled, y ) ;
+	const Scalar err_zero = law.eval( x_best, b ) ;
+
+	Scalar err_best ;
+	if( err_zero < err_init )
+	{
+		err_best = err_zero ;
+		x.setZero() ;
+	} else {
+		err_best = err_init ;
+		x_best = x ;
+	}
+
 	std::vector< unsigned > skip( n, 0 ) ;
 
-	for( unsigned GSIter = 0 ; GSIter < m_maxIters ; ++GSIter )
+	for( unsigned GSIter = 1 ; GSIter <= m_maxIters ; ++GSIter )
 	{
-		LocalProblemType::Vector lb, lx, ldx ;
+		typename ProblemTraits::Vector lb, lx, ldx ;
 		for( unsigned i = 0 ; i < n ; ++ i )
 		{
 			if( skip[i] ) {
@@ -45,34 +66,54 @@ NSLaw::ErrorType GaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
 				continue ;
 			}
 
-			lb = b.segment< d >( d*i ) ;
+			lb = ProblemTraits::segment( i, b ) ;
 			m_matrix.splitRowMultiply( i, x, lb ) ;
-			lx = x.segment< d >( d*i ) ;
+			lx = ProblemTraits::segment( i, x ) ;
 			ldx = lx ;
 
-			law.solveLocal( m_localProblems[i].A, lb, lx ) ;
-
+			const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx ) ;
 			ldx -= lx ;
-			const Traits::Scalar scaledSkipTol = scaling * scaling * m_skipTol ;
+
+			if( !ok ) ldx *= .1 ;
+			ProblemTraits::segment( i, x ) = lx + ldx;
+
+			const Scalar scaledSkipTol = m_scaling[ d*i ] * m_scaling[ d*i ] * m_skipTol ;
 			if( ldx.squaredNorm() < scaledSkipTol || lx.squaredNorm() < scaledSkipTol )
 			{
 				skip[i] = m_skipIters ;
 			}
 		}
 
-		if( 0 == (GSIter % m_evalEvery ) )
+		if( 0 == ( GSIter % m_evalEvery ) )
 		{
+			y = b + m_matrix * x ;
+			x_scaled = x.array() * m_scaling.array() ;
+			const double err = law.eval( x_scaled, y ) ;
 
+			std::cout << "Finished iteration " << GSIter
+					  << " with residual " << err << std::endl ;
+
+			if( err < m_tol )
+			{
+				return err ;
+			}
+
+			if( err < err_best )
+			{
+				x_best = x ;
+				err_best = err ;
+			}
 		}
 
 	}
 
-}
-
-
-
+	x = x_best ;
+	return err_best ;
 
 }
+
+
+} //namespace bogus
 
 
 #endif

@@ -11,4 +11,5 @@ Block/SparseTranspose.impl.hpp
 GaussSeidel.hpp
 GaussSeidel/GaussSeidel.impl.hpp
 GaussSeidel/LocalProblem.hpp
+SOCLaw.hpp
 empty.cpp

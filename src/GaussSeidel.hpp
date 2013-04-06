@@ -13,29 +13,32 @@ class GaussSeidel
 public:
 
 	typedef typename BlockMatrixTraits< BlockMatrixType >::BlockType LocalMatrixType ;
-	typedef LocalProblem< LocalMatrixType > LocalProblemType ;
-	typedef typename LocalProblemType::Traits ProblemTraits ;
+	typedef LocalProblemTraits< LocalMatrixType > ProblemTraits ;
+	typedef typename ProblemTraits::Scalar Scalar ;
 
 	explicit GaussSeidel( const BlockMatrixBase< BlockMatrixType > & M ) ;
 
-	template < typename Derived >
-	void setRhs( const Eigen::MatrixBase< Derived >&b,
-
 	template < typename NSLaw, typename Derived, typename OtherDerived >
-	NSLaw::ErrorType solve( const NSLaw &law,
+	Scalar solve( const NSLaw &law,
+							const Eigen::MatrixBase< Derived >&b,
 							Eigen::MatrixBase< OtherDerived > &x ) const ;
 
 private:
-	const BlockMatrixBase< Derived > & m_matrix ;
-	std::vector< LocalProblem > m_localProblems ;
+	const BlockMatrixBase< BlockMatrixType > & m_matrix ;
+	std::vector< LocalMatrixType > m_localMatrices ;
+	typename ProblemTraits::DynVector m_scaling ;
 
 	unsigned m_maxIters ;
+	Scalar m_tol ;
+
 	unsigned m_evalEvery ;
-	ProblemTraits::Scalar m_skipTol ;
-	ProblemTraits::Scalar m_skipIters ;
+	Scalar m_skipTol ;
+	Scalar m_skipIters ;
 } ;
 
-}
+} //namespace bogus
+
+#include "GaussSeidel/GaussSeidel.impl.hpp"
 
 
 #endif
