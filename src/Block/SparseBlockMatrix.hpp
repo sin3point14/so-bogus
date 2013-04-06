@@ -106,7 +106,10 @@ public:
 		return this->m_blocks[ ptr ] ;
 	}
 
+	// Warning: inefficient  block has to exists
 	const BlockType& diagonal( const Index row ) const ;
+	// Warning: inefficient -- block has to exist
+	const BlockType& block( Index row, Index col ) const ;
 
 	const SparseIndexType& majorIndex() const
 	{
@@ -138,6 +141,9 @@ public:
 
 	template < typename LhsT, typename RhsT >
 	void setFromProduct( const Product< LhsT, RhsT > &prod , double scale = 1. ) ;
+
+	const SparseBlockIndexBase& getIndex( const bool transpose, const bool colWise,
+									SparseBlockIndex< >& aux ) const ;
 
 protected:
 	BlockType& allocateBlock()
@@ -196,9 +202,6 @@ protected:
 	void innerColTransposedMultiply( const SparseIndexType &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
 
 	void setInnerOffets( SparseIndexType& index, const std::vector< Index > &blockSizes ) ;
-
-	const SparseBlockIndexBase& getIndex( const bool transpose, const bool colWise,
-									SparseBlockIndex< >& aux ) const ;
 
 
 	template < typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock, typename LhsGetter, typename RhsGetter  >

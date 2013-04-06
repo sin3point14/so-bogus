@@ -41,8 +41,8 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 	assert( ! LhsTraits::is_symmetric ) ;
 	assert( ! RhsTraits::is_symmetric ) ;
 
-	const SparseBlockIndexBase &lhsIdx = getIndex( Prod::transposeLhs, false, auxIndexLhs ) ;
-	const SparseBlockIndexBase &rhsIdx = getIndex( Prod::transposeRhs, true, auxIndexRhs ) ;
+	const SparseBlockIndexBase &lhsIdx = prod.lhs.getIndex( Prod::transposeLhs, false, auxIndexLhs ) ;
+	const SparseBlockIndexBase &rhsIdx = prod.rhs.getIndex( Prod::transposeRhs, true, auxIndexRhs ) ;
 
 	clear() ;
 	if( Prod::transposeLhs )
@@ -99,6 +99,8 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(const LhsIndex &lhsIdx,
 {
 	typedef std::pair< std::vector< BlockPtr >, std::vector< BlockPtr > > BlockComputation ;
 
+	assert( lhsIdx.valid ) ;
+	assert( rhsIdx.valid ) ;
 	assert( lhsIdx.innerSize() == rhsIdx.innerSize() ) ;
 	rowMajorIndex().resizeOuter( colMajorIndex().innerSize() ) ;
 	colMajorIndex().resizeOuter( rowMajorIndex().innerSize() ) ;
@@ -118,7 +120,6 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(const LhsIndex &lhsIdx,
 			typename LhsIndex::InnerIterator lhs_it ( lhsIdx, Traits::is_col_major ? j : i ) ;
 			typename RhsIndex::InnerIterator rhs_it ( rhsIdx, Traits::is_col_major ? i : j ) ;
 
-
 			while( lhs_it && rhs_it )
 			{
 				if( lhs_it.inner() > rhs_it.inner() ) ++rhs_it ;
@@ -126,6 +127,8 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(const LhsIndex &lhsIdx,
 				else {
 					currentBlock.first.push_back( lhs_it.ptr() ) ;
 					currentBlock.second.push_back( rhs_it.ptr() ) ;
+					++lhs_it ;
+					++rhs_it ;
 				}
 			}
 
@@ -161,8 +164,9 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(const LhsIndex &lhsIdx,
 	{
 		BlockType& b = block( i ) ;
 		const BlockComputation &bc = *flat_compute[i] ;
-		b.setZero() ;
-		for( unsigned j = 0 ; j != bc.first.size() ; ++ j)
+		b = lhsGetter.get( lhsData[ bc.first[0] ], false )
+				* rhsGetter.get( rhsData[ bc.second[0] ], false ) ;
+		for( unsigned j = 1 ; j != bc.first.size() ; ++ j)
 		{
 			b += lhsGetter.get( lhsData[ bc.first[j] ], false )
 					* rhsGetter.get( rhsData[ bc.second[j] ], false ) ;
@@ -170,6 +174,7 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(const LhsIndex &lhsIdx,
 		b *= scale ;
 	}
 
+	compressed.valid  = true ;
 	m_majorIndex = compressed ;
 	assert( m_majorIndex.valid ) ;
 }

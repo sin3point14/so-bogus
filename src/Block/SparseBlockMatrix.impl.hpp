@@ -42,6 +42,7 @@ void SparseBlockMatrixBase< Derived >::setInnerOffets(
 template < typename Derived >
 void SparseBlockMatrixBase< Derived >::finalize()
 {
+	assert( m_majorIndex.valid ) ;
 	m_majorIndex.finalize() ;
 }
 
@@ -93,7 +94,7 @@ void SparseBlockMatrixBase< Derived >::computeMinorIndex(SparseBlockIndex< > &cm
 template < typename Derived >
 const SparseBlockIndex< >& SparseBlockMatrixBase< Derived >::getUncompressedMinorIndex(SparseBlockIndex< > &cmIndex) const
 {
-	if( m_minorIndex.valid && !m_transposeCached ) return m_minorIndex.asUncompressed() ;
+	if( !Traits::is_compressed && m_minorIndex.valid && !m_transposeCached ) return m_minorIndex.asUncompressed() ;
 	computeMinorIndex( cmIndex ) ;
 	return cmIndex ;
 }
@@ -132,13 +133,18 @@ template < typename Derived >
 const SparseBlockIndexBase& SparseBlockMatrixBase< Derived >::getIndex(const bool transpose, const bool colWise,
 		SparseBlockIndex< >& aux ) const
 {
-	if ( (colWise ^ transpose) == Traits::is_col_major )
+	if ( bool(colWise ^ transpose) == bool( Traits::is_col_major ) )
 	{
 		// Native order
 		return m_majorIndex ;
 	} else {
 		// Minor order
-		return getUncompressedMinorIndex( aux ) ;
+		if( m_minorIndex.valid && !m_transposeCached ) {
+			return m_minorIndex ;
+		} else {
+			computeMinorIndex( aux ) ;
+			return aux ;
+		}
 	}
 }
 
@@ -214,13 +220,29 @@ void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res, boo
 template < typename Derived >
 const typename SparseBlockMatrixBase< Derived >::BlockType& SparseBlockMatrixBase< Derived >::diagonal( const Index row ) const
 {
+	if( Traits::is_symmetric ) return this->block( m_majorIndex.last( row ) );
+
 	for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( majorIndex(), row ) ;
 		 it ; ++ it )
 	{
 		if( it.inner() == row )
-			return this->m_blocks( it.ptr() ) ;
+			return this->m_blocks[ it.ptr() ] ;
 	}
 	assert( 0 && "No diagonal block" ) ;
+	return this->m_blocks[ (BlockPtr)-1 ] ;
+}
+template < typename Derived >
+const typename SparseBlockMatrixBase< Derived >::BlockType& SparseBlockMatrixBase< Derived >::block( Index row, Index col ) const
+{
+	if( Traits::is_col_major ) std::swap( row, col ) ;
+
+	for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( majorIndex(), row ) ;
+		 it ; ++ it )
+	{
+		if( it.inner() == col )
+			return this->m_blocks[ it.ptr() ] ;
+	}
+	assert( 0 && "Bock does not exist" ) ;
 	return this->m_blocks[ (BlockPtr)-1 ] ;
 }
 template < typename Derived >

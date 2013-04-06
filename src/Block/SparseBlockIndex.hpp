@@ -48,12 +48,12 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 
 	void finalize()
 	{
-		valid = true ;
 	}
 
 	void clear()
 	{
 		std::vector< Inner >( outer.size() ).swap( outer ) ;
+		valid = true ;
 	}
 
 	SparseBlockIndex< Compressed > &operator=( const SparseBlockIndex< Compressed > &o )
@@ -110,6 +110,11 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 	{
 		assert( 0 && "as Uncompressed should never be called on this object, segfaulting" ) ;
 		return *static_cast< const SparseBlockIndex< true > * > ( 0 ) ;
+	}
+
+	BlockPtr last( const Index outerIdx ) const
+	{
+		return outer[ outerIdx ].back().second ;
 	}
 
 	struct InnerIterator
@@ -269,6 +274,11 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 	{
 		assert( 0 && "as Uncompressed should never be called on this object, segfaulting" ) ;
 		return *static_cast< const SparseBlockIndex< > * > ( 0 ) ;
+	}
+
+	BlockPtr last( const Index outerIdx ) const
+	{
+		return base + outer[ outerIdx + 1 ] - 1  ;
 	}
 
 	struct InnerIterator
