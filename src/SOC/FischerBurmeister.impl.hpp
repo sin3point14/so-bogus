@@ -79,32 +79,39 @@ compute( const Scalar mu, const Vector& x, const Vector& y, Vector& fb )
     BaseFunction::compute( mu, x, y, fb ) ;
   }
 }
+
+template< unsigned Dimension, typename Scalar, bool DeSaxceCOV >
+void FischerBurmeister< Dimension, Scalar, DeSaxceCOV >::compute(
+    const Vector& x, Vector& fb ) const 
+{
+  const Vector y = m_A * x + m_b ;
+  compute( m_mu, x, y, fb ) ;
+}
 	
 template< unsigned Dimension, typename Scalar, bool DeSaxceCOV >
 void FischerBurmeister< Dimension, Scalar, DeSaxceCOV >::computeJacobian(
-      const Scalar mu, const Vector& x, const Matrix& A, const Vector& b, 
-      Vector& fb, Matrix& dFb_dx ) 
+      const Vector& x, Vector& fb, Matrix& dFb_dx ) const 
 {
-  Vector y ( A * x + b ) ;
+  Vector y ( m_A * x + m_b ) ;
   Scalar s = 0. ;
 
   if ( DeSaxceCOV )
   {
     s = Traits::tp( y ).norm() ;
-    Traits::np( y ) += mu * s ;
+    Traits::np( y ) += m_mu * s ;
   }
 
   Matrix dFb_dy ;
-  BaseFunction::computeJacobian( mu, x, y, fb, dFb_dx, dFb_dy ) ;
+  BaseFunction::computeJacobian( m_mu, x, y, fb, dFb_dx, dFb_dy ) ;
   
   if ( DeSaxceCOV && !NumTraits< Scalar >::isZero( s ) )
   {
     dFb_dy.template block< Dimension, Dimension - 1 >( 0, 1 ).noalias() +=
-      dFb_dy.col( 0 ) *  ( mu / s ) * Traits::tp( y ).transpose() ;
+      dFb_dy.col( 0 ) *  ( m_mu / s ) * Traits::tp( y ).transpose() ;
 
   }
 
-  dFb_dx.noalias() += dFb_dy * A ;
+  dFb_dx.noalias() += dFb_dy * m_A ;
 
 }
 

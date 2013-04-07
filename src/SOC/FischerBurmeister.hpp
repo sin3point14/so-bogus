@@ -27,19 +27,31 @@ private:
 } ;
 
 template< unsigned Dimension, typename Scalar, bool DeSaxceCOV >
-struct FischerBurmeister
+class FischerBurmeister
 {
+
+public:
   typedef MatrixTraits< Dimension, Scalar > Traits ;
   typedef FBBaseFunction< Dimension, Scalar > BaseFunction ;
   typedef typename Traits::Vector Vector ;
   typedef typename Traits::Matrix Matrix ;
 
-  static void compute( const Scalar mu, const Vector& x, const Vector& y, Vector& fb ) ;
+  FischerBurmeister(
+    const Scalar mu,
+    const Matrix& A,
+    const Vector& b )
+      : m_mu( mu ), m_A( A ), m_b( b )
+  {}
 	
-  
-  static void computeJacobian(
-      const Scalar mu, const Vector& x, const Matrix& A, const Vector& b, 
-      Vector& fb, Matrix& dFb_dx ) ;
+  void compute( const Vector& x, Vector& fb ) const ;
+  void computeJacobian( const Vector& x, Vector& fb, Matrix& dFb_dx ) const ;
+
+  static void compute( const Scalar mu, const Vector& x, const Vector& y, Vector& fb ) ;
+
+private:
+  Scalar m_mu ;
+  const Matrix& m_A ;
+  const Vector& m_b ;
 
 } ;
 

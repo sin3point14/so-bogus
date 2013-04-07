@@ -2,6 +2,10 @@
 #define BOGUS_LOCAL_SOC_SOLVER_IMPL_HPP
 
 #include "LocalSOCSolver.hpp"
+#include "FischerBurmeister.hpp"
+
+#include "../Utils/NonSmoothNewton.hpp"
+#include "../Utils/NonSmoothNewton.impl.hpp"
 
 namespace bogus {
 
@@ -13,12 +17,11 @@ Scalar LocalSOCSolver< Dimension, Scalar, DeSaxceCOV >::solve(
           const Scalar mu, const Scalar tol
           )
 {
-    (void) A ;
-    (void) b ;
-    (void) x ;
-    (void) mu ;
-    (void) tol ;
-    return -1 ;
+    typedef FischerBurmeister< Dimension, Scalar, DeSaxceCOV > FBFunc ;
+    FBFunc fb( mu, A, b ) ;
+    NonSmoothNewton< FBFunc > nsNewton( fb, tol )  ;
+
+    return nsNewton.solve( x ) ;
 }
 
 }

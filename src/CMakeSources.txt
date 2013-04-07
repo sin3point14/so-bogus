@@ -23,4 +23,5 @@ SOC/SOCLaw.hpp
 SOC/SOCLaw.impl.hpp
 SecondOrder.hpp
 Utils/NonSmoothNewton.hpp
+Utils/NonSmoothNewton.impl.hpp
 Utils/NumTraits.hpp

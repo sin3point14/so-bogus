@@ -18,15 +18,18 @@ struct NumTraits
 	{ return std::fabs(s) < std::numeric_limits< Scalar >::epsilon() ; }
 } ;
 
-template< unsigned Dimension, typename Scalar >
+template< unsigned Dimension, typename ScalarType >
 struct MatrixTraits
 {
+        typedef ScalarType Scalar ;
 	typedef Eigen::Matrix< Scalar, Dimension, 1 > Vector ;
 	typedef Eigen::Matrix< Scalar, Dimension, Dimension > Matrix ;
 
-	static Scalar np( const Vector & v )
+        enum{ dimension = Dimension } ;
+
+	static ScalarType np( const Vector & v )
 	{ return v[0] ; }
-	static Scalar& np( Vector & v )
+	static ScalarType& np( Vector & v )
 	{ return v[0] ; }
 
 	static typename Vector::template ConstFixedSegmentReturnType< Dimension - 1 >::Type
