@@ -2,6 +2,7 @@
 #define BOGUS_LOCAL_PROBLEM_HPP
 
 #include <Eigen/Core>
+#include <limits>
 
 namespace bogus
 {

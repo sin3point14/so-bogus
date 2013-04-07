@@ -1,13 +1,13 @@
 
 #include "Block.hpp"
 #include "GaussSeidel.hpp"
-#include "SOCLaw.hpp"
+#include "SecondOrder.hpp"
 
 #include <gtest/gtest.h>
 
 TEST( GaussSeidel, Small )
 {
-	typedef bogus::SOCLaw <> Law ;
+    typedef bogus::Coulomb3D Law ;
 	typedef bogus::SparseBlockMatrix< Eigen::Matrix3d > Mat ;
 	Law law ;
 	Mat mat ;
