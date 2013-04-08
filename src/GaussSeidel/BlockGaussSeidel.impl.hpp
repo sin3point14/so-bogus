@@ -21,8 +21,7 @@ GaussSeidel< BlockMatrixType >::GaussSeidel( const BlockMatrixBase< BlockMatrixT
 	{
 		m_localMatrices[i] = M.diagonal( i ) ;
 		ProblemTraits::segment( i, m_scaling )
-				//.setConstant( std::max( 1., m_localMatrices[i].trace() ) );
-				.setOnes() ;
+				.setConstant( std::max( 1., m_localMatrices[i].trace() ) );
 	}
 
 }
@@ -46,7 +45,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	const Scalar err_zero = law.eval( x_best, b ) ;
 
 	Scalar err_best ;
-	if( false && err_zero < err_init )
+	if( err_zero < err_init )
 	{
 		err_best = err_zero ;
 		x.setZero() ;
