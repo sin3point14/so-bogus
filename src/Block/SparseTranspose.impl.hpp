@@ -54,8 +54,10 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 		assert( source.majorIndex().valid ) ;
 
 		SparseBlockIndex< > uncompressed ;
-		if( Traits::is_col_major == BlockMatrixTraits< OtherDerived >::is_col_major )
+		if( ( Traits::is_col_major && BlockMatrixTraits< OtherDerived >::is_col_major ) ||
+				!( Traits::is_col_major || BlockMatrixTraits< OtherDerived >::is_col_major ) )
 		{
+			// Same col-major-ness
 			uncompressed.setToTranspose( source.majorIndex() ) ;
 		} else {
 			uncompressed = source.majorIndex() ;

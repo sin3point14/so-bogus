@@ -22,4 +22,4 @@ link_directories( ${binary_dir} )
 add_executable(test${CMAKE_PROJECT_NAME} ${SRC_LIST})
 
 add_dependencies(test${CMAKE_PROJECT_NAME} googletest)
-target_link_libraries(test${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_NAME} gtest gtest_main )
+target_link_libraries(test${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_NAME} gtest gtest_main pthread )

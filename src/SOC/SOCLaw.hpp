@@ -23,32 +23,32 @@ struct SOCLaw
 	template< typename Derived, typename OtherDerived >
 	Scalar eval(
 			const Eigen::MatrixBase< Derived > &x,
-            const Eigen::MatrixBase< OtherDerived > &y ) const
-    {
-        typedef FischerBurmeister< ProblemTraits::dimension, typename ProblemTraits::Scalar, DeSaxceCOV > FBFunction ;
+			const Eigen::MatrixBase< OtherDerived > &y ) const
+	{
+		typedef FischerBurmeister< ProblemTraits::dimension, typename ProblemTraits::Scalar, DeSaxceCOV > FBFunction ;
 
-        Scalar sum = 0. ;
-        typename ProblemTraits::Vector lx, ly, fb ;
+		Scalar sum = 0. ;
+		typename ProblemTraits::Vector lx, ly, fb ;
 
-        assert( x.rows() == mu.size() * ProblemTraits::dimension ) ;
-        assert( y.rows() == mu.size() * ProblemTraits::dimension ) ;
+		assert( x.rows() == mu.size() * ProblemTraits::dimension ) ;
+		assert( y.rows() == mu.size() * ProblemTraits::dimension ) ;
 
-        for( unsigned i = 0 ; i < mu.size() ; ++ i )
-        {
-            lx = ProblemTraits::segment( i, x ) ;
-            ly = ProblemTraits::segment( i, y ) ;
-            FBFunction::compute( mu[i], lx, ly, fb ) ;
-            sum += fb.squaredNorm() ;
-        }
+		for( unsigned i = 0 ; i < mu.size() ; ++ i )
+		{
+			lx = ProblemTraits::segment( i, x ) ;
+			ly = ProblemTraits::segment( i, y ) ;
+			FBFunction::compute( mu[i], lx, ly, fb ) ;
+			sum += fb.squaredNorm() ;
+		}
 
-        return sum / mu.size() ;
-    }
+		return sum / ( 1 + mu.size() );
+	}
 
 	bool solveLocal(
 			const unsigned problemIndex,
 			const typename ProblemTraits::Matrix &A,
 			const typename ProblemTraits::Vector &b,
-            typename ProblemTraits::Vector &x
+			typename ProblemTraits::Vector &x
 			) const ;
 
 } ;
