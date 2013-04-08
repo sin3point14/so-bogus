@@ -6,6 +6,8 @@
 #include "../GaussSeidel/LocalProblem.hpp"
 #include "FischerBurmeister.hpp"
 
+#include <iostream>
+
 namespace bogus
 {
 

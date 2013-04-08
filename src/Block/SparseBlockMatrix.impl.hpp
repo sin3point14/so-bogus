@@ -79,14 +79,20 @@ void SparseBlockMatrixBase< Derived >::computeMinorIndex(SparseBlockIndex< > &cm
 	cmIndex.innerOffsets = m_minorIndex.innerOffsets ;
 	cmIndex.resizeOuter( m_majorIndex.innerSize() );
 
-	for ( unsigned i = 0 ; i < m_majorIndex.outerSize() ; ++ i )
+	if( Traits::is_symmetric )
 	{
-		// For a symmetric matrix, do not store diagonal block in col-major index
-		for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( m_majorIndex, i ) ;
-			 it && !( Traits::is_symmetric && it.inner() == i ) ; ++ it )
+		for ( unsigned i = 0 ; i < m_majorIndex.outerSize() ; ++ i )
 		{
-			cmIndex.insertBack( it.inner(), i, it.ptr() );
+			// For a symmetric matrix, do not store diagonal block in col-major index
+			for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( m_majorIndex, i ) ;
+				 it && it.inner() != i ; ++ it )
+			{
+				cmIndex.insertBack( it.inner(), i, it.ptr() );
+			}
 		}
+
+	} else {
+		cmIndex.setToTranspose( m_majorIndex ) ;
 	}
 
 	cmIndex.finalize() ;
@@ -108,7 +114,7 @@ void SparseBlockMatrixBase< Derived >::cacheTranspose()
 	SparseBlockIndex< > uncompressedIndex ;
 	const SparseBlockIndex< >& minorIndex = getUncompressedMinorIndex( uncompressedIndex ) ;
 
-	if ( !m_minorIndex.valid )
+	if( !m_minorIndex.valid )
 	{
 		m_minorIndex = minorIndex ;
 	}

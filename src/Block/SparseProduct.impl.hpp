@@ -177,6 +177,8 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(const LhsIndex &lhsIdx,
 	compressed.valid  = true ;
 	m_majorIndex = compressed ;
 	assert( m_majorIndex.valid ) ;
+
+	m_minorIndex.valid = false ;
 }
 
 

@@ -88,6 +88,12 @@ public:
 		else
 			return insertBackOuterInner( row, col ) ;
 	}
+	BlockType& insertBackAndResize( Index row, Index col )
+	{
+		BlockType& block = insertBack( row, col ) ;
+		block.resize( blockRows( row ), blockCols( col ) ) ;
+		return block ;
+	}
 
 	void finalize() ;
 	void clear() ;

@@ -16,16 +16,18 @@ struct NumTraits
 	{ return std::numeric_limits< Scalar >::epsilon() ; }
 	static bool isZero( Scalar s )
 	{ return std::fabs(s) < std::numeric_limits< Scalar >::epsilon() ; }
+	static bool isSquareZero( Scalar s )
+	{ return s*s < std::numeric_limits< Scalar >::epsilon() ; }
 } ;
 
 template< unsigned Dimension, typename ScalarType >
 struct MatrixTraits
 {
-        typedef ScalarType Scalar ;
+		typedef ScalarType Scalar ;
 	typedef Eigen::Matrix< Scalar, Dimension, 1 > Vector ;
 	typedef Eigen::Matrix< Scalar, Dimension, Dimension > Matrix ;
 
-        enum{ dimension = Dimension } ;
+		enum{ dimension = Dimension } ;
 
 	static ScalarType np( const Vector & v )
 	{ return v[0] ; }

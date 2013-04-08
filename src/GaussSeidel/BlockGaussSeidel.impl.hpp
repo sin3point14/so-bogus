@@ -9,7 +9,7 @@ namespace bogus
 
 template < typename BlockMatrixType >
 GaussSeidel< BlockMatrixType >::GaussSeidel( const BlockMatrixBase< BlockMatrixType > & M )
-	: m_matrix( M ), m_maxIters( 1000 ), m_tol( 1.e-6 ),
+	: m_matrix( M ), m_maxIters( 250 ), m_tol( 1.e-6 ),
 	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 )
 {
 	const unsigned d = ProblemTraits::dimension ;
@@ -21,7 +21,8 @@ GaussSeidel< BlockMatrixType >::GaussSeidel( const BlockMatrixBase< BlockMatrixT
 	{
 		m_localMatrices[i] = M.diagonal( i ) ;
 		ProblemTraits::segment( i, m_scaling )
-				.setConstant( std::max( 1., m_localMatrices[i].trace() ) );
+				//.setConstant( std::max( 1., m_localMatrices[i].trace() ) );
+				.setOnes() ;
 	}
 
 }
@@ -45,7 +46,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	const Scalar err_zero = law.eval( x_best, b ) ;
 
 	Scalar err_best ;
-	if( err_zero < err_init )
+	if( false && err_zero < err_init )
 	{
 		err_best = err_zero ;
 		x.setZero() ;
@@ -65,17 +66,16 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 				--skip[i] ;
 				continue ;
 			}
-
 			lb = ProblemTraits::segment( i, b ) ;
 			m_matrix.splitRowMultiply( i, x, lb ) ;
 			lx = ProblemTraits::segment( i, x ) ;
-			ldx = lx ;
+			ldx = -lx ;
 
 			const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx ) ;
-			ldx -= lx ;
+			ldx += lx ;
 
-			if( !ok ) ldx *= .1 ;
-			ProblemTraits::segment( i, x ) = lx + ldx;
+			if( !ok ) ldx *= .7 ;
+			ProblemTraits::segment( i, x ) += ldx ;
 
 			const Scalar scaledSkipTol = m_scaling[ d*i ] * m_scaling[ d*i ] * m_skipTol ;
 			if( ldx.squaredNorm() < scaledSkipTol || lx.squaredNorm() < scaledSkipTol )
