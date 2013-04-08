@@ -25,3 +25,6 @@ SecondOrder.hpp
 Utils/NonSmoothNewton.hpp
 Utils/NonSmoothNewton.impl.hpp
 Utils/NumTraits.hpp
+Utils/Polynomial.cpp
+Utils/Polynomial.hpp
+Utils/Polynomial.impl.hpp

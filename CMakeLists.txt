@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 2.8)
 
 SET( BOGUS_ROOT ${CMAKE_CURRENT_SOURCE_DIR} )
 SET( CMAKE_MODULE_PATH ${BOGUS_ROOT}/cmake )
-
 # Eigen
 FIND_PACKAGE(Eigen3 REQUIRED)
 SET( EXTERNAL_INCLUDES ${EIGEN3_INCLUDE_DIR} )
@@ -20,7 +19,7 @@ if(OPENMP_FOUND)
 endif()
 
 # Proc flags
-set( CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -Wno-tautological-compare " )
+set( CMAKE_CXX_FLAGS "-Wall -Wextra -Werror " )
 
 include_directories( ${EXTERNAL_INCLUDES} )
 
