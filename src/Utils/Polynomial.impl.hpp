@@ -1,10 +1,11 @@
 #ifndef BOGUS_POLYNOMIAL_IMPL_HPP
 #define BOGUS_POLYNOMIAL_IMPL_HPP
 
+#include <Eigen/Eigenvalues>
+
 #include "Polynomial.hpp"
 #include "NumTraits.hpp"
 
-#include <Eigen/EigenValues>
 
 namespace bogus
 {

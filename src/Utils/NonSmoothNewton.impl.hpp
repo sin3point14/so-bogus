@@ -1,27 +1,14 @@
 #ifndef BOGUS_NS_NETWON_IMPL_HPP
 #define BOGUS_NS_NETWON_IMPL_HPP
 
-#include "NumTraits.hpp"
 #include "NonSmoothNewton.hpp"
 
-#include <Eigen/LU>
+#include "NumTraits.hpp"
+#include "LinearSolver.hpp"
 
 #include <iostream>
 
 namespace bogus {
-
-template < unsigned Dimension, typename Scalar >
-struct LinearSolver
-{
-  typedef MatrixTraits< Dimension, Scalar > Traits ;
-  typedef Eigen::FullPivLU< typename Traits::Matrix > FactType ;
-  typedef Eigen::internal::solve_retval< FactType, typename Traits::Vector > ReturnType ; // Why did I decide not to use c++11, again ?
-
-  static typename Traits::Vector solve( const typename Traits::Matrix &A, const typename Traits::Vector &b )
-  {
-	return A.fullPivLu().solve( b ) ;
-  }
-} ;
 
 template < typename NSFunction >
 typename NonSmoothNewton< NSFunction >::Scalar NonSmoothNewton<NSFunction>::solve(
