@@ -76,7 +76,9 @@ public:
 
 	BlockType& insertBackOuterInner( Index outer, Index inner )
 	{
+#ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp atomic
+#endif
 		++m_nBlocks ;
 
 		BlockPtr ptr ;
