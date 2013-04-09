@@ -10,60 +10,79 @@ namespace bogus
 {
 
 template< typename EigenDerived >
-struct BlockProductTraits
+struct BlockProductTraits< Eigen::MatrixBase< EigenDerived > >
 {
-	typedef Eigen::Matrix< typename Eigen::internal::traits<EigenDerived>::Scalar, Eigen::Dynamic, 1 > Vec ;
-	typedef Eigen::Matrix< typename Eigen::internal::traits<EigenDerived>::Scalar, 1, Eigen::Dynamic > RowVec ;
+	typedef Eigen::Matrix< typename Eigen::internal::traits<EigenDerived>::Scalar, EigenDerived::RowsAtCompileTime, 1 > ResVec ;
+	typedef Eigen::Matrix< typename Eigen::internal::traits<EigenDerived>::Scalar, 1, EigenDerived::ColsAtCompileTime > RowResVec ;
 } ;
+
+template< typename Derived >
+typename BlockProductTraits< Eigen::MatrixBase< Derived > >::ResVec getBlockProductResVec( const Eigen::MatrixBase< Derived > & )
+{
+	return typename BlockProductTraits< Eigen::MatrixBase< Derived > >::ResVec() ;
+}
 
 }
 
 template < typename Derived, typename EigenDerived >
-typename bogus::BlockProductTraits< EigenDerived >::Vec operator* ( const bogus::BlockMatrixBase< Derived >& lhs,
+typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec operator* ( const bogus::BlockMatrixBase< Derived >& lhs,
 						 const Eigen::MatrixBase< EigenDerived > &rhs )
 {
 	assert( rhs.cols() == 1 ) ;
 	assert( rhs.rows() == lhs.cols() ) ;
-	typename bogus::BlockProductTraits< EigenDerived >::Vec res (
-				bogus::BlockProductTraits< EigenDerived >::Vec::Zero( lhs.rows() ) ) ;
+
+	typedef typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
+
+	ResVec res ( lhs.rows() ) ;
+	res.setZero() ;
+
 	lhs.multiply( rhs, res ) ;
 	return res ;
 }
 
 template < typename Derived, typename EigenDerived >
-typename bogus::BlockProductTraits< EigenDerived >::Vec operator* ( const bogus::Transpose< bogus::BlockMatrixBase< Derived > >& lhs,
+typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec operator* ( const bogus::Transpose< bogus::BlockMatrixBase< Derived > >& lhs,
 						 const Eigen::MatrixBase< EigenDerived > &rhs )
 {
 	assert( rhs.cols() == 1 ) ;
 	assert( rhs.rows() == lhs.matrix.rows() ) ;
-	typename bogus::BlockProductTraits< EigenDerived >::Vec res (
-				bogus::BlockProductTraits< EigenDerived >::Vec::Zero( lhs.matrix.cols() ) ) ;
+
+	typedef typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
+	ResVec res ( lhs.matrix.cols() ) ;
+	res.setZero() ;
+
 	lhs.matrix.multiply( rhs, res, true ) ;
 	return res ;
 }
 
 template < typename Derived, typename EigenDerived >
-typename bogus::BlockProductTraits< EigenDerived >::RowVec operator* ( const Eigen::MatrixBase< EigenDerived > &lhs,
+typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec operator* ( const Eigen::MatrixBase< EigenDerived > &lhs,
 						 const bogus::BlockMatrixBase< Derived >& rhs )
 {
 	assert( lhs.rows() == 1 ) ;
 	assert( lhs.cols() == rhs.rows() ) ;
-	typename bogus::BlockProductTraits< EigenDerived >::RowVec res (
-				bogus::BlockProductTraits< EigenDerived >::RowVec::Zero( rhs.cols() ) ) ;
-	Eigen::Transpose< typename bogus::BlockProductTraits< EigenDerived >::RowVec > resTrans ( res ) ;
+
+	typedef typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec ResVec ;
+	ResVec res ( rhs.cols() ) ;
+	res.setZero() ;
+
+	Eigen::Transpose< ResVec > resTrans ( res ) ;
 	rhs.multiply( lhs.transpose(), resTrans, true ) ;
 	return res ;
 }
 
 template < typename Derived, typename EigenDerived >
-typename bogus::BlockProductTraits< EigenDerived >::RowVec operator* ( const Eigen::MatrixBase< EigenDerived > &lhs,
+typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec operator* ( const Eigen::MatrixBase< EigenDerived > &lhs,
 						 const bogus::Transpose< bogus::BlockMatrixBase< Derived > >& rhs )
 {
 	assert( lhs.rows() == 1 ) ;
 	assert( lhs.cols() == rhs.matrix.cols() ) ;
-	typename bogus::BlockProductTraits< EigenDerived >::RowVec res (
-				bogus::BlockProductTraits< EigenDerived >::RowVec::Zero( rhs.matrix.rows() ) ) ;
-	Eigen::Transpose< typename bogus::BlockProductTraits< EigenDerived >::RowVec > resTrans ( res ) ;
+
+	typedef typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec ResVec ;
+	ResVec res ( rhs.matrix.rows() ) ;
+	res.setZero() ;
+
+	Eigen::Transpose< ResVec > resTrans ( res ) ;
 	rhs.matrix.multiply( lhs.transpose(), resTrans ) ;
 	return res ;
 }

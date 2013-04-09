@@ -85,6 +85,14 @@ struct BlockTranspose< true, false > {
 	{ return afterDiag ? src.transpose() : src ; }
 } ;
 
+template< typename Derived >
+struct BlockProductTraits
+{
+	typedef Derived ResVec;
+	typedef Derived RowResVec;
+} ;
+
 }
+
 
 #endif // EXPRESSIONS_HPP

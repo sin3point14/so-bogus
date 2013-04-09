@@ -3,6 +3,10 @@
 
 #include <vector>
 
+#if !( defined( _OPENMP ) || defined( BOGUS_DONT_PARALLELIZE ) )
+#define BOGUS_DONT_PARALLELIZE
+#endif
+
 namespace bogus
 {
 

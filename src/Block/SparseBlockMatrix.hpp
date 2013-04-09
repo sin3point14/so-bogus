@@ -76,10 +76,16 @@ public:
 
 	BlockType& insertBackOuterInner( Index outer, Index inner )
 	{
-		m_majorIndex.insertBack( outer, inner, m_nBlocks++ ) ;
+#pragma omp atomic
+		++m_nBlocks ;
+
+		BlockPtr ptr ;
+		allocateBlock( ptr ) ;
+
+		m_majorIndex.insertBack( outer, inner, ptr ) ;
 		m_minorIndex.valid = false ;
 
-		return allocateBlock() ;
+		return block(ptr) ;
 	}
 	BlockType& insertBack( Index row, Index col )
 	{
@@ -155,10 +161,15 @@ public:
 									SparseBlockIndex< >& aux ) const ;
 
 protected:
-	BlockType& allocateBlock()
+	void allocateBlock( BlockPtr &ptr )
 	{
-		this->m_blocks.push_back( BlockType() ) ;
-		return this->m_blocks.back() ;
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp critical
+#endif
+		{
+			ptr = this->m_blocks.size() ;
+			this->m_blocks.push_back( BlockType() ) ;
+		}
 	}
 
 	void computeMinorIndex(SparseBlockIndex< > &cmIndex) const ;
@@ -222,6 +233,9 @@ protected:
 						 const RhsGetter &rhsGetter,
 						 double scale = 1.
 						  ) ;
+
+	template < typename RhsT, typename ResT, typename LocalResT >
+	void multiplyAndReduct( const RhsT& rhs, ResT& res, bool transposed, const LocalResT& ) const ;
 
 	std::size_t m_nBlocks ;
 

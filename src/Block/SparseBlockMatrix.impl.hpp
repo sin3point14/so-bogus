@@ -2,6 +2,7 @@
 #define BOGUS_SPARSE_BLOCK_MATRIX_IMPL_HPP
 
 #include "SparseBlockMatrix.hpp"
+#include "Expressions.hpp"
 
 #include <iostream>
 
@@ -119,17 +120,30 @@ void SparseBlockMatrixBase< Derived >::cacheTranspose()
 		m_minorIndex = minorIndex ;
 	}
 
-	this->m_blocks.reserve( 2*m_nBlocks ) ;
+	this->m_blocks.resize( 2*m_nBlocks ) ;
 
+	BlockPtr base = m_nBlocks ;
+	std::vector< BlockPtr > ptrOffsets( minorIndex.outerSize() ) ;
+	for( unsigned i = 0 ; i < minorIndex.outerSize() ; ++i )
+	{
+		ptrOffsets[i] = base ;
+		base += minorIndex.size( i ) ;
+	}
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
 	for ( unsigned i = 0 ; i < minorIndex.outerSize() ; ++ i )
 	{
+
 		typename SparseBlockIndex< >::InnerIterator uncompressed_it
 			 ( minorIndex , i ) ;
 		for( typename SparseIndexType::InnerIterator it( m_minorIndex, i ) ;
 			 it ; ++ it, ++uncompressed_it )
 		{
-			allocateBlock() = block( uncompressed_it.ptr() ).transpose() ;
-			m_minorIndex.setPtr( it, ( BlockPtr ) ( this->m_blocks.size() - 1 )  ) ;
+			const BlockPtr ptr = ptrOffsets[i]++ ;
+			block( ptr ) = block( uncompressed_it.ptr() ).transpose() ;
+			m_minorIndex.setPtr( it, ptr ) ;
 		}
 	}
 
@@ -156,13 +170,69 @@ const SparseBlockIndexBase& SparseBlockMatrixBase< Derived >::getIndex(const boo
 }
 
 template < typename Derived >
+template < typename RhsT, typename ResT, typename LocalResT >
+void SparseBlockMatrixBase< Derived >::multiplyAndReduct( const RhsT& rhs, ResT& res, bool transpose, const LocalResT& ) const
+{
+#ifdef BOGUS_DONT_PARALLELIZE
+	(void) rhs ; (void) res ; (void) transpose ;
+	assert( false && "multiplyAndReduct should never be called if BOGUS_DONT_PARALLELIZE" ) ;
+#else
+#pragma omp parallel
+{
+	LocalResT locRes( res.rows() ) ;
+	locRes.setZero() ;
+
+	if( Traits::is_symmetric )
+	{
+#pragma omp for
+		for( Index i = 0 ; i < majorIndex().outerSize() ; ++i )
+		{
+			typename RhsT::ConstSegmentReturnType rhs_seg( majorIndex().innerSegment( rhs, i ) ) ;
+			typename ResT::SegmentReturnType res_seg( majorIndex().innerSegment( res, i ) ) ;
+			for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( m_majorIndex, i ) ;
+				 it ; ++ it )
+			{
+				const BlockType &b = block( it.ptr() ) ;
+				res_seg += b * m_minorIndex.innerSegment( rhs, it.inner() ) ;
+				if( it.inner() != i )
+					m_minorIndex.innerSegment( locRes, it.inner() ) += b.transpose() * rhs_seg  ;
+			}
+		}
+	} else if ( transpose ) {
+#pragma omp for
+		for( Index i = 0 ; i < rowsOfBlocks() ; ++i )
+		{
+			typename RhsT::ConstSegmentReturnType seg( rowSegment( rhs, i ) ) ;
+			innerColTransposedMultiply( rowMajorIndex(), i, seg, locRes ) ;
+		}
+	} else if ( Traits::is_col_major ) {
+#pragma omp for
+		for( Index i = 0 ; i < colsOfBlocks() ; ++i )
+		{
+			typename RhsT::ConstSegmentReturnType seg( colSegment( rhs, i ) ) ;
+			innerColMultiply( colMajorIndex(), i, seg, locRes ) ;
+		}
+	}
+
+
+#pragma omp critical
+	res += locRes ;
+}
+#endif
+}
+
+template < typename Derived >
 template < typename RhsT, typename ResT >
 void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res, bool transposed ) const
 {
+
 	if( Traits::is_symmetric )
 	{
 		if( m_transposeCached )
 		{
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
 			for( Index i = 0 ; i < majorIndex().outerSize() ; ++i )
 			{
 				typename ResT::SegmentReturnType seg( rowSegment( res, i ) ) ;
@@ -170,6 +240,7 @@ void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res, boo
 				innerRowMultiply( colMajorIndex(), i, rhs, seg ) ;
 			}
 		} else {
+#ifdef BOGUS_DONT_PARALLELIZE
 			for( Index i = 0 ; i < majorIndex().outerSize() ; ++i )
 			{
 				typename RhsT::ConstSegmentReturnType rhs_seg( majorIndex().innerSegment( rhs, i ) ) ;
@@ -183,11 +254,17 @@ void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res, boo
 						m_minorIndex.innerSegment( res, it.inner() ) += b.transpose() * rhs_seg  ;
 				}
 			}
+#else
+		multiplyAndReduct( rhs, res, transposed, getBlockProductResVec( res ) ) ;
+#endif
 		}
 
 	} else if( transposed )
 	{
 		if ( Traits::is_col_major )  {
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
 			for( Index i = 0 ; i < colsOfBlocks() ; ++i )
 			{
 				typename ResT::SegmentReturnType seg( colSegment( res, i ) ) ;
@@ -196,26 +273,40 @@ void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res, boo
 		} else {
 			if( m_transposeCached )
 			{
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
 				for( Index i = 0 ; i < colsOfBlocks() ; ++i )
 				{
 					typename ResT::SegmentReturnType seg( colSegment( res, i ) ) ;
 					innerRowMultiply( colMajorIndex(), i, rhs, seg ) ;
 				}
 			} else {
+#ifdef BOGUS_DONT_PARALLELIZE
 				for( Index i = 0 ; i < rowsOfBlocks() ; ++i )
 				{
 					typename RhsT::ConstSegmentReturnType seg( rowSegment( rhs, i ) ) ;
 					innerColTransposedMultiply( rowMajorIndex(), i, seg, res ) ;
 				}
+#else
+				multiplyAndReduct( rhs, res, transposed, getBlockProductResVec( res ) ) ;
+#endif
 			}
 		}
 	} else if ( Traits::is_col_major )  {
+#ifdef BOGUS_DONT_PARALLELIZE
 		for( Index i = 0 ; i < colsOfBlocks() ; ++i )
 		{
 			typename RhsT::ConstSegmentReturnType seg( colSegment( rhs, i ) ) ;
 			innerColMultiply( colMajorIndex(), i, seg, res ) ;
 		}
+#else
+		multiplyAndReduct( rhs, res, transposed, getBlockProductResVec( res ) ) ;
+#endif
 	} else {
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
 		for( Index i = 0 ; i < rowsOfBlocks() ; ++i )
 		{
 			typename ResT::SegmentReturnType seg( rowSegment( res, i ) ) ;

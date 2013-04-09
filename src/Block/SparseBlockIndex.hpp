@@ -117,6 +117,11 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 		return outer[ outerIdx ].back().second ;
 	}
 
+	Index size( const Index outerIdx ) const
+	{
+		return outer[ outerIdx ].size() ;
+	}
+
 	struct InnerIterator
 	{
 		InnerIterator( const SparseBlockIndex& index, Index outer )
@@ -279,6 +284,11 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 	BlockPtr last( const Index outerIdx ) const
 	{
 		return base + outer[ outerIdx + 1 ] - 1  ;
+	}
+
+	Index size( const Index outerIdx ) const
+	{
+		return  outer[ outerIdx + 1 ] - outer[ outerIdx ] ;
 	}
 
 	struct InnerIterator
