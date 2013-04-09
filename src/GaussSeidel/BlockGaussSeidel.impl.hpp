@@ -70,7 +70,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 			lx = ProblemTraits::segment( i, x ) ;
 			ldx = -lx ;
 
-			const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx ) ;
+			const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ d*i ] ) ;
 			ldx += lx ;
 
 			if( !ok ) ldx *= .7 ;

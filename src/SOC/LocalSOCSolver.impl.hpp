@@ -20,11 +20,11 @@ Scalar LocalSOCSolver< Dimension, Scalar, DeSaxceCOV, Strat >::solve(
 		  const typename Traits::Matrix &A,
 		  const typename Traits::Vector &b,
 		  typename Traits::Vector &x,
-		  const Scalar mu, const Scalar tol
+		  const Scalar mu, const Scalar tol, const Scalar scaling
 		  )
 {
 	typedef FischerBurmeister< Dimension, Scalar, DeSaxceCOV > FBFunc ;
-	FBFunc fb( mu, A, b ) ;
+	FBFunc fb( mu, A, b, scaling ) ;
 	NonSmoothNewton< FBFunc > nsNewton( fb, tol )  ;
 
 	return nsNewton.solve( x ) ;
@@ -44,12 +44,12 @@ struct LocalSOCSolver< 3, Scalar, true, Strat >
 		  const typename Traits::Matrix &A,
 		  const typename Traits::Vector &b,
 		  typename Traits::Vector &x,
-		  const Scalar mu, const Scalar tol
+		  const Scalar mu, const Scalar tol, const Scalar scaling
 		  )
   {
 	  // Newton solver
 	  typedef FischerBurmeister< Dimension, Scalar, true > FBFunc ;
-	  FBFunc fb( mu, A, b ) ;
+	  FBFunc fb( mu, A, b, scaling ) ;
 	  NonSmoothNewton< FBFunc > nsNewton( fb, tol )  ;
 
 	  if( Strat == local_soc_solver::PureNewton )

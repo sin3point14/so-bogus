@@ -15,7 +15,6 @@ GaussSeidel/LocalProblem.hpp
 SOC/FischerBurmeister.cpp
 SOC/FischerBurmeister.hpp
 SOC/FischerBurmeister.impl.hpp
-SOC/LocalSOCSolver.cpp
 SOC/LocalSOCSolver.hpp
 SOC/LocalSOCSolver.impl.hpp
 SOC/SOCLaw.cpp

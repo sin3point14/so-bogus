@@ -149,14 +149,16 @@ template< unsigned Dimension, typename Scalar, bool DeSaxceCOV >
 void FischerBurmeister< Dimension, Scalar, DeSaxceCOV >::compute(
 	const Vector& x, Vector& fb ) const
 {
-  const Vector y = m_A * x + m_b ;
-  compute( m_mu, x, y, fb ) ;
+  const Vector y  = m_A * x + m_b ;
+  const Vector xs = m_scaling * x ;
+  compute( m_mu, xs, y, fb ) ;
 }
 
 template< unsigned Dimension, typename Scalar, bool DeSaxceCOV >
 void FischerBurmeister< Dimension, Scalar, DeSaxceCOV >::computeJacobian(
 	  const Vector& x, Vector& fb, Matrix& dFb_dx ) const
 {
+  const Vector xs = m_scaling * x ;
   Vector y ( m_A * x + m_b ) ;
   Scalar s = 0. ;
 //  std::cout << m_A << std::endl ;
@@ -170,7 +172,7 @@ void FischerBurmeister< Dimension, Scalar, DeSaxceCOV >::computeJacobian(
 //  std::cout << y.transpose() << std::endl ;
 
   Matrix dFb_dy ;
-  BaseFunction::computeJacobian( m_mu, x, y, fb, dFb_dx, dFb_dy ) ;
+  BaseFunction::computeJacobian( m_mu, xs, y, fb, dFb_dx, dFb_dy ) ;
 //  std::cout << dFb_dx.transpose() << std::endl ;
 //  std::cout << dFb_dy.transpose() << std::endl ;
 
@@ -181,6 +183,7 @@ void FischerBurmeister< Dimension, Scalar, DeSaxceCOV >::computeJacobian(
 
   }
 
+  dFb_dx *= m_scaling ;
   dFb_dx.noalias() += dFb_dy * m_A ;
 
 }

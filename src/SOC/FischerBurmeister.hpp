@@ -15,8 +15,8 @@ struct FBBaseFunction
 	static void compute( const Scalar mu, const Vector& x, const Vector& y, Vector& fb ) ;
 
 	static void computeJacobian(
-                const Scalar mu, const Vector& x, const Vector& y, 
-	        Vector& fb, Matrix& dFb_dx, Matrix& dFb_dy ) ;
+				const Scalar mu, const Vector& x, const Vector& y,
+			Vector& fb, Matrix& dFb_dx, Matrix& dFb_dy ) ;
 
 private:
 	template <bool JacobianAsWell >
@@ -37,12 +37,13 @@ public:
   typedef typename Traits::Matrix Matrix ;
 
   FischerBurmeister(
-    const Scalar mu,
-    const Matrix& A,
-    const Vector& b )
-      : m_mu( mu ), m_A( A ), m_b( b )
+	const Scalar mu,
+	const Matrix& A,
+	const Vector& b,
+	const Scalar scaling )
+	  : m_mu( mu ), m_scaling( scaling ), m_A( A ), m_b( b )
   {}
-	
+
   void compute( const Vector& x, Vector& fb ) const ;
   void computeJacobian( const Vector& x, Vector& fb, Matrix& dFb_dx ) const ;
 
@@ -50,6 +51,7 @@ public:
 
 private:
   Scalar m_mu ;
+  Scalar m_scaling ;
   const Matrix& m_A ;
   const Vector& m_b ;
 

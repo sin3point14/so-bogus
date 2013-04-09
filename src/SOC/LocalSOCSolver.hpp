@@ -29,7 +29,8 @@ struct LocalSOCSolver
 		  const typename Traits::Matrix &A,
 		  const typename Traits::Vector &b,
 		  typename Traits::Vector &x,
-		  const Scalar mu, const Scalar tol
+		  const Scalar mu, const Scalar tol,
+		  const Scalar scaling = 1
 		  ) ;
 
 } ;

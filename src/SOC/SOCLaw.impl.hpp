@@ -6,6 +6,7 @@
 
 #include "FischerBurmeister.hpp"
 #include "LocalSOCSolver.hpp"
+#include "LocalSOCSolver.impl.hpp"
 
 namespace bogus {
 
@@ -17,14 +18,13 @@ SOCLaw< LocalMatrixType, DeSaxceCOV, Strat >::SOCLaw( const std::vector< double 
 
 
 template < typename LocalMatrixType, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
-bool SOCLaw< LocalMatrixType, DeSaxceCOV, Strat >::solveLocal(
-			const unsigned problemIndex,
+bool SOCLaw< LocalMatrixType, DeSaxceCOV, Strat >::solveLocal(const unsigned problemIndex,
 			const typename ProblemTraits::Matrix &A,
 			const typename ProblemTraits::Vector &b,
-			typename ProblemTraits::Vector &x ) const
+			typename ProblemTraits::Vector &xm , const Scalar scaling ) const
 {
 	typedef LocalSOCSolver< ProblemTraits::dimension, typename ProblemTraits::Scalar, DeSaxceCOV, Strat > LocalSolver ;
-	return m_localTol > LocalSolver::solve(  A, b, x, m_mu[ problemIndex ], m_localTol ) ;
+	return m_localTol > LocalSolver::solve(  A, b, xm, m_mu[ problemIndex ], m_localTol, scaling ) ;
 }
 
 }

@@ -50,7 +50,8 @@ public:
 			const unsigned problemIndex,
 			const typename ProblemTraits::Matrix &A,
 			const typename ProblemTraits::Vector &b,
-			typename ProblemTraits::Vector &x
+			typename ProblemTraits::Vector &xm,
+			const Scalar scaling
 			) const ;
 
 private:

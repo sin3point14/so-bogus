@@ -20,8 +20,8 @@ public:
 
 	template < typename NSLaw, typename Derived, typename OtherDerived >
 	Scalar solve( const NSLaw &law,
-							const Eigen::MatrixBase< Derived >&b,
-							Eigen::MatrixBase< OtherDerived > &x ) const ;
+				  const Eigen::MatrixBase< Derived >&b,
+				  Eigen::MatrixBase< OtherDerived > &x ) const ;
 
 private:
 	const BlockMatrixBase< BlockMatrixType > & m_matrix ;
