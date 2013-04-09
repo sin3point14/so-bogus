@@ -74,21 +74,35 @@ TEST( GaussSeidel, Small )
 
 	Eigen::VectorXd b = w - H * ( InvMassMat * f );
 
-	typedef bogus::Coulomb3D Law ;
-	Law law ;
-	law.mu.resize(2) ;
-	law.mu[0] = 0.5 ;
-	law.mu[1] = 0.7 ;
-
 	bogus::GaussSeidel< WType > gs( W ) ;
-	Eigen::VectorXd x( W.rows() ) ;
-	x.setOnes() ;
 
-	double res = gs.solve( law, b, x ) ;
-	ASSERT_LT( res, 1.e-8 ) ;
+	std::vector< double > mu ;
+	mu.resize(2) ;
+	mu[0] = 0.5 ;
+	mu[1] = 0.7 ;
 
 	Eigen::VectorXd sol( 6 ) ;
 	sol << 0.0152695, 0.0073010, 0.0022325, 0.0, 0.0, 0.0 ;
 
+	Eigen::VectorXd x( W.rows() ) ;
+
+	x.setOnes() ;
+	double res = gs.solve( bogus::Coulomb3D( mu ), b, x ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
+	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
+
+	x.setOnes() ;
+	res = gs.solve( bogus::SOCLaw< Eigen::Matrix3d, true, bogus::local_soc_solver::PureNewton >( mu ), b, x ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
+	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
+
+	x.setOnes() ;
+	res = gs.solve( bogus::SOCLaw< Eigen::Matrix3d, true, bogus::local_soc_solver::PureEnumerative >( mu ), b, x ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
+	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
+
+	x.setOnes() ;
+	res = gs.solve( bogus::SOCLaw< Eigen::Matrix3d, true, bogus::local_soc_solver::RevHybrid >( mu ), b, x ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
 	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 }

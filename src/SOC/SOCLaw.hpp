@@ -5,22 +5,22 @@
 
 #include "../GaussSeidel/LocalProblem.hpp"
 #include "FischerBurmeister.hpp"
+#include "LocalSOCSolver.hpp"
 
-#include <iostream>
+#include <vector>
 
 namespace bogus
 {
 
-template < typename LocalMatrixType, bool DeSaxceCOV = false >
-struct SOCLaw
+template < typename LocalMatrixType, bool DeSaxceCOV,
+		   local_soc_solver::Strategy Strat = local_soc_solver::Hybrid  >
+class SOCLaw
 {
+public:
 	typedef LocalProblemTraits< LocalMatrixType > ProblemTraits ;
 	typedef typename ProblemTraits::Scalar Scalar ;
 
-	typename ProblemTraits::DynVector mu ;
-	Scalar localTol ;
-
-	SOCLaw() ;
+	SOCLaw( const std::vector< double >& mu ) ;
 
 	template< typename Derived, typename OtherDerived >
 	Scalar eval(
@@ -32,18 +32,18 @@ struct SOCLaw
 		Scalar sum = 0. ;
 		typename ProblemTraits::Vector lx, ly, fb ;
 
-		assert( x.rows() == mu.size() * ProblemTraits::dimension ) ;
-		assert( y.rows() == mu.size() * ProblemTraits::dimension ) ;
+		assert( (unsigned) x.rows() == m_mu.size() * ProblemTraits::dimension ) ;
+		assert( (unsigned) y.rows() == m_mu.size() * ProblemTraits::dimension ) ;
 
-		for( unsigned i = 0 ; i < mu.size() ; ++ i )
+		for( unsigned i = 0 ; i < m_mu.size() ; ++ i )
 		{
 			lx = ProblemTraits::segment( i, x ) ;
 			ly = ProblemTraits::segment( i, y ) ;
-			FBFunction::compute( mu[i], lx, ly, fb ) ;
+			FBFunction::compute( m_mu[i], lx, ly, fb ) ;
 			sum += fb.squaredNorm() ;
 		}
 
-		return sum / ( 1 + mu.size() );
+		return sum / ( 1 + m_mu.size() );
 	}
 
 	bool solveLocal(
@@ -52,6 +52,11 @@ struct SOCLaw
 			const typename ProblemTraits::Vector &b,
 			typename ProblemTraits::Vector &x
 			) const ;
+
+private:
+
+	const std::vector< double > &m_mu ;
+	Scalar m_localTol ;
 
 } ;
 

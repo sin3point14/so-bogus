@@ -15,8 +15,8 @@
 namespace bogus {
 
 
-template< unsigned Dimension, typename Scalar, bool DeSaxceCOV >
-Scalar LocalSOCSolver< Dimension, Scalar, DeSaxceCOV >::solve(
+template< unsigned Dimension, typename Scalar, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
+Scalar LocalSOCSolver< Dimension, Scalar, DeSaxceCOV, Strat >::solve(
 		  const typename Traits::Matrix &A,
 		  const typename Traits::Vector &b,
 		  typename Traits::Vector &x,
@@ -31,8 +31,8 @@ Scalar LocalSOCSolver< Dimension, Scalar, DeSaxceCOV >::solve(
 }
 
 // Specialization for 3D Coulomb friction -- hybrid solver
-template< typename Scalar >
-struct LocalSOCSolver< 3, Scalar, true >
+template< typename Scalar, local_soc_solver::Strategy Strat  >
+struct LocalSOCSolver< 3, Scalar, true, Strat >
 {
   enum { Dimension = 3 } ;
 
@@ -47,65 +47,73 @@ struct LocalSOCSolver< 3, Scalar, true >
 		  const Scalar mu, const Scalar tol
 		  )
   {
-	 if( Traits::np(b) >= 0. )
-	 {
-		 // Take-off case
-		 x.setZero() ;
-		 return 0. ;
-	 }
-	 if( NumTraits< Scalar >::isZero( mu ) )
-	 {
-		 //Frictionless case
-		 if( A(0,0) < NumTraits< Scalar >::epsilon() )
-		 {
-			 // Degenerate problem
-			 x.setZero() ;
-			 return b[0]*b[0] ;
-		 } else {
-			Traits::tp( x ).setZero() ;
-			Traits::np( x ) = - Traits::np( b ) / A(0,0);
-			return 0. ;
-		 }
-	 }
+	  // Newton solver
+	  typedef FischerBurmeister< Dimension, Scalar, true > FBFunc ;
+	  FBFunc fb( mu, A, b ) ;
+	  NonSmoothNewton< FBFunc > nsNewton( fb, tol )  ;
 
-	 // Newton solver
-	 typedef FischerBurmeister< Dimension, Scalar, true > FBFunc ;
-	 FBFunc fb( mu, A, b ) ;
-	 NonSmoothNewton< FBFunc > nsNewton( fb, tol )  ;
+	  if( Strat == local_soc_solver::PureNewton )
+	  {
+		  return nsNewton.solve( x ) ;
+	  }
 
-#ifndef BOGUS_PURE_ENUMERATIVE
-	 const double newtonRes = nsNewton.solve( x ) ;
-	 if( newtonRes < tol ) return newtonRes ;
-#endif
+	  if( Traits::np(b) >= 0. )
+	  {
+		  // Take-off case
+		  x.setZero() ;
+		  return 0. ;
+	  }
+	  if( NumTraits< Scalar >::isZero( mu ) )
+	  {
+		  //Frictionless case
+		  if( A(0,0) < NumTraits< Scalar >::epsilon() )
+		  {
+			  // Degenerate problem
+			  x.setZero() ;
+			  return b[0]*b[0] ;
+		  } else {
+			  Traits::tp( x ).setZero() ;
+			  Traits::np( x ) = - Traits::np( b ) / A(0,0);
+			  return 0. ;
+		  }
+	  }
 
-	 // Continuing enumerative fallback
+	  double res = 0. ;
 
-	 Vector u = -b, x0 = x ;
-	 x = LinearSolver< Dimension, Scalar >::solve( A, u ) ;
-	 if( mu * Traits::np( x ) >= Traits::tp( x ).norm() )
-	 {
-		 // Sticking case
-		 return 0. ;
-	 }
+	  if( Strat == local_soc_solver::Hybrid )
+	  {
+		  res = nsNewton.solve( x ) ;
+		  if( res < tol ) return res ;
+	  }
+
+	  // Continuing enumerative fallback
+
+	  Vector u = -b, x0 = x ;
+	  x = LinearSolver< Dimension, Scalar >::solve( A, u ) ;
+	  if( mu * Traits::np( x ) >= Traits::tp( x ).norm() )
+	  {
+		  // Sticking case
+		  return 0. ;
+	  }
 
 	 // Sliding case
 	 if( !solveSliding( A, b, x, mu ) )
 		 x = x0 ;
 
-#ifdef BOGUS_PURE_ENUMERATIVE
-	 return 0. ;
-#else
 	 // Refinement of final solution
-	 const double refinedRes = nsNewton.solve( x ) ;
-	 if( refinedRes > newtonRes ) {
+	 if( Strat == local_soc_solver::RevHybrid ) {
+		 res = nsNewton.solve( x ) ;
+	 } else if( Strat == local_soc_solver::Hybrid  ) {
+		 const double refinedRes = nsNewton.solve( x ) ;
+		 if( refinedRes <= res )
+			 return refinedRes ;
+
 		 //This can happen if the quartic solver returned a very bad value, like an
 		 // unreastically huge alpha
 		 x = x0 ;
-		 return newtonRes ;
 	 }
 
-	 return refinedRes ;
-#endif
+	 return res ;
   }
 
   static bool solveSliding(
