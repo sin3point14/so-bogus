@@ -3,6 +3,7 @@
 #include "Block.hpp"
 
 #include <Eigen/Core>
+#include <Eigen/Sparse>
 
 #include <gtest/gtest.h>
 
@@ -325,4 +326,47 @@ TEST( SparseBlock, Inv )
 	rhs.setOnes() ;
 
 	EXPECT_EQ( expected_2, ( isbm * rhs ) ) ;
+
 }
+
+TEST( SparseBlock, Sparse )
+{
+	Eigen::VectorXd expected_1( 6 ) ;
+	expected_1 << 2, 4, 6, 16, 40, 6 ;
+	Eigen::VectorXd expected_2( 6 ) ;
+	expected_2 << 0.5, 1, 1.5, 1, 0.625, 6 ;
+
+	typedef Eigen::SparseMatrix< double > BlockT ;
+	bogus::SparseBlockMatrix< BlockT > sbm ;
+	sbm.reserve( 10 ) ;
+	sbm.setRows( 2, 3 ) ;
+	sbm.setCols( 2, 3 ) ;
+
+	BlockT& b1 = sbm.insertBackAndResize( 0, 0 ) ;
+	b1.insert( 0, 0 ) = 2;
+	b1.insert( 1, 1 ) = 2;
+	b1.insert( 2, 2 ) = 2;
+
+	BlockT& b2 = sbm.insertBackAndResize( 1, 1 ) ;
+	b2.insert( 0, 0 ) = 4;
+	b2.insert( 1, 1 ) = 8;
+	b2.insert( 2, 2 ) = 1;
+
+	sbm.finalize() ;
+	Eigen::VectorXd rhs( 6 ) ;
+	rhs << 1, 2, 3, 4, 5, 6;
+
+	EXPECT_EQ( expected_1, ( sbm * rhs ) ) ;
+
+	typedef bogus::SparseLDLT< double > InvBlockT ;
+	bogus::SparseBlockMatrix< InvBlockT > isbm ;
+	isbm.cloneStructure( sbm ) ;
+
+	for( unsigned i = 0 ; i < isbm.nBlocks() ; ++i )
+	{
+		isbm.block(i).compute( sbm.block(i) );
+	}
+
+	EXPECT_EQ( expected_2, ( isbm * rhs ) ) ;
+}
+

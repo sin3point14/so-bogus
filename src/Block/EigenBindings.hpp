@@ -8,6 +8,7 @@
 
 #ifndef BOGUS_BLOCK_WITHOUT_LINEAR_SOLVERS
 #include "../Utils/EigenLinearSolvers.hpp"
+#include "../Utils/EigenSparseLinearSolvers.hpp"
 #endif
 
 namespace bogus

@@ -1,11 +1,6 @@
 #ifndef BOGUS_LINEAR_SOLVER_HPP
 #define BOGUS_LINEAR_SOLVER_HPP
 
-namespace Eigen
-{
-	template< typename Derived > class MatrixBase ;
-}
-
 namespace bogus {
 
 template < typename LSDerived >
