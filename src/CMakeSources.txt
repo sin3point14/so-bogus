@@ -21,6 +21,8 @@ SOC/SOCLaw.cpp
 SOC/SOCLaw.hpp
 SOC/SOCLaw.impl.hpp
 SecondOrder.hpp
+Utils/EigenLinearSolvers.hpp
+Utils/EigenMatrixTraits.hpp
 Utils/LinearSolver.hpp
 Utils/NonSmoothNewton.hpp
 Utils/NonSmoothNewton.impl.hpp

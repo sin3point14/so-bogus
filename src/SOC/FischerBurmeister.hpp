@@ -2,6 +2,7 @@
 #define BOGUS_FISCHER_BURMEISTER_HPP
 
 #include "../Utils/NumTraits.hpp"
+#include "../Utils/EigenMatrixTraits.hpp"
 
 namespace bogus {
 

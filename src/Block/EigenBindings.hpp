@@ -6,6 +6,10 @@
 #include "BlockMatrix.hpp"
 #include "Expressions.hpp"
 
+#ifndef BOGUS_BLOCK_WITHOUT_LINEAR_SOLVERS
+#include "../Utils/EigenLinearSolvers.hpp"
+#endif
+
 namespace bogus
 {
 

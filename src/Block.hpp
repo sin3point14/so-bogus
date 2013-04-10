@@ -10,6 +10,8 @@
 #include "Block/SparseTranspose.impl.hpp"
 #include "Block/SparseProduct.impl.hpp"
 
+#ifndef BOGUS_BLOCK_WITHOUT_EIGEN_BINDINGS
 #include "Block/EigenBindings.hpp"
+#endif
 
 #endif

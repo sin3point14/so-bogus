@@ -78,7 +78,7 @@ TEST( SparseBlock, MatrixVector )
 	bogus::SparseBlockMatrix< Eigen::MatrixXd > prod( sbm * copyofsbm );
 
 	sbm = structofsbm.transpose() ;
-    EXPECT_TRUE( sbm.majorIndex().valid ) ;
+	EXPECT_TRUE( sbm.majorIndex().valid ) ;
 	EXPECT_EQ( expected_1, sbm.transpose() * rhs ) ;
 	EXPECT_EQ( expected_2, ( sbm * res )  ) ;
 }
@@ -143,7 +143,7 @@ TEST( SparseBlock, Symmetric )
 	rhs.resize( ussbm.rows() ) ;
 	rhs.setOnes() ;
 
-    EXPECT_TRUE( ussbm.computeMinorIndex() ) ;
+	EXPECT_TRUE( ussbm.computeMinorIndex() ) ;
 
 	for( unsigned k = 0 ; k < 3 ; ++ k )
 	{
@@ -196,13 +196,13 @@ TEST( SparseBlock, ColMajor )
 	bogus::SparseBlockMatrix< BlockT, bogus::BlockMatrixFlags::COMPRESSED > rsbm ( sbm );
 	EXPECT_EQ( 4u, rsbm.rowsOfBlocks() ) ;
 	EXPECT_EQ( 4u, rsbm.majorIndex().outerSize() ) ;
-    EXPECT_TRUE( rsbm.majorIndex().valid ) ;
+	EXPECT_TRUE( rsbm.majorIndex().valid ) ;
 	EXPECT_EQ( 2u, rsbm.colsOfBlocks() ) ;
 	EXPECT_EQ( expected_1, rsbm * rhs ) ;
 	bogus::SparseBlockMatrix< BlockT > ursbm ( sbm );
 	EXPECT_EQ( 4u, ursbm.rowsOfBlocks() ) ;
 	EXPECT_EQ( 4u, ursbm.majorIndex().outerSize() ) ;
-    EXPECT_TRUE( ursbm.majorIndex().valid ) ;
+	EXPECT_TRUE( ursbm.majorIndex().valid ) ;
 	EXPECT_EQ( 2u, ursbm.colsOfBlocks() ) ;
 	EXPECT_EQ( expected_1, ursbm * rhs ) ;
 	bogus::SparseBlockMatrix< BlockT, bogus::BlockMatrixFlags::COL_MAJOR > tsbm ( rsbm.transpose() );
@@ -264,7 +264,7 @@ TEST( SparseBlock, MMult )
 		sbm.insertBack( 2, 1 ) = 5 * BlockT::Ones() ;
 
 		sbm.finalize() ;
-    ASSERT_FALSE( sbm.minorIndex().valid ) ;
+	ASSERT_FALSE( sbm.minorIndex().valid ) ;
 
 		bogus::SparseBlockMatrix< Eigen::Matrix3d > mm = sbm*sbm.transpose() ;
 		EXPECT_EQ( mm.block(0,2), mm.block(2,0).transpose() ) ;
@@ -286,7 +286,7 @@ TEST( SparseBlock, MMult )
 		sbm.insertBack( 2, 1 ) = 5 * BlockT::Ones() ;
 
 		sbm.finalize() ;
-    ASSERT_FALSE( sbm.minorIndex().valid ) ;
+	ASSERT_FALSE( sbm.minorIndex().valid ) ;
 
 		bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::BlockMatrixFlags::COL_MAJOR > mm = sbm*sbm.transpose() ;
 
@@ -301,3 +301,28 @@ TEST( SparseBlock, MMult )
 
 }
 
+TEST( SparseBlock, Inv )
+{
+	const Eigen::Vector2d expected_1 ( .5, .5 ) ;
+	Eigen::VectorXd expected_2( 6 ) ;
+	expected_2 << .25, .25, .25, .125, .125, .125 ;
+
+	bogus::DenseLDLT< double, 2 > ldlt(  2 * Eigen::Matrix2d::Identity() ) ;
+	EXPECT_EQ( expected_1, ldlt * Eigen::Vector2d::Ones() )  ;
+
+	Eigen::Matrix2d matRes = ldlt * Eigen::Matrix2d::Ones() ;
+	EXPECT_EQ( expected_1, matRes.diagonal() )  ;
+
+	typedef bogus::LU< Eigen::MatrixBase< Eigen::MatrixXd > > BlockT ;
+	bogus::SparseBlockMatrix< BlockT > isbm ;
+	isbm.setRows( 2, 3 ) ;
+	isbm.setCols( 2, 3 ) ;
+	isbm.insertBack( 0, 0 ).compute( 4 * Eigen::Matrix3d::Identity() ) ;
+	isbm.insertBack( 1, 1 ).compute( 8 * Eigen::Matrix3d::Identity() ) ;
+	isbm.finalize() ;
+
+	Eigen::VectorXd rhs( 6 ) ;
+	rhs.setOnes() ;
+
+	EXPECT_EQ( expected_2, ( isbm * rhs ) ) ;
+}

@@ -10,6 +10,8 @@
 #include "../Utils/Polynomial.hpp"
 #include "../Utils/Polynomial.impl.hpp"
 
+#include "../Utils/EigenLinearSolvers.hpp"
+
 #define BOGUS_PURE_ENUMERATIVE
 
 namespace bogus {
@@ -88,8 +90,8 @@ struct LocalSOCSolver< 3, Scalar, true, Strat >
 
 	  // Continuing enumerative fallback
 
-	  Vector u = -b, x0 = x ;
-	  x = LinearSolver< Dimension, Scalar >::solve( A, u ) ;
+	  Vector x0 = x ;
+	  x = DenseLU< Scalar, Dimension >( A ).solve( -b ) ;
 	  if( mu * Traits::np( x ) >= Traits::tp( x ).norm() )
 	  {
 		  // Sticking case

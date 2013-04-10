@@ -17,8 +17,6 @@ typename NonSmoothNewton< NSFunction >::Scalar NonSmoothNewton<NSFunction>::solv
   static const Scalar sigma2 = 1.e-4 ;
   static const Scalar alpha = .5 ;
 
-  typedef LinearSolver< Traits::dimension, Scalar > LinearSolver ;
-
   Vector F ;
   m_func.compute( x, F ) ;
   const Scalar Phi_init = F.squaredNorm() ;
@@ -44,6 +42,8 @@ typename NonSmoothNewton< NSFunction >::Scalar NonSmoothNewton<NSFunction>::solv
   Matrix dF_dx ;
   Vector dPhi_dx, dx ;
 
+  typename Traits::LUType lu ;
+
   for( unsigned iter = 0 ; iter < m_maxIters ; ++iter )
   {
 	m_func.computeJacobian( x, F, dF_dx ) ;
@@ -54,9 +54,10 @@ typename NonSmoothNewton< NSFunction >::Scalar NonSmoothNewton<NSFunction>::solv
 	  Phi_best = Phi ;
 	  x_best = x ;
 	}
+
 	dPhi_dx = dF_dx.transpose() * x ;
 
-	dx = - LinearSolver::solve( dF_dx, F ) ;
+	dx = - lu.compute( dF_dx ).solve( F ) ;
 	const Scalar proj = dx.dot( dPhi_dx ) ;
 
 	if( proj > 0 || proj * proj < sigma2 * dx.squaredNorm() * dPhi_dx.squaredNorm() )
