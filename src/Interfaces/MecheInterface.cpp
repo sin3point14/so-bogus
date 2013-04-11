@@ -9,7 +9,45 @@
 namespace bogus
 {
 
-double MecheInterface::solveFrictionProblem (
+struct MecheFrictionProblem::Data
+{
+	// Primal Data
+	//! M^-1
+	SparseBlockMatrix< LU< Eigen::MatrixBase< Eigen::MatrixXd > >, flags::COMPRESSED > MInv ;
+	//! E
+	bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::COMPRESSED > E ;
+	//! H
+	typedef Eigen::Matrix< double, 3, Eigen::Dynamic > HBlock ;
+	SparseBlockMatrix< HBlock, flags::COL_MAJOR > H;
+
+	const double *f ;
+	const double *w ;
+	const double *mu ;
+
+	//Dual
+
+	//! W
+	typedef bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC | bogus::flags::COMPRESSED > WType ;
+	WType W ;
+
+	Eigen::VectorXd b ;
+
+	// Cached data
+
+	//! M^-1 * H'
+	typedef Eigen::Matrix< double, Eigen::Dynamic, 3 > HtBlock ;
+	SparseBlockMatrix< HtBlock > MInvHt ;
+
+	Eigen::VectorXd MInvf ;
+
+} ;
+
+MecheFrictionProblem::~MecheFrictionProblem()
+{
+	delete m_data ;
+}
+
+void MecheFrictionProblem::fromPrimal (
 		unsigned int NObj, //!< number of subsystems
 		const unsigned int * ndof, //!< array of size \a NObj, the number of degree of freedom of each subsystem
 		const double *const * MassMat, //!< array of pointers to the mass matrix of each subsystem
@@ -24,115 +62,125 @@ double MecheInterface::solveFrictionProblem (
 		const double *const HB[], //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjB[i] </c> (\c NULL for an external object)
 		double r0[], //!< length \a nd : initialization for \a r (in world space coordinates) + used to return computed r
 		double v0[] //!< length \a m: initialization for v + to return computed v
-		  )
+		)
 {
+	delete m_data ;
+	m_data = new Data() ;
+
 	std::vector< unsigned > dofs( NObj ) ;
 	std::copy( ndof, ndof + NObj, dofs.begin() ) ;
 
 	// Build M^-1
 
-	SparseBlockMatrix< LU< Eigen::MatrixBase< Eigen::MatrixXd > >, flags::COMPRESSED > MInv ;
-	MInv.reserve( NObj ) ;
-	MInv.setRows( dofs ) ;
-	MInv.setCols( dofs ) ;
+	m_data->MInv.reserve( NObj ) ;
+	m_data->MInv.setRows( dofs ) ;
+	m_data->MInv.setCols( dofs ) ;
 
 	for( unsigned i = 0 ; i < NObj ; ++i )
 	{
-	   MInv.insertBack( i, i ) ;
+	   m_data->MInv.insertBack( i, i ) ;
 	}
-	MInv.finalize() ;
+	m_data->MInv.finalize() ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
 	for( unsigned i = 0 ; i < NObj ; ++ i )
 	{
-		MInv.block(i).compute( Eigen::MatrixXd::Map( MassMat[i], dofs[i], dofs[i] ) ) ;
+		m_data->MInv.block(i).compute( Eigen::MatrixXd::Map( MassMat[i], dofs[i], dofs[i] ) ) ;
 	}
 
 	// E
 	Eigen::Map< const Eigen::Matrix< double, Eigen::Dynamic, 3 > > E_flat( E_in, 3*n_in, 3 ) ;
 
-	bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::COMPRESSED > E ;
-	E.reserve( n_in ) ;
-	E.setRows( n_in, 3 ) ;
-	E.setCols( n_in, 3 ) ;
+	m_data->E.reserve( n_in ) ;
+	m_data->E.setRows( n_in, 3 ) ;
+	m_data->E.setCols( n_in, 3 ) ;
 	for( unsigned i = 0 ; i < n_in ; ++i )
 	{
-		E.insertBack( i, i ) = E_flat.block< 3,3 > ( 3*i, 0 ) ;
+		m_data->E.insertBack( i, i ) = E_flat.block< 3,3 > ( 3*i, 0 ) ;
 	}
-	E.finalize() ;
-	E.cacheTranspose() ;
+	m_data->E.finalize() ;
+	m_data->E.cacheTranspose() ;
 
 
 	// Build H
-	typedef Eigen::Matrix< double, 3, Eigen::Dynamic > HBlock ;
-	SparseBlockMatrix< HBlock, flags::COL_MAJOR > H;
-	H.reserve( 2*n_in ) ;
-	H.setRows( n_in, 3 ) ;
-	H.setCols( dofs ) ;
+	m_data->H.reserve( 2*n_in ) ;
+	m_data->H.setRows( n_in, 3 ) ;
+	m_data->H.setCols( dofs ) ;
 	for( unsigned i = 0 ; i < n_in ; ++i )
 	{
-		const Eigen::Matrix3d Et = E.diagonal(i).transpose() ;
+		const Eigen::Matrix3d Et = m_data->E.diagonal(i).transpose() ;
 		if( ObjB[i] == -1 )
 		{
-			H.insertBack( i, ObjA[i] ) =  Et *
+			m_data->H.insertBack( i, ObjA[i] ) =  Et *
 					Eigen::MatrixXd::Map( HA[i], 3, dofs[ ObjA[i] ] ) ;
 		} else if( ObjB[i] == ObjA[i] )
 		{
-			H.insertBack( i, ObjA[i] ) =  Et *
+			m_data->H.insertBack( i, ObjA[i] ) =  Et *
 					( Eigen::MatrixXd::Map( HA[i], 3, dofs[ ObjA[i] ] ) -
 					  Eigen::MatrixXd::Map( HB[i], 3, dofs[ ObjA[i] ] ) ) ;
 		} else {
-			H.insertBack( i, ObjA[i] ) =  Et *
+			m_data->H.insertBack( i, ObjA[i] ) =  Et *
 					Eigen::MatrixXd::Map( HA[i], 3, dofs[ ObjA[i] ] ) ;
-			H.insertBack( i, ObjB[i] ) =  - Et *
+			m_data->H.insertBack( i, ObjB[i] ) =  - Et *
 					Eigen::MatrixXd::Map( HB[i], 3, dofs[ ObjB[i] ] ) ;
 		}
 	}
-	H.finalize() ;
+	m_data->H.finalize() ;
 
-//	std::cout << H << std::endl ;
+	m_data->f = f_in ;
+	m_data->w = w_in ;
+	m_data->mu = mu_in ;
 
-	// M^-1 * H'
-	typedef Eigen::Matrix< double, Eigen::Dynamic, 3 > HtBlock ;
-	const SparseBlockMatrix< HtBlock > MInvHt ( MInv * H.transpose() );
+	m_r = r0 ;
+	m_v = v0 ;
+}
 
-//	std::cout << MInvHt << std::endl ;
 
-	//W
-	typedef bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC | bogus::flags::COMPRESSED > WType ;
-	WType W = H * MInvHt ;
+double MecheFrictionProblem::solve(
+			bool deterministic, //!< Whether the Gauss-Seidel should be eterministic
+			double tol,                  //!< Gauss-Seidel tolerance. 0. means GS's default
+			unsigned maxIters //!< Max number of iterations. 0 means GS's default
+			)
+{
+	assert( m_data ) ;
+	const unsigned m = m_data->H.cols() ;
+	const unsigned n = m_data->H.rowsOfBlocks() ;
 
-	W.cacheTranspose() ; // More efficient Gauss-seidel
-	bogus::GaussSeidel< WType > gs( W ) ;
+	// If dual has not been computed yet
+	if( m_data->W.rowsOfBlocks() != n )
+	{
+		// M^-1 * H'
+		m_data->MInvHt = m_data->MInv * m_data->H.transpose() ;
 
-	// b
-	const Eigen::VectorXd MInvf = MInv * Eigen::VectorXd::Map( f_in, MInv.rows() ) ;
-	const Eigen::VectorXd uf =Eigen::VectorXd::Map( w_in, 3*n_in) ;
-	const Eigen::VectorXd b = ( E.transpose() * uf ) - H * ( MInvf );
+		//W
+		m_data->W = m_data->H * m_data->MInvHt ;
+		m_data->W.cacheTranspose() ; // More efficient Gauss-seidel
 
-//	std::cout << W << std::endl ;
-//	std::cout << b.transpose() << std::endl ;
-//	std::cout << ( Eigen::VectorXd::Map( w_in, 3*n_in) ).transpose() << std::endl ;
-//	std::cout << ( E.transpose() * uf ).transpose() << std::endl ;
-//	std::cout << ( E.transpose() * Eigen::VectorXd::Map( w_in, 3*n_in) ).transpose() << std::endl ;
+		// M^-1 f, b
+		m_data->MInvf = m_data->MInv * Eigen::VectorXd::Map( m_data->f, m ) ;
+		m_data->b = ( m_data->E.transpose() * Eigen::VectorXd::Map( m_data->w, 3*n) )
+				- m_data->H * ( m_data->MInvf );
+	}
 
-	// mu
-	std::vector< double > mu( n_in ) ;
-	std::copy( mu_in, mu_in + n_in, mu.begin() ) ;
 
 	// r to local coords
-	Eigen::Map< Eigen::VectorXd > r( r0, 3*n_in ) ;
-	Eigen::VectorXd r_loc = E.transpose() * r ;
+	Eigen::Map< Eigen::VectorXd > r( m_r, 3*n ) ;
+	Eigen::VectorXd r_loc = m_data->E.transpose() * r ;
 
-	double res = gs.solve( bogus::Coulomb3D( mu ), b, r_loc ) ;
+	bogus::GaussSeidel< Data::WType > gs( m_data->W ) ;
+	if( tol != 0. ) gs.setTol( tol );
+	if( maxIters != 0 ) gs.setMaxIters( maxIters );
+	gs.setDeterministic( deterministic );
+
+	double res = gs.solve( bogus::Coulomb3D( n, m_data->mu ), m_data->b, r_loc ) ;
 
 	// compute v
-	Eigen::VectorXd::Map( v0, MInv.rows() ) = MInvHt * r_loc -  MInvf ;
+	Eigen::VectorXd::Map( m_v, m ) = m_data->MInvHt * r_loc -  m_data->MInvf ;
 
 	// r to world coords
-	r = E * r_loc ;
+	r = m_data->E * r_loc ;
 
 
 	return res ;

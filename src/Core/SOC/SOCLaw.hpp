@@ -20,7 +20,7 @@ public:
 	typedef LocalProblemTraits< LocalMatrixType > ProblemTraits ;
 	typedef typename ProblemTraits::Scalar Scalar ;
 
-	SOCLaw( const std::vector< double >& mu ) ;
+	SOCLaw( const unsigned n, const double * mu ) ;
 
 	template< typename Derived, typename OtherDerived >
 	Scalar eval(
@@ -32,10 +32,10 @@ public:
 		Scalar sum = 0. ;
 		typename ProblemTraits::Vector lx, ly, fb ;
 
-		assert( (unsigned) x.rows() == m_mu.size() * ProblemTraits::dimension ) ;
-		assert( (unsigned) y.rows() == m_mu.size() * ProblemTraits::dimension ) ;
+		assert( (unsigned) x.rows() == m_n * ProblemTraits::dimension ) ;
+		assert( (unsigned) y.rows() == m_n * ProblemTraits::dimension ) ;
 
-		for( unsigned i = 0 ; i < m_mu.size() ; ++ i )
+		for( unsigned i = 0 ; i < m_n ; ++ i )
 		{
 			lx = ProblemTraits::segment( i, x ) ;
 			ly = ProblemTraits::segment( i, y ) ;
@@ -43,7 +43,7 @@ public:
 			sum += fb.squaredNorm() ;
 		}
 
-		return sum / ( 1 + m_mu.size() );
+		return sum / ( 1 + m_n );
 	}
 
 	bool solveLocal(
@@ -56,7 +56,8 @@ public:
 
 private:
 
-	const std::vector< double > &m_mu ;
+	const double * m_mu ;
+	const unsigned m_n ;
 	Scalar m_localTol ;
 
 } ;

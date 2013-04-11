@@ -234,14 +234,6 @@ protected:
 						 const RhsGetter &rhsGetter,
 						 double scale = 1.
 						  ) ;
-//	template < bool ColWise, typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock, typename LhsGetter, typename RhsGetter  >
-//	void setFromProduct_ColWise( const LhsIndex &lhsIdx, const RhsIndex &rhsIdx,
-//						 const std::vector< LhsBlock > &lhsData,
-//						 const std::vector< RhsBlock > &rhsData,
-//						 const LhsGetter &lhsGetter,
-//						 const RhsGetter &rhsGetter,
-//						 double scale = 1.
-//						  ) ;
 
 	template < typename RhsT, typename ResT, typename LocalResT >
 	void multiplyAndReduct( const RhsT& rhs, ResT& res, bool transposed, const LocalResT& ) const ;

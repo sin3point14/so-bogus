@@ -10,7 +10,8 @@ namespace bogus
 
 template < typename BlockMatrixType >
 GaussSeidel< BlockMatrixType >::GaussSeidel( const BlockMatrixBase< BlockMatrixType > & M )
-	: m_matrix( M ), m_maxIters( 250 ), m_tol( 1.e-6 ),
+	: m_matrix( M ),
+	  m_maxIters( 250 ), m_tol( 1.e-6 ), m_deterministic( false ),
 	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 )
 {
 	const unsigned d = ProblemTraits::dimension ;
@@ -62,6 +63,10 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	for( unsigned GSIter = 1 ; GSIter <= m_maxIters ; ++GSIter )
 	{
 		typename ProblemTraits::Vector lb, lx, ldx ;
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for schedule( dynamic, 16 ) private( lb,lx ldx ) if( !m_deterministic )
+#endif
 		for( unsigned i = 0 ; i < n ; ++ i )
 		{
 			if( skip[i] ) {

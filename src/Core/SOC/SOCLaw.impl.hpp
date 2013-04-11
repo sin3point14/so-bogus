@@ -11,8 +11,8 @@
 namespace bogus {
 
 template < typename LocalMatrixType, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
-SOCLaw< LocalMatrixType, DeSaxceCOV, Strat >::SOCLaw( const std::vector< double >& mu )
-	: m_mu(mu), m_localTol( std::pow( NumTraits< Scalar >::epsilon(), .75 ) )
+SOCLaw< LocalMatrixType, DeSaxceCOV, Strat >::SOCLaw(const unsigned n, const double *mu )
+	: m_mu(mu), m_n(n), m_localTol( std::pow( NumTraits< Scalar >::epsilon(), .75 ) )
 {
 }
 

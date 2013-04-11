@@ -23,6 +23,10 @@ public:
 				  const Eigen::MatrixBase< Derived >&b,
 				  Eigen::MatrixBase< OtherDerived > &x ) const ;
 
+	void setMaxIters( unsigned maxIters ) { m_maxIters = maxIters ; }
+	void setTol( double tol ) { m_tol = tol ; }
+	void setDeterministic( bool deterministic ) { m_deterministic = deterministic ; }
+
 private:
 	const BlockMatrixBase< BlockMatrixType > & m_matrix ;
 	std::vector< LocalMatrixType > m_localMatrices ;
@@ -30,6 +34,7 @@ private:
 
 	unsigned m_maxIters ;
 	Scalar m_tol ;
+	bool m_deterministic ;
 
 	unsigned m_evalEvery ;
 	Scalar m_skipTol ;

@@ -77,10 +77,7 @@ TEST( GaussSeidel, Small )
 
 	bogus::GaussSeidel< WType > gs( W ) ;
 
-	std::vector< double > mu ;
-	mu.resize(2) ;
-	mu[0] = 0.5 ;
-	mu[1] = 0.7 ;
+	double mu[2] = { 0.5, 0.7 } ;
 
 	Eigen::VectorXd sol( 6 ) ;
 	sol << 0.0152695, 0.0073010, 0.0022325, 0.0, 0.0, 0.0 ;
@@ -88,22 +85,22 @@ TEST( GaussSeidel, Small )
 	Eigen::VectorXd x( W.rows() ) ;
 
 	x.setOnes() ;
-	double res = gs.solve( bogus::Coulomb3D( mu ), b, x ) ;
+	double res = gs.solve( bogus::Coulomb3D( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 
 	x.setOnes() ;
-	res = gs.solve( bogus::SOCLaw< Eigen::Matrix3d, true, bogus::local_soc_solver::PureNewton >( mu ), b, x ) ;
+	res = gs.solve( bogus::SOCLaw< Eigen::Matrix3d, true, bogus::local_soc_solver::PureNewton >( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 
 	x.setOnes() ;
-	res = gs.solve( bogus::SOCLaw< Eigen::Matrix3d, true, bogus::local_soc_solver::PureEnumerative >( mu ), b, x ) ;
+	res = gs.solve( bogus::SOCLaw< Eigen::Matrix3d, true, bogus::local_soc_solver::PureEnumerative >( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 
 	x.setOnes() ;
-	res = gs.solve( bogus::SOCLaw< Eigen::Matrix3d, true, bogus::local_soc_solver::RevHybrid >( mu ), b, x ) ;
+	res = gs.solve( bogus::SOCLaw< Eigen::Matrix3d, true, bogus::local_soc_solver::RevHybrid >( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 }

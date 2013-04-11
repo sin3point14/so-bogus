@@ -4,10 +4,14 @@
 namespace bogus
 {
 
-struct MecheInterface
+class MecheFrictionProblem
 {
+	MecheFrictionProblem()
+		: m_data( 0 ), m_r( 0 ), m_v( 0 )
+	{}
+	~MecheFrictionProblem() ;
 
-	static double solveFrictionProblem (
+	void fromPrimal (
 		unsigned int NObj, //!< number of subsystems
 		const unsigned int * ndof, //!< array of size \a NObj, the number of degree of freedom of each subsystem
 		const double *const * MassMat, //!< array of pointers to the mass matrix of each subsystem
@@ -22,8 +26,20 @@ struct MecheInterface
 		const double *const HB[], //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjB[i] </c> (\c NULL for an external object)
 		double r0[], //!< length \a nd : initialization for \a r (in world space coordinates) + used to return computed r
 		double v0[] //!< length \a m: initialization for v + to return computed v
+	);
 
-		  );
+	double solve(
+			bool deterministic = false,       //!< Whether the Gauss-Seidel should be eterministic
+			double tol = 0.,                  //!< Gauss-Seidel tolerance. 0. means GS's default
+			unsigned maxIters = 0             //!< Max number of iterations. 0 means GS's default
+			);
+
+	protected:
+		struct Data  ;
+
+		Data* m_data ;
+		double * m_r ;
+		double * m_v ;
 
 } ;
 
