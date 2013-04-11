@@ -1,7 +1,7 @@
 
-#include "Block.hpp"
-#include "GaussSeidel.hpp"
-#include "SecondOrder.hpp"
+#include "Core/Block.impl.hpp"
+#include "Core/GaussSeidel.impl.hpp"
+#include "Core/SecondOrder.impl.hpp"
 
 #include <Eigen/LU>
 #include <Eigen/Cholesky>

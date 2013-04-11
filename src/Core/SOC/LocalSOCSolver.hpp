@@ -5,16 +5,6 @@
 
 namespace bogus {
 
-namespace local_soc_solver
-{
-enum Strategy
-{
-	PureNewton,
-	PureEnumerative,
-	Hybrid,
-	RevHybrid
-} ;
-}
 
 template< unsigned Dimension, typename Scalar, bool DeSaxceCOV,
 		   local_soc_solver::Strategy Strat = local_soc_solver::Hybrid  >

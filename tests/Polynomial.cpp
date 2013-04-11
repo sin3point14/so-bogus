@@ -1,6 +1,6 @@
 
-#include "Utils/Polynomial.hpp"
-#include "Utils/Polynomial.impl.hpp"
+#include "Core/Utils/Polynomial.hpp"
+#include "Core/Utils/Polynomial.impl.hpp"
 
 #include <gtest/gtest.h>
 

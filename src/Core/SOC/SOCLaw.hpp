@@ -3,7 +3,7 @@
 
 #include <Eigen/Core>
 
-#include "../GaussSeidel/LocalProblem.hpp"
+#include "../GaussSeidel.fwd.hpp"
 #include "FischerBurmeister.hpp"
 #include "LocalSOCSolver.hpp"
 
@@ -13,7 +13,7 @@ namespace bogus
 {
 
 template < typename LocalMatrixType, bool DeSaxceCOV,
-		   local_soc_solver::Strategy Strat = local_soc_solver::Hybrid  >
+		   local_soc_solver::Strategy Strat >
 class SOCLaw
 {
 public:

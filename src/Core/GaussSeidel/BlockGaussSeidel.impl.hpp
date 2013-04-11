@@ -1,8 +1,8 @@
 #ifndef BOGUS_BLOCK_GAUSS_SEIDEL_IMPL_HPP
 #define BOGUS_BLOCK_GAUSS_SEIDEL_IMPL_HPP
 
-#include "../Block/BlockMatrix.hpp"
 #include "BlockGaussSeidel.hpp"
+#include "../Block/BlockMatrix.hpp"
 
 namespace bogus
 {

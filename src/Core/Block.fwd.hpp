@@ -20,10 +20,10 @@ template < typename Derived >
 struct BlockObjectBase ;
 
 template < typename Derived >
-struct BlockMatrixBase ;
+class BlockMatrixBase ;
 
 template < typename Derived >
-struct SparseBlockMatrixBase ;
+class SparseBlockMatrixBase ;
 
 template < typename BlockT, int Flags = flags::NONE >
 class SparseBlockMatrix  ;

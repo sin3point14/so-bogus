@@ -2,7 +2,7 @@
 
 //#define BOGUS_DONT_PARALLELIZE
 
-#include "Block.hpp"
+#include "Core/Block.impl.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Sparse>

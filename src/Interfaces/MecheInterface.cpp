@@ -1,8 +1,8 @@
 #include "MecheInterface.hpp"
 
-#include "../Block.hpp"
-#include "../GaussSeidel.hpp"
-#include "../SecondOrder.hpp"
+#include "../Core/Block.impl.hpp"
+#include "../Core/GaussSeidel.impl.hpp"
+#include "../Core/SecondOrder.impl.hpp"
 
 #include <algorithm>
 
@@ -42,7 +42,9 @@ double MecheInterface::solveFrictionProblem (
 	}
 	MInv.finalize() ;
 
+#ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
+#endif
 	for( unsigned i = 0 ; i < NObj ; ++ i )
 	{
 		MInv.block(i).compute( Eigen::MatrixXd::Map( MassMat[i], dofs[i], dofs[i] ) ) ;
