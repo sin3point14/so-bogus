@@ -1,5 +1,7 @@
 #include <iostream>
 
+//#define BOGUS_DONT_PARALLELIZE
+
 #include "Block.hpp"
 
 #include <Eigen/Core>
@@ -272,7 +274,15 @@ TEST( SparseBlock, MMult )
 		EXPECT_EQ( mm.block(2,1), mm.block(1,2).transpose() ) ;
 		EXPECT_EQ( mm.diagonal(2), Eigen::Matrix3d::Constant( 136 ) ) ;
 
+		mm.setFromProduct< false >( sbm*sbm.transpose() ) ;
+		EXPECT_EQ( mm.block(0,2), mm.block(2,0).transpose() ) ;
+		EXPECT_EQ( mm.block(2,1), mm.block(1,2).transpose() ) ;
+		EXPECT_EQ( mm.diagonal(2), Eigen::Matrix3d::Constant( 136 ) ) ;
+
 		bogus::SparseBlockMatrix< Eigen::Matrix4d, bogus::BlockMatrixFlags::COMPRESSED | bogus::BlockMatrixFlags::SYMMETRIC > mm_t = sbm.transpose()*sbm ;
+		ASSERT_EQ( mm_t.nBlocks(), 3u ) ;
+		EXPECT_EQ( mm_t.diagonal(1), Eigen::Matrix4d::Constant( 78 ) ) ;
+		mm_t.setFromProduct< false > ( sbm.transpose()*sbm ) ;
 		ASSERT_EQ( mm_t.nBlocks(), 3u ) ;
 		EXPECT_EQ( mm_t.diagonal(1), Eigen::Matrix4d::Constant( 78 ) ) ;
 	}
@@ -295,7 +305,16 @@ TEST( SparseBlock, MMult )
 		EXPECT_EQ( mm.block(2,1), mm.block(1,2).transpose() ) ;
 		EXPECT_EQ( mm.diagonal(2), Eigen::Matrix3d::Constant( 136 ) ) ;
 
+		mm.setFromProduct< false >( sbm*sbm.transpose() ) ;
+		EXPECT_EQ( mm.block(0,2), mm.block(2,0).transpose() ) ;
+		EXPECT_EQ( mm.block(2,1), mm.block(1,2).transpose() ) ;
+		EXPECT_EQ( mm.diagonal(2), Eigen::Matrix3d::Constant( 136 ) ) ;
+
 		bogus::SparseBlockMatrix< Eigen::Matrix4d, bogus::BlockMatrixFlags::COL_MAJOR | bogus::BlockMatrixFlags::COMPRESSED | bogus::BlockMatrixFlags::SYMMETRIC > mm_t = sbm.transpose()*sbm ;
+		ASSERT_EQ( mm_t.nBlocks(), 3u ) ;
+		EXPECT_EQ( mm_t.diagonal(1), Eigen::Matrix4d::Constant( 78 ) ) ;
+
+		mm_t.setFromProduct< false > ( sbm.transpose()*sbm ) ;
 		ASSERT_EQ( mm_t.nBlocks(), 3u ) ;
 		EXPECT_EQ( mm_t.diagonal(1), Eigen::Matrix4d::Constant( 78 ) ) ;
 	}

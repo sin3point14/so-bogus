@@ -195,7 +195,7 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 
 	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
 	{
-		if ( ptr != base + inner.size() ) valid = false ;
+		valid &= ( ptr == base + inner.size() ) ;
 		++outer[ outIdx+1 ] ;
 		inner.push_back( inIdx ) ;
 	}

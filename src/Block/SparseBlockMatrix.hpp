@@ -156,7 +156,7 @@ public:
 	template < typename BlockT2 >
 	void cloneStructure( const SparseBlockMatrix< BlockT2, Traits::flags > &source ) ;
 
-	template < typename LhsT, typename RhsT >
+	template < bool ColWise, typename LhsT, typename RhsT >
 	void setFromProduct( const Product< LhsT, RhsT > &prod , double scale = 1. ) ;
 
 	const SparseBlockIndexBase& getIndex( const bool transpose, const bool colWise,
@@ -226,15 +226,22 @@ protected:
 	void setInnerOffets( SparseIndexType& index, const std::vector< Index > &blockSizes ) ;
 
 
-	template < typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock, typename LhsGetter, typename RhsGetter  >
-	void setFromProduct( const LhsIndex &lhsIdx,
-						 const RhsIndex &rhsIdx,
+	template < bool ColWise, typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock, typename LhsGetter, typename RhsGetter  >
+	void setFromProduct( const LhsIndex &lhsIdx, const RhsIndex &rhsIdx,
 						 const std::vector< LhsBlock > &lhsData,
 						 const std::vector< RhsBlock > &rhsData,
 						 const LhsGetter &lhsGetter,
 						 const RhsGetter &rhsGetter,
 						 double scale = 1.
 						  ) ;
+//	template < bool ColWise, typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock, typename LhsGetter, typename RhsGetter  >
+//	void setFromProduct_ColWise( const LhsIndex &lhsIdx, const RhsIndex &rhsIdx,
+//						 const std::vector< LhsBlock > &lhsData,
+//						 const std::vector< RhsBlock > &rhsData,
+//						 const LhsGetter &lhsGetter,
+//						 const RhsGetter &rhsGetter,
+//						 double scale = 1.
+//						  ) ;
 
 	template < typename RhsT, typename ResT, typename LocalResT >
 	void multiplyAndReduct( const RhsT& rhs, ResT& res, bool transposed, const LocalResT& ) const ;

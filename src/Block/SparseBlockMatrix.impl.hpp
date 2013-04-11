@@ -441,7 +441,7 @@ void SparseBlockMatrixBase<Derived>::cloneStructure( const SparseBlockMatrix< Bl
 	m_nBlocks = source.nBlocks() ;
 	rowMajorIndex() = source.rowMajorIndex() ;
 	colMajorIndex() = source.colMajorIndex() ;
-	m_minorIndex.valid = ! source.transposeCached() ;
+	m_minorIndex.valid &= !source.transposeCached() ;
 	m_transposeCached = false ;
 
 	this->m_cols = source.cols() ;

@@ -53,18 +53,19 @@ TEST( GaussSeidel, Small )
 	H.finalize() ;
 
 	//std::cout << MassMat << std::endl ;
-	//std::cout << InvMassMat << std::endl ;
-	//std::cout << H << std::endl ;
+//	std::cout << InvMassMat << std::endl ;
+//	std::cout << H << std::endl ;
 
 	typedef Eigen::Matrix< double, Eigen::Dynamic, 3 > GradBlockTransT ;
 	bogus::SparseBlockMatrix< GradBlockTransT, bogus::BlockMatrixFlags::COL_MAJOR >
 			MInvHt = InvMassMat * H.transpose() ;
 
+//	std::cout << MInvHt << std::endl ;
+
 	typedef bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::BlockMatrixFlags::SYMMETRIC | bogus::BlockMatrixFlags::COMPRESSED > WType ;
 	WType W = H * MInvHt ;
 
-	//std::cout << MInvHt << std::endl ;
-	//std::cout << W << std::endl ;
+//	std::cout << W << std::endl ;
 	W.cacheTranspose();
 
 	Eigen::VectorXd f( 6 ) ;
