@@ -1,3 +1,4 @@
+Block.fwd.hpp
 Block.hpp
 Block/BlockMatrix.hpp
 Block/BlockMatrix.impl.hpp
@@ -12,6 +13,8 @@ GaussSeidel.hpp
 GaussSeidel/BlockGaussSeidel.hpp
 GaussSeidel/BlockGaussSeidel.impl.hpp
 GaussSeidel/LocalProblem.hpp
+Interfaces/MecheInterface.hpp
+Interfaces/MecheInterface.cpp
 SOC/FischerBurmeister.cpp
 SOC/FischerBurmeister.hpp
 SOC/FischerBurmeister.impl.hpp

@@ -1,7 +1,7 @@
 #ifndef BOGUS_BLOCK_GAUSS_SEIDEL_HPP
 #define BOGUS_BLOCK_GAUSS_SEIDEL_HPP
 
-#include "../Block/BlockMatrix.hpp"
+#include "../Block.fwd.hpp"
 #include "../GaussSeidel/LocalProblem.hpp"
 
 namespace bogus

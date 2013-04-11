@@ -1,6 +1,7 @@
 #ifndef BOGUS_BLOCK_GAUSS_SEIDEL_IMPL_HPP
 #define BOGUS_BLOCK_GAUSS_SEIDEL_IMPL_HPP
 
+#include "../Block/BlockMatrix.hpp"
 #include "BlockGaussSeidel.hpp"
 
 namespace bogus
@@ -53,6 +54,8 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 		err_best = err_init ;
 		x_best = x ;
 	}
+
+//	std::cout << err_init << " /// " << err_zero << std::endl ;
 
 	std::vector< unsigned > skip( n, 0 ) ;
 

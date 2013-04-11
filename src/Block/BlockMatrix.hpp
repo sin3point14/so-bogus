@@ -1,6 +1,8 @@
 #ifndef BOGUS_BLOCKMATRIX_HPP
 #define BOGUS_BLOCKMATRIX_HPP
 
+#include "../Block.fwd.hpp"
+
 #include <vector>
 
 #if !( defined( _OPENMP ) || defined( BOGUS_DONT_PARALLELIZE ) )
@@ -12,7 +14,6 @@ namespace bogus
 
 typedef unsigned Index ;
 
-
 template < typename Derived >
 struct BlockObjectBase
 {
@@ -23,25 +24,10 @@ struct BlockObjectBase
 };
 
 template< typename Derived >
-struct BlockMatrixTraits
-{ } ;
-
-template< typename Derived >
 struct BlockMatrixTraits< BlockObjectBase< Derived > > {
 	typedef unsigned Index ;
 	typedef Derived PlainObjectType ;
 } ;
-
-struct BlockMatrixFlags
-{
-	enum {
-		NONE = 0,
-		COMPRESSED = 0x1,
-		COL_MAJOR = 0x2,
-		SYMMETRIC = 0x4
-	} ;
-} ;
-
 
 template < typename Derived >
 class BlockMatrixBase : public BlockObjectBase< Derived >

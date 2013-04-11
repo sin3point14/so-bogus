@@ -1,6 +1,8 @@
 #ifndef BOGUS_LINEAR_SOLVER_HPP
 #define BOGUS_LINEAR_SOLVER_HPP
 
+#include <cassert>
+
 namespace bogus {
 
 template < typename LSDerived >
