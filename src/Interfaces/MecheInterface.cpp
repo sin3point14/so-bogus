@@ -59,9 +59,7 @@ void MecheFrictionProblem::fromPrimal (
 		const int * const ObjA, //!< array of size \a n, the first object involved in the \a i-th contact (must be an internal object) (counted from 0)
 		const int * const ObjB, //!< array of size \a n, the second object involved in the \a i-th contact (-1 for an external object) (counted from 0)
 		const double *const HA[], //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjA[i] </c>
-		const double *const HB[], //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjB[i] </c> (\c NULL for an external object)
-		double r0[], //!< length \a nd : initialization for \a r (in world space coordinates) + used to return computed r
-		double v0[] //!< length \a m: initialization for v + to return computed v
+		const double *const HB[] //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjB[i] </c> (\c NULL for an external object)
 		)
 {
 	delete m_data ;
@@ -78,7 +76,7 @@ void MecheFrictionProblem::fromPrimal (
 
 	for( unsigned i = 0 ; i < NObj ; ++i )
 	{
-	   m_data->MInv.insertBack( i, i ) ;
+		m_data->MInv.insertBack( i, i ) ;
 	}
 	m_data->MInv.finalize() ;
 
@@ -119,7 +117,7 @@ void MecheFrictionProblem::fromPrimal (
 		{
 			m_data->H.insertBack( i, ObjA[i] ) =  Et *
 					( Eigen::MatrixXd::Map( HA[i], 3, dofs[ ObjA[i] ] ) -
-					  Eigen::MatrixXd::Map( HB[i], 3, dofs[ ObjA[i] ] ) ) ;
+					Eigen::MatrixXd::Map( HB[i], 3, dofs[ ObjA[i] ] ) ) ;
 		} else {
 			m_data->H.insertBack( i, ObjA[i] ) =  Et *
 					Eigen::MatrixXd::Map( HA[i], 3, dofs[ ObjA[i] ] ) ;
@@ -132,17 +130,16 @@ void MecheFrictionProblem::fromPrimal (
 	m_data->f = f_in ;
 	m_data->w = w_in ;
 	m_data->mu = mu_in ;
-
-	m_r = r0 ;
-	m_v = v0 ;
 }
 
 
 double MecheFrictionProblem::solve(
-			bool deterministic, //!< Whether the Gauss-Seidel should be eterministic
-			double tol,                  //!< Gauss-Seidel tolerance. 0. means GS's default
-			unsigned maxIters //!< Max number of iterations. 0 means GS's default
-			)
+		double *r,
+		double *v,
+		bool deterministic, //!< Whether the Gauss-Seidel should be eterministic
+		double tol,                  //!< Gauss-Seidel tolerance. 0. means GS's default
+		unsigned maxIters //!< Max number of iterations. 0 means GS's default
+		)
 {
 	assert( m_data ) ;
 	const unsigned m = m_data->H.cols() ;
@@ -166,8 +163,7 @@ double MecheFrictionProblem::solve(
 
 
 	// r to local coords
-	Eigen::Map< Eigen::VectorXd > r( m_r, 3*n ) ;
-	Eigen::VectorXd r_loc = m_data->E.transpose() * r ;
+	Eigen::VectorXd r_loc = m_data->E.transpose() * Eigen::VectorXd::Map( r, 3*n ) ; ;
 
 	bogus::GaussSeidel< Data::WType > gs( m_data->W ) ;
 	if( tol != 0. ) gs.setTol( tol );
@@ -177,10 +173,13 @@ double MecheFrictionProblem::solve(
 	double res = gs.solve( bogus::Coulomb3D( n, m_data->mu ), m_data->b, r_loc ) ;
 
 	// compute v
-	Eigen::VectorXd::Map( m_v, m ) = m_data->MInvHt * r_loc -  m_data->MInvf ;
+	if( v )
+	{
+		Eigen::VectorXd::Map( v, m ) = m_data->MInvHt * r_loc -  m_data->MInvf ;
+	}
 
 	// r to world coords
-	r = m_data->E * r_loc ;
+	Eigen::VectorXd::Map( r, 3*n ) = m_data->E * r_loc ;
 
 
 	return res ;

@@ -65,7 +65,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 		typename ProblemTraits::Vector lb, lx, ldx ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp parallel for schedule( dynamic, 16 ) private( lb,lx ldx ) if( !m_deterministic )
+#pragma omp parallel for schedule( dynamic, 16 ) private( lb, lx, ldx ) if( !m_deterministic )
 #endif
 		for( unsigned i = 0 ; i < n ; ++ i )
 		{
