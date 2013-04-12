@@ -29,12 +29,15 @@ public:
 	{
 		typedef FischerBurmeister< ProblemTraits::dimension, typename ProblemTraits::Scalar, DeSaxceCOV > FBFunction ;
 
-		Scalar sum = 0. ;
-		typename ProblemTraits::Vector lx, ly, fb ;
-
 		assert( (unsigned) x.rows() == m_n * ProblemTraits::dimension ) ;
 		assert( (unsigned) y.rows() == m_n * ProblemTraits::dimension ) ;
 
+		Scalar sum = 0. ;
+		typename ProblemTraits::Vector lx, ly, fb ;
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for private( lx, ly, fb ) reduction ( + : sum )
+#endif
 		for( unsigned i = 0 ; i < m_n ; ++ i )
 		{
 			lx = ProblemTraits::segment( i, x ) ;

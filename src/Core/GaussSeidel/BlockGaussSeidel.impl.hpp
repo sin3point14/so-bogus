@@ -11,7 +11,7 @@ namespace bogus
 template < typename BlockMatrixType >
 GaussSeidel< BlockMatrixType >::GaussSeidel( const BlockMatrixBase< BlockMatrixType > & M )
 	: m_matrix( M ),
-	  m_maxIters( 250 ), m_tol( 1.e-6 ), m_deterministic( false ),
+	  m_maxIters( 250 ), m_tol( 1.e-6 ), m_deterministic( true ),
 	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 )
 {
 	const unsigned d = ProblemTraits::dimension ;
@@ -98,7 +98,8 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 			const double err = law.eval( x_scaled, y ) ;
 
 			std::cout << "Finished iteration " << GSIter
-					  << " with residual " << err << std::endl ;
+					  << " with residual " << err
+					  << " (target: " << m_tol << " )" << std::endl ;
 
 			if( err < m_tol )
 			{
