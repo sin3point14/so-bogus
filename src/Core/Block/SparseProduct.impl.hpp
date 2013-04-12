@@ -24,6 +24,57 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Product< LhsT, RhsT > 
 	return this->derived() ;
 }
 
+template < typename IndexType >
+struct CompoundSparseBlockIndex
+{
+	typedef typename IndexType::Index Index ;
+	typedef typename IndexType::BlockPtr BlockPtr ;
+
+	CompoundSparseBlockIndex( const IndexType& index1, const IndexType &index2 )
+		: first( index1 ), second( index2 )
+	{
+		assert( index1.outerSize() == index2.outerSize() ) ;
+		assert( index1.innerSize() == index2.innerSize() ) ;
+	}
+
+	Index outerSize() const { return first.outerSize() ; }
+	Index innerSize() const { return first.innerSize() ; }
+
+	struct InnerIterator
+	{
+		InnerIterator( const CompoundSparseBlockIndex& index, Index outer )
+			: m_it1( index.first, outer ), m_it2( index.second, outer )
+		{
+		}
+
+		operator bool() const
+		{
+			return m_it1 || m_it2 ;
+		}
+
+		InnerIterator& operator++()
+		{
+			if( m_it1 ) ++ m_it1 ;
+			else        ++ m_it2 ;
+			return *this ;
+		}
+
+		Index inner() const {
+			return m_it1 ? m_it1.inner() : m_it2.inner() ;
+		}
+		BlockPtr ptr() const {
+			return m_it1 ? m_it1.ptr()   : m_it2.ptr() ;
+		}
+
+	private:
+		typename IndexType::InnerIterator m_it1 ;
+		typename IndexType::InnerIterator m_it2 ;
+	} ;
+
+	const IndexType& first ;
+	const IndexType& second ;
+} ;
+
 template < typename Derived >
 template < bool ColWise, typename LhsT, typename RhsT >
 void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT > &prod, double scale )
@@ -36,11 +87,6 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 	LhsGetter lhsGetter ;
 	typedef BlockTranspose< RhsTraits::is_symmetric, Prod::transposeRhs > RhsGetter ;
 	RhsGetter rhsGetter ;
-
-	SparseBlockIndex< > auxIndexLhs, auxIndexRhs ;
-
-	assert( ! LhsTraits::is_symmetric ) ;
-	assert( ! RhsTraits::is_symmetric ) ;
 
 	clear() ;
 	if( Prod::transposeLhs )
@@ -60,33 +106,64 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 		rowMajorIndex().innerOffsets = prod.rhs.rowMajorIndex().innerOffsets;
 	}
 
-	const SparseBlockIndexBase &lhsIdx = prod.lhs.getIndex( Prod::transposeLhs, ColWise, auxIndexLhs ) ;
-	const SparseBlockIndexBase &rhsIdx = prod.rhs.getIndex( Prod::transposeRhs, !ColWise, auxIndexRhs ) ;
 
-	if( lhsIdx.isCompressed() )
+
+
+	SparseBlockIndex< > auxIndexLhs, auxIndexRhs ;
+
+	assert( ! RhsTraits::is_symmetric ) ;
+
+	// This is ugly. Any idea ?
+
+	if( LhsTraits::is_symmetric )
 	{
+		assert( prod.lhs.minorIndex().valid ) ;
+		CompoundSparseBlockIndex< typename LhsTraits::SparseIndexType > lhsIdx( prod.lhs.majorIndex(), prod.lhs.minorIndex() ) ;
+
+		const SparseBlockIndexBase &rhsIdx = prod.rhs.getIndex( Prod::transposeRhs, !ColWise, auxIndexRhs ) ;
+
 		if( rhsIdx.isCompressed() )
 		{
-			setFromProduct< ColWise >( lhsIdx.asCompressed(), rhsIdx.asCompressed(),
+			setFromProduct< ColWise >( lhsIdx, rhsIdx.asCompressed(),
 							prod.lhs.blocks(), prod.rhs.blocks(),
 							lhsGetter, rhsGetter, scale ) ;
 		} else {
-			setFromProduct< ColWise >( lhsIdx.asCompressed(), rhsIdx.asUncompressed(),
+			setFromProduct< ColWise >( lhsIdx, rhsIdx.asUncompressed(),
 							prod.lhs.blocks(), prod.rhs.blocks(),
 							lhsGetter, rhsGetter, scale ) ;
 		}
+
+
 	} else {
-		if( rhsIdx.isCompressed() )
+		const SparseBlockIndexBase &lhsIdx = prod.lhs.getIndex( Prod::transposeLhs, ColWise, auxIndexLhs ) ;
+		const SparseBlockIndexBase &rhsIdx = prod.rhs.getIndex( Prod::transposeRhs, !ColWise, auxIndexRhs ) ;
+
+		if( lhsIdx.isCompressed() )
 		{
-			setFromProduct< ColWise >( lhsIdx.asUncompressed(), rhsIdx.asCompressed(),
-							prod.lhs.blocks(), prod.rhs.blocks(),
-							lhsGetter, rhsGetter, scale ) ;
+			if( rhsIdx.isCompressed() )
+			{
+				setFromProduct< ColWise >( lhsIdx.asCompressed(), rhsIdx.asCompressed(),
+								prod.lhs.blocks(), prod.rhs.blocks(),
+								lhsGetter, rhsGetter, scale ) ;
+			} else {
+				setFromProduct< ColWise >( lhsIdx.asCompressed(), rhsIdx.asUncompressed(),
+								prod.lhs.blocks(), prod.rhs.blocks(),
+								lhsGetter, rhsGetter, scale ) ;
+			}
 		} else {
-			setFromProduct< ColWise >( lhsIdx.asUncompressed(), rhsIdx.asUncompressed(),
-							prod.lhs.blocks(), prod.rhs.blocks(),
-							lhsGetter, rhsGetter, scale ) ;
+			if( rhsIdx.isCompressed() )
+			{
+				setFromProduct< ColWise >( lhsIdx.asUncompressed(), rhsIdx.asCompressed(),
+								prod.lhs.blocks(), prod.rhs.blocks(),
+								lhsGetter, rhsGetter, scale ) ;
+			} else {
+				setFromProduct< ColWise >( lhsIdx.asUncompressed(), rhsIdx.asUncompressed(),
+								prod.lhs.blocks(), prod.rhs.blocks(),
+								lhsGetter, rhsGetter, scale ) ;
+			}
 		}
 	}
+
 
 
 }
@@ -98,7 +175,8 @@ struct SparseBlockProductIndex
 	typedef typename SparseMatrixT::Traits Traits ;
 	typedef typename SparseMatrixT::BlockPtr BlockPtr ;
 	typedef typename SparseMatrixT::Index Index ;
-	typedef std::pair< std::vector< BlockPtr >, std::vector< BlockPtr > > BlockComputation ;
+	typedef std::vector< std::pair< bool, BlockPtr > > BlockComputationFactor ;
+	typedef std::pair< BlockComputationFactor, BlockComputationFactor > BlockComputation ;
 
 	typedef std::vector< BlockComputation > InnerType;
 	typedef typename InnerType::const_iterator InnerIterator;
@@ -137,16 +215,18 @@ struct SparseBlockProductIndex
 			const Index last = Traits::is_symmetric ? i+1 : innerSize ;
 			for( Index j = 0 ; j != last ; ++ j )
 			{
-				typename LhsIndex::InnerIterator lhs_it ( lhsIdx, Traits::is_col_major ? j : i ) ;
-				typename RhsIndex::InnerIterator rhs_it ( rhsIdx, Traits::is_col_major ? i : j ) ;
+				const Index lhsOuter = Traits::is_col_major ? j : i ;
+				const Index rhsOuter = Traits::is_col_major ? i : j ;
+				typename LhsIndex::InnerIterator lhs_it ( lhsIdx, lhsOuter ) ;
+				typename RhsIndex::InnerIterator rhs_it ( rhsIdx, rhsOuter ) ;
 
 				while( lhs_it && rhs_it )
 				{
 					if( lhs_it.inner() > rhs_it.inner() ) ++rhs_it ;
 					else if( lhs_it.inner() < rhs_it.inner() ) ++lhs_it ;
 					else {
-						currentBlock.first.push_back( lhs_it.ptr() ) ;
-						currentBlock.second.push_back( rhs_it.ptr() ) ;
+						currentBlock.first. push_back( std::make_pair( lhs_it.inner() > lhsOuter, lhs_it.ptr() ) ) ;
+						currentBlock.second.push_back( std::make_pair( rhs_it.inner() > rhsOuter, rhs_it.ptr() ) ) ;
 						++lhs_it ;
 						++rhs_it ;
 					}
@@ -183,7 +263,8 @@ struct SparseBlockProductIndex< true, Derived >
 	typedef typename SparseMatrixT::Traits Traits ;
 	typedef typename SparseMatrixT::BlockPtr BlockPtr ;
 	typedef typename SparseMatrixT::Index Index ;
-	typedef std::pair< std::vector< BlockPtr >, std::vector< BlockPtr > > BlockComputation ;
+	typedef std::vector< std::pair< bool, BlockPtr > > BlockComputationFactor ;
+	typedef std::pair< BlockComputationFactor, BlockComputationFactor > BlockComputation ;
 
 	typedef std::map< Index, BlockComputation > InnerType;
 	typedef typename InnerType::const_iterator InnerIterator;
@@ -226,8 +307,8 @@ struct SparseBlockProductIndex< true, Derived >
 						 ++lhs_it )
 					{
 						BlockComputation &bc = loc_compute[ rhs_it.inner() ][ lhs_it.inner() ] ;
-						bc.first.push_back( lhs_it.ptr() ) ;
-						bc.second.push_back( rhs_it.ptr() ) ;
+						bc.first.push_back( std::make_pair( lhs_it.inner() > i, lhs_it.ptr() ) ) ;
+						bc.second.push_back( std::make_pair( rhs_it.inner() > i, rhs_it.ptr() ) ) ;
 					}
 				}
 			} else {
@@ -238,8 +319,8 @@ struct SparseBlockProductIndex< true, Derived >
 						 ++rhs_it )
 					{
 						BlockComputation &bc = loc_compute[ lhs_it.inner() ][ rhs_it.inner() ] ;
-						bc.first.push_back( lhs_it.ptr() ) ;
-						bc.second.push_back( rhs_it.ptr() ) ;
+						bc.first.push_back( std::make_pair( lhs_it.inner() > i, lhs_it.ptr() ) ) ;
+						bc.second.push_back( std::make_pair( rhs_it.inner() > i, rhs_it.ptr() ) ) ;
 					}
 				}
 			}
@@ -327,12 +408,12 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(
 	{
 		BlockType& b = block( i ) ;
 		const BlockComputation &bc = *flat_compute[i] ;
-		b = lhsGetter.get( lhsData[ bc.first[0] ], false )
-				* rhsGetter.get( rhsData[ bc.second[0] ], false ) ;
+		b = lhsGetter.get( lhsData[ bc.first[0].second ], bc.first[0].first)
+				* rhsGetter.get( rhsData[ bc.second[0].second ], bc.second[0].first) ;
 		for( unsigned j = 1 ; j != bc.first.size() ; ++ j)
 		{
-			b += lhsGetter.get( lhsData[ bc.first[j] ], false )
-					* rhsGetter.get( rhsData[ bc.second[j] ], false ) ;
+			b += lhsGetter.get( lhsData[ bc.first[j].second ], bc.first[j].first)
+					* rhsGetter.get( rhsData[ bc.second[j].second ], bc.second[j].first) ;
 		}
 		b *= scale ;
 	}
@@ -342,6 +423,8 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(
 	assert( m_majorIndex.valid ) ;
 
 	m_minorIndex.valid = false ;
+	m_transposeCached  = false ;
+	Finalizer::finalize( *this ) ;
 }
 
 } //namespace bogus

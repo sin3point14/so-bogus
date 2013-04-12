@@ -13,6 +13,9 @@ namespace bogus
 template < typename BlockT, int Flags >
 class SparseBlockMatrix  ;
 
+template < bool DontFinalize, bool Symmetric, bool Compressed >
+struct SparseBlockMatrixFinalizer ;
+
 template < typename Derived >
 class SparseBlockMatrixBase : public BlockMatrixBase< Derived >
 {
@@ -163,6 +166,9 @@ public:
 									SparseBlockIndex< >& aux ) const ;
 
 protected:
+
+	typedef SparseBlockMatrixFinalizer< Traits::dont_finalize, Traits::is_symmetric, Traits::is_compressed > Finalizer ;
+
 	void allocateBlock( BlockPtr &ptr )
 	{
 #ifndef BOGUS_DONT_PARALLELIZE
@@ -256,9 +262,10 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
 	typedef BlockT BlockType ;
 
 	enum {
-		is_compressed = Flags & flags::COMPRESSED,
-		is_symmetric  = Flags & flags::SYMMETRIC,
-		is_col_major  = Flags & flags::COL_MAJOR
+		is_compressed  = Flags & flags::COMPRESSED,
+		is_symmetric   = Flags & flags::SYMMETRIC,
+		is_col_major   = Flags & flags::COL_MAJOR,
+		dont_finalize  = Flags & flags::DONT_FINALIZE
 	} ;
 	enum {
 		flags         = Flags

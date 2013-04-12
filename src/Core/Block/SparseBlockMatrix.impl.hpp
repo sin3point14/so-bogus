@@ -8,6 +8,7 @@
 
 namespace bogus {
 
+
 template < typename Derived >
 void SparseBlockMatrixBase< Derived >::setRows(
 		const std::vector< Index > &rowsPerBlocks )
@@ -41,11 +42,34 @@ void SparseBlockMatrixBase< Derived >::setInnerOffets(
 	}
 }
 
+template < bool DontFinalize, bool Symmetric, bool Compressed >
+struct SparseBlockMatrixFinalizer
+{
+	template < typename Derived >
+	static void finalize( SparseBlockMatrixBase< Derived >& ) { }
+} ;
+template < bool Compressed >
+struct SparseBlockMatrixFinalizer< false, true, Compressed >
+{
+	template < typename Derived >
+	static void finalize( SparseBlockMatrixBase< Derived >& matrix )
+	{ matrix.computeMinorIndex() ; }
+} ;
+template < >
+struct SparseBlockMatrixFinalizer< false, true, true >
+{
+	template < typename Derived >
+	static void finalize( SparseBlockMatrixBase< Derived >& matrix )
+	{ matrix.cacheTranspose(); }
+} ;
+
 template < typename Derived >
 void SparseBlockMatrixBase< Derived >::finalize()
 {
 	assert( m_majorIndex.valid ) ;
 	m_majorIndex.finalize() ;
+
+	Finalizer::finalize( *this ) ;
 }
 
 template < typename Derived >
@@ -505,6 +529,8 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 		}
 		finalize() ;
 	}
+
+	Finalizer::finalize( *this ) ;
 
 	return this->derived();
 }

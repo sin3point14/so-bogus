@@ -256,6 +256,11 @@ TEST( SparseBlock, MMult )
 	BlockT sample ;
 	sample<< 1, 2, 3, 4, 3, 2, 1, 0, 1, 2, 3, 4 ;
 
+	Eigen::VectorXd rhs( 12 ), expected_1( 8 ) ;
+	rhs << 4, 2, 1, 0, 7, 6, 9, 8, 2, 4, 6, 8 ;
+
+	expected_1 << 30410, 31550, 32690, 33830, 46674, 46674, 46674, 46674 ;
+
 	{
 		bogus::SparseBlockMatrix< BlockT, bogus::flags::COMPRESSED > sbm ;
 		sbm.setRows( 4, 3 ) ;
@@ -285,6 +290,16 @@ TEST( SparseBlock, MMult )
 		mm_t.setFromProduct< false > ( sbm.transpose()*sbm ) ;
 		ASSERT_EQ( mm_t.nBlocks(), 3u ) ;
 		EXPECT_EQ( mm_t.diagonal(1), Eigen::Matrix4d::Constant( 78 ) ) ;
+
+		EXPECT_TRUE( mm_t.minorIndex().valid ) ;
+
+		bogus::SparseBlockMatrix< Eigen::MatrixXd > mm_t_mt = mm_t  * sbm.transpose() ;
+		EXPECT_EQ( expected_1, mm_t_mt*rhs ) ;
+		EXPECT_EQ( expected_1, mm_t * ( sbm.transpose() * rhs )  ) ;
+		bogus::SparseBlockMatrix< Eigen::MatrixXd > mm_t_mt_chk = sbm.transpose() * mm;
+		EXPECT_EQ( expected_1, mm_t_mt_chk*rhs );
+		mm_t_mt.setFromProduct< false > ( mm_t  * sbm.transpose() ) ;
+		EXPECT_EQ( expected_1, mm_t_mt*rhs );
 	}
 	{
 		bogus::SparseBlockMatrix< BlockT, bogus::flags::COL_MAJOR | bogus::flags::COMPRESSED > sbm ;

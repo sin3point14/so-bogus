@@ -153,7 +153,6 @@ double MecheFrictionProblem::solve(
 
 		//W
 		m_data->W = m_data->H * m_data->MInvHt ;
-		m_data->W.cacheTranspose() ; // More efficient Gauss-seidel
 
 		// M^-1 f, b
 		m_data->MInvf = m_data->MInv * Eigen::VectorXd::Map( m_data->f, m ) ;

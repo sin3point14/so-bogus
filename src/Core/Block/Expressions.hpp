@@ -72,17 +72,17 @@ struct BlockTranspose< false, true > {
 	static typename BlockT::ConstTransposeReturnType get( const BlockT& src, bool )
 	{ return src.transpose() ; }
 } ;
-template < >
-struct BlockTranspose< true, true > {
+template < bool DoTranspose >
+struct BlockTranspose< true, DoTranspose > {
+//	template < typename BlockT >
+//	static BlockT get( const BlockT& src, bool afterDiag )
+//	{ return afterDiag ? src : src.transpose() ; }
+//} ;
+//template < >
+//struct BlockTranspose< true, false > {
 	template < typename BlockT >
 	static BlockT get( const BlockT& src, bool afterDiag )
-	{ return afterDiag ? src : src.transpose() ; }
-} ;
-template < >
-struct BlockTranspose< true, false > {
-	template < typename BlockT >
-	static BlockT get( const BlockT& src, bool afterDiag )
-	{ return afterDiag ? src.transpose() : src ; }
+	{ return afterDiag ? BlockT( src.transpose() ) : src ; }
 } ;
 
 template< typename Derived >

@@ -129,7 +129,7 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 		{
 		}
 
-		operator bool()
+		operator bool() const
 		{
 			return m_it != m_end ;
 		}
@@ -299,7 +299,7 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 		{
 		}
 
-		operator bool()
+		operator bool() const
 		{
 			return m_it != m_end ;
 		}

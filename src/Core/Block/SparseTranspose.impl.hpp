@@ -74,6 +74,8 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 		finalize() ;
 	}
 
+	Finalizer::finalize( *this ) ;
+
 	return this->derived();
 }
 }
