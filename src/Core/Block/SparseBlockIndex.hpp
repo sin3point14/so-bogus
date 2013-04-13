@@ -8,10 +8,7 @@
 namespace bogus
 {
 
-template < bool Compressed = false >
-struct SparseBlockIndex ;
-
-template < bool Compressed  >
+template < bool Compressed = false  >
 struct SparseBlockIndex
 {
 	typedef unsigned Index ;

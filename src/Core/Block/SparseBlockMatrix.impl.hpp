@@ -34,7 +34,7 @@ struct SparseBlockIndexGetter
 
 	static ReturnType& get( MatrixType& matrix )
 	{
-		return matrix.minorIndex() ;
+		return matrix.m_minorIndex ;
 	}
 
 	static const ReturnType& get( const MatrixType& matrix )
@@ -59,7 +59,7 @@ struct SparseBlockIndexGetter< Derived, true >
 
 	static ReturnType& get( MatrixType& matrix )
 	{
-		return matrix.majorIndex() ;
+		return matrix.m_majorIndex ;
 	}
 	static const ReturnType& get( const MatrixType& matrix )
 	{

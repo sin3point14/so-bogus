@@ -11,8 +11,8 @@ namespace bogus
 template < typename BlockT, int Flags >
 class SparseBlockMatrix  ;
 
-template < bool Symmetric >
-struct SparseBlockMatrixFinalizer ;
+template < bool Symmetric > struct SparseBlockMatrixFinalizer ;
+template < typename Derived, bool Major > struct SparseBlockIndexGetter ;
 
 template < typename Derived >
 class SparseBlockMatrixBase : public BlockMatrixBase< Derived >
@@ -105,11 +105,11 @@ public:
 
 	void finalize() ;
 	void clear() ;
-	void cacheTranspose() ;
-	bool transposeCached() const { return m_transposeIndex.valid ; }
 
 	bool computeMinorIndex() ;
-	const UncompressedIndexType& getOrComputeMinorIndex( UncompressedIndexType &tempIndex) const ;
+
+	void cacheTranspose() ;
+	bool transposeCached() const { return m_transposeIndex.valid ; }
 
 	std::size_t nBlocks() const { return m_nBlocks ; }
 
@@ -123,9 +123,9 @@ public:
 		return this->m_blocks[ ptr ] ;
 	}
 
-	// Warning: inefficient  block has to exists
+	// Warning: block has to exists
 	const BlockType& diagonal( const Index row ) const ;
-	// Warning: inefficient -- block has to exist
+	// Warning: inefficient ; block has to exist
 	const BlockType& block( Index row, Index col ) const ;
 
 	const SparseIndexType& majorIndex() const
@@ -157,16 +157,11 @@ public:
 	template < bool ColWise, typename LhsT, typename RhsT >
 	void setFromProduct( const Product< LhsT, RhsT > &prod , double scale = 1. ) ;
 
-	SparseIndexType& majorIndex() {
-		return m_majorIndex ;
-	}
-	UncompressedIndexType& minorIndex() {
-		return m_minorIndex ;
-	}
-
 protected:
 
 	typedef SparseBlockMatrixFinalizer< Traits::is_symmetric > Finalizer ;
+	friend struct SparseBlockIndexGetter< Derived, true > ;
+	friend struct SparseBlockIndexGetter< Derived, false > ;
 
 	void allocateBlock( BlockPtr &ptr )
 	{
@@ -180,6 +175,8 @@ protected:
 	}
 
 	void computeMinorIndex( UncompressedIndexType &cmIndex) const ;
+
+	const UncompressedIndexType& getOrComputeMinorIndex( UncompressedIndexType &tempIndex) const ;
 
 	Index blockRows( Index row ) const { return rowOffsets()[ row + 1 ] - rowOffsets()[ row ] ; }
 	Index blockCols( Index col ) const { return colOffsets()[ col + 1 ] - colOffsets()[ col ] ; }
