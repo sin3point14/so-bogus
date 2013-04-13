@@ -14,15 +14,34 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 
 	assert( static_cast< const void* >( this ) != static_cast< const void* >( &source ) ) ;
 
+	typedef typename SparseBlockMatrixBase< OtherDerived >::Traits OtherTraits ;
+
+	const bool sameMajorness = ( (bool) Traits::is_col_major ) ^ !( OtherTraits::is_col_major ) ;
+
 	m_nBlocks = source.nBlocks() ;
+
+	bool needTranspose = false ;
 
 	if( Traits::is_symmetric )
 	{
 		m_majorIndex = source.majorIndex() ;
 		m_minorIndex = source.minorIndex() ;
+		m_transposeIndex = source.transposeIndex() ;
+	}
+	else if( source.transposeIndex().valid && sameMajorness )
+	{
+		m_majorIndex = source.transposeIndex() ;
+		m_transposeIndex = source.majorIndex() ;
+		m_minorIndex.innerOffsets = m_transposeIndex.innerOffsets ;
+		m_minorIndex.clear() ;
+		m_minorIndex.valid = false ;
 	} else {
+		needTranspose = true ;
 		rowMajorIndex() = source.colMajorIndex() ;
 		colMajorIndex() = source.rowMajorIndex() ;
+
+		// Will be valid if !sameMajorness && source.transposeIndex().valid
+		m_transposeIndex = source.transposeIndex()  ;
 	}
 
 	this->m_cols = source.rows() ;
@@ -30,18 +49,16 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 
 	if( m_majorIndex.valid )
 	{
-		m_transposeCached = source.transposeCached() ;
 		this->m_blocks.resize( source.blocks().size() ) ;
 
-		if( m_transposeCached )
+		if( needTranspose )
 		{
-			this->m_blocks.resize( source.blocks().size() ) ;
-			std::copy( source.blocks().begin(), source.blocks().end(), this->m_blocks.begin() ) ;
-		} else {
 			for( unsigned i = 0 ; i < this->m_blocks.size() ; ++i )
 			{
 				block( i ) = source.block(i).transpose() ;
 			}
+		} else {
+			std::copy( source.blocks().begin(), source.blocks().end(), this->m_blocks.begin() ) ;
 		}
 	} else {
 		// If we're here, this means that :
@@ -54,12 +71,11 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 		assert( source.majorIndex().valid ) ;
 
 		SparseBlockIndex< > uncompressed ;
-		if( ( Traits::is_col_major && BlockMatrixTraits< OtherDerived >::is_col_major ) ||
-				!( Traits::is_col_major || BlockMatrixTraits< OtherDerived >::is_col_major ) )
+		if( sameMajorness )
 		{
-			// Same col-major-ness
 			uncompressed.setToTranspose( source.majorIndex() ) ;
 		} else {
+			// Same col-major-ness
 			uncompressed = source.majorIndex() ;
 		}
 

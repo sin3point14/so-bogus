@@ -24,14 +24,14 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Product< LhsT, RhsT > 
 	return this->derived() ;
 }
 
-template < typename IndexType >
+template < typename FirstIndexType, typename SecondIndexType >
 struct CompoundSparseBlockIndex
 {
-	typedef typename IndexType::Index Index ;
-	typedef typename IndexType::BlockPtr BlockPtr ;
+	typedef typename FirstIndexType::Index Index ;
+	typedef typename FirstIndexType::BlockPtr BlockPtr ;
 
-	CompoundSparseBlockIndex( const IndexType& index1, const IndexType &index2 )
-		: first( index1 ), second( index2 )
+	CompoundSparseBlockIndex( const FirstIndexType& index1, const SecondIndexType &index2 )
+		: first( index1 ), second( index2 ), valid( first.valid && second.valid )
 	{
 		assert( index1.outerSize() == index2.outerSize() ) ;
 		assert( index1.innerSize() == index2.innerSize() ) ;
@@ -67,12 +67,55 @@ struct CompoundSparseBlockIndex
 		}
 
 	private:
-		typename IndexType::InnerIterator m_it1 ;
-		typename IndexType::InnerIterator m_it2 ;
+		typename FirstIndexType::InnerIterator m_it1 ;
+		typename SecondIndexType::InnerIterator m_it2 ;
 	} ;
 
-	const IndexType& first ;
-	const IndexType& second ;
+	const FirstIndexType& first ;
+	const SecondIndexType& second ;
+	bool valid ;
+} ;
+
+template < typename MatrixType, bool Symmetric, bool ColWise, bool Transpose >
+struct SparseBlockIndexComputer
+{
+	typedef BlockMatrixTraits< MatrixType > Traits ;
+	enum { is_major = bool(ColWise ^ Transpose) == bool( Traits::is_col_major ) } ;
+	typedef SparseBlockIndexGetter< MatrixType, is_major > Getter ;
+	typedef typename Getter::ReturnType ReturnType ;
+
+	SparseBlockIndexComputer( const MatrixType &matrix )
+		: m_matrix( matrix )
+	{}
+
+	const ReturnType& get( )
+	{
+		return Getter::getOrCompute( m_matrix, m_aux ) ;
+	}
+
+private:
+	const MatrixType m_matrix ;
+	typename Traits::UncompressedIndexType m_aux ;
+} ;
+
+template < typename MatrixType, bool ColWise, bool Transpose >
+struct SparseBlockIndexComputer< MatrixType, true, ColWise, Transpose >
+{
+	typedef BlockMatrixTraits< MatrixType > Traits ;
+	typedef CompoundSparseBlockIndex< typename Traits::SparseIndexType, typename Traits::UncompressedIndexType >
+	ReturnType ;
+
+	SparseBlockIndexComputer( const MatrixType &matrix )
+		: m_index( matrix.majorIndex(), matrix.minorIndex() )
+	{}
+
+	const ReturnType& get( )
+	{
+		return m_index ;
+	}
+
+private:
+	ReturnType m_index ;
 } ;
 
 template < typename Derived >
@@ -107,64 +150,15 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 	}
 
 
+	SparseBlockIndexComputer< typename Prod::LhsTraits::MatrixType, LhsTraits::is_symmetric,
+			ColWise, Prod::transposeLhs> lhsIndexComputer ( prod.lhs ) ;
+	SparseBlockIndexComputer< typename Prod::RhsTraits::MatrixType, RhsTraits::is_symmetric,
+			!ColWise, Prod::transposeRhs> rhsIndexComputer ( prod.rhs ) ;
 
 
-	SparseBlockIndex< > auxIndexLhs, auxIndexRhs ;
-
-	assert( ! RhsTraits::is_symmetric ) ;
-
-	// This is ugly. Any idea ?
-
-	if( LhsTraits::is_symmetric )
-	{
-		assert( prod.lhs.minorIndex().valid ) ;
-		CompoundSparseBlockIndex< typename LhsTraits::SparseIndexType > lhsIdx( prod.lhs.majorIndex(), prod.lhs.minorIndex() ) ;
-
-		const SparseBlockIndexBase &rhsIdx = prod.rhs.getIndex( Prod::transposeRhs, !ColWise, auxIndexRhs ) ;
-
-		if( rhsIdx.isCompressed() )
-		{
-			setFromProduct< ColWise >( lhsIdx, rhsIdx.asCompressed(),
-							prod.lhs.blocks(), prod.rhs.blocks(),
-							lhsGetter, rhsGetter, scale ) ;
-		} else {
-			setFromProduct< ColWise >( lhsIdx, rhsIdx.asUncompressed(),
-							prod.lhs.blocks(), prod.rhs.blocks(),
-							lhsGetter, rhsGetter, scale ) ;
-		}
-
-
-	} else {
-		const SparseBlockIndexBase &lhsIdx = prod.lhs.getIndex( Prod::transposeLhs, ColWise, auxIndexLhs ) ;
-		const SparseBlockIndexBase &rhsIdx = prod.rhs.getIndex( Prod::transposeRhs, !ColWise, auxIndexRhs ) ;
-
-		if( lhsIdx.isCompressed() )
-		{
-			if( rhsIdx.isCompressed() )
-			{
-				setFromProduct< ColWise >( lhsIdx.asCompressed(), rhsIdx.asCompressed(),
-								prod.lhs.blocks(), prod.rhs.blocks(),
-								lhsGetter, rhsGetter, scale ) ;
-			} else {
-				setFromProduct< ColWise >( lhsIdx.asCompressed(), rhsIdx.asUncompressed(),
-								prod.lhs.blocks(), prod.rhs.blocks(),
-								lhsGetter, rhsGetter, scale ) ;
-			}
-		} else {
-			if( rhsIdx.isCompressed() )
-			{
-				setFromProduct< ColWise >( lhsIdx.asUncompressed(), rhsIdx.asCompressed(),
-								prod.lhs.blocks(), prod.rhs.blocks(),
-								lhsGetter, rhsGetter, scale ) ;
-			} else {
-				setFromProduct< ColWise >( lhsIdx.asUncompressed(), rhsIdx.asUncompressed(),
-								prod.lhs.blocks(), prod.rhs.blocks(),
-								lhsGetter, rhsGetter, scale ) ;
-			}
-		}
-	}
-
-
+	setFromProduct< ColWise >( lhsIndexComputer.get(), rhsIndexComputer.get(),
+							   prod.lhs.blocks(), prod.rhs.blocks(),
+							   lhsGetter, rhsGetter, scale ) ;
 
 }
 
@@ -423,7 +417,8 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(
 	assert( m_majorIndex.valid ) ;
 
 	m_minorIndex.valid = false ;
-	m_transposeCached  = false ;
+	m_transposeIndex.clear() ;
+	m_transposeIndex.valid = false ;
 	Finalizer::finalize( *this ) ;
 }
 

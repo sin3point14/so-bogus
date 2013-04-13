@@ -52,7 +52,11 @@ TEST( SparseBlock, MatrixVector )
 	EXPECT_EQ( expected_2, ( csbm.transpose() * res )  ) ;
 	EXPECT_EQ( expected_3, ( rhs.transpose() * csbm.transpose() ).transpose()  ) ;
 
+	EXPECT_FALSE( sbm.minorIndex().valid );
+	EXPECT_FALSE( sbm.transposeIndex().valid );
 	sbm.cacheTranspose();
+	ASSERT_TRUE( sbm.minorIndex().valid );
+	ASSERT_TRUE( sbm.transposeIndex().valid );
 	EXPECT_EQ( expected_2, ( res.transpose() * sbm ).transpose() ) ;
 	EXPECT_EQ( expected_2, ( sbm.transpose() * res )  ) ;
 
@@ -60,7 +64,7 @@ TEST( SparseBlock, MatrixVector )
 	structofsbm.cloneStructure( sbm ) ;
   EXPECT_TRUE( structofsbm.majorIndex().valid ) ;
   EXPECT_FALSE( structofsbm.transposeCached() ) ;
-  EXPECT_FALSE( structofsbm.minorIndex().valid ) ;
+  EXPECT_TRUE( structofsbm.minorIndex().valid ) ;
 	structofsbm = sbm ;
 
 	bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::COMPRESSED > copyofsbm ;
@@ -74,7 +78,9 @@ TEST( SparseBlock, MatrixVector )
 	EXPECT_EQ( expected_2, ( copyofsbm.transpose() * res )  ) ;
 
 	sbm = copyofsbm.transpose() ;
-  EXPECT_TRUE( sbm.majorIndex().valid ) ;
+	EXPECT_TRUE( sbm.majorIndex().valid ) ;
+	EXPECT_FALSE( sbm.minorIndex().valid ) ;
+	EXPECT_TRUE( sbm.transposeIndex().valid ) ;
 	EXPECT_EQ( expected_1, sbm.transpose() * rhs ) ;
 	EXPECT_EQ( expected_2, ( sbm * res )  ) ;
 

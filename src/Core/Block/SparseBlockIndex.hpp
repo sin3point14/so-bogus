@@ -11,15 +11,8 @@ namespace bogus
 template < bool Compressed = false >
 struct SparseBlockIndex ;
 
-struct SparseBlockIndexBase
-{
-	virtual bool isCompressed() const = 0 ;
-	virtual const SparseBlockIndex<true>& asCompressed() const = 0 ;
-	virtual const SparseBlockIndex<>& asUncompressed() const = 0 ;
-} ;
-
 template < bool Compressed  >
-struct SparseBlockIndex : public SparseBlockIndexBase
+struct SparseBlockIndex
 {
 	typedef unsigned Index ;
 	typedef Index BlockPtr ;
@@ -89,7 +82,6 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 
 		for( unsigned i = 0 ; i < source.outerSize() ; ++i )
 		{
-			// For a symmetric matrix, do not store diagonal block in col-major index
 			for( typename SparseBlockIndex< OtherCompressed >::InnerIterator it( source, i ) ;
 				 it ; ++ it )
 			{
@@ -97,19 +89,6 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 			}
 		}
 		return *this ;
-	}
-
-	bool isCompressed() const { return false ; }
-
-	const SparseBlockIndex< > &asUncompressed () const
-	{
-		return *this ;
-	}
-
-	const SparseBlockIndex< true > &asCompressed () const
-	{
-		assert( 0 && "as Uncompressed should never be called on this object, segfaulting" ) ;
-		return *static_cast< const SparseBlockIndex< true > * > ( 0 ) ;
 	}
 
 	BlockPtr last( const Index outerIdx ) const
@@ -168,7 +147,7 @@ struct SparseBlockIndex : public SparseBlockIndexBase
 } ;
 
 template<>
-struct SparseBlockIndex< true > : public SparseBlockIndexBase
+struct SparseBlockIndex< true >
 {
 	typedef unsigned Index ;
 	typedef Index BlockPtr ;
@@ -266,19 +245,6 @@ struct SparseBlockIndex< true > : public SparseBlockIndexBase
 		finalize() ;
 
 		return *this ;
-	}
-
-	bool isCompressed() const { return true ; }
-
-	const SparseBlockIndex< true > &asCompressed () const
-	{
-		return *this ;
-	}
-
-	const SparseBlockIndex< > &asUncompressed () const
-	{
-		assert( 0 && "as Uncompressed should never be called on this object, segfaulting" ) ;
-		return *static_cast< const SparseBlockIndex< > * > ( 0 ) ;
 	}
 
 	BlockPtr last( const Index outerIdx ) const

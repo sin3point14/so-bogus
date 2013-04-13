@@ -10,6 +10,7 @@ Core/Block/SparseBlockMatrix.hpp
 Core/Block/SparseBlockMatrix.impl.hpp
 Core/Block/SparseProduct.impl.hpp
 Core/Block/SparseTranspose.impl.hpp
+Core/Block/Streams.hpp
 Core/GaussSeidel.fwd.hpp
 Core/GaussSeidel.hpp
 Core/GaussSeidel.impl.hpp

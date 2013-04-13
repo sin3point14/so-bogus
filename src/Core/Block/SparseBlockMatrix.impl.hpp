@@ -8,6 +8,111 @@
 
 namespace bogus {
 
+// Finalizer
+
+template < bool DontFinalize, bool Symmetric, bool Compressed >
+struct SparseBlockMatrixFinalizer
+{
+	template < typename Derived >
+	static void finalize( SparseBlockMatrixBase< Derived >& ) { }
+} ;
+template < bool Compressed >
+struct SparseBlockMatrixFinalizer< false, true, Compressed >
+{
+	template < typename Derived >
+	static void finalize( SparseBlockMatrixBase< Derived >& matrix )
+	{ matrix.computeMinorIndex() ; }
+} ;
+template < >
+struct SparseBlockMatrixFinalizer< false, true, true >
+{
+	template < typename Derived >
+	static void finalize( SparseBlockMatrixBase< Derived >& matrix )
+	{ matrix.cacheTranspose(); }
+} ;
+
+// Index getter
+
+template < typename Derived, bool Major >
+struct SparseBlockIndexGetter
+{
+	typedef SparseBlockMatrixBase< Derived > MatrixType ;
+	typedef typename MatrixType::UncompressedIndexType ReturnType ;
+
+	static ReturnType& get( MatrixType& matrix )
+	{
+		return matrix.minorIndex() ;
+	}
+
+	static const ReturnType& get( const MatrixType& matrix )
+	{
+		return matrix.minorIndex() ;
+	}
+
+	static const ReturnType&
+	getOrCompute( const MatrixType& matrix,
+				  typename MatrixType::UncompressedIndexType& tempIndex
+				  )
+	{
+		return matrix.getOrComputeMinorIndex( tempIndex) ;
+	}
+} ;
+
+template < typename Derived >
+struct SparseBlockIndexGetter< Derived, true >
+{
+	typedef SparseBlockMatrixBase< Derived > MatrixType ;
+	typedef typename MatrixType::SparseIndexType ReturnType ;
+
+	static ReturnType& get( MatrixType& matrix )
+	{
+		return matrix.majorIndex() ;
+	}
+	static const ReturnType& get( const MatrixType& matrix )
+	{
+		return matrix.majorIndex() ;
+	}
+
+	static const ReturnType&
+	getOrCompute( const MatrixType& matrix,
+				  typename MatrixType::UncompressedIndexType& )
+	{
+		return matrix.majorIndex() ;
+	}
+} ;
+
+// Sparse Block Matrix
+
+template < typename Derived >
+typename SparseBlockMatrixBase< Derived >::RowIndexType &SparseBlockMatrixBase< Derived >::rowMajorIndex( )
+{
+	return SparseBlockIndexGetter< Derived, !Traits::is_col_major >::get( *this ) ;
+}
+template < typename Derived >
+typename SparseBlockMatrixBase< Derived >::ColIndexType &SparseBlockMatrixBase< Derived >::colMajorIndex( )
+{
+	return SparseBlockIndexGetter< Derived, Traits::is_col_major >::get( *this ) ;
+}
+template < typename Derived >
+const typename SparseBlockMatrixBase< Derived >::RowIndexType &SparseBlockMatrixBase< Derived >::rowMajorIndex( ) const
+{
+	return SparseBlockIndexGetter< Derived, !Traits::is_col_major >::get( *this ) ;
+}
+template < typename Derived >
+const typename SparseBlockMatrixBase< Derived >::ColIndexType &SparseBlockMatrixBase< Derived >::colMajorIndex( ) const
+{
+	return SparseBlockIndexGetter< Derived, Traits::is_col_major >::get( *this ) ;
+}
+
+template < typename Derived >
+SparseBlockMatrixBase< Derived >::SparseBlockMatrixBase()
+	: m_nBlocks(0)
+{
+	setRows( 0, 0 ) ;
+	setCols( 0, 0 ) ;
+	m_transposeIndex.resizeOuter(0) ;
+	m_transposeIndex.valid = false ;
+}
 
 template < typename Derived >
 void SparseBlockMatrixBase< Derived >::setRows(
@@ -31,8 +136,9 @@ void SparseBlockMatrixBase< Derived >::setCols(
 }
 
 template < typename Derived >
+template < typename IndexT >
 void SparseBlockMatrixBase< Derived >::setInnerOffets(
-		SparseIndexType &index, const std::vector<Index> &blockSizes)
+		IndexT &index, const std::vector<Index> &blockSizes) const
 {
 	index.innerOffsets.resize( blockSizes.size() + 1 ) ;
 	index.innerOffsets[0] = 0 ;
@@ -41,27 +147,6 @@ void SparseBlockMatrixBase< Derived >::setInnerOffets(
 		index.innerOffsets[ i+1 ] = index.innerOffsets[ i ] + blockSizes[i] ;
 	}
 }
-
-template < bool DontFinalize, bool Symmetric, bool Compressed >
-struct SparseBlockMatrixFinalizer
-{
-	template < typename Derived >
-	static void finalize( SparseBlockMatrixBase< Derived >& ) { }
-} ;
-template < bool Compressed >
-struct SparseBlockMatrixFinalizer< false, true, Compressed >
-{
-	template < typename Derived >
-	static void finalize( SparseBlockMatrixBase< Derived >& matrix )
-	{ matrix.computeMinorIndex() ; }
-} ;
-template < >
-struct SparseBlockMatrixFinalizer< false, true, true >
-{
-	template < typename Derived >
-	static void finalize( SparseBlockMatrixBase< Derived >& matrix )
-	{ matrix.cacheTranspose(); }
-} ;
 
 template < typename Derived >
 void SparseBlockMatrixBase< Derived >::finalize()
@@ -84,28 +169,22 @@ void SparseBlockMatrixBase< Derived >::clear()
 template < typename Derived >
 bool SparseBlockMatrixBase< Derived >::computeMinorIndex()
 {
-	// Warning if Traits::is_compressed, the col major index will not be
-	// valid unless the transpose Matrix is cached as well
-
 	if ( m_minorIndex.valid ) return true ;
 
-	SparseBlockIndex< > cmIndex ;
-	computeMinorIndex( cmIndex ) ;
-
-	m_minorIndex = cmIndex ;
+	computeMinorIndex( m_minorIndex ) ;
 
 	return m_minorIndex.valid ;
 }
 
 template < typename Derived >
-void SparseBlockMatrixBase< Derived >::computeMinorIndex(SparseBlockIndex< > &cmIndex) const
+void SparseBlockMatrixBase< Derived >::computeMinorIndex( UncompressedIndexType &cmIndex) const
 {
-
+	cmIndex.clear() ;
 	cmIndex.innerOffsets = m_minorIndex.innerOffsets ;
-	cmIndex.resizeOuter( m_majorIndex.innerSize() );
 
 	if( Traits::is_symmetric )
 	{
+		cmIndex.resizeOuter( m_majorIndex.innerSize() );
 		for ( unsigned i = 0 ; i < m_majorIndex.outerSize() ; ++ i )
 		{
 			// For a symmetric matrix, do not store diagonal block in col-major index
@@ -124,9 +203,10 @@ void SparseBlockMatrixBase< Derived >::computeMinorIndex(SparseBlockIndex< > &cm
 }
 
 template < typename Derived >
-const SparseBlockIndex< >& SparseBlockMatrixBase< Derived >::getUncompressedMinorIndex(SparseBlockIndex< > &cmIndex) const
+const typename SparseBlockMatrixBase< Derived >::UncompressedIndexType&
+SparseBlockMatrixBase< Derived >::getOrComputeMinorIndex( UncompressedIndexType &cmIndex) const
 {
-	if( !Traits::is_compressed && m_minorIndex.valid && !m_transposeCached ) return m_minorIndex.asUncompressed() ;
+	if( m_minorIndex.valid ) return m_minorIndex ;
 	computeMinorIndex( cmIndex ) ;
 	return cmIndex ;
 }
@@ -134,63 +214,41 @@ const SparseBlockIndex< >& SparseBlockMatrixBase< Derived >::getUncompressedMino
 template < typename Derived >
 void SparseBlockMatrixBase< Derived >::cacheTranspose()
 {
-	if ( m_transposeCached ) return ;
+	if ( m_transposeIndex.valid ) return ;
 
-	SparseBlockIndex< > uncompressedIndex ;
-	const SparseBlockIndex< >& minorIndex = getUncompressedMinorIndex( uncompressedIndex ) ;
-
-	if( !m_minorIndex.valid )
-	{
-		m_minorIndex = minorIndex ;
-	}
+	computeMinorIndex() ;
 
 	this->m_blocks.resize( 2*m_nBlocks ) ;
 
 	BlockPtr base = m_nBlocks ;
-	std::vector< BlockPtr > ptrOffsets( minorIndex.outerSize() ) ;
-	for( unsigned i = 0 ; i < minorIndex.outerSize() ; ++i )
+	std::vector< BlockPtr > ptrOffsets( m_minorIndex.outerSize() ) ;
+	for( unsigned i = 0 ; i < m_minorIndex.outerSize() ; ++i )
 	{
 		ptrOffsets[i] = base ;
-		base += minorIndex.size( i ) ;
+		base += m_minorIndex.size( i ) ;
 	}
+
+	m_transposeIndex = (const UncompressedIndexType& ) m_minorIndex ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for ( unsigned i = 0 ; i < minorIndex.outerSize() ; ++ i )
+	for ( unsigned i = 0 ; i < m_minorIndex.outerSize() ; ++ i )
 	{
 
 		typename SparseBlockIndex< >::InnerIterator uncompressed_it
-			 ( minorIndex , i ) ;
-		for( typename SparseIndexType::InnerIterator it( m_minorIndex, i ) ;
+			 ( m_minorIndex , i ) ;
+		for( typename SparseIndexType::InnerIterator it( m_transposeIndex, i ) ;
 			 it ; ++ it, ++uncompressed_it )
 		{
 			const BlockPtr ptr = ptrOffsets[i]++ ;
 			block( ptr ) = block( uncompressed_it.ptr() ).transpose() ;
-			m_minorIndex.setPtr( it, ptr ) ;
+			m_transposeIndex.setPtr( it, ptr ) ;
 		}
 	}
 
-	m_transposeCached = true ;
-}
-
-template < typename Derived >
-const SparseBlockIndexBase& SparseBlockMatrixBase< Derived >::getIndex(const bool transpose, const bool colWise,
-		SparseBlockIndex< >& aux ) const
-{
-	if ( bool(colWise ^ transpose) == bool( Traits::is_col_major ) )
-	{
-		// Native order
-		return m_majorIndex ;
-	} else {
-		// Minor order
-		if( m_minorIndex.valid && !m_transposeCached ) {
-			return m_minorIndex ;
-		} else {
-			computeMinorIndex( aux ) ;
-			return aux ;
-		}
-	}
+	assert( m_minorIndex.valid ) ;
+	assert( m_transposeIndex.valid ) ;
 }
 
 template < typename Derived >
@@ -252,7 +310,7 @@ void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res, boo
 
 	if( Traits::is_symmetric )
 	{
-		if( m_transposeCached )
+		if( m_transposeIndex.valid )
 		{
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
@@ -260,8 +318,8 @@ void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res, boo
 			for( Index i = 0 ; i < majorIndex().outerSize() ; ++i )
 			{
 				typename ResT::SegmentReturnType seg( rowSegment( res, i ) ) ;
-				innerRowMultiply( rowMajorIndex(), i, rhs, seg ) ;
-				innerRowMultiply( colMajorIndex(), i, rhs, seg ) ;
+				innerRowMultiply( majorIndex(), i, rhs, seg ) ;
+				innerRowMultiply( m_transposeIndex, i, rhs, seg ) ;
 			}
 		} else {
 #ifdef BOGUS_DONT_PARALLELIZE
@@ -295,7 +353,7 @@ void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res, boo
 				innerRowTransposedMultiply( colMajorIndex(), i, rhs, seg ) ;
 			}
 		} else {
-			if( m_transposeCached )
+			if( m_transposeIndex.valid )
 			{
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
@@ -303,7 +361,7 @@ void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res, boo
 				for( Index i = 0 ; i < colsOfBlocks() ; ++i )
 				{
 					typename ResT::SegmentReturnType seg( colSegment( res, i ) ) ;
-					innerRowMultiply( colMajorIndex(), i, rhs, seg ) ;
+					innerRowMultiply( m_transposeIndex, i, rhs, seg ) ;
 				}
 			} else {
 #ifdef BOGUS_DONT_PARALLELIZE
@@ -381,9 +439,9 @@ void SparseBlockMatrixBase< Derived >::splitRowMultiply( const Index row, const 
 	}
 	if( Traits::is_symmetric )
 	{
-		if( m_transposeCached )
+		if( m_transposeIndex.valid )
 		{
-			innerRowMultiply( m_minorIndex, row, rhs, res ) ;
+			innerRowMultiply( m_transposeIndex, row, rhs, res ) ;
 		} else {
 			assert( m_minorIndex.valid ) ;
 			innerRowTransposedMultiply( m_minorIndex, row, rhs, res ) ;
@@ -392,10 +450,10 @@ void SparseBlockMatrixBase< Derived >::splitRowMultiply( const Index row, const 
 }
 
 template < typename Derived >
-template < typename RhsT, typename ResT >
-void SparseBlockMatrixBase< Derived >::innerRowMultiply( const SparseIndexType &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const
+template < typename IndexT, typename RhsT, typename ResT >
+void SparseBlockMatrixBase< Derived >::innerRowMultiply( const IndexT &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const
 {
-	for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( index, outerIdx ) ;
+	for( typename IndexT::InnerIterator it( index, outerIdx ) ;
 		 it ; ++ it )
 	{
 		res += block( it.ptr() ) * index.innerSegment( rhs, it.inner() ) ;
@@ -403,10 +461,10 @@ void SparseBlockMatrixBase< Derived >::innerRowMultiply( const SparseIndexType &
 }
 
 template < typename Derived >
-template < typename RhsT, typename ResT >
-void SparseBlockMatrixBase< Derived >::innerRowTransposedMultiply( const SparseIndexType &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const
+template < typename IndexT, typename RhsT, typename ResT >
+void SparseBlockMatrixBase< Derived >::innerRowTransposedMultiply( const IndexT &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const
 {
-	for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( index, outerIdx ) ;
+	for( typename IndexT::InnerIterator it( index, outerIdx ) ;
 		 it ; ++ it )
 	{
 		res += block( it.ptr() ).transpose() * index.innerSegment( rhs, it.inner() ) ;
@@ -414,10 +472,10 @@ void SparseBlockMatrixBase< Derived >::innerRowTransposedMultiply( const SparseI
 }
 
 template < typename Derived >
-template < typename RhsT, typename ResT >
-void SparseBlockMatrixBase< Derived >::innerColMultiply( const SparseIndexType &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const
+template < typename IndexT, typename RhsT, typename ResT >
+void SparseBlockMatrixBase< Derived >::innerColMultiply( const IndexT &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const
 {
-	for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( index, outerIdx ) ;
+	for( typename IndexT::InnerIterator it( index, outerIdx ) ;
 		 it ; ++ it )
 	{
 		index.innerSegment( res, it.inner() ) += block( it.ptr() ) * rhs  ;
@@ -425,37 +483,14 @@ void SparseBlockMatrixBase< Derived >::innerColMultiply( const SparseIndexType &
 }
 
 template < typename Derived >
-template < typename RhsT, typename ResT >
-void SparseBlockMatrixBase< Derived >::innerColTransposedMultiply( const SparseIndexType &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const
+template < typename IndexT, typename RhsT, typename ResT >
+void SparseBlockMatrixBase< Derived >::innerColTransposedMultiply( const IndexT &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const
 {
-	for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( index, outerIdx ) ;
+	for( typename IndexT::InnerIterator it( index, outerIdx ) ;
 		 it ; ++ it )
 	{
 		index.innerSegment( res, it.inner() ) += block( it.ptr() ).transpose() * rhs  ;
 	}
-}
-
-template < typename Derived >
-std::ostream& operator<<( std::ostream &out, const SparseBlockMatrixBase< Derived > &sbm )
-{
-	out << " Total rows: " << sbm.rows() << " / cols: " << sbm.cols() << std::endl ;
-	for ( unsigned i = 0 ; i < sbm.majorIndex().outerSize() ; ++ i )
-	{
-		out << i << ": " ;
-		for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( sbm.majorIndex(), i ) ;
-			 it ; ++ it )
-		{
-			out << "(" << it.inner() << ";" << it.ptr() << ")" ;
-		}
-		out << std::endl ;
-	}
-	out << " Blocks (" << sbm.nBlocks() << ")" << std::endl ;
-	for ( unsigned i = 0 ; i < sbm.nBlocks() ; ++ i )
-	{
-		out << sbm.block(i) << std::endl ;
-		out << " --- " << std::endl ;
-	}
-	return out ;
 }
 
 template < typename Derived >
@@ -465,8 +500,7 @@ void SparseBlockMatrixBase<Derived>::cloneStructure( const SparseBlockMatrix< Bl
 	m_nBlocks = source.nBlocks() ;
 	rowMajorIndex() = source.rowMajorIndex() ;
 	colMajorIndex() = source.colMajorIndex() ;
-	m_minorIndex.valid &= !source.transposeCached() ;
-	m_transposeCached = false ;
+	m_transposeIndex.valid = false ;
 
 	this->m_cols = source.cols() ;
 	this->m_rows = source.rows() ;
@@ -479,15 +513,21 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 {
 	if( static_cast< const void* >( this ) == static_cast< const void* >( &source ) ) return this->derived() ;
 
+	typedef typename SparseBlockMatrixBase< OtherDerived >::Traits OtherTraits ;
+	const bool sameMajorness = ( (bool) Traits::is_col_major ) ^ !( OtherTraits::is_col_major ) ;
+
 	m_nBlocks = source.nBlocks() ;
 
-	if( Traits::is_symmetric )
+	if( Traits::is_symmetric || sameMajorness )
 	{
 		m_majorIndex = source.majorIndex() ;
 		m_minorIndex = source.minorIndex() ;
+		m_transposeIndex = source.transposeIndex() ;
 	} else {
 		rowMajorIndex() = source.rowMajorIndex() ;
 		colMajorIndex() = source.colMajorIndex() ;
+		m_transposeIndex.clear() ;
+		m_transposeIndex.valid = false ;
 	}
 
 	this->m_cols = source.cols() ;
@@ -495,8 +535,6 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 
 	if( m_majorIndex.valid )
 	{
-		m_transposeCached = m_minorIndex.valid && source.transposeCached() ;
-
 		this->m_blocks.resize( source.blocks().size() ) ;
 		std::copy( source.blocks().begin(), source.blocks().end(), this->m_blocks.begin() ) ;
 	} else {
@@ -510,8 +548,7 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 		assert( source.majorIndex().valid ) ;
 
 		SparseBlockIndex< > uncompressed ;
-		if( ( Traits::is_col_major && BlockMatrixTraits< OtherDerived >::is_col_major ) ||
-				!( Traits::is_col_major || BlockMatrixTraits< OtherDerived >::is_col_major ) )
+		if( sameMajorness )
 		{
 			// Same col-major-ness
 			uncompressed = source.majorIndex() ;
@@ -535,25 +572,6 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 	return this->derived();
 }
 
-template < typename BlockT, int Flags >
-class SparseBlockMatrix : public  SparseBlockMatrixBase< SparseBlockMatrix< BlockT, Flags > >
-{
-	typedef SparseBlockMatrixBase< SparseBlockMatrix< BlockT, Flags > > Base ;
-public:
-	SparseBlockMatrix() : Base() {}
-
-	template < typename RhsT >
-	SparseBlockMatrix( const RhsT& rhs ) : Base()
-	{
-		Base::operator= ( rhs ) ;
-	}
-
-	template < typename RhsT >
-	SparseBlockMatrix< BlockT, Flags>& operator=( const RhsT& rhs )
-	{
-		return Base::operator= ( rhs ) ;
-	}
-} ;
 
 }
 
