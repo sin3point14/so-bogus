@@ -62,16 +62,16 @@ TEST( SparseBlock, MatrixVector )
 
 	bogus::SparseBlockMatrix< Eigen::MatrixXd > structofsbm ;
 	structofsbm.cloneStructure( sbm ) ;
-  EXPECT_TRUE( structofsbm.majorIndex().valid ) ;
-  EXPECT_FALSE( structofsbm.transposeCached() ) ;
-  EXPECT_TRUE( structofsbm.minorIndex().valid ) ;
+	EXPECT_TRUE( structofsbm.majorIndex().valid ) ;
+	EXPECT_FALSE( structofsbm.transposeCached() ) ;
+	EXPECT_TRUE( structofsbm.minorIndex().valid ) ;
 	structofsbm = sbm ;
 
 	bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::COMPRESSED > copyofsbm ;
 	copyofsbm = sbm ;
-  EXPECT_TRUE( copyofsbm.majorIndex().valid ) ;
-  EXPECT_TRUE( copyofsbm.transposeCached() ) ;
-  EXPECT_TRUE( copyofsbm.minorIndex().valid ) ;
+	EXPECT_TRUE( copyofsbm.majorIndex().valid ) ;
+	EXPECT_TRUE( copyofsbm.transposeCached() ) ;
+	EXPECT_TRUE( copyofsbm.minorIndex().valid ) ;
 
 	rhs.setOnes() ;
 	EXPECT_EQ( expected_1, copyofsbm * rhs ) ;
@@ -201,7 +201,7 @@ TEST( SparseBlock, ColMajor )
 	lhs << 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 ;
 
 	EXPECT_EQ( expected_1, sbm * rhs ) ;
-//	std::cout << sbm << std::endl ;
+	//	std::cout << sbm << std::endl ;
 	bogus::SparseBlockMatrix< BlockT, bogus::flags::COMPRESSED > rsbm ( sbm );
 	EXPECT_EQ( 4u, rsbm.rowsOfBlocks() ) ;
 	EXPECT_EQ( 4u, rsbm.majorIndex().outerSize() ) ;
@@ -278,7 +278,7 @@ TEST( SparseBlock, MMult )
 		sbm.insertBack( 2, 1 ) = 5 * BlockT::Ones() ;
 
 		sbm.finalize() ;
-	ASSERT_FALSE( sbm.minorIndex().valid ) ;
+		ASSERT_FALSE( sbm.minorIndex().valid ) ;
 
 		bogus::SparseBlockMatrix< Eigen::Matrix3d > mm = sbm*sbm.transpose() ;
 		EXPECT_EQ( mm.block(0,2), mm.block(2,0).transpose() ) ;
@@ -306,6 +306,11 @@ TEST( SparseBlock, MMult )
 		EXPECT_EQ( expected_1, mm_t_mt_chk*rhs );
 		mm_t_mt.setFromProduct< false > ( mm_t  * sbm.transpose() ) ;
 		EXPECT_EQ( expected_1, mm_t_mt*rhs );
+		bogus::SparseBlockMatrix< Eigen::MatrixXd > mm_t_mt_t = sbm * mm_t.transpose() ;
+		EXPECT_EQ( expected_1, mm_t_mt_t.transpose() *rhs );
+
+		bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::SYMMETRIC > mm_t2( mm_t * mm_t ) ;
+		EXPECT_EQ( mm_t2*expected_1, mm_t * ( mm_t * expected_1 ) );
 	}
 	{
 		bogus::SparseBlockMatrix< BlockT, bogus::flags::COL_MAJOR | bogus::flags::COMPRESSED > sbm ;
@@ -318,7 +323,7 @@ TEST( SparseBlock, MMult )
 		sbm.insertBack( 2, 1 ) = 5 * BlockT::Ones() ;
 
 		sbm.finalize() ;
-	ASSERT_FALSE( sbm.minorIndex().valid ) ;
+		ASSERT_FALSE( sbm.minorIndex().valid ) ;
 
 		bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::COL_MAJOR > mm = sbm*sbm.transpose() ;
 
@@ -338,6 +343,21 @@ TEST( SparseBlock, MMult )
 		mm_t.setFromProduct< false > ( sbm.transpose()*sbm ) ;
 		ASSERT_EQ( mm_t.nBlocks(), 3u ) ;
 		EXPECT_EQ( mm_t.diagonal(1), Eigen::Matrix4d::Constant( 78 ) ) ;
+
+		EXPECT_TRUE( mm_t.minorIndex().valid ) ;
+
+		bogus::SparseBlockMatrix< Eigen::MatrixXd > mm_t_mt = mm_t  * sbm.transpose() ;
+		EXPECT_EQ( expected_1, mm_t_mt*rhs ) ;
+		EXPECT_EQ( expected_1, mm_t * ( sbm.transpose() * rhs )  ) ;
+		bogus::SparseBlockMatrix< Eigen::MatrixXd > mm_t_mt_chk = sbm.transpose() * mm;
+		EXPECT_EQ( expected_1, mm_t_mt_chk*rhs );
+		mm_t_mt.setFromProduct< false > ( mm_t  * sbm.transpose() ) ;
+		EXPECT_EQ( expected_1, mm_t_mt*rhs );
+		bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::COL_MAJOR > mm_t_mt_t = sbm * mm_t.transpose() ;
+		EXPECT_EQ( expected_1, mm_t_mt_t.transpose() *rhs );
+
+		bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::SYMMETRIC > mm_t2( mm_t * mm_t ) ;
+		EXPECT_EQ( mm_t2*expected_1, mm_t * ( mm_t * expected_1 ) );
 	}
 
 }

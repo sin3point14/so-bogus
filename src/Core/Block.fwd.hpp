@@ -9,8 +9,7 @@ namespace flags
 		NONE = 0,
 		COMPRESSED = 0x1,
 		COL_MAJOR = 0x2,
-		SYMMETRIC = 0x4,
-		DONT_FINALIZE = 0x8
+		SYMMETRIC = 0x4
 	} ;
 }
 

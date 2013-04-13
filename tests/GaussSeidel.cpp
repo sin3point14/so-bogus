@@ -66,7 +66,7 @@ TEST( GaussSeidel, Small )
 	WType W = H * MInvHt ;
 
 //	std::cout << W << std::endl ;
-	W.cacheTranspose();
+//	W.cacheTranspose();
 
 	Eigen::VectorXd f( 6 ) ;
 	f << 1, 2, 3, 4, 5, 6 ;

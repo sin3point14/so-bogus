@@ -10,25 +10,18 @@ namespace bogus {
 
 // Finalizer
 
-template < bool DontFinalize, bool Symmetric, bool Compressed >
+template < bool Symmetric >
 struct SparseBlockMatrixFinalizer
 {
 	template < typename Derived >
 	static void finalize( SparseBlockMatrixBase< Derived >& ) { }
 } ;
-template < bool Compressed >
-struct SparseBlockMatrixFinalizer< false, true, Compressed >
+template < >
+struct SparseBlockMatrixFinalizer<  true >
 {
 	template < typename Derived >
 	static void finalize( SparseBlockMatrixBase< Derived >& matrix )
 	{ matrix.computeMinorIndex() ; }
-} ;
-template < >
-struct SparseBlockMatrixFinalizer< false, true, true >
-{
-	template < typename Derived >
-	static void finalize( SparseBlockMatrixBase< Derived >& matrix )
-	{ matrix.cacheTranspose(); }
 } ;
 
 // Index getter
