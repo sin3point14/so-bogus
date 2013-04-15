@@ -430,3 +430,18 @@ TEST( SparseBlock, Sparse )
 	EXPECT_EQ( expected_2, ( isbm * rhs ) ) ;
 }
 
+TEST( SparseBlock, Scalar )
+{
+
+	bogus::SparseBlockMatrix< Eigen::VectorXd > sbm ;
+	sbm.setRows( 2, 5 ) ;
+	sbm.setCols( 2, 1 ) ;
+
+	sbm.insertBackAndResize( 0, 0 ) << 1, 2, 3, 4, 5 ;
+	sbm.insertBackAndResize( 1, 1 ) << 10, 9, 8, 7, 6 ;
+
+	sbm.finalize() ;
+	bogus::SparseBlockMatrix< double > sm ;
+
+}
+
