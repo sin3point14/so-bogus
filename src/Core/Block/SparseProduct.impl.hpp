@@ -118,6 +118,38 @@ private:
 	ReturnType m_index ;
 } ;
 
+
+template < bool Symmetric, bool DoTranspose >
+struct BlockTranspose{
+	template < typename BlockT >
+	static const BlockT& get( const BlockT& src, bool )
+	{ return src ; }
+} ;
+template <  >
+struct BlockTranspose< false, true > {
+	//SFINAE
+
+	template < typename BlockT >
+	static typename BlockT::ConstTransposeReturnType get( const BlockT& src, bool )
+	{ return src.transpose() ; }
+
+	template < typename BlockT >
+	static typename BlockTransposeTraits< BlockT >::ReturnType get( const BlockT& src, bool )
+	{ return transpose_block( src ) ; }
+
+	template < typename BlockT >
+	static typename SelfTransposeTraits< BlockT >::ReturnType get( const BlockT& src, bool )
+	{ return src ; }
+} ;
+
+template < bool DoTranspose >
+struct BlockTranspose< true, DoTranspose > {
+	template < typename BlockT >
+	static BlockT get( const BlockT& src, bool afterDiag )
+	{ return afterDiag ? BlockT( transpose_block( src ) ) : src ; }
+} ;
+
+
 template < typename Derived >
 template < bool ColWise, typename LhsT, typename RhsT >
 void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT > &prod, double scale )

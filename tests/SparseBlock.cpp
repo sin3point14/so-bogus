@@ -442,6 +442,24 @@ TEST( SparseBlock, Scalar )
 
 	sbm.finalize() ;
 	bogus::SparseBlockMatrix< double > sm ;
+	sm = sbm.transpose() * sbm ;
+
+	EXPECT_EQ( sbm.block(0,0).squaredNorm(), sm.block(0,0) ) ;
+	EXPECT_EQ( sbm.block(1,1).squaredNorm(), sm.block(1,1) ) ;
+
+	Eigen::Vector2d rhs( 1, 1 ), res( 0, 0 ), expected_1 (55, 330 ) ;
+	EXPECT_EQ( expected_1, sm * rhs );
+	EXPECT_EQ( expected_1, sm.transpose() * rhs );
+
+	sm.splitRowMultiply( 1, rhs, res ) ;
+	EXPECT_EQ( Eigen::Vector2d::Zero(), res ) ;
+
+	bogus::SparseBlockMatrix< float, bogus::flags::SYMMETRIC > ssm ;
+	ssm = sbm.transpose() * sbm ;
+	EXPECT_EQ( expected_1, ssm * rhs );
+	EXPECT_EQ( expected_1, ssm.transpose() * rhs );
+
+	EXPECT_EQ( Eigen::Vector2d::Zero(), res ) ;
 
 }
 

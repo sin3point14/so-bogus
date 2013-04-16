@@ -55,7 +55,7 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 		{
 			for( unsigned i = 0 ; i < this->m_blocks.size() ; ++i )
 			{
-				block( i ) = source.block(i).transpose() ;
+				block( i ) = transpose_block( source.block(i) ) ;
 			}
 		} else {
 			std::copy( source.blocks().begin(), source.blocks().end(), this->m_blocks.begin() ) ;
@@ -84,7 +84,7 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 			for( typename SparseBlockIndex<>::InnerIterator src_it( uncompressed, i ) ;
 				 src_it ; ++ src_it )
 			{
-				insertBackOuterInner( i, src_it.inner() ) = source.block( src_it.ptr() ).transpose() ;
+				insertBackOuterInner( i, src_it.inner() ) = transpose_block( source.block( src_it.ptr() ) ) ;
 			}
 		}
 		finalize() ;

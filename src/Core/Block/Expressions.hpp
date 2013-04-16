@@ -60,37 +60,26 @@ struct Product
 	{}
 } ;
 
-template < bool Symmetric, bool DoTranspose >
-struct BlockTranspose{
-	template < typename BlockT >
-	static const BlockT& get( const BlockT& src, bool )
-	{ return src ; }
-} ;
-template <  >
-struct BlockTranspose< false, true > {
-	template < typename BlockT >
-	static typename BlockT::ConstTransposeReturnType get( const BlockT& src, bool )
-	{ return src.transpose() ; }
-} ;
-template < bool DoTranspose >
-struct BlockTranspose< true, DoTranspose > {
-//	template < typename BlockT >
-//	static BlockT get( const BlockT& src, bool afterDiag )
-//	{ return afterDiag ? src : src.transpose() ; }
-//} ;
-//template < >
-//struct BlockTranspose< true, false > {
-	template < typename BlockT >
-	static BlockT get( const BlockT& src, bool afterDiag )
-	{ return afterDiag ? BlockT( src.transpose() ) : src ; }
-} ;
+// SFINAE transpose and matrix/vector product return types
+
+template< typename BlockT >
+struct SelfTransposeTraits {} ;
+
+template< typename BlockT >
+struct BlockTransposeTraits {} ;
+
+template< > struct SelfTransposeTraits< double   > { typedef double   ReturnType ; } ;
+template< > struct SelfTransposeTraits< float    > { typedef float    ReturnType ; } ;
+template< > struct SelfTransposeTraits< int      > { typedef int      ReturnType ; } ;
+template< > struct SelfTransposeTraits< unsigned > { typedef unsigned ReturnType ; } ;
+
+template < typename SelfTransposeT >
+const typename SelfTransposeTraits< SelfTransposeT >::ReturnType& transpose_block( const SelfTransposeT &block  ) { return  block ; }
+
 
 template< typename Derived >
-struct BlockProductTraits
-{
-	typedef Derived ResVec;
-	typedef Derived RowResVec;
-} ;
+struct BlockVectorProductTraits
+{} ;
 
 }
 

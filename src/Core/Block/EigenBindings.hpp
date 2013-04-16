@@ -2,6 +2,7 @@
 #define BLOCK_EIGENBINDINGS_HPP
 
 #include <Eigen/Core>
+#include <Eigen/SparseCore>
 
 #include "BlockMatrix.hpp"
 #include "Expressions.hpp"
@@ -14,29 +15,54 @@
 namespace bogus
 {
 
+// Transpose
+
 template< typename EigenDerived >
-struct BlockProductTraits< Eigen::MatrixBase< EigenDerived > >
+typename EigenDerived::ConstTransposeReturnType
+transpose_block ( const Eigen::MatrixBase< EigenDerived >& block )
+{
+	return block.transpose() ;
+}
+template< typename EigenDerived >
+const Eigen::Transpose< const EigenDerived >
+transpose_block( const Eigen::SparseMatrixBase< EigenDerived >& block )
+{
+	return block.transpose() ;
+}
+
+template< typename Derived >
+const LinearSolverBase< Derived >& transpose_block( const LinearSolverBase< Derived >& b )
+{
+	assert( 0 && "transpose_block should not be called on LinearSolvers ! ") ;
+	return b ;
+}
+
+
+// Matrix vector product
+
+template< typename EigenDerived >
+struct BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >
 {
 	typedef Eigen::Matrix< typename Eigen::internal::traits<EigenDerived>::Scalar, EigenDerived::RowsAtCompileTime, 1 > ResVec ;
 	typedef Eigen::Matrix< typename Eigen::internal::traits<EigenDerived>::Scalar, 1, EigenDerived::ColsAtCompileTime > RowResVec ;
 } ;
 
 template< typename Derived >
-typename BlockProductTraits< Eigen::MatrixBase< Derived > >::ResVec getBlockProductResVec( const Eigen::MatrixBase< Derived > & )
+typename BlockVectorProductTraits< Eigen::MatrixBase< Derived > >::ResVec getBlockProductResVec( const Eigen::MatrixBase< Derived > & )
 {
-	return typename BlockProductTraits< Eigen::MatrixBase< Derived > >::ResVec() ;
+	return typename BlockVectorProductTraits< Eigen::MatrixBase< Derived > >::ResVec() ;
 }
 
 }
 
 template < typename Derived, typename EigenDerived >
-typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec operator* ( const bogus::BlockMatrixBase< Derived >& lhs,
+typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec operator* ( const bogus::BlockMatrixBase< Derived >& lhs,
 						 const Eigen::MatrixBase< EigenDerived > &rhs )
 {
 	assert( rhs.cols() == 1 ) ;
 	assert( rhs.rows() == lhs.cols() ) ;
 
-	typedef typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
+	typedef typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
 
 	ResVec res ( lhs.rows() ) ;
 	res.setZero() ;
@@ -46,13 +72,13 @@ typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec 
 }
 
 template < typename Derived, typename EigenDerived >
-typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec operator* ( const bogus::Transpose< bogus::BlockMatrixBase< Derived > >& lhs,
+typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec operator* ( const bogus::Transpose< bogus::BlockMatrixBase< Derived > >& lhs,
 						 const Eigen::MatrixBase< EigenDerived > &rhs )
 {
 	assert( rhs.cols() == 1 ) ;
 	assert( rhs.rows() == lhs.matrix.rows() ) ;
 
-	typedef typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
+	typedef typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
 	ResVec res ( lhs.matrix.cols() ) ;
 	res.setZero() ;
 
@@ -61,13 +87,13 @@ typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec 
 }
 
 template < typename Derived, typename EigenDerived >
-typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec operator* ( const Eigen::MatrixBase< EigenDerived > &lhs,
+typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec operator* ( const Eigen::MatrixBase< EigenDerived > &lhs,
 						 const bogus::BlockMatrixBase< Derived >& rhs )
 {
 	assert( lhs.rows() == 1 ) ;
 	assert( lhs.cols() == rhs.rows() ) ;
 
-	typedef typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec ResVec ;
+	typedef typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec ResVec ;
 	ResVec res ( rhs.cols() ) ;
 	res.setZero() ;
 
@@ -77,13 +103,13 @@ typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResV
 }
 
 template < typename Derived, typename EigenDerived >
-typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec operator* ( const Eigen::MatrixBase< EigenDerived > &lhs,
+typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec operator* ( const Eigen::MatrixBase< EigenDerived > &lhs,
 						 const bogus::Transpose< bogus::BlockMatrixBase< Derived > >& rhs )
 {
 	assert( lhs.rows() == 1 ) ;
 	assert( lhs.cols() == rhs.matrix.cols() ) ;
 
-	typedef typename bogus::BlockProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec ResVec ;
+	typedef typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec ResVec ;
 	ResVec res ( rhs.matrix.rows() ) ;
 	res.setZero() ;
 

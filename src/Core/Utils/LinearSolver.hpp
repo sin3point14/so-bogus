@@ -19,13 +19,6 @@ struct LinearSolverBase
 	   return static_cast< const Derived& >( *this ).solve( rhs ) ;
 	}
 
-	// Fake transpose, to allow compilation -- could be removed if transpose was only specified at compile time
-	typename LinearSolverTraits< Derived >::MatrixType transpose() const
-	{
-		assert( 0 && "Transpose should never be called on a LinearSolverBase" ) ;
-		return typename LinearSolverTraits< Derived >::MatrixType().transpose() ;
-	}
-
 } ;
 
 

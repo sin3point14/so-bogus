@@ -235,7 +235,7 @@ void SparseBlockMatrixBase< Derived >::cacheTranspose()
 			 it ; ++ it, ++uncompressed_it )
 		{
 			const BlockPtr ptr = ptrOffsets[i]++ ;
-			block( ptr ) = block( uncompressed_it.ptr() ).transpose() ;
+			block( ptr ) = transpose_block( block( uncompressed_it.ptr() ) ) ;
 			m_transposeIndex.setPtr( it, ptr ) ;
 		}
 	}
@@ -270,7 +270,7 @@ void SparseBlockMatrixBase< Derived >::multiplyAndReduct( const RhsT& rhs, ResT&
 				const BlockType &b = block( it.ptr() ) ;
 				res_seg += b * m_minorIndex.innerSegment( rhs, it.inner() ) ;
 				if( it.inner() != i )
-					m_minorIndex.innerSegment( locRes, it.inner() ) += b.transpose() * rhs_seg  ;
+					m_minorIndex.innerSegment( locRes, it.inner() ) += transpose_block( b ) * rhs_seg  ;
 			}
 		}
 	} else if ( transpose ) {
@@ -326,7 +326,7 @@ void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res, boo
 					const BlockType &b = block( it.ptr() ) ;
 					res_seg += b * m_minorIndex.innerSegment( rhs, it.inner() ) ;
 					if( it.inner() != i )
-						m_minorIndex.innerSegment( res, it.inner() ) += b.transpose() * rhs_seg  ;
+						m_minorIndex.innerSegment( res, it.inner() ) += transpose_block( b ) * rhs_seg  ;
 				}
 			}
 #else
@@ -460,7 +460,7 @@ void SparseBlockMatrixBase< Derived >::innerRowTransposedMultiply( const IndexT 
 	for( typename IndexT::InnerIterator it( index, outerIdx ) ;
 		 it ; ++ it )
 	{
-		res += block( it.ptr() ).transpose() * index.innerSegment( rhs, it.inner() ) ;
+		res += transpose_block( block( it.ptr() ) ) * index.innerSegment( rhs, it.inner() ) ;
 	}
 }
 
@@ -482,7 +482,7 @@ void SparseBlockMatrixBase< Derived >::innerColTransposedMultiply( const IndexT 
 	for( typename IndexT::InnerIterator it( index, outerIdx ) ;
 		 it ; ++ it )
 	{
-		index.innerSegment( res, it.inner() ) += block( it.ptr() ).transpose() * rhs  ;
+		index.innerSegment( res, it.inner() ) += transpose_block( block( it.ptr() ) ) * rhs  ;
 	}
 }
 
