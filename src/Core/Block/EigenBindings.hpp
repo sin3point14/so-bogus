@@ -17,6 +17,11 @@ namespace bogus
 
 // Transpose
 
+template < typename BlockT >
+struct BlockTransposeTraits< Eigen::SparseMatrixBase < BlockT > > {
+	typedef const Eigen::Transpose< const BlockT > ReturnType ;
+} ;
+
 template< typename EigenDerived >
 typename EigenDerived::ConstTransposeReturnType
 transpose_block ( const Eigen::MatrixBase< EigenDerived >& block )
