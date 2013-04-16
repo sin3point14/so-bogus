@@ -130,7 +130,7 @@ struct BlockTranspose< false, true > {
 	//SFINAE
 
 	template < typename BlockT >
-	static typename BlockT::ConstTransposeReturnType get( const BlockT& src, bool )
+	static typename BlockT::AdjointReturnType get( const BlockT& src, bool )
 	{ return src.transpose() ; }
 
 	template < typename BlockT >

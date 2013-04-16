@@ -417,6 +417,9 @@ TEST( SparseBlock, Sparse )
 	rhs << 1, 2, 3, 4, 5, 6;
 
 	EXPECT_EQ( expected_1, ( sbm * rhs ) ) ;
+	EXPECT_EQ( expected_1, ( sbm.transpose() * rhs ) ) ;
+
+	bogus::SparseBlockMatrix< BlockT > sbm2 = sbm * sbm.transpose() ;
 
 	typedef bogus::SparseLDLT< double > InvBlockT ;
 	bogus::SparseBlockMatrix< InvBlockT > isbm ;
