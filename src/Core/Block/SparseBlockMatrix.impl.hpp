@@ -110,7 +110,7 @@ void SparseBlockMatrixBase< Derived >::setRows(
 		const std::vector< Index > &rowsPerBlocks )
 {
 	setInnerOffets( colMajorIndex(), rowsPerBlocks );
-	this->m_rows = colMajorIndex().innerOffsets.back() ;
+	m_rows = colMajorIndex().innerOffsets.back() ;
 	rowMajorIndex().resizeOuter( rowsPerBlocks.size() ) ;
 
 	if( Traits::is_symmetric ) setCols( rowsPerBlocks ) ;
@@ -121,7 +121,7 @@ void SparseBlockMatrixBase< Derived >::setCols(
 		const std::vector< Index > &colsPerBlocks )
 {
 	setInnerOffets( rowMajorIndex(), colsPerBlocks );
-	this->m_cols = rowMajorIndex().innerOffsets.back() ;
+	m_cols = rowMajorIndex().innerOffsets.back() ;
 
 	colMajorIndex().resizeOuter( colsPerBlocks.size() ) ;
 }
@@ -153,8 +153,10 @@ void SparseBlockMatrixBase< Derived >::clear()
 {
 	m_majorIndex.clear() ;
 	m_minorIndex.clear() ;
+	m_transposeIndex.clear() ;
+	m_transposeIndex.valid = false ;
 	m_nBlocks = 0 ;
-	this->m_blocks.clear() ;
+	m_blocks.clear() ;
 }
 
 template < typename Derived >
@@ -209,7 +211,7 @@ void SparseBlockMatrixBase< Derived >::cacheTranspose()
 
 	computeMinorIndex() ;
 
-	this->m_blocks.resize( 2*m_nBlocks ) ;
+	m_blocks.resize( 2*m_nBlocks ) ;
 
 	BlockPtr base = m_nBlocks ;
 	std::vector< BlockPtr > ptrOffsets( m_minorIndex.outerSize() ) ;
@@ -245,16 +247,16 @@ void SparseBlockMatrixBase< Derived >::cacheTranspose()
 template < typename Derived >
 const typename SparseBlockMatrixBase< Derived >::BlockType& SparseBlockMatrixBase< Derived >::diagonal( const Index row ) const
 {
-	if( Traits::is_symmetric ) return this->block( m_majorIndex.last( row ) );
+	if( Traits::is_symmetric ) return block( m_majorIndex.last( row ) );
 
 	for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( majorIndex(), row ) ;
 		 it ; ++ it )
 	{
 		if( it.inner() == row )
-			return this->m_blocks[ it.ptr() ] ;
+			return m_blocks[ it.ptr() ] ;
 	}
 	assert( 0 && "No diagonal block" ) ;
-	return this->m_blocks[ (BlockPtr)-1 ] ;
+	return m_blocks[ (BlockPtr)-1 ] ;
 }
 
 template < typename Derived >
@@ -266,10 +268,10 @@ const typename SparseBlockMatrixBase< Derived >::BlockType& SparseBlockMatrixBas
 		 it ; ++ it )
 	{
 		if( it.inner() == col )
-			return this->m_blocks[ it.ptr() ] ;
+			return m_blocks[ it.ptr() ] ;
 	}
 	assert( 0 && "Bock does not exist" ) ;
-	return this->m_blocks[ (BlockPtr)-1 ] ;
+	return m_blocks[ (BlockPtr)-1 ] ;
 }
 
 
@@ -282,16 +284,16 @@ void SparseBlockMatrixBase<Derived>::cloneStructure( const SparseBlockMatrix< Bl
 	colMajorIndex() = source.colMajorIndex() ;
 	m_transposeIndex.valid = false ;
 
-	this->m_cols = source.cols() ;
-	this->m_rows = source.rows() ;
-	this->m_blocks.resize( m_nBlocks ) ;
+	m_cols = source.cols() ;
+	m_rows = source.rows() ;
+	m_blocks.resize( m_nBlocks ) ;
 }
 
 template < typename Derived >
 template < typename OtherDerived >
 Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase< OtherDerived > &source )
 {
-	if( static_cast< const void* >( this ) == static_cast< const void* >( &source ) ) return this->derived() ;
+	if( static_cast< const void* >( this ) == static_cast< const void* >( &source ) ) return derived() ;
 
 	typedef typename SparseBlockMatrixBase< OtherDerived >::Traits OtherTraits ;
 	const bool sameMajorness = ( (bool) Traits::is_col_major ) ^ !( OtherTraits::is_col_major ) ;
@@ -310,20 +312,20 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 		m_transposeIndex.valid = false ;
 	}
 
-	this->m_cols = source.cols() ;
-	this->m_rows = source.rows() ;
+	m_cols = source.cols() ;
+	m_rows = source.rows() ;
 
 	if( m_majorIndex.valid )
 	{
-		this->m_blocks.resize( source.blocks().size() ) ;
-		std::copy( source.blocks().begin(), source.blocks().end(), this->m_blocks.begin() ) ;
+		m_blocks.resize( source.blocks().size() ) ;
+		std::copy( source.blocks().begin(), source.blocks().end(), m_blocks.begin() ) ;
 	} else {
 		// If we're here, this means that :
 		//  - either one matrix is column major, the other row major
 		//  -     or the major index of the destination iscompressed and cannot accomodate the source
 
 		clear() ;
-		this->m_blocks.reserve( source.blocks().size() ) ;
+		m_blocks.reserve( source.blocks().size() ) ;
 
 		assert( source.majorIndex().valid ) ;
 
@@ -349,7 +351,7 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 
 	Finalizer::finalize( *this ) ;
 
-	return this->derived();
+	return derived();
 }
 
 

@@ -23,39 +23,39 @@ template < typename Derived >
 template < typename LhsT, typename RhsT >
 Derived& SparseBlockMatrixBase<Derived>::operator=( const Product< LhsT, RhsT > &prod )
 {
-	setFromProduct< true >( prod, 1. ) ;
-	return this->derived() ;
+	setFromProduct< true >( prod ) ;
+	return derived() ;
 }
 
 
 template < typename Derived >
 template < bool ColWise, typename LhsT, typename RhsT >
-void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT > &prod, double scale )
+void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT > &prod )
 {
 	typedef Product< LhsT, RhsT> Prod ;
 	typedef BlockMatrixTraits< typename Prod::LhsTraits::MatrixType > LhsTraits ;
 	typedef BlockMatrixTraits< typename Prod::RhsTraits::MatrixType > RhsTraits ;
 
-	typedef BlockTranspose< LhsTraits::is_symmetric, Prod::transposeLhs > LhsGetter ;
+	typedef BlockTransposeOption< LhsTraits::is_symmetric, Prod::transposeLhs > LhsGetter ;
 	LhsGetter lhsGetter ;
-	typedef BlockTranspose< RhsTraits::is_symmetric, Prod::transposeRhs > RhsGetter ;
+	typedef BlockTransposeOption< RhsTraits::is_symmetric, Prod::transposeRhs > RhsGetter ;
 	RhsGetter rhsGetter ;
 
 	clear() ;
 	if( Prod::transposeLhs )
 	{
-		this->m_rows = prod.lhs.cols() ;
+		m_rows = prod.lhs.cols() ;
 		colMajorIndex().innerOffsets = prod.lhs.rowMajorIndex().innerOffsets;
 	} else {
-		this->m_rows = prod.lhs.rows() ;
+		m_rows = prod.lhs.rows() ;
 		colMajorIndex().innerOffsets = prod.lhs.colMajorIndex().innerOffsets;
 	}
 	if( Prod::transposeRhs )
 	{
-		this->m_cols = prod.rhs.rows() ;
+		m_cols = prod.rhs.rows() ;
 		rowMajorIndex().innerOffsets = prod.rhs.colMajorIndex().innerOffsets;
 	} else {
-		this->m_cols = prod.rhs.cols() ;
+		m_cols = prod.rhs.cols() ;
 		rowMajorIndex().innerOffsets = prod.rhs.rowMajorIndex().innerOffsets;
 	}
 
@@ -68,7 +68,7 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 
 	setFromProduct< ColWise >( lhsIndexComputer.get(), rhsIndexComputer.get(),
 							   prod.lhs.blocks(), prod.rhs.blocks(),
-							   lhsGetter, rhsGetter, scale ) ;
+							   lhsGetter, rhsGetter ) ;
 
 }
 
@@ -268,11 +268,13 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(
 		const RhsIndex &rhsIdx,
 		const std::vector< LhsBlock > &lhsData,
 		const std::vector< RhsBlock > &rhsData,
-		const LhsGetter &lhsGetter, const RhsGetter &rhsGetter,
-		double scale)
+		const LhsGetter &lhsGetter, const RhsGetter &rhsGetter
+		)
 {
 	typedef SparseBlockProductIndex< ColWise, Derived > ProductIndex ;
 	typedef typename ProductIndex::BlockComputation BlockComputation ;
+
+	clear() ;
 
 	assert( lhsIdx.valid ) ;
 	assert( rhsIdx.valid ) ;
@@ -319,7 +321,6 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(
 			b += lhsGetter.get( lhsData[ bc.first[j].second ], bc.first[j].first)
 					* rhsGetter.get( rhsData[ bc.second[j].second ], bc.second[j].first) ;
 		}
-		b *= scale ;
 	}
 
 	productIndex.compressed.valid  = true ;
@@ -330,6 +331,7 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(
 	m_transposeIndex.clear() ;
 	m_transposeIndex.valid = false ;
 	Finalizer::finalize( *this ) ;
+
 }
 
 } //namespace bogus

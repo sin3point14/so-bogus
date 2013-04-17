@@ -35,14 +35,6 @@ transpose_block( const Eigen::SparseMatrixBase< EigenDerived >& block )
 	return block.transpose() ;
 }
 
-template< typename Derived >
-const LinearSolverBase< Derived >& transpose_block( const LinearSolverBase< Derived >& b )
-{
-	assert( 0 && "transpose_block should not be called on LinearSolvers ! ") ;
-	return b ;
-}
-
-
 // Matrix vector product
 
 template< typename EigenDerived >
@@ -72,7 +64,7 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 	ResVec res ( lhs.rows() ) ;
 	res.setZero() ;
 
-	lhs.multiply( rhs, res ) ;
+	lhs.template multiply< false >( rhs, res ) ;
 	return res ;
 }
 
@@ -87,7 +79,7 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 	ResVec res ( lhs.matrix.cols() ) ;
 	res.setZero() ;
 
-	lhs.matrix.multiply( rhs, res, true ) ;
+	lhs.matrix.template multiply< true >( rhs, res ) ;
 	return res ;
 }
 
@@ -103,7 +95,7 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 	res.setZero() ;
 
 	Eigen::Transpose< ResVec > resTrans ( res ) ;
-	rhs.multiply( lhs.transpose(), resTrans, true ) ;
+	rhs.template multiply< true >( lhs.transpose(), resTrans ) ;
 	return res ;
 }
 
@@ -119,7 +111,7 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 	res.setZero() ;
 
 	Eigen::Transpose< ResVec > resTrans ( res ) ;
-	rhs.matrix.multiply( lhs.transpose(), resTrans ) ;
+	rhs.matrix.template multiply< false >( lhs.transpose(), resTrans ) ;
 	return res ;
 }
 

@@ -33,32 +33,35 @@ template < typename Derived >
 class BlockMatrixBase : public BlockObjectBase< Derived >
 {
 public:
+	typedef BlockObjectBase< Derived > Base;
 	typedef typename BlockMatrixTraits< Derived >::BlockType BlockType ;
 	typedef typename BlockMatrixTraits< Derived >::Index Index ;
 
-public:
+	using Base::derived ;
+
+
 	BlockMatrixBase() : m_rows(0), m_cols(0)
 	{}
 
 	virtual ~BlockMatrixBase()
 	{}
 
-	template < typename RhsT, typename ResT >
-	void multiply( const RhsT& rhs, ResT& res, bool transposed = false ) const
+	template < bool Transpose, typename RhsT, typename ResT >
+	void multiply( const RhsT& rhs, ResT& res ) const
 	{
-		this->derived().multiply( rhs, res, transposed ) ;
+		derived().template multiply< Transpose >( rhs, res ) ;
 	}
 
 	template < typename RhsT, typename ResT >
 	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const
 	{
-		this->derived().splitRowMultiply( row, rhs, res ) ;
+		derived().splitRowMultiply( row, rhs, res ) ;
 	}
 
 
 	const BlockType& diagonal( const Index row ) const
 	{
-		return this->derived().diagonal( row );
+		return derived().diagonal( row );
 	}
 
 	Index rows() const { return m_rows ; }

@@ -44,21 +44,21 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 		m_transposeIndex = source.transposeIndex()  ;
 	}
 
-	this->m_cols = source.rows() ;
-	this->m_rows = source.cols() ;
+	m_cols = source.rows() ;
+	m_rows = source.cols() ;
 
 	if( m_majorIndex.valid )
 	{
-		this->m_blocks.resize( source.blocks().size() ) ;
+		m_blocks.resize( source.blocks().size() ) ;
 
 		if( needTranspose )
 		{
-			for( unsigned i = 0 ; i < this->m_blocks.size() ; ++i )
+			for( unsigned i = 0 ; i < m_blocks.size() ; ++i )
 			{
 				block( i ) = transpose_block( source.block(i) ) ;
 			}
 		} else {
-			std::copy( source.blocks().begin(), source.blocks().end(), this->m_blocks.begin() ) ;
+			std::copy( source.blocks().begin(), source.blocks().end(), m_blocks.begin() ) ;
 		}
 	} else {
 		// If we're here, this means that :
@@ -66,7 +66,7 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 		//  -     or the major index of the destination iscompressed and cannot accomodate the source
 
 		clear() ;
-		this->m_blocks.reserve( source.blocks().size() ) ;
+		m_blocks.reserve( source.blocks().size() ) ;
 
 		assert( source.majorIndex().valid ) ;
 
@@ -92,7 +92,7 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 
 	Finalizer::finalize( *this ) ;
 
-	return this->derived();
+	return derived();
 }
 }
 

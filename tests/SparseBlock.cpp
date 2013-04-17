@@ -34,13 +34,13 @@ TEST( SparseBlock, MatrixVector )
 
 	rhs.setOnes() ;
 	res.setZero() ;
-	sbm.multiply( rhs, res ) ;
+	sbm.multiply< false >( rhs, res ) ;
 
 	EXPECT_EQ( expected_1, res ) ;
 	EXPECT_EQ( expected_1, sbm*rhs ) ;
 
 	rhs.setZero() ;
-	sbm.multiply( res, rhs, true ) ;
+	sbm.multiply< true >( res, rhs ) ;
 
 	EXPECT_EQ( expected_2, rhs ) ;
 	EXPECT_EQ( expected_2, ( res.transpose() * sbm ).transpose() ) ;
@@ -291,10 +291,10 @@ TEST( SparseBlock, MMult )
 		EXPECT_EQ( mm.diagonal(2), Eigen::Matrix3d::Constant( 136 ) ) ;
 
 		bogus::SparseBlockMatrix< Eigen::Matrix4d, bogus::flags::COMPRESSED | bogus::flags::SYMMETRIC > mm_t = sbm.transpose()*sbm ;
-		ASSERT_EQ( mm_t.nBlocks(), 3u ) ;
+		ASSERT_EQ( 3u, mm_t.nBlocks() ) ;
 		EXPECT_EQ( mm_t.diagonal(1), Eigen::Matrix4d::Constant( 78 ) ) ;
 		mm_t.setFromProduct< false > ( sbm.transpose()*sbm ) ;
-		ASSERT_EQ( mm_t.nBlocks(), 3u ) ;
+		ASSERT_EQ( 3u, mm_t.nBlocks() ) ;
 		EXPECT_EQ( mm_t.diagonal(1), Eigen::Matrix4d::Constant( 78 ) ) ;
 
 		EXPECT_TRUE( mm_t.minorIndex().valid ) ;

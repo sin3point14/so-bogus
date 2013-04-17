@@ -19,6 +19,7 @@ class SparseBlockMatrixBase : public BlockMatrixBase< Derived >
 {
 
 public:
+	typedef BlockMatrixBase< Derived > Base ;
 	typedef BlockMatrixTraits< Derived > Traits ;
 
 	typedef typename Traits::SparseIndexType SparseIndexType ;
@@ -28,6 +29,11 @@ public:
 
 	typedef typename Traits::BlockType BlockType ;
 	typedef typename SparseIndexType::BlockPtr BlockPtr ;
+
+	using Base::rows ;
+	using Base::cols ;
+	using Base::blocks ;
+	using Base::derived ;
 
 	SparseBlockMatrixBase() ;
 
@@ -65,12 +71,12 @@ public:
 
 	void reserve( std::size_t nBlocks )
 	{
-		this->m_blocks.reserve( nBlocks ) ;
+		m_blocks.reserve( nBlocks ) ;
 	}
 
 	void prealloc( std::size_t nBlocks )
 	{
-		this->m_blocks.resize( nBlocks ) ;
+		m_blocks.resize( nBlocks ) ;
 		m_nBlocks = nBlocks ;
 	}
 
@@ -115,12 +121,12 @@ public:
 
 	const BlockType& block( BlockPtr ptr ) const
 	{
-		return this->m_blocks[ ptr ] ;
+		return m_blocks[ ptr ] ;
 	}
 
 	BlockType& block( BlockPtr ptr )
 	{
-		return this->m_blocks[ ptr ] ;
+		return m_blocks[ ptr ] ;
 	}
 
 	// Warning: block has to exists
@@ -145,8 +151,8 @@ public:
 
 	Transpose< SparseBlockMatrixBase > transpose() const { return Transpose< SparseBlockMatrixBase< Derived > >( *this ) ; }
 
-	template < typename RhsT, typename ResT >
-	void multiply( const RhsT& rhs, ResT& res, bool transposed = false ) const ;
+	template < bool Transpose, typename RhsT, typename ResT >
+	void multiply( const RhsT& rhs, ResT& res ) const ;
 
 	template < typename RhsT, typename ResT >
 	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
@@ -155,13 +161,19 @@ public:
 	void cloneStructure( const SparseBlockMatrix< BlockT2, Traits::flags > &source ) ;
 
 	template < bool ColWise, typename LhsT, typename RhsT >
-	void setFromProduct( const Product< LhsT, RhsT > &prod , double scale = 1. ) ;
+	void setFromProduct( const Product< LhsT, RhsT > &prod ) ;
 
 protected:
+
+	using Base::m_cols ;
+	using Base::m_rows ;
+	using Base::m_blocks ;
 
 	typedef SparseBlockMatrixFinalizer< Traits::is_symmetric > Finalizer ;
 	friend struct SparseBlockIndexGetter< Derived, true > ;
 	friend struct SparseBlockIndexGetter< Derived, false > ;
+	template < bool Symmetric, bool NativeOrder, bool Transpose > friend struct SparseBlockMatrixVectorMultiplier ;
+	template < bool Symmetric > friend struct OutOfOrderSparseBlockMatrixVectorMultiplier ;
 
 	void allocateBlock( BlockPtr &ptr )
 	{
@@ -169,8 +181,8 @@ protected:
 #pragma omp critical
 #endif
 		{
-			ptr = this->m_blocks.size() ;
-			this->m_blocks.push_back( BlockType() ) ;
+			ptr = m_blocks.size() ;
+			m_blocks.push_back( BlockType() ) ;
 		}
 	}
 
@@ -212,14 +224,10 @@ protected:
 		return v.segment( colOffset( colBlockIdx ), blockCols( colBlockIdx ) ) ;
 	}
 
-	template < typename IndexT, typename RhsT, typename ResT >
-	void innerRowMultiply( const IndexT &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
-	template < typename IndexT, typename RhsT, typename ResT >
-	void innerColMultiply( const IndexT &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
-	template < typename IndexT, typename RhsT, typename ResT >
-	void innerRowTransposedMultiply( const IndexT &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
-	template < typename IndexT, typename RhsT, typename ResT >
-	void innerColTransposedMultiply( const IndexT &index, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
+	template < typename IndexT, typename GetterT, typename RhsT, typename ResT >
+	void innerRowMultiply( const IndexT &index, const GetterT &getter, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
+	template < typename IndexT, typename GetterT, typename RhsT, typename ResT >
+	void innerColMultiply( const IndexT &index, const GetterT &getter, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
 
 	template< typename IndexT >
 	void setInnerOffets( IndexT& index, const std::vector< Index > &blockSizes ) const ;
@@ -229,12 +237,8 @@ protected:
 						 const std::vector< LhsBlock > &lhsData,
 						 const std::vector< RhsBlock > &rhsData,
 						 const LhsGetter &lhsGetter,
-						 const RhsGetter &rhsGetter,
-						 double scale = 1.
+						 const RhsGetter &rhsGetter
 						  ) ;
-
-	template < typename RhsT, typename ResT, typename LocalResT >
-	void multiplyAndReduct( const RhsT& rhs, ResT& res, bool transposed, const LocalResT& ) const ;
 
 	std::size_t m_nBlocks ;
 

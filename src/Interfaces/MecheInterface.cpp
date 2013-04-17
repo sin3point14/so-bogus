@@ -18,7 +18,7 @@ struct MecheFrictionProblem::Data
 	bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::COMPRESSED > E ;
 	//! H
 	typedef Eigen::Matrix< double, 3, Eigen::Dynamic > HBlock ;
-	SparseBlockMatrix< HBlock, flags::COL_MAJOR > H;
+	SparseBlockMatrix< HBlock > H;
 
 	const double *f ;
 	const double *w ;
@@ -106,6 +106,9 @@ void MecheFrictionProblem::fromPrimal (
 	m_data->H.reserve( 2*n_in ) ;
 	m_data->H.setRows( n_in, 3 ) ;
 	m_data->H.setCols( dofs ) ;
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
 	for( unsigned i = 0 ; i < n_in ; ++i )
 	{
 		const Eigen::Matrix3d Et = m_data->E.diagonal(i).transpose() ;
