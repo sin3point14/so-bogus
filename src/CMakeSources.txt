@@ -3,12 +3,16 @@ Core/Block.hpp
 Core/Block.impl.hpp
 Core/Block/BlockMatrix.hpp
 Core/Block/BlockMatrix.impl.hpp
+Core/Block/BlockUtils.hpp
+Core/Block/CompoundSparseBlockIndex.hpp
 Core/Block/EigenBindings.hpp
 Core/Block/Expressions.hpp
 Core/Block/SparseBlockIndex.hpp
+Core/Block/SparseBlockIndexComputer.hpp
 Core/Block/SparseBlockMatrix.hpp
 Core/Block/SparseBlockMatrix.impl.hpp
-Core/Block/SparseProduct.impl.hpp
+Core/Block/SparseMatrixMatrixProduct.impl.hpp
+Core/Block/SparseMatrixVectorProduct.impl.hpp
 Core/Block/SparseTranspose.impl.hpp
 Core/Block/Streams.hpp
 Core/GaussSeidel.fwd.hpp

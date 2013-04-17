@@ -61,12 +61,13 @@ struct Product
 } ;
 
 // SFINAE transpose and matrix/vector product return types
-
-template< typename BlockT >
-struct SelfTransposeTraits {} ;
+// Specialization of these structures should define a ReturnType if the operation is allowed
 
 template< typename BlockT >
 struct BlockTransposeTraits {} ;
+
+template< typename BlockT >
+struct SelfTransposeTraits {} ;
 
 template< > struct SelfTransposeTraits< double   > { typedef double   ReturnType ; } ;
 template< > struct SelfTransposeTraits< float    > { typedef float    ReturnType ; } ;

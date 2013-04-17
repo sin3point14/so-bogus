@@ -1,8 +1,11 @@
-#ifndef BOGUS_SPARSEPRODUCT_IMPL_HPP
-#define BOGUS_SPARSEPRODUCT_IMPL_HPP
+#ifndef BOGUS_SPARSE_MATRIXMATRIX_PRODUCT_IMPL_HPP
+#define BOGUS_SPARSE_MATRIXMATRIX_PRODUCT_IMPL_HPP
 
 #include "Expressions.hpp"
 #include "SparseBlockMatrix.hpp"
+
+#include "SparseBlockIndexComputer.hpp"
+#include "BlockUtils.hpp"
 
 #include <map>
 
@@ -23,135 +26,6 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Product< LhsT, RhsT > 
 	setFromProduct< true >( prod, 1. ) ;
 	return this->derived() ;
 }
-
-template < typename FirstIndexType, typename SecondIndexType >
-struct CompoundSparseBlockIndex
-{
-	typedef typename FirstIndexType::Index Index ;
-	typedef typename FirstIndexType::BlockPtr BlockPtr ;
-
-	CompoundSparseBlockIndex( const FirstIndexType& index1, const SecondIndexType &index2 )
-		: first( index1 ), second( index2 ), valid( first.valid && second.valid )
-	{
-		assert( index1.outerSize() == index2.outerSize() ) ;
-		assert( index1.innerSize() == index2.innerSize() ) ;
-	}
-
-	Index outerSize() const { return first.outerSize() ; }
-	Index innerSize() const { return first.innerSize() ; }
-
-	struct InnerIterator
-	{
-		InnerIterator( const CompoundSparseBlockIndex& index, Index outer )
-			: m_it1( index.first, outer ), m_it2( index.second, outer )
-		{
-		}
-
-		operator bool() const
-		{
-			return m_it1 || m_it2 ;
-		}
-
-		InnerIterator& operator++()
-		{
-			if( m_it1 ) ++ m_it1 ;
-			else        ++ m_it2 ;
-			return *this ;
-		}
-
-		Index inner() const {
-			return m_it1 ? m_it1.inner() : m_it2.inner() ;
-		}
-		BlockPtr ptr() const {
-			return m_it1 ? m_it1.ptr()   : m_it2.ptr() ;
-		}
-
-	private:
-		typename FirstIndexType::InnerIterator m_it1 ;
-		typename SecondIndexType::InnerIterator m_it2 ;
-	} ;
-
-	const FirstIndexType& first ;
-	const SecondIndexType& second ;
-	bool valid ;
-} ;
-
-template < typename MatrixType, bool Symmetric, bool ColWise, bool Transpose >
-struct SparseBlockIndexComputer
-{
-	typedef BlockMatrixTraits< MatrixType > Traits ;
-	enum { is_major = bool(ColWise ^ Transpose) == bool( Traits::is_col_major ) } ;
-	typedef SparseBlockIndexGetter< MatrixType, is_major > Getter ;
-	typedef typename Getter::ReturnType ReturnType ;
-
-	SparseBlockIndexComputer( const MatrixType &matrix )
-		: m_matrix( matrix )
-	{}
-
-	const ReturnType& get( )
-	{
-		return Getter::getOrCompute( m_matrix, m_aux ) ;
-	}
-
-private:
-	const MatrixType m_matrix ;
-	typename Traits::UncompressedIndexType m_aux ;
-} ;
-
-template < typename MatrixType, bool ColWise, bool Transpose >
-struct SparseBlockIndexComputer< MatrixType, true, ColWise, Transpose >
-{
-	typedef BlockMatrixTraits< MatrixType > Traits ;
-	typedef CompoundSparseBlockIndex< typename Traits::SparseIndexType, typename Traits::UncompressedIndexType >
-	ReturnType ;
-
-	SparseBlockIndexComputer( const MatrixType &matrix )
-		: m_index( matrix.majorIndex(), matrix.minorIndex() )
-	{}
-
-	const ReturnType& get( )
-	{
-		return m_index ;
-	}
-
-private:
-	ReturnType m_index ;
-} ;
-
-
-template < bool Symmetric, bool DoTranspose >
-struct BlockTranspose{
-	template < typename BlockT >
-	static const BlockT& get( const BlockT& src, bool )
-	{ return src ; }
-} ;
-template <  >
-struct BlockTranspose< false, true > {
-	//SFINAE
-
-	template < typename BlockT >
-	static typename BlockT::ConstTransposeReturnType get( const BlockT& src, bool )
-	{ return src.transpose() ; }
-
-	template < typename BlockT >
-	static typename BlockTransposeTraits< typename BlockT::Base >::ReturnType get( const BlockT& src, bool )
-	{ return transpose_block( src ) ; }
-
-	template < typename BlockT >
-	static typename BlockTransposeTraits< BlockT >::ReturnType get( const BlockT& src, bool )
-	{ return transpose_block( src ) ; }
-
-	template < typename BlockT >
-	static typename SelfTransposeTraits< BlockT >::ReturnType get( const BlockT& src, bool )
-	{ return src ; }
-} ;
-
-template < bool DoTranspose >
-struct BlockTranspose< true, DoTranspose > {
-	template < typename BlockT >
-	static BlockT get( const BlockT& src, bool afterDiag )
-	{ return afterDiag ? BlockT( transpose_block( src ) ) : src ; }
-} ;
 
 
 template < typename Derived >
