@@ -2,14 +2,24 @@
 #define BLOCK_EIGENBINDINGS_HPP
 
 #include <Eigen/Core>
+
+#ifndef BOGUS_BLOCK_WITHOUT_EIGEN_SPARSE
+#if EIGEN_VERSION_AT_LEAST(3,1,0)
 #include <Eigen/SparseCore>
+#else
+#define EIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET
+#include <Eigen/Sparse>
+#endif
+#endif
 
 #include "BlockMatrix.hpp"
 #include "Expressions.hpp"
 
 #ifndef BOGUS_BLOCK_WITHOUT_LINEAR_SOLVERS
 #include "../Utils/EigenLinearSolvers.hpp"
+#ifndef BOGUS_BLOCK_WITHOUT_EIGEN_SPARSE
 #include "../Utils/EigenSparseLinearSolvers.hpp"
+#endif
 #endif
 
 namespace bogus
@@ -17,23 +27,26 @@ namespace bogus
 
 // Transpose
 
-template < typename BlockT >
-struct BlockTransposeTraits< Eigen::SparseMatrixBase < BlockT > > {
-	typedef const Eigen::Transpose< const BlockT > ReturnType ;
-} ;
-
 template< typename EigenDerived >
 typename EigenDerived::ConstTransposeReturnType
 transpose_block ( const Eigen::MatrixBase< EigenDerived >& block )
 {
 	return block.transpose() ;
 }
+
+#ifndef BOGUS_BLOCK_WITHOUT_EIGEN_SPARSE
+template < typename BlockT >
+struct BlockTransposeTraits< Eigen::SparseMatrixBase < BlockT > > {
+	typedef const Eigen::Transpose< const BlockT > ReturnType ;
+} ;
+
 template< typename EigenDerived >
 const Eigen::Transpose< const EigenDerived >
 transpose_block( const Eigen::SparseMatrixBase< EigenDerived >& block )
 {
 	return block.transpose() ;
 }
+#endif
 
 // Matrix vector product
 

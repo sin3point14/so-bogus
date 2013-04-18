@@ -421,6 +421,7 @@ TEST( SparseBlock, Sparse )
 
 	bogus::SparseBlockMatrix< BlockT > sbm2 = sbm * sbm.transpose() ;
 
+#if EIGEN_VERSION_AT_LEAST(3,1,0)
 	typedef bogus::SparseLDLT< double > InvBlockT ;
 	bogus::SparseBlockMatrix< InvBlockT > isbm ;
 	isbm.cloneStructure( sbm ) ;
@@ -431,6 +432,7 @@ TEST( SparseBlock, Sparse )
 	}
 
 	EXPECT_EQ( expected_2, ( isbm * rhs ) ) ;
+#endif
 }
 
 TEST( SparseBlock, Scalar )

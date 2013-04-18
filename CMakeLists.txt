@@ -21,7 +21,14 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas " )
 endif()
 
 # Proc flags
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -g " )
+
+if (NOT CMAKE_BUILD_TYPE)
+  message(STATUS "No build type selected, default to Release")
+  set(CMAKE_BUILD_TYPE "Release")
+endif()
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror " )
+SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  -march=native -DEIGEN_NO_DEBUG ")
 
 include_directories( ${EXTERNAL_INCLUDES} )
 

@@ -1,6 +1,8 @@
 #ifndef BOGUS_EIGEN_SPARSE_LINEAR_SOLVERS
 #define BOGUS_EIGEN_SPARSE_LINEAR_SOLVERS
 
+#if EIGEN_VERSION_AT_LEAST(3,1,0)
+
 #include "LinearSolver.hpp"
 
 #include <Eigen/Sparse>
@@ -68,5 +70,7 @@ struct SparseLDLT : public LDLT< Eigen::SparseMatrixBase< Eigen::SparseMatrix< S
 } ;
 
 } //namespace bogus
+
+#endif
 
 #endif
