@@ -1,7 +1,9 @@
 #ifndef BOGUS_LOCAL_SOC_SOLVER_HPP
 #define BOGUS_LOCAL_SOC_SOLVER_HPP
 
+#include "../SecondOrder.fwd.hpp"
 #include "../Utils/NumTraits.hpp"
+#include "../Utils/EigenMatrixTraits.hpp"
 
 namespace bogus {
 
