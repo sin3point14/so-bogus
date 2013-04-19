@@ -214,6 +214,7 @@ struct SparseBlockIndex< true >
 			// We would like to swap this vector as well, but there seems to be a bug in 4.6.3
 			// that prevent memormy ownership to be properly transfered
 			outer = compressed.outer ;
+//			outer.swap( compressed.outer );
 			inner.swap( compressed.inner );
 			if( !compressed.innerOffsets.empty() )
 				innerOffsets.swap( compressed.innerOffsets ) ;
