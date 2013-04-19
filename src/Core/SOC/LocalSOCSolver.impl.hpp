@@ -50,6 +50,8 @@ struct LocalSOCSolver< 3, Scalar, true, Strat >
 		  const Scalar mu, const Scalar tol, const Scalar scaling
 		  )
   {
+	  // see [Daviet et al 2011], Appendix B.2
+
 	  // Newton solver
 	  typedef FischerBurmeister< Dimension, Scalar, true > FBFunc ;
 	  FBFunc fb( mu, A, b, scaling ) ;
@@ -126,6 +128,8 @@ struct LocalSOCSolver< 3, Scalar, true, Strat >
 		  const Scalar mu
 		  )
   {
+	  // see [Daviet et al 2011], Appendix B.1
+
 	 typedef Eigen::Matrix< Scalar, 2, 1 > Vec2 ;
 	 typedef Eigen::Matrix< Scalar, 2, 2 > Mat2 ;
 
@@ -273,6 +277,8 @@ struct LocalSOCSolver< 3, Scalar, false, Strat >
 		  const Scalar mu
 		  )
   {
+	  // see doc/sage/poySOC.sage
+
 	 typedef Eigen::Matrix< Scalar, 2, 1 > Vec2 ;
 	 typedef Eigen::Matrix< Scalar, 2, 2 > Mat2 ;
 
@@ -280,16 +286,18 @@ struct LocalSOCSolver< 3, Scalar, false, Strat >
 	 if( wN < NumTraits< Scalar >::epsilon() )
 		 return false ; // Could we do something better ?
 
-	 const Scalar b0=b[0], b1=b[1], b2=b[2],
-			 w00=W(0,0), w01=W(0,1), w02=W(0,2), w11=W(1,1), w12=W(1,2),
-			 w22=W(2,2) ;
+	 const Scalar A = (b[1]*W(1,2) - b[2]*W(1,1))*mu*mu + b[0]*W(0,2) - b[2]*W(0,0) ;
+	 const Scalar B = (b[0]*W(1,2) + b[1]*W(0,2) - 2*b[2]*W(0,1))*mu ;
+	 const Scalar C = 2*( (b[1]*W(2,2) - b[2]*W(1,2))*mu*mu - b[0]*W(0,1) + b[1]*W(0,0) );
+	 const Scalar D = 2*( b[0]*(W(1,1) - W(2,2)) - b[1]*W(0,1) + b[2]*W(0,2))*mu ;
+	 const Scalar E = -6*(b[0]*W(1,2) - b[1]*W(0,2))*mu ;
 
 	 Scalar coeffs[5] ;
-	 coeffs[0] =  (b1*w12 - b2*w11)*mu*mu + (b0*w12 + b1*w02 - 2*b2*w01)*mu + b0*w02 - b2*w00 ;
-	 coeffs[1] =  2*(b1*w22 - b2*w12)*mu*mu - 2*(b0*w11 - b0*w22 - b1*w01 + b2*w02)*mu - 2*b0*w01 + 2*b1*w00 ;
-	 coeffs[2] =  -6*(b0*w12 - b1*w02)*mu ;
-	 coeffs[3] =  2*(b1*w22 - b2*w12)*mu*mu + 2*(b0*w11 - b0*w22 - b1*w01 + b2*w02)*mu - 2*b0*w01 + 2*b1*w00 ;
-	 coeffs[4] =  -(b1*w12 - b2*w11)*mu*mu + (b0*w12 + b1*w02 - 2*b2*w01)*mu - b0*w02 + b2*w00 ;
+	 coeffs[0] =  A + B ;
+	 coeffs[1] =  C - D ;
+	 coeffs[2] =  E ;
+	 coeffs[3] =  C + D ;
+	 coeffs[4] =  B - A ;
 
 	 Scalar roots[4] ;
 	 const unsigned nRoots =
@@ -310,7 +318,7 @@ struct LocalSOCSolver< 3, Scalar, false, Strat >
 		 if( bogus::NumTraits< Scalar >::isZero( den ) )
 			 continue ;
 
-		 const Scalar rN = -(CT*b0 + b1*mu)/den ;
+		 const Scalar rN = -(CT*b[0] + b[1]*mu)/den ;
 		 if( rN <= 0 )
 			 continue ;
 

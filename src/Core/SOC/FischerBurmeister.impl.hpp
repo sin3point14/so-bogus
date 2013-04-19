@@ -59,6 +59,8 @@ void FBBaseFunction< Dimension, Scalar >::compute(
 			const Vector& x, const Vector& y, Vector& fb,
 			Matrix& dFb_dx, Matrix& dFb_dy )
 {
+	// see [Daviet et al 2011], Appendix A.1
+
 	Vector z2 ;
 
 	z2[0] = x.squaredNorm() + y.squaredNorm() ;

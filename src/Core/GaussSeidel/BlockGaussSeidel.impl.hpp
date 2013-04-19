@@ -60,6 +60,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 
 	std::vector< unsigned > skip( n, 0 ) ;
 
+	// see [Daviet et al 2011], Algorithm 1
 	for( unsigned GSIter = 1 ; GSIter <= m_maxIters ; ++GSIter )
 	{
 		typename ProblemTraits::Vector lb, lx, ldx ;

@@ -14,6 +14,8 @@ template < typename NSFunction >
 typename NonSmoothNewton< NSFunction >::Scalar NonSmoothNewton<NSFunction>::solve(
   Vector& x ) const
 {
+	// see [Daviet et al 2011], Appendix A.2
+
   static const Scalar sigma2 = 1.e-4 ;
   static const Scalar alpha = .5 ;
 
