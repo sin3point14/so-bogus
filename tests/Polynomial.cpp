@@ -39,6 +39,7 @@ TEST( Polynomial, SOQPQuartic )
 	b << -0.1458, -0.2484, -0.1515 ;
 
 	Eigen::Vector3d r ;
+	Eigen::Vector3d u ;
 	const double mu = 0.6 ;
 
 	 typedef double Scalar ;
@@ -46,86 +47,57 @@ TEST( Polynomial, SOQPQuartic )
 	 typedef Eigen::Matrix< Scalar, 2, 2 > Mat2 ;
 
 	 const Scalar wN = W(0,0) ;
-	 if( wN < bogus::NumTraits< Scalar >::epsilon() )
-		 return ; // Could we do something better ?
-/*
-	 const Vec2 wT = W.block< 2, 1 >( 1, 0 ) ;
-	 const Mat2 WT = W.block< 2, 2 >( 1, 1 ) ;
+	 ASSERT_FALSE( wN < bogus::NumTraits< Scalar >::epsilon() ) ;
 
-	 const Scalar bN = b[0];
-	 const Vec2 bT = b.segment<2>(1) ;
+	 const Scalar b0=b[0], b1=b[1], b2=b[2],
+			 w00=W(0,0), w01=W(0,1), w02=W(0,2), w11=W(1,1), w12=W(1,2),
+			 w22=W(2,2) ;
 
-	 const Vec2 wT_wN = wT/wN ;
-	 const Mat2 Wbar = WT - wT_wN * wT.transpose() ;
-	 const Vec2 bbar = bT/bN - wT_wN ;
-
-	 const Scalar imu2 = 1. / ( mu * mu ) ;
-
-	 const Scalar A = Wbar.trace() - wT.dot( bbar ) ;
-	 const Vec2   B ( Wbar(1,1)*bbar[0] - Wbar(1,0)*bbar[1],
-					  Wbar(0,0)*bbar[1] - Wbar(0,1)*bbar[0] ) ;
-	 const Scalar C = Wbar.determinant() - wT.dot( B ) ;
-	 const Scalar D = wN*wN * imu2 ;
-
-	 Scalar coeffs[4] = {
-		 C*C - D * B.squaredNorm(),
-		 2*( C*A - D * bbar.dot( B ) ),
-		 2*C + A*A - D * bbar.squaredNorm(),
-		 2*A
-	 } ;
-
-
-	 const Scalar E = - 2 * wN * imu2 ;
-	 const Scalar F = bbar.squaredNorm() ;
-	 const Scalar G = 2 * B.dot( bbar );
-	 const Scalar H = B.squaredNorm() ;
-
-	 coeffs[3] += G * imu2 + E * F ;
-	 coeffs[2] += H * imu2 + E * G ;
-	 coeffs[1] += E * H ;
-
-	 const Scalar coeff4 = 1 + F * imu2 ;
-	 for( unsigned i = 0 ; i < 4 ; ++i )
-	 {
-		 coeffs[i] /= coeff4 ;
-	 }
+	 Scalar coeffs[5] ;
+	 coeffs[0] =  (b1*w12 - b2*w11)*mu*mu + (b0*w12 + b1*w02 - 2*b2*w01)*mu + b0*w02 - b2*w00 ;
+	 coeffs[1] =  2*(b1*w22 - b2*w12)*mu*mu - 2*(b0*w11 - b0*w22 - b1*w01 + b2*w02)*mu - 2*b0*w01 + 2*b1*w00 ;
+	 coeffs[2] =  -6*(b0*w12 - b1*w02)*mu ;
+	 coeffs[3] =  2*(b1*w22 - b2*w12)*mu*mu + 2*(b0*w11 - b0*w22 - b1*w01 + b2*w02)*mu - 2*b0*w01 + 2*b1*w00 ;
+	 coeffs[4] =  -(b1*w12 - b2*w11)*mu*mu + (b0*w12 + b1*w02 - 2*b2*w01)*mu - b0*w02 + b2*w00 ;
 
 	 Scalar roots[4] ;
 	 const unsigned nRoots =
-			 bogus::polynomial::getRealRoots( coeffs, roots, bogus::polynomial::StrictlyPositiveRoots ) ;
+			 bogus::polynomial::getRealRoots( coeffs, roots, bogus::polynomial::AllRoots ) ;
 
-	 if( 0 == nRoots ) return ;
+	 ASSERT_EQ( 2u, nRoots ) ;
 
-	 Scalar alpha = roots[0] ;
-	 //Get the minimal one, this is as good an heuristic as any
-	 for ( unsigned i = 1 ; i != nRoots ; ++ i )
+	 for ( unsigned i = 0 ; i != nRoots ; ++ i )
 	 {
-		 if( roots[i] < alpha ) alpha = roots[i] ;
-	 }*/
+		 Scalar t = roots[i] ;
 
-	 /*
-	 const double alpha = W(0,0) ;
+		 const Scalar CT = ( 1 - t*t ) / ( 1 + t*t ) ;
+		 const Scalar ST = 2*t / ( 1 + t*t ) ;
 
+		 const Eigen::Vector3d dir ( 1, mu*CT, mu*ST ) ;
 
+		 const Scalar den = ( mu * W.col(1) + CT * W.col( 0 )).dot( dir ) ;
+		 if( bogus::NumTraits< Scalar >::isZero( den ) )
+			 continue ;
 
-	 std::cout << "Found " << alpha << std::endl ;
+		 const Scalar rN = -(CT*b0 + b1*mu)/den ;
 
-	 const Mat2 M = Wbar + alpha * Mat2::Identity() ;
-	 r.segment<2>(1) = - bN * M.fullPivLu().solve( bbar ) ;
-	 r[0] = r.segment<2>(1).norm() / mu ;*/
+		 r = rN * dir ;
+		 u = W*r + b ;
 
-	 Eigen::Matrix3d M = W ;
-	 M(0,0) = 0 ;
-	 M(1,1) += wN ;
-	 M(2,2) += wN ;
-	 r = - M.fullPivLu().solve( b ) ;
+		 if( r[0] > 0 && u[0] > 0 )
+		 {
+			 std::cout << "Found " << t << std::endl ;
 
-	 std::cout << r.transpose() << std::endl ;
-	 Eigen::Vector3d u = W*r + b ;
-	 std::cout <<  u[0]  << std::endl ;
-	 std::cout <<  u.segment<2>(1) .norm() << std::endl ;
-	 std::cout <<  u.segment<2>(1) .norm() * mu << std::endl ;
-	 std::cout <<  u.dot( r ) << std::endl ;
+			 std::cout << r.transpose() << std::endl ;
+			 std::cout <<  u.transpose()  << std::endl ;
+			 std::cout <<  u.dot( r ) << std::endl ;
+
+			 break ;
+		 }
+	 }
+
+	 ASSERT_FLOAT_EQ( u[0], u.segment<2>(1) .norm() * mu ) ;
+	 ASSERT_TRUE( u.dot(r) < 1.e-12 ) ;
 
 
 }

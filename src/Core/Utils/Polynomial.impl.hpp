@@ -38,8 +38,7 @@ struct CompanionMatrix
 } ;
 
 template< unsigned Dimension, typename Scalar >
-unsigned RootsFinder< Dimension, Scalar>::getRealRoots(
-		const Scalar coeffs[Dimension], Scalar realRoots[Dimension],
+unsigned RootsFinder< Dimension, Scalar>::getRealRoots(const Scalar *coeffs, Scalar *realRoots,
 		RealRootsFilter filter )
 {
 	typedef CompanionMatrix< Dimension, Scalar > CM ;
@@ -62,9 +61,36 @@ unsigned RootsFinder< Dimension, Scalar>::getRealRoots(
 	return count ;
 }
 
+template< typename Scalar >
+struct PossiblyDegenerateRootsFinder< 0, Scalar >
+{
+	static unsigned getRealRoots( const Scalar* coeffs,
+								  Scalar* realRoots,
+								  RealRootsFilter filter = AllRoots )
+	{
+		realRoots[0] = 0. ;
+		return filter == AllRoots && NumTraits< Scalar >::isZero( coeffs[0] ) ;
+	}
+} ;
+
+template< unsigned Dimension, typename Scalar >
+unsigned PossiblyDegenerateRootsFinder< Dimension, Scalar>::getRealRoots( Scalar *coeffs, Scalar *realRoots,
+		RealRootsFilter filter )
+{
+	if( NumTraits< Scalar >::isZero( coeffs[ Dimension ] ) )
+	{
+		return PossiblyDegenerateRootsFinder< Dimension - 1, Scalar >::getRealRoots( coeffs, realRoots, filter ) ;
+	}
+	const Scalar inv = 1./coeffs[Dimension] ;
+	for( unsigned k = 0 ; k < Dimension ; ++k )
+	{
+		coeffs[k] *= inv ;
+	}
+	return RootsFinder< Dimension, Scalar >::getRealRoots( coeffs, realRoots, filter ) ;
 }
 
+} //namespace polynomial
 
-}
+} //namespace bogus
 
 #endif
