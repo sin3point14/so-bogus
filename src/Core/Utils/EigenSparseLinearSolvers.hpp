@@ -1,6 +1,19 @@
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public 
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
 #ifndef BOGUS_EIGEN_SPARSE_LINEAR_SOLVERS
 #define BOGUS_EIGEN_SPARSE_LINEAR_SOLVERS
 
+/*  Depending on your version of Eigen, this file may make use of LGPL licensed code.
+	See Eigen/src/Sparse/SimplicialCholesky.h for more information
+*/
+
+#ifndef EIGEN_MPL2_ONLY
 #if EIGEN_VERSION_AT_LEAST(3,1,0)
 
 #include "LinearSolver.hpp"
@@ -71,6 +84,7 @@ struct SparseLDLT : public LDLT< Eigen::SparseMatrixBase< Eigen::SparseMatrix< S
 
 } //namespace bogus
 
+#endif
 #endif
 
 #endif

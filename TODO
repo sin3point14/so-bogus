@@ -1,0 +1,13 @@
+
+ + Mixed Problems ( Equality constraints )
+ + Serialization of Block matrices
+ + Documentation
+ = Proper frictional problem interface
+ = SOQP interface
+ = Linear Block solver ( Conjugate gradient )
+ - Coloring Gauss Seidel
+ - FClib bindings
+ - Sparse <-> Block Sparse conversion
+ - Dense block matrices
+ - Coulomb law refinements
+
