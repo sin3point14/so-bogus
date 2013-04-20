@@ -314,11 +314,20 @@ struct LocalSOCSolver< 3, Scalar, false, Strat >
 
 		 const Eigen::Vector3d dir ( 1, mu*CT, mu*ST ) ;
 
-		 const Scalar den = ( mu * W.col(1) + CT * W.col( 0 )).dot( dir ) ;
-		 if( bogus::NumTraits< Scalar >::isZero( den ) )
-			 continue ;
+		 Scalar den, rN ;
 
-		 const Scalar rN = -(CT*b[0] + b[1]*mu)/den ;
+		 den = ( mu * W.col(1) + CT * W.col( 0 )).dot( dir ) ;
+		 if( bogus::NumTraits< Scalar >::isZero( den ) ) {
+			 den = ( mu * W.col(2) + ST * W.col( 0 )).dot( dir ) ;
+			 if( bogus::NumTraits< Scalar >::isZero( den ) ) {
+				 continue ;
+			 } else {
+				 rN = -(ST*b[0] + b[2]*mu)/den ;
+			 }
+		 } else {
+			 rN = -(CT*b[0] + b[1]*mu)/den ;
+		 }
+
 		 if( rN <= 0 )
 			 continue ;
 
