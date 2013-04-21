@@ -1,3 +1,4 @@
+#ifdef BOGUS_WITH_BOOST_SERIALIZATION
 
 #include <boost/serialization/split_free.hpp>
 #include <boost/serialization/array.hpp>
@@ -70,4 +71,6 @@ TEST( Serialization, EigenSparse )
 
 	ASSERT_EQ( Eigen::Vector3d( 1., 2., 3.), sm_ * Eigen::Vector3d::Ones() ) ;
 }
-#endif
+#endif // EIGEN >=3.1
+
+#endif // BOGUS_BOOST_SERIALIZATION

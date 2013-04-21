@@ -111,7 +111,7 @@ struct SparseBlockProductIndex
 		to_compute.resize( outerSize ) ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
-		SparseBlockIndex< false > uncompressed ;
+		SparseBlockIndex< false, Index, BlockPtr > uncompressed ;
 		uncompressed.resizeOuter( outerSize ) ;
 #else
 		compressed.resizeOuter( outerSize ) ;

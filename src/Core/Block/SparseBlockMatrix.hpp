@@ -262,8 +262,8 @@ template < typename BlockT, int Flags >
 struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMatrixTraits< BlockObjectBase< SparseBlockMatrix< BlockT, Flags > > >
 {
 	typedef BlockMatrixTraits< BlockObjectBase< SparseBlockMatrix< BlockT, Flags > > > BaseTraits ;
-	using typename BaseTraits::Index ;
-	using typename BaseTraits::BlockPtr ;
+	typedef typename BaseTraits::Index Index ;
+	typedef typename BaseTraits::BlockPtr BlockPtr ;
 
 	typedef BlockT BlockType ;
 

@@ -90,6 +90,7 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 	template < typename Derived, typename RhsT, typename ResT, typename LocalResT >
 	static void multiplyAndReduct( const SparseBlockMatrixBase< Derived >& matrix,  const RhsT& rhs, ResT& res, const LocalResT& )
 	{
+		typedef typename SparseBlockMatrixBase< Derived >::SparseIndexType SparseIndexType ;
 #pragma omp parallel
 		{
 			LocalResT locRes( res.rows() ) ;
@@ -100,12 +101,12 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 			{
 				typename RhsT::ConstSegmentReturnType rhs_seg( matrix.majorIndex().innerSegment( rhs, i ) ) ;
 				typename ResT::SegmentReturnType locRes_seg( matrix.majorIndex().innerSegment( locRes, i ) ) ;
-				for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( matrix.majorIndex(), i ) ;
+				for( typename SparseIndexType::InnerIterator it( matrix.majorIndex(), i ) ;
 					 it ; ++ it )
 				{
 					const typename Derived::BlockType &b = matrix.block( it.ptr() ) ;
 					locRes_seg += b * matrix.minorIndex().innerSegment( rhs, it.inner() ) ;
-					if( it.inner() != (Index) i )
+					if( it.inner() != (typename SparseIndexType::Index) i )
 						matrix.minorIndex().innerSegment( locRes, it.inner() ) += transpose_block( b ) * rhs_seg  ;
 				}
 			}

@@ -1,7 +1,8 @@
 project(bogus)
 cmake_minimum_required(VERSION 2.6)
 
-OPTION( BOGUS_TESTS "Build tests" ON )
+OPTION( TESTS "Build tests" ON )
+OPTION( BOOST_SERIALIZATION "Use boost::serialization" ON )
 
 SET( BOGUS_ROOT ${CMAKE_CURRENT_SOURCE_DIR} )
 SET( CMAKE_MODULE_PATH ${BOGUS_ROOT}/cmake )
@@ -23,10 +24,13 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas " )
 endif()
 
 # boost
-find_package(Boost 1.36.0 COMPONENTS serialization)
-if( Boost_FOUND )
-	SET( EXTERNAL_INCLUDES ${EXTERNAL_INCLUDES} ${Boost_INCLUDE_DIR} )
-	SET( EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} ${EXTERNAL_LIBRARIES} boost_serialization )
+if( BOOST_SERIALIZATION )
+	find_package(Boost 1.36.0 COMPONENTS serialization)
+	if( Boost_FOUND )
+		add_definitions( -DBOGUS_WITH_BOOST_SERIALIZATION )
+		SET( EXTERNAL_INCLUDES ${EXTERNAL_INCLUDES} ${Boost_INCLUDE_DIR} )
+		SET( EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} ${EXTERNAL_LIBRARIES} boost_serialization )
+	endif()
 endif()
 
 # Build types and processor flags
@@ -68,7 +72,7 @@ endif()
 include_directories( ${EXTERNAL_INCLUDES} )
 
 add_subdirectory( src )
-if( BOGUS_TESTS )
+if( TESTS )
 	enable_testing()
 	add_subdirectory( tests )
 endif()
