@@ -23,6 +23,7 @@ Core/Eigen/BlockBindings.hpp
 Core/Eigen/EigenLinearSolvers.hpp
 Core/Eigen/EigenMatrixTraits.hpp
 Core/Eigen/EigenProblemTraits.hpp
+Core/Eigen/EigenSerialization.hpp
 Core/Eigen/EigenSparseLinearSolvers.hpp
 Core/SOC/FischerBurmeister.hpp
 Core/SOC/FischerBurmeister.impl.hpp

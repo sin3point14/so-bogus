@@ -20,7 +20,7 @@ struct MecheFrictionProblem::Data
 {
 	// Primal Data
 	//! M^-1
-	SparseBlockMatrix< LU< Eigen::MatrixBase< Eigen::MatrixXd > >, flags::COMPRESSED > MInv ;
+	SparseBlockMatrix< Eigen::MatrixXd, flags::COMPRESSED  > M ;
 	//! E
 	bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::COMPRESSED > E ;
 	//! H
@@ -40,6 +40,9 @@ struct MecheFrictionProblem::Data
 	Eigen::VectorXd b ;
 
 	// Cached data
+
+	//! M^-1
+	SparseBlockMatrix< LU< Eigen::MatrixBase< Eigen::MatrixXd > >, flags::COMPRESSED > MInv ;
 
 	//! M^-1 * H'
 	typedef Eigen::Matrix< double, Eigen::Dynamic, 3 > HtBlock ;
@@ -77,23 +80,15 @@ void MecheFrictionProblem::fromPrimal (
 
 	// Build M^-1
 
-	m_data->MInv.reserve( NObj ) ;
-	m_data->MInv.setRows( dofs ) ;
-	m_data->MInv.setCols( dofs ) ;
+	m_data->M.reserve( NObj ) ;
+	m_data->M.setRows( dofs ) ;
+	m_data->M.setCols( dofs ) ;
 
 	for( unsigned i = 0 ; i < NObj ; ++i )
 	{
-		m_data->MInv.insertBack( i, i ) ;
+		m_data->M.insertBackAndResize( i, i ) = Eigen::MatrixXd::Map( MassMat[i], dofs[i], dofs[i] ) ;
 	}
-	m_data->MInv.finalize() ;
-
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp parallel for
-#endif
-	for( int i = 0 ; i < (int) NObj ; ++ i )
-	{
-		m_data->MInv.block(i).compute( Eigen::MatrixXd::Map( MassMat[i], dofs[i], dofs[i] ) ) ;
-	}
+	m_data->M.finalize() ;
 
 	// E
 	Eigen::Map< const Eigen::Matrix< double, Eigen::Dynamic, 3 > > E_flat( E_in, 3*n_in, 3 ) ;
@@ -158,6 +153,16 @@ double MecheFrictionProblem::solve(
 	// If dual has not been computed yet
 	if( m_data->W.rowsOfBlocks() != n )
 	{
+		// M^-1
+		m_data->MInv.cloneStructure( m_data->M ) ;
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
+		for( int i = 0 ; i < (int) m_data->M.nBlocks()  ; ++ i )
+		{
+			m_data->MInv.block(i).compute( m_data->M.block(i) ) ;
+		}
+
 		// M^-1 * H'
 		m_data->MInvHt = m_data->MInv * m_data->H.transpose() ;
 
