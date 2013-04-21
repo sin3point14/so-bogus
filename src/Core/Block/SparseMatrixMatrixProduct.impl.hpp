@@ -122,7 +122,7 @@ struct SparseBlockProductIndex
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for private( currentBlock )
 #endif
-		for( Index i = 0 ; i < outerSize ; ++i )
+		for( int i = 0 ; i < (int) outerSize ; ++i )
 		{
 			const Index last = Traits::is_symmetric ? i+1 : innerSize ;
 			for( Index j = 0 ; j != last ; ++ j )
@@ -208,8 +208,10 @@ struct SparseBlockProductIndex< true, Derived >
 		std::vector< InnerType > loc_compute( outerSize ) ;
 #pragma omp for
 #endif
-		for( Index i = 0 ; i < productSize ; ++i )
+		for( int ii = 0 ; ii < (int) productSize ; ++ii )
 		{
+			const Index i = (Index) ii ;
+
 			if( Traits::is_col_major )
 			{
 				for( typename RhsIndex::InnerIterator rhs_it ( rhsIdx, i ) ; rhs_it ; ++rhs_it )
@@ -304,7 +306,7 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( Index i = 0 ; i < outerSize ; ++i )
+	for( int i = 0 ; i < (int) outerSize ; ++i )
 	{
 		typename ProductIndex::InnerIterator j = productIndex.to_compute[i].begin() ;
 		for( typename SparseBlockIndex< true >::InnerIterator c_it( productIndex.compressed, i ) ;
@@ -318,7 +320,7 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( BlockPtr i = 0 ; i < nBlocks() ; ++ i )
+	for( long i = 0 ; i < (long) nBlocks() ; ++ i )
 	{
 		BlockType& b = block( i ) ;
 		const BlockComputation &bc = *flat_compute[i] ;

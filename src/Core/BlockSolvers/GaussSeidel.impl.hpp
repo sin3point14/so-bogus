@@ -77,7 +77,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for schedule( dynamic, 16 ) private( lb, lx, ldx ) if( !m_deterministic )
 #endif
-		for( unsigned i = 0 ; i < n ; ++ i )
+		for( int i = 0 ; i < (int) n ; ++ i )
 		{
 			if( skip[i] ) {
 				--skip[i] ;

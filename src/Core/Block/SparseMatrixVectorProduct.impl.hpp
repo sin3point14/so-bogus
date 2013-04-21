@@ -75,7 +75,7 @@ struct SparseBlockMatrixVectorMultiplier
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-		for( Index i = 0 ; i < matrix.majorIndex().outerSize() ; ++i )
+		for( int i = 0 ; i < (int) matrix.majorIndex().outerSize() ; ++i )
 		{
 			typename ResT::SegmentReturnType seg( matrix.minorIndex().innerSegment( res, i ) ) ;
 			matrix.innerRowMultiply( matrix.majorIndex(), getter, i, rhs, seg ) ;
@@ -96,7 +96,7 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 			locRes.setZero() ;
 
 #pragma omp for
-			for( Index i = 0 ; i < matrix.majorIndex().outerSize() ; ++i )
+			for( int i = 0 ; i < (int) matrix.majorIndex().outerSize() ; ++i )
 			{
 				typename RhsT::ConstSegmentReturnType rhs_seg( matrix.majorIndex().innerSegment( rhs, i ) ) ;
 				typename ResT::SegmentReturnType locRes_seg( matrix.majorIndex().innerSegment( locRes, i ) ) ;
@@ -105,7 +105,7 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 				{
 					const typename Derived::BlockType &b = matrix.block( it.ptr() ) ;
 					locRes_seg += b * matrix.minorIndex().innerSegment( rhs, it.inner() ) ;
-					if( it.inner() != i )
+					if( it.inner() != (Index) i )
 						matrix.minorIndex().innerSegment( locRes, it.inner() ) += transpose_block( b ) * rhs_seg  ;
 				}
 			}
@@ -124,7 +124,7 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-			for( Index i = 0 ; i < matrix.majorIndex().outerSize() ; ++i )
+			for( int i = 0 ; i < (int) matrix.majorIndex().outerSize() ; ++i )
 			{
 				typename ResT::SegmentReturnType seg( matrix.rowSegment( res, i ) ) ;
 				matrix.innerRowMultiply( matrix.majorIndex()    , BlockGetter< false >(), i, rhs, seg ) ;
@@ -168,7 +168,7 @@ struct OutOfOrderSparseBlockMatrixVectorMultiplier
 			locRes.setZero() ;
 
 #pragma omp for
-			for( Index i = 0 ; i < matrix.majorIndex().outerSize() ; ++i )
+			for( int i = 0 ; i < (int) matrix.majorIndex().outerSize() ; ++i )
 			{
 				typename RhsT::ConstSegmentReturnType seg( matrix.minorIndex().innerSegment( rhs, i ) ) ;
 				matrix.innerColMultiply( matrix.majorIndex(), getter, i, seg, locRes ) ;
@@ -216,7 +216,7 @@ struct SparseBlockMatrixVectorMultiplier< false, false, true >
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-			for( Index i = 0 ; i < matrix.transposeIndex().outerSize() ; ++i )
+			for( int i = 0 ; i < (int) matrix.transposeIndex().outerSize() ; ++i )
 			{
 				typename ResT::SegmentReturnType seg( matrix.majorIndex().innerSegment( res, i ) ) ;
 				matrix.innerRowMultiply( matrix.transposeIndex(), getter, i, rhs, seg ) ;

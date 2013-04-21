@@ -43,7 +43,7 @@ public:
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for private( lx, ly, fb ) reduction ( + : sum )
 #endif
-		for( unsigned i = 0 ; i < m_n ; ++ i )
+		for( int i = 0 ; i < (int) m_n ; ++ i )
 		{
 			lx = GlobalProblemTraits::segment( i, x ) ;
 			ly = GlobalProblemTraits::segment( i, y ) ;

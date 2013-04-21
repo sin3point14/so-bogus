@@ -25,16 +25,26 @@ namespace polynomial {
 
 #ifndef BOGUS_WITHOUT_EIGEN
 
+#ifdef _MSC_VER
+#define BOGUS_TLS_SPEC __declspec( thread )
+#else
+#if !defined( __GNUC__ ) or !defined( __APPLE__ )
+#define BOGUS_TLS_SPEC __thread
+#endif
+#endif
+
 template< unsigned Dimension, typename Scalar >
 struct CompanionMatrix
 {
 	typedef Eigen::Matrix< Scalar, Dimension, Dimension > BaseType ;
+
+#ifdef BOGUS_TLS_SPEC
 	typedef typename BaseType::MapType ReturnType ;
 
 	static ReturnType get()
 	{
-		static __thread double s_matrix_data[ Dimension*Dimension ] ;
-		static __thread bool s_matrix_initialized = false ;
+		static BOGUS_TLS_SPEC double s_matrix_data[ Dimension*Dimension ] ;
+		static BOGUS_TLS_SPEC bool s_matrix_initialized = false ;
 
 		ReturnType matrix( s_matrix_data ) ;
 
@@ -44,9 +54,25 @@ struct CompanionMatrix
 			matrix.template block< Dimension - 1, Dimension -1 >( 1, 0 ).setIdentity() ;
 			s_matrix_initialized = true ;
 		}
-
-		return matrix ;
 	}
+#else
+	typedef BaseType ReturnType ;
+
+	static ReturnType get()
+	{
+		static BaseType s_matrix ;
+		static bool s_matrix_initialized = false ;
+
+		if( !s_matrix_initialized )
+		{
+			s_matrix.template block< 1, Dimension-1> ( 0, 0 ).setZero() ;
+			s_matrix.template block< Dimension - 1, Dimension -1 >( 1, 0 ).setIdentity() ;
+			s_matrix_initialized = true ;
+		}
+
+		return s_matrix ;
+	}
+#endif
 } ;
 
 template< unsigned Dimension, typename Scalar >

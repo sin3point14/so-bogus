@@ -90,7 +90,7 @@ void MecheFrictionProblem::fromPrimal (
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( unsigned i = 0 ; i < NObj ; ++ i )
+	for( int i = 0 ; i < (int) NObj ; ++ i )
 	{
 		m_data->MInv.block(i).compute( Eigen::MatrixXd::Map( MassMat[i], dofs[i], dofs[i] ) ) ;
 	}
@@ -116,7 +116,7 @@ void MecheFrictionProblem::fromPrimal (
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( unsigned i = 0 ; i < n_in ; ++i )
+	for( int i = 0 ; i < (int) n_in ; ++i )
 	{
 		const Eigen::Matrix3d Et = m_data->E.diagonal(i).transpose() ;
 		if( ObjB[i] == -1 )

@@ -234,7 +234,7 @@ void SparseBlockMatrixBase< Derived >::cacheTranspose()
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for ( unsigned i = 0 ; i < m_minorIndex.outerSize() ; ++ i )
+	for ( int i = 0 ; i < (int) m_minorIndex.outerSize() ; ++ i )
 	{
 
 		typename SparseBlockIndex< >::InnerIterator uncompressed_it

@@ -19,7 +19,7 @@ struct ProblemTraits : public MatrixTraits< LocalMatrixType >
 {
 	typedef MatrixTraits< LocalMatrixType > Base ;
 	typedef typename Base::Scalar Scalar ;
-	using Base::dimension ;
+	enum{ dimension = Base::dimension } ;
 
 	typedef Eigen::Matrix< Scalar, Eigen::Dynamic, 1 > DynVector ;
 
