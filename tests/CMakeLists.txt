@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 2.8)
 
 execute_process( COMMAND ../updateCMakeSources.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
 file(STRINGS CMakeSources.txt SRC_LIST)
@@ -18,8 +19,8 @@ include_directories( ../src ${source_dir}/include)
 ExternalProject_Get_Property(googletest binary_dir)
 link_directories( ${binary_dir} )
 
-
 add_executable(test${CMAKE_PROJECT_NAME} ${SRC_LIST})
+add_test( ${CMAKE_PROJECT_NAME} test${CMAKE_PROJECT_NAME} )
 
 add_dependencies(test${CMAKE_PROJECT_NAME} googletest)
 target_link_libraries(test${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_NAME} gtest gtest_main pthread )

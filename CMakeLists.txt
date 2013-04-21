@@ -1,8 +1,12 @@
 project(bogus)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.6)
+
+OPTION( BOGUS_TESTS "Build tests" ON )
 
 SET( BOGUS_ROOT ${CMAKE_CURRENT_SOURCE_DIR} )
 SET( CMAKE_MODULE_PATH ${BOGUS_ROOT}/cmake )
+
+
 # Eigen
 FIND_PACKAGE(Eigen3 REQUIRED)
 SET( EXTERNAL_INCLUDES ${EIGEN3_INCLUDE_DIR} )
@@ -33,7 +37,7 @@ elseif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" )
   set (GCC TRUE)
 endif()
 
-  # using GCC
+# using GCC
 if ( GCC OR CLANG )
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra " )
 	SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Werror " )
@@ -60,5 +64,7 @@ endif()
 include_directories( ${EXTERNAL_INCLUDES} )
 
 add_subdirectory( src )
-add_subdirectory( tests )
-
+if( BOGUS_TESTS )
+	enable_testing()
+	add_subdirectory( tests )
+endif()

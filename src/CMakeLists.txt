@@ -5,5 +5,16 @@ file(STRINGS CMakeSources.txt SRC_LIST)
 add_library(${CMAKE_PROJECT_NAME} SHARED ${SRC_LIST})
 target_link_libraries(${CMAKE_PROJECT_NAME} ${EXTERNAL_LIBRARIES} )
 
+FOREACH(item ${SRC_LIST})
+  STRING(REGEX MATCH "^Interfaces/.+\\.hpp$" item ${item})
+  IF(item)
+    LIST(APPEND INTERFACES ${item})
+  ENDIF(item)
+ENDFOREACH(item ${SRC_LIST})
 
+MESSAGE( STATUS ${INTERFACES} )
+
+INSTALL( DIRECTORY Core DESTINATION include/bogus )
+INSTALL( FILES ${INTERFACES} DESTINATION include/bogus/Interfaces )
+INSTALL( TARGETS ${CMAKE_PROJECT_NAME} LIBRARY DESTINATION lib )
 
