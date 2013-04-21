@@ -30,13 +30,14 @@ public:
 	typedef BlockMatrixBase< Derived > Base ;
 	typedef BlockMatrixTraits< Derived > Traits ;
 
+	typedef typename Traits::Index Index ;
 	typedef typename Traits::SparseIndexType SparseIndexType ;
 	typedef typename Traits::RowIndexType RowIndexType ;
 	typedef typename Traits::ColIndexType ColIndexType ;
 	typedef typename Traits::UncompressedIndexType UncompressedIndexType ;
 
 	typedef typename Traits::BlockType BlockType ;
-	typedef typename SparseIndexType::BlockPtr BlockPtr ;
+	typedef typename Traits::BlockPtr BlockPtr ;
 
 	using Base::rows ;
 	using Base::cols ;
@@ -258,8 +259,12 @@ protected:
 } ;
 
 template < typename BlockT, int Flags >
-struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
+struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMatrixTraits< BlockObjectBase< SparseBlockMatrix< BlockT, Flags > > >
 {
+	typedef BlockMatrixTraits< BlockObjectBase< SparseBlockMatrix< BlockT, Flags > > > BaseTraits ;
+	using typename BaseTraits::Index ;
+	using typename BaseTraits::BlockPtr ;
+
 	typedef BlockT BlockType ;
 
 	enum {
@@ -271,14 +276,11 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
 		flags         = Flags
 	} ;
 
-	typedef SparseBlockIndex< is_compressed > SparseIndexType ;
-	typedef typename SparseIndexType::Index Index ;
+	typedef SparseBlockIndex< is_compressed, Index, BlockPtr > SparseIndexType ;
 
-	typedef SparseBlockMatrix< BlockT, Flags > PlainObjectType ;
-
-	typedef SparseBlockIndex< false > UncompressedIndexType ;
-	typedef SparseBlockIndex< is_compressed && !is_col_major > RowIndexType ;
-	typedef SparseBlockIndex< is_compressed && is_col_major > ColIndexType ;
+	typedef SparseBlockIndex< false, Index, BlockPtr  > UncompressedIndexType ;
+	typedef SparseBlockIndex< is_compressed && !is_col_major, Index, BlockPtr > RowIndexType ;
+	typedef SparseBlockIndex< is_compressed && is_col_major , Index, BlockPtr > ColIndexType ;
 } ;
 
 template < typename BlockT, int Flags >

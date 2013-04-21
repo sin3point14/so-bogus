@@ -10,6 +10,7 @@
 #define BOGUS_SPARSETRANSPOSE_IMPL_HPP
 
 #include "SparseBlockMatrix.hpp"
+#include "BlockTranspose.hpp"
 
 namespace bogus
 {
@@ -78,7 +79,7 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 
 		assert( source.majorIndex().valid ) ;
 
-		SparseBlockIndex< > uncompressed ;
+		UncompressedIndexType uncompressed ;
 		if( sameMajorness )
 		{
 			uncompressed.setToTranspose( source.majorIndex() ) ;
@@ -89,7 +90,7 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 
 		for( unsigned i = 0 ; i < uncompressed.outerSize() ; ++i )
 		{
-			for( typename SparseBlockIndex<>::InnerIterator src_it( uncompressed, i ) ;
+			for( typename UncompressedIndexType::InnerIterator src_it( uncompressed, i ) ;
 				 src_it ; ++ src_it )
 			{
 				insertBackOuterInner( i, src_it.inner() ) = transpose_block( source.block( src_it.ptr() ) ) ;

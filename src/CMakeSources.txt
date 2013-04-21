@@ -3,7 +3,7 @@ Core/Block.hpp
 Core/Block.impl.hpp
 Core/Block/BlockMatrix.hpp
 Core/Block/BlockMatrix.impl.hpp
-Core/Block/BlockUtils.hpp
+Core/Block/BlockTranspose.hpp
 Core/Block/CompoundSparseBlockIndex.hpp
 Core/Block/Expressions.hpp
 Core/Block/SparseBlockIndex.hpp

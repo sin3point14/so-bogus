@@ -6,10 +6,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-#ifndef BOGUS_BLOCK_UTILS
-#define BOGUS_BLOCK_UTILS
+#ifndef BOGUS_BLOCK_TRANSPOSE_HPP
+#define BOGUS_BLOCK_TRANSPOSE_HPP
 
 namespace bogus {
+
+template < typename SelfTransposeT >
+const typename SelfTransposeTraits< SelfTransposeT >::ReturnType& transpose_block( const SelfTransposeT &block  ) { return  block ; }
 
 template < bool DoTranspose >
 struct BlockGetter {

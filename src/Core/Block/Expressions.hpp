@@ -37,7 +37,7 @@ struct Transpose< SparseBlockMatrixBase< MatrixT > > : public Transpose< BlockMa
 } ;
 
 template < typename MatrixT >
-struct TransposeTraits
+struct TransposeOption
 {
 	enum { do_transpose = false } ;
 	typedef MatrixT MatrixType ;
@@ -45,7 +45,7 @@ struct TransposeTraits
 	static const MatrixType &get( const MatrixT &m ) { return m ; }
 } ;
 template < typename MatrixT >
-struct TransposeTraits< Transpose< MatrixT > >
+struct TransposeOption< Transpose< MatrixT > >
 {
 	enum { do_transpose = true } ;
 	typedef typename MatrixT::PlainObjectType MatrixType ;
@@ -56,19 +56,22 @@ struct TransposeTraits< Transpose< MatrixT > >
 template <typename LhsMatrixT, typename RhsMatrixT>
 struct Product
 {
-	typedef TransposeTraits< LhsMatrixT > LhsTraits ;
-	typedef TransposeTraits< RhsMatrixT > RhsTraits ;
-	const typename LhsTraits::MatrixType &lhs ;
-	const typename RhsTraits::MatrixType &rhs ;
-	enum { transposeLhs = LhsTraits::do_transpose };
-	enum { transposeRhs = RhsTraits::do_transpose };
+	typedef TransposeOption< LhsMatrixT > LhsTransposeOption ;
+	typedef TransposeOption< RhsMatrixT > RhsTransposeOption ;
+	typedef typename LhsTransposeOption::MatrixType PlainLhsMatrixType ;
+	typedef typename RhsTransposeOption::MatrixType PlainRhsMatrixType ;
+
+	const PlainLhsMatrixType &lhs ;
+	const PlainRhsMatrixType &rhs ;
+	enum { transposeLhs = LhsTransposeOption::do_transpose };
+	enum { transposeRhs = RhsTransposeOption::do_transpose };
 
 	Product( const BlockObjectBase< LhsMatrixT >& l, const BlockObjectBase< RhsMatrixT > &r )
-		: lhs( LhsTraits::get( l.derived() ) ), rhs ( RhsTraits::get( r.derived() ) )
+		: lhs( LhsTransposeOption::get( l.derived() ) ), rhs ( RhsTransposeOption::get( r.derived() ) )
 	{}
 } ;
 
-// SFINAE transpose and matrix/vector product return types
+// Transpose and matrix/vector product return types
 // Specialization of these structures should define a ReturnType if the operation is allowed
 
 template< typename BlockT >
@@ -77,18 +80,13 @@ struct BlockTransposeTraits {} ;
 template< typename BlockT >
 struct SelfTransposeTraits {} ;
 
+template< typename Derived >
+struct BlockVectorProductTraits {} ;
+
 template< > struct SelfTransposeTraits< double   > { typedef double   ReturnType ; } ;
 template< > struct SelfTransposeTraits< float    > { typedef float    ReturnType ; } ;
 template< > struct SelfTransposeTraits< int      > { typedef int      ReturnType ; } ;
 template< > struct SelfTransposeTraits< unsigned > { typedef unsigned ReturnType ; } ;
-
-template < typename SelfTransposeT >
-const typename SelfTransposeTraits< SelfTransposeT >::ReturnType& transpose_block( const SelfTransposeT &block  ) { return  block ; }
-
-
-template< typename Derived >
-struct BlockVectorProductTraits
-{} ;
 
 }
 

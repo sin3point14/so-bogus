@@ -20,8 +20,6 @@
 namespace bogus
 {
 
-typedef unsigned Index ;
-
 template < typename Derived >
 struct BlockObjectBase
 {
@@ -34,6 +32,7 @@ struct BlockObjectBase
 template< typename Derived >
 struct BlockMatrixTraits< BlockObjectBase< Derived > > {
 	typedef unsigned Index ;
+	typedef unsigned BlockPtr ;
 	typedef Derived PlainObjectType ;
 } ;
 

@@ -11,7 +11,7 @@
 
 #include "SparseBlockMatrix.hpp"
 #include "Expressions.hpp"
-#include "BlockUtils.hpp"
+#include "BlockTranspose.hpp"
 
 namespace bogus {
 
@@ -119,6 +119,7 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 	template < typename Derived, typename RhsT, typename ResT >
 	static void multiply( const SparseBlockMatrixBase< Derived >& matrix,  const RhsT& rhs, ResT& res )
 	{
+		typedef typename SparseBlockMatrixBase< Derived >::Index Index ;
 		if( matrix.transposeIndex().valid )
 		{
 #ifndef BOGUS_DONT_PARALLELIZE
@@ -183,6 +184,7 @@ struct OutOfOrderSparseBlockMatrixVectorMultiplier
 	template < typename Derived, typename RhsT, typename ResT >
 	static void multiply( const SparseBlockMatrixBase< Derived >& matrix,  const RhsT& rhs, ResT& res )
 	{
+		typedef typename SparseBlockMatrixBase< Derived >::Index Index ;
 #ifdef BOGUS_DONT_PARALLELIZE
 		for( Index i = 0 ; i < matrix.majorIndex().outerSize() ; ++i )
 		{

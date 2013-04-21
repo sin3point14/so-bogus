@@ -16,21 +16,22 @@
 namespace bogus
 {
 
-template < bool Compressed = false  >
+template < bool Compressed, typename _Index, typename _BlockPtr = _Index  >
 struct SparseBlockIndex
 {
-	typedef unsigned Index ;
-	typedef Index BlockPtr ;
+	typedef _Index Index ;
+	typedef _BlockPtr BlockPtr ;
 
-	SparseBlockIndex() : valid( true )
-	{}
+	std::vector< Index > innerOffsets ;
+	bool valid ;
 
 	typedef std::vector < std::pair< Index, BlockPtr > > Inner ;
 	typedef std::vector < Inner > Outer ;
 
 	Outer outer ;
-	std::vector< Index > innerOffsets ;
-	bool valid ;
+
+	SparseBlockIndex() : valid( true )
+	{}
 
 	void resizeOuter( Index size )
 	{
@@ -54,7 +55,7 @@ struct SparseBlockIndex
 		valid = true ;
 	}
 
-	SparseBlockIndex< Compressed > &operator=( const SparseBlockIndex< Compressed > &o )
+	SparseBlockIndex &operator=( const SparseBlockIndex &o )
 	{
 		if( &o != this )
 		{
@@ -66,7 +67,7 @@ struct SparseBlockIndex
 		return *this ;
 	}
 
-	SparseBlockIndex< Compressed > &operator=( SparseBlockIndex< > &uncompressed )
+	SparseBlockIndex &operator=( SparseBlockIndex &uncompressed )
 	{
 		outer.swap( uncompressed.outer ) ;
 		if( !uncompressed.innerOffsets.empty() )
@@ -76,18 +77,19 @@ struct SparseBlockIndex
 		return *this ;
 	}
 
-	SparseBlockIndex< Compressed > &operator=( const SparseBlockIndex< true > &compressed ) ;
+	template < bool OCompressed, typename OIndex, typename OBlockPtr  >
+	SparseBlockIndex &operator=( const SparseBlockIndex< OCompressed, OIndex, OBlockPtr > &compressed ) ;
 
-	template < bool OtherCompressed >
-	SparseBlockIndex< Compressed >& setToTranspose( const SparseBlockIndex< OtherCompressed > &source )
+	template < bool OCompressed, typename OIndex, typename OBlockPtr  >
+	SparseBlockIndex& setToTranspose( const SparseBlockIndex< OCompressed, OIndex, OBlockPtr > &source )
 	{
 		clear() ;
 		resizeOuter( source.innerSize() ) ;
 		valid = source.valid ;
 
-		for( unsigned i = 0 ; i < source.outerSize() ; ++i )
+		for( OIndex i = 0 ; i < source.outerSize() ; ++i )
 		{
-			for( typename SparseBlockIndex< OtherCompressed >::InnerIterator it( source, i ) ;
+			for( typename SparseBlockIndex< OCompressed, OIndex, OBlockPtr >::InnerIterator it( source, i ) ;
 				 it ; ++ it )
 			{
 				insertBack( it.inner(), i, it.ptr() ) ;
@@ -151,15 +153,14 @@ struct SparseBlockIndex
 
 } ;
 
-template<>
-struct SparseBlockIndex< true >
+template< typename _Index, typename _BlockPtr >
+struct SparseBlockIndex< true, _Index, _BlockPtr >
 {
-	typedef unsigned Index ;
-	typedef Index BlockPtr ;
+	typedef _Index Index ;
+	typedef _BlockPtr BlockPtr ;
 
-	SparseBlockIndex( )
-		: base(0), valid( true )
-	{}
+	std::vector< Index > innerOffsets ;
+	bool valid ;
 
 	typedef std::vector< Index > Inner ;
 	typedef std::vector< Index > Outer ;
@@ -167,8 +168,10 @@ struct SparseBlockIndex< true >
 	Inner inner ;
 	Outer outer ;
 	BlockPtr base ;
-	std::vector< Index > innerOffsets ;
-	bool valid ;
+
+	SparseBlockIndex( )
+		: valid( true ), base(0)
+	{}
 
 	void resizeOuter( Index size )
 	{
@@ -179,7 +182,7 @@ struct SparseBlockIndex< true >
 
 	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
 	{
-		valid &= ( ptr == base + inner.size() ) ;
+		valid &= ( ptr == (BlockPtr) ( base + inner.size() ) ) ;
 		++outer[ outIdx+1 ] ;
 		inner.push_back( inIdx ) ;
 	}
@@ -201,7 +204,7 @@ struct SparseBlockIndex< true >
 		base = 0 ;
 	}
 
-	SparseBlockIndex< true > &operator=( const SparseBlockIndex< true > &compressed )
+	SparseBlockIndex &operator=( const SparseBlockIndex &compressed )
 	{
 		if( &compressed != this )
 		{
@@ -215,12 +218,13 @@ struct SparseBlockIndex< true >
 		return *this ;
 	}
 
-	SparseBlockIndex< true > &operator=( SparseBlockIndex< true > &compressed )
+	SparseBlockIndex &operator=( SparseBlockIndex &compressed )
 	{
 		if( &compressed != this )
 		{
 			// We would like to swap this vector as well, but there seems to be a bug in 4.6.3
 			// that prevent memormy ownership to be properly transfered
+			// Note: Swapping works perfectly with gcc 4.6.3 in non-optimized mode, gcc 4.8, gcc 4.2, clang 4.2
 			outer = compressed.outer ;
 //			outer.swap( compressed.outer );
 			inner.swap( compressed.inner );
@@ -233,17 +237,20 @@ struct SparseBlockIndex< true >
 		return *this ;
 	}
 
-	SparseBlockIndex< true > &operator=( const SparseBlockIndex< > &uncompressed )
+	template < bool OCompressed, typename OIndex, typename OBlockPtr  >
+	SparseBlockIndex &operator=( const SparseBlockIndex< OCompressed, OIndex, OBlockPtr > &source )
 	{
-		resizeOuter( uncompressed.outerSize() ) ;
+		resizeOuter( source.outerSize() ) ;
 		inner.clear() ;
-		if( !uncompressed.innerOffsets.empty() )
-			innerOffsets = uncompressed.innerOffsets ;
-		valid = uncompressed.valid ;
+		if( !source.innerOffsets.empty() ) {
+			innerOffsets.resize( source.innerOffsets.size() ) ;
+			std::copy( source.innerOffsets.begin(), source.innerOffsets.end(), innerOffsets.begin() ) ;
+		}
+		valid = source.valid ;
 
-		for( unsigned i = 0 ; i < uncompressed.outerSize() ; ++i )
+		for( Index i = 0 ; i < source.outerSize() ; ++i )
 		{
-			for( SparseBlockIndex< >::InnerIterator it( uncompressed, i ) ;
+			for( typename SparseBlockIndex< OCompressed, OIndex, OBlockPtr >::InnerIterator it( source, i ) ;
 				 it ; ++ it )
 			{
 				if( inner.empty() ) base = it.ptr() ;
@@ -314,16 +321,17 @@ struct SparseBlockIndex< true >
 	}
 } ;
 
-template < bool Compressed  >
-SparseBlockIndex< Compressed > & SparseBlockIndex< Compressed >::operator=(
-		const SparseBlockIndex< true > &compressed )
+template < bool Compressed, typename Index, typename BlockPtr  >
+template < bool OCompressed, typename OIndex, typename OBlockPtr  >
+SparseBlockIndex< Compressed, Index, BlockPtr > & SparseBlockIndex< Compressed, Index, BlockPtr >::operator=(
+		const SparseBlockIndex< OCompressed, OIndex, OBlockPtr> &source )
 {
 	clear() ;
-	resizeOuter( compressed.outerSize() ) ;
+	resizeOuter( source.outerSize() ) ;
 
-	for( unsigned i = 0 ; i < compressed.outerSize() ; ++i )
+	for( OIndex i = 0 ; i < source.outerSize() ; ++i )
 	{
-		for( typename SparseBlockIndex< true >::InnerIterator it( compressed, i ) ;
+		for( typename SparseBlockIndex< OCompressed, OIndex, OBlockPtr >::InnerIterator it( source, i ) ;
 			 it ; ++ it )
 		{
 			insertBack( i, it.inner(), it.ptr() ) ;
@@ -331,9 +339,11 @@ SparseBlockIndex< Compressed > & SparseBlockIndex< Compressed >::operator=(
 	}
 
 	finalize() ;
-	valid = compressed.valid ;
-	if( !compressed.innerOffsets.empty() )
-		innerOffsets = compressed.innerOffsets ;
+	valid = source.valid ;
+	if( !source.innerOffsets.empty() ) {
+		innerOffsets.resize( source.innerOffsets.size() ) ;
+		std::copy( source.innerOffsets.begin(), source.innerOffsets.end(), innerOffsets.begin() ) ;
+	}
 
 	return *this ;
 }

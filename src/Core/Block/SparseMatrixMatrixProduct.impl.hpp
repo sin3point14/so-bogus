@@ -13,7 +13,7 @@
 #include "SparseBlockMatrix.hpp"
 
 #include "SparseBlockIndexComputer.hpp"
-#include "BlockUtils.hpp"
+#include "BlockTranspose.hpp"
 
 #include <map>
 
@@ -41,8 +41,8 @@ template < bool ColWise, typename LhsT, typename RhsT >
 void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT > &prod )
 {
 	typedef Product< LhsT, RhsT> Prod ;
-	typedef BlockMatrixTraits< typename Prod::LhsTraits::MatrixType > LhsTraits ;
-	typedef BlockMatrixTraits< typename Prod::RhsTraits::MatrixType > RhsTraits ;
+	typedef BlockMatrixTraits< typename Prod::PlainLhsMatrixType > LhsTraits ;
+	typedef BlockMatrixTraits< typename Prod::PlainRhsMatrixType > RhsTraits ;
 
 	typedef BlockTransposeOption< LhsTraits::is_symmetric, Prod::transposeLhs > LhsGetter ;
 	LhsGetter lhsGetter ;
@@ -68,9 +68,9 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 	}
 
 
-	SparseBlockIndexComputer< typename Prod::LhsTraits::MatrixType, LhsTraits::is_symmetric,
+	SparseBlockIndexComputer< typename Prod::PlainLhsMatrixType, LhsTraits::is_symmetric,
 			ColWise, Prod::transposeLhs> lhsIndexComputer ( prod.lhs ) ;
-	SparseBlockIndexComputer< typename Prod::RhsTraits::MatrixType, RhsTraits::is_symmetric,
+	SparseBlockIndexComputer< typename Prod::PlainRhsMatrixType, RhsTraits::is_symmetric,
 			!ColWise, Prod::transposeRhs> rhsIndexComputer ( prod.rhs ) ;
 
 
@@ -95,7 +95,7 @@ struct SparseBlockProductIndex
 
 	static const BlockComputation* get( const InnerIterator& iter ) { return &(*iter) ; }
 
-	SparseBlockIndex< true > compressed ;
+	SparseBlockIndex< true, Index, BlockPtr > compressed ;
 	std::vector< InnerType > to_compute ;
 
 	template< typename LhsIndex, typename RhsIndex >
@@ -183,7 +183,7 @@ struct SparseBlockProductIndex< true, Derived >
 
 	static const BlockComputation* get( const InnerIterator& iter ) { return &(iter->second) ; }
 
-	SparseBlockIndex< true > compressed ;
+	SparseBlockIndex< true, Index, BlockPtr > compressed ;
 	std::vector< InnerType > to_compute ;
 
 	template< typename LhsIndex, typename RhsIndex >
@@ -309,7 +309,7 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(
 	for( int i = 0 ; i < (int) outerSize ; ++i )
 	{
 		typename ProductIndex::InnerIterator j = productIndex.to_compute[i].begin() ;
-		for( typename SparseBlockIndex< true >::InnerIterator c_it( productIndex.compressed, i ) ;
+		for( typename SparseBlockIndex< true, Index, BlockPtr >::InnerIterator c_it( productIndex.compressed, i ) ;
 			 c_it ; ++c_it, ++j )
 		{
 			outerIndices[ c_it.ptr() ] = i  ;

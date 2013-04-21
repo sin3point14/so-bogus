@@ -11,6 +11,7 @@
 
 #include "SparseBlockMatrix.hpp"
 #include "Expressions.hpp"
+#include "BlockTranspose.hpp"
 
 namespace bogus {
 
@@ -186,7 +187,7 @@ void SparseBlockMatrixBase< Derived >::computeMinorIndex( UncompressedIndexType 
 	if( Traits::is_symmetric )
 	{
 		cmIndex.resizeOuter( m_majorIndex.innerSize() );
-		for ( unsigned i = 0 ; i < m_majorIndex.outerSize() ; ++ i )
+		for ( Index i = 0 ; i < m_majorIndex.outerSize() ; ++ i )
 		{
 			// For a symmetric matrix, do not store diagonal block in col-major index
 			for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( m_majorIndex, i ) ;
@@ -223,7 +224,7 @@ void SparseBlockMatrixBase< Derived >::cacheTranspose()
 
 	BlockPtr base = m_nBlocks ;
 	std::vector< BlockPtr > ptrOffsets( m_minorIndex.outerSize() ) ;
-	for( unsigned i = 0 ; i < m_minorIndex.outerSize() ; ++i )
+	for( Index i = 0 ; i < m_minorIndex.outerSize() ; ++i )
 	{
 		ptrOffsets[i] = base ;
 		base += m_minorIndex.size( i ) ;
@@ -237,7 +238,7 @@ void SparseBlockMatrixBase< Derived >::cacheTranspose()
 	for ( int i = 0 ; i < (int) m_minorIndex.outerSize() ; ++ i )
 	{
 
-		typename SparseBlockIndex< >::InnerIterator uncompressed_it
+		typename UncompressedIndexType::InnerIterator uncompressed_it
 			 ( m_minorIndex , i ) ;
 		for( typename SparseIndexType::InnerIterator it( m_transposeIndex, i ) ;
 			 it ; ++ it, ++uncompressed_it )
@@ -337,7 +338,7 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 
 		assert( source.majorIndex().valid ) ;
 
-		SparseBlockIndex< > uncompressed ;
+		UncompressedIndexType uncompressed ;
 		if( sameMajorness )
 		{
 			// Same col-major-ness
@@ -348,7 +349,7 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 
 		for( unsigned i = 0 ; i < uncompressed.outerSize() ; ++i )
 		{
-			for( typename SparseBlockIndex<>::InnerIterator src_it( uncompressed, i ) ;
+			for( typename UncompressedIndexType::InnerIterator src_it( uncompressed, i ) ;
 				 src_it ; ++ src_it )
 			{
 				insertBackOuterInner( i, src_it.inner() ) = source.block( src_it.ptr() ) ;
