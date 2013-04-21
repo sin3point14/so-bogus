@@ -16,12 +16,17 @@ namespace local_soc_solver
 {
 enum Strategy
 {
-	PureNewton,
-	PureEnumerative,
-	Hybrid,
-	RevHybrid
+	PureNewton
+#ifndef BOGUS_WITHOUT_EIGEN
+	,PureEnumerative
+	,Hybrid
+	,RevHybrid
+#endif
 } ;
 }
+
+template< unsigned Dimension, typename Scalar >
+struct LocalProblemTraits ;
 
 template < typename LocalMatrixType, bool DeSaxceCOV,
 		   local_soc_solver::Strategy Strat = local_soc_solver::Hybrid  >

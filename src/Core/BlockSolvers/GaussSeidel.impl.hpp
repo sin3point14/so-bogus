@@ -9,7 +9,7 @@
 #ifndef BOGUS_BLOCK_GAUSS_SEIDEL_IMPL_HPP
 #define BOGUS_BLOCK_GAUSS_SEIDEL_IMPL_HPP
 
-#include "BlockGaussSeidel.hpp"
+#include "GaussSeidel.hpp"
 #include "../Block/BlockMatrix.hpp"
 
 namespace bogus
@@ -37,11 +37,12 @@ GaussSeidel< BlockMatrixType >::GaussSeidel( const BlockMatrixBase< BlockMatrixT
 }
 
 template < typename BlockMatrixType >
-template < typename NSLaw, typename Derived, typename OtherDerived >
+template < typename NSLaw, typename RhsT, typename ResT >
 typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
-							const Eigen::MatrixBase< Derived >&b,
-							Eigen::MatrixBase< OtherDerived > &x ) const
+							const RhsT &b, ResT &x ) const
 {
+	typedef LocalProblemTraits< ProblemTraits::dimension, typename ProblemTraits::Scalar > LocalProblemTraits ;
+
 	const unsigned d = ProblemTraits::dimension ;
 	const unsigned n = m_localMatrices.size() ;
 	assert( n*d == b.rows() ) ;
@@ -71,7 +72,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	// see [Daviet et al 2011], Algorithm 1
 	for( unsigned GSIter = 1 ; GSIter <= m_maxIters ; ++GSIter )
 	{
-		typename ProblemTraits::Vector lb, lx, ldx ;
+		typename LocalProblemTraits::Vector lb, lx, ldx ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for schedule( dynamic, 16 ) private( lb, lx, ldx ) if( !m_deterministic )

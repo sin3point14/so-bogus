@@ -10,6 +10,18 @@
 #define BOGUS_SECOND_ORDER_HPP
 
 #include "SecondOrder.fwd.hpp"
+#ifndef BOGUS_WITHOUT_EIGEN
+#include "Eigen/EigenProblemTraits.hpp"
+#endif
 #include "SOC/SOCLaw.hpp"
+
+#ifndef BOGUS_WITHOUT_EIGEN
+namespace bogus {
+	typedef SOCLaw< Eigen::Matrix2d,  true > Coulomb2D ;
+	typedef SOCLaw< Eigen::Matrix3d,  true > Coulomb3D ;
+	typedef SOCLaw< Eigen::Matrix2d, false > SOC2D ;
+	typedef SOCLaw< Eigen::Matrix3d, false > SOC3D ;
+}
+#endif
 
 #endif

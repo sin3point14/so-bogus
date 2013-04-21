@@ -6,10 +6,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-#ifndef BOGUS_GAUSS_SEIDEL_HPP
-#define BOGUS_GAUSS_SEIDEL_HPP
+#ifndef BOGUS_GAUSS_SEIDEL_IMPL_HPP
+#define BOGUS_GAUSS_SEIDEL_IMPL_HPP
 
-#include "GaussSeidel.fwd.hpp"
-#include "GaussSeidel/BlockGaussSeidel.hpp"
+#include "BlockSolvers.hpp"
+#include "BlockSolvers/GaussSeidel.impl.hpp"
 
 #endif

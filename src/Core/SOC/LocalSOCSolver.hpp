@@ -10,8 +10,6 @@
 #define BOGUS_LOCAL_SOC_SOLVER_HPP
 
 #include "../SecondOrder.fwd.hpp"
-#include "../Utils/NumTraits.hpp"
-#include "../Utils/EigenMatrixTraits.hpp"
 
 namespace bogus {
 
@@ -21,7 +19,7 @@ template< unsigned Dimension, typename Scalar, bool DeSaxceCOV,
 struct LocalSOCSolver
 {
 
-  typedef MatrixTraits< Dimension, Scalar > Traits ;
+  typedef LocalProblemTraits< Dimension, Scalar > Traits ;
   typedef typename Traits::Vector Vector ;
   typedef typename Traits::Matrix Matrix ;
 

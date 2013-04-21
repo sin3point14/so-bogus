@@ -9,15 +9,14 @@
 #ifndef BOGUS_FISCHER_BURMEISTER_HPP
 #define BOGUS_FISCHER_BURMEISTER_HPP
 
-#include "../Utils/NumTraits.hpp"
-#include "../Utils/EigenMatrixTraits.hpp"
+#include "../SecondOrder.fwd.hpp"
 
 namespace bogus {
 
 template< unsigned Dimension, typename Scalar >
 struct FBBaseFunction
 {
-	typedef MatrixTraits< Dimension, Scalar > Traits ;
+	typedef LocalProblemTraits< Dimension, Scalar > Traits ;
 	typedef typename Traits::Vector Vector ;
 	typedef typename Traits::Matrix Matrix ;
 
@@ -40,7 +39,7 @@ class FischerBurmeister
 {
 
 public:
-  typedef MatrixTraits< Dimension, Scalar > Traits ;
+  typedef LocalProblemTraits< Dimension, Scalar > Traits ;
   typedef FBBaseFunction< Dimension, Scalar > BaseFunction ;
   typedef typename Traits::Vector Vector ;
   typedef typename Traits::Matrix Matrix ;

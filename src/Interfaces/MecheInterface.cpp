@@ -8,7 +8,7 @@
 #include "MecheInterface.hpp"
 
 #include "../Core/Block.impl.hpp"
-#include "../Core/GaussSeidel.impl.hpp"
+#include "../Core/BlockSolvers.impl.hpp"
 #include "../Core/SecondOrder.impl.hpp"
 
 #include <algorithm>

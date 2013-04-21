@@ -11,8 +11,8 @@
 
 #include "Block.hpp"
 
-#ifndef BOGUS_BLOCK_WITHOUT_EIGEN_BINDINGS
-#include "Block/EigenBindings.hpp"
+#ifndef BOGUS_WITHOUT_EIGEN
+#include "Eigen/BlockBindings.hpp"
 #endif
 #ifndef BOGUS_BLOCK_WITHOUT_STREAMS
 #include "Block/Streams.hpp"

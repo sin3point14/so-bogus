@@ -6,10 +6,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-#ifndef BOGUS_GAUSS_SEIDEL_IMPL_HPP
-#define BOGUS_GAUSS_SEIDEL_IMPL_HPP
+#ifndef BOGUS_GAUSS_SEIDEL_FWD_HPP
+#define BOGUS_GAUSS_SEIDEL_FWD_HPP
 
-#include "GaussSeidel.hpp"
-#include "GaussSeidel/BlockGaussSeidel.impl.hpp"
+namespace bogus {
+
+template < typename MatrixType >
+struct ProblemTraits ;
+
+template < typename BlockMatrixType >
+class GaussSeidel ;
+
+}
 
 #endif

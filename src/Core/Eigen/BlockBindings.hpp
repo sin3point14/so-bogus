@@ -20,13 +20,13 @@
 #endif
 #endif
 
-#include "BlockMatrix.hpp"
-#include "Expressions.hpp"
+#include "../Block/BlockMatrix.hpp"
+#include "../Block/Expressions.hpp"
 
 #ifndef BOGUS_BLOCK_WITHOUT_LINEAR_SOLVERS
-#include "../Utils/EigenLinearSolvers.hpp"
+#include "EigenLinearSolvers.hpp"
 #ifndef BOGUS_BLOCK_WITHOUT_EIGEN_SPARSE
-#include "../Utils/EigenSparseLinearSolvers.hpp"
+#include "EigenSparseLinearSolvers.hpp"
 #endif
 #endif
 

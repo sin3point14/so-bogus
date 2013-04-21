@@ -9,9 +9,7 @@
 #ifndef BOGUS_SOCLAW_HPP
 #define BOGUS_SOCLAW_HPP
 
-#include <Eigen/Core>
-
-#include "../GaussSeidel.fwd.hpp"
+#include "../BlockSolvers.fwd.hpp"
 #include "FischerBurmeister.hpp"
 #include "LocalSOCSolver.hpp"
 
@@ -25,15 +23,14 @@ template < typename LocalMatrixType, bool DeSaxceCOV,
 class SOCLaw
 {
 public:
-	typedef LocalProblemTraits< LocalMatrixType > ProblemTraits ;
+	typedef ProblemTraits< LocalMatrixType > GlobalProblemTraits ;
+	typedef LocalProblemTraits< GlobalProblemTraits::dimension, typename GlobalProblemTraits::Scalar > ProblemTraits ;
 	typedef typename ProblemTraits::Scalar Scalar ;
 
 	SOCLaw( const unsigned n, const double * mu ) ;
 
-	template< typename Derived, typename OtherDerived >
-	Scalar eval(
-			const Eigen::MatrixBase< Derived > &x,
-			const Eigen::MatrixBase< OtherDerived > &y ) const
+	template< typename VectorT, typename OtherVectorT >
+	Scalar eval( const VectorT &x, const OtherVectorT &y ) const
 	{
 		typedef FischerBurmeister< ProblemTraits::dimension, typename ProblemTraits::Scalar, DeSaxceCOV > FBFunction ;
 
@@ -48,8 +45,8 @@ public:
 #endif
 		for( unsigned i = 0 ; i < m_n ; ++ i )
 		{
-			lx = ProblemTraits::segment( i, x ) ;
-			ly = ProblemTraits::segment( i, y ) ;
+			lx = GlobalProblemTraits::segment( i, x ) ;
+			ly = GlobalProblemTraits::segment( i, y ) ;
 			FBFunction::compute( m_mu[i], lx, ly, fb ) ;
 			sum += fb.squaredNorm() ;
 		}
@@ -72,11 +69,6 @@ private:
 	Scalar m_localTol ;
 
 } ;
-
-typedef SOCLaw< Eigen::Matrix2d,  true > Coulomb2D ;
-typedef SOCLaw< Eigen::Matrix3d,  true > Coulomb3D ;
-typedef SOCLaw< Eigen::Matrix2d, false > SOC2D ;
-typedef SOCLaw< Eigen::Matrix3d, false > SOC3D ;
 
 }
 

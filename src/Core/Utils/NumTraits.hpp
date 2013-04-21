@@ -26,6 +26,9 @@ struct NumTraits
 	{ return s*s < std::numeric_limits< Scalar >::epsilon() ; }
 } ;
 
+template <typename MatrixType>
+struct MatrixTraits ;
+
 }
 
 #endif

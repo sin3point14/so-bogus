@@ -2,6 +2,8 @@
 #include "Core/Utils/Polynomial.hpp"
 #include "Core/Utils/Polynomial.impl.hpp"
 
+#include "Core/Eigen/EigenProblemTraits.hpp"
+#include "Core/Eigen/EigenLinearSolvers.hpp"
 #include "Core/SOC/LocalSOCSolver.impl.hpp"
 
 #include <gtest/gtest.h>

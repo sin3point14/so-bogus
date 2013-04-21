@@ -12,7 +12,7 @@
 #include "NonSmoothNewton.hpp"
 
 #include "NumTraits.hpp"
-#include "LinearSolver.hpp"
+#include "LinearSolverBase.hpp"
 
 #include <iostream>
 

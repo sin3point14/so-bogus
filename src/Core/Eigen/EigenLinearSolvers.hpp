@@ -9,7 +9,7 @@
 #ifndef BOGUS_EIGEN_LINEAR_SOLVERS
 #define BOGUS_EIGEN_LINEAR_SOLVERS
 
-#include "LinearSolver.hpp"
+#include "../Utils/LinearSolverBase.hpp"
 
 #include <Eigen/LU>
 #include <Eigen/Cholesky>

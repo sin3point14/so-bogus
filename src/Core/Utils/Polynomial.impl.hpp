@@ -9,7 +9,9 @@
 #ifndef BOGUS_POLYNOMIAL_IMPL_HPP
 #define BOGUS_POLYNOMIAL_IMPL_HPP
 
+#ifndef BOGUS_WITHOUT_EIGEN
 #include <Eigen/Eigenvalues>
+#endif
 
 #include "Polynomial.hpp"
 #include "NumTraits.hpp"
@@ -20,6 +22,8 @@ namespace bogus
 
 namespace polynomial {
 
+
+#ifndef BOGUS_WITHOUT_EIGEN
 
 template< unsigned Dimension, typename Scalar >
 struct CompanionMatrix
@@ -68,6 +72,16 @@ unsigned RootsFinder< Dimension, Scalar>::getRealRoots(const Scalar *coeffs, Sca
 	}
 	return count ;
 }
+
+#else
+template< unsigned Dimension, typename Scalar >
+unsigned RootsFinder< Dimension, Scalar>::getRealRoots(const Scalar *coeffs, Scalar *realRoots,
+		RealRootsFilter filter )
+{
+	assert( 0 && "bogus::Polynomial::RootsFinder::getRealRoots requires Eigen" ) ;
+	return 0 ;
+}
+#endif
 
 template< typename Scalar >
 struct PossiblyDegenerateRootsFinder< 0, Scalar >

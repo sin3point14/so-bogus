@@ -16,7 +16,7 @@
 #ifndef EIGEN_MPL2_ONLY
 #if EIGEN_VERSION_AT_LEAST(3,1,0)
 
-#include "LinearSolver.hpp"
+#include "../Utils/LinearSolverBase.hpp"
 
 #include <Eigen/Sparse>
 

@@ -11,6 +11,9 @@
 
 #include "SecondOrder.hpp"
 #include "SOC/SOCLaw.impl.hpp"
+#ifndef BOGUS_WITHOUT_EIGEN
+#include "Eigen/EigenLinearSolvers.hpp"
+#endif
 #include "SOC/LocalSOCSolver.impl.hpp"
 #include "SOC/FischerBurmeister.impl.hpp"
 

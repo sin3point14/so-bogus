@@ -19,7 +19,7 @@
 #include "../Utils/Polynomial.hpp"
 #include "../Utils/Polynomial.impl.hpp"
 
-#include "../Utils/EigenLinearSolvers.hpp"
+#include "../Utils/LinearSolverBase.hpp"
 
 #define BOGUS_PURE_ENUMERATIVE
 
@@ -47,7 +47,7 @@ struct LocalSOCSolver< 3, Scalar, true, Strat >
 {
   enum { Dimension = 3 } ;
 
-  typedef MatrixTraits< Dimension, Scalar > Traits ;
+  typedef LocalProblemTraits< Dimension, Scalar > Traits ;
   typedef typename Traits::Vector Vector ;
   typedef typename Traits::Matrix Matrix ;
 
@@ -138,8 +138,8 @@ struct LocalSOCSolver< 3, Scalar, true, Strat >
   {
 	  // see [Daviet et al 2011], Appendix B.1
 
-	 typedef Eigen::Matrix< Scalar, 2, 1 > Vec2 ;
-	 typedef Eigen::Matrix< Scalar, 2, 2 > Mat2 ;
+	 typedef typename LocalProblemTraits< 2, Scalar >::Vector Vec2 ;
+	 typedef typename LocalProblemTraits< 2, Scalar >::Matrix Mat2 ;
 
 	 const Scalar wN = W(0,0) ;
 	 if( wN < NumTraits< Scalar >::epsilon() )
@@ -184,7 +184,8 @@ struct LocalSOCSolver< 3, Scalar, true, Strat >
 //	 std::cout << "Found " << alpha << std::endl ;
 
 	 const Mat2 M = Wbar + alpha * Mat2::Identity() ;
-	 Traits::tp( r ) = - bN * M.fullPivLu().solve( bbar ) ;
+	 const typename MatrixTraits< Mat2 >::LUType lu (M) ;
+	 Traits::tp( r ) = - bN * lu.solve( bbar ) ;
 	 Traits::np( r ) = Traits::tp( r ).norm() / mu ;
 
 	 return true ;
@@ -198,7 +199,7 @@ struct LocalSOCSolver< 3, Scalar, false, Strat >
 {
   enum { Dimension = 3 } ;
 
-  typedef MatrixTraits< Dimension, Scalar > Traits ;
+  typedef LocalProblemTraits< Dimension, Scalar > Traits ;
   typedef typename Traits::Vector Vector ;
   typedef typename Traits::Matrix Matrix ;
 
@@ -287,8 +288,8 @@ struct LocalSOCSolver< 3, Scalar, false, Strat >
   {
 	  // see doc/sage/poySOC.sage
 
-	 typedef Eigen::Matrix< Scalar, 2, 1 > Vec2 ;
-	 typedef Eigen::Matrix< Scalar, 2, 2 > Mat2 ;
+	 typedef typename LocalProblemTraits< 2, Scalar >::Vector Vec2 ;
+	 typedef typename LocalProblemTraits< 2, Scalar >::Matrix Mat2 ;
 
 	 const Scalar wN = W(0,0) ;
 	 if( wN < NumTraits< Scalar >::epsilon() )
@@ -320,7 +321,7 @@ struct LocalSOCSolver< 3, Scalar, false, Strat >
 		 const Scalar CT = ( 1 - t*t ) / ( 1 + t*t ) ;
 		 const Scalar ST = 2*t / ( 1 + t*t ) ;
 
-		 const Eigen::Vector3d dir ( 1, mu*CT, mu*ST ) ;
+		 const typename Traits::Vector dir ( 1, mu*CT, mu*ST ) ;
 
 		 Scalar den, rN ;
 

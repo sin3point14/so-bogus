@@ -10,6 +10,7 @@
 #define BOGUS_FISCHER_BURMEISTER_IMPL_HPP
 
 #include "FischerBurmeister.hpp"
+
 #include <iostream>
 namespace bogus {
 
@@ -118,7 +119,7 @@ void FBBaseFunction< Dimension, Scalar >::compute(
 				invLz.template block< 1, Dimension - 1>( 0, 1 ) = -Traits::tp( z ).transpose() ;
 				invLz.template block< Dimension - 1, 1>( 1, 0 ) = -Traits::tp( z ) ;
 				invLz.template block< Dimension - 1, Dimension - 1>( 1, 1 ) =
-					( det * MatrixTraits< Dimension - 1, Scalar >::Matrix::Identity() +
+					( det * LocalProblemTraits< Dimension - 1, Scalar >::Matrix::Identity() +
 					  Traits::tp( z ) * Traits::tp( z ).transpose() ) / z[0] ;
 				invLz /= det ;
 

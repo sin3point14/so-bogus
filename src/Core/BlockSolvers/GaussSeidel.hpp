@@ -10,7 +10,7 @@
 #define BOGUS_BLOCK_GAUSS_SEIDEL_HPP
 
 #include "../Block.fwd.hpp"
-#include "../GaussSeidel/LocalProblem.hpp"
+#include "../BlockSolvers.fwd.hpp"
 
 namespace bogus
 {
@@ -21,15 +21,13 @@ class GaussSeidel
 public:
 
 	typedef typename BlockMatrixTraits< BlockMatrixType >::BlockType LocalMatrixType ;
-	typedef LocalProblemTraits< LocalMatrixType > ProblemTraits ;
+	typedef ProblemTraits< LocalMatrixType > ProblemTraits ;
 	typedef typename ProblemTraits::Scalar Scalar ;
 
 	explicit GaussSeidel( const BlockMatrixBase< BlockMatrixType > & M ) ;
 
-	template < typename NSLaw, typename Derived, typename OtherDerived >
-	Scalar solve( const NSLaw &law,
-				  const Eigen::MatrixBase< Derived >&b,
-				  Eigen::MatrixBase< OtherDerived > &x ) const ;
+	template < typename NSLaw, typename RhsT, typename ResT >
+	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const ;
 
 	void setMaxIters( unsigned maxIters ) { m_maxIters = maxIters ; }
 	void setTol( double tol ) { m_tol = tol ; }
