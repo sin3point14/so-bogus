@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -22,7 +22,7 @@ GaussSeidel< BlockMatrixType >::GaussSeidel( const BlockMatrixBase< BlockMatrixT
 	  m_maxIters( 250 ), m_tol( 1.e-6 ), m_deterministic( true ),
 	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 )
 {
-	const unsigned d = ProblemTraits::dimension ;
+	const unsigned d = GlobalProblemTraits::dimension ;
 	const unsigned n = M.rowsOfBlocks() ;
 	m_localMatrices.resize( n ) ;
 	m_scaling.resize( n*d ) ;
@@ -30,7 +30,7 @@ GaussSeidel< BlockMatrixType >::GaussSeidel( const BlockMatrixBase< BlockMatrixT
 	for( unsigned i = 0 ; i < n ; ++i )
 	{
 		m_localMatrices[i] = M.diagonal( i ) ;
-		ProblemTraits::segment( i, m_scaling )
+		GlobalProblemTraits::segment( i, m_scaling )
 				.setConstant( std::max( 1., m_localMatrices[i].trace() ) );
 	}
 
@@ -41,16 +41,16 @@ template < typename NSLaw, typename RhsT, typename ResT >
 typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
 							const RhsT &b, ResT &x ) const
 {
-	typedef LocalProblemTraits< ProblemTraits::dimension, typename ProblemTraits::Scalar > LocalProblemTraits ;
+	typedef LocalProblemTraits< GlobalProblemTraits::dimension, typename GlobalProblemTraits::Scalar > LocalProblemTraits ;
 
-	const unsigned d = ProblemTraits::dimension ;
+	const unsigned d = GlobalProblemTraits::dimension ;
 	const unsigned n = m_localMatrices.size() ;
 	assert( n*d == b.rows() ) ;
 	assert( n*d == x.rows() ) ;
 
-	typename ProblemTraits::DynVector y ( b + m_matrix*x ) ;
-	typename ProblemTraits::DynVector x_best( ProblemTraits::DynVector::Zero( x.rows() ) ) ;
-	typename ProblemTraits::DynVector x_scaled( x.array() * m_scaling.array() ) ;
+	typename GlobalProblemTraits::DynVector y ( b + m_matrix*x ) ;
+	typename GlobalProblemTraits::DynVector x_best( GlobalProblemTraits::DynVector::Zero( x.rows() ) ) ;
+	typename GlobalProblemTraits::DynVector x_scaled( x.array() * m_scaling.array() ) ;
 
 	const Scalar err_init = law.eval( x_scaled, y ) ;
 	const Scalar err_zero = law.eval( x_best, b ) ;
@@ -83,16 +83,16 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 				--skip[i] ;
 				continue ;
 			}
-			lb = ProblemTraits::segment( i, b ) ;
+			lb = GlobalProblemTraits::segment( i, b ) ;
 			m_matrix.splitRowMultiply( i, x, lb ) ;
-			lx = ProblemTraits::segment( i, x ) ;
+			lx = GlobalProblemTraits::segment( i, x ) ;
 			ldx = -lx ;
 
 			const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ d*i ] ) ;
 			ldx += lx ;
 
 			if( !ok ) ldx *= .7 ;
-			ProblemTraits::segment( i, x ) += ldx ;
+			GlobalProblemTraits::segment( i, x ) += ldx ;
 
 			const Scalar scaledSkipTol = m_scaling[ d*i ] * m_scaling[ d*i ] * m_skipTol ;
 			if( ldx.squaredNorm() < scaledSkipTol || lx.squaredNorm() < scaledSkipTol )

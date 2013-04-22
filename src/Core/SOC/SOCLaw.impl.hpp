@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -27,11 +27,11 @@ SOCLaw< LocalMatrixType, DeSaxceCOV, Strat >::SOCLaw(const unsigned n, const dou
 
 template < typename LocalMatrixType, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
 bool SOCLaw< LocalMatrixType, DeSaxceCOV, Strat >::solveLocal(const unsigned problemIndex,
-			const typename ProblemTraits::Matrix &A,
-			const typename ProblemTraits::Vector &b,
-			typename ProblemTraits::Vector &xm , const Scalar scaling ) const
+			const typename Traits::Matrix &A,
+			const typename Traits::Vector &b,
+			typename Traits::Vector &xm , const Scalar scaling ) const
 {
-	typedef LocalSOCSolver< ProblemTraits::dimension, typename ProblemTraits::Scalar, DeSaxceCOV, Strat > LocalSolver ;
+	typedef LocalSOCSolver< Traits::dimension, typename Traits::Scalar, DeSaxceCOV, Strat > LocalSolver ;
 	return m_localTol > LocalSolver::solve(  A, b, xm, m_mu[ problemIndex ], m_localTol, scaling ) ;
 }
 

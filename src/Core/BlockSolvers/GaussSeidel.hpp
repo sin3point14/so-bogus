@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -21,8 +21,8 @@ class GaussSeidel
 public:
 
 	typedef typename BlockMatrixTraits< BlockMatrixType >::BlockType LocalMatrixType ;
-	typedef ProblemTraits< LocalMatrixType > ProblemTraits ;
-	typedef typename ProblemTraits::Scalar Scalar ;
+	typedef ProblemTraits< LocalMatrixType > GlobalProblemTraits ;
+	typedef typename GlobalProblemTraits::Scalar Scalar ;
 
 	explicit GaussSeidel( const BlockMatrixBase< BlockMatrixType > & M ) ;
 
@@ -36,7 +36,7 @@ public:
 private:
 	const BlockMatrixBase< BlockMatrixType > & m_matrix ;
 	std::vector< LocalMatrixType > m_localMatrices ;
-	typename ProblemTraits::DynVector m_scaling ;
+	typename GlobalProblemTraits::DynVector m_scaling ;
 
 	unsigned m_maxIters ;
 	Scalar m_tol ;
