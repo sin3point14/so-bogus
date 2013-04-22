@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -40,7 +40,8 @@ public:
 			double * v, //!< length \a m: to return computed v ( or NULL if not needed )
 			bool deterministic = false,       //!< Whether the Gauss-Seidel should be eterministic
 			double tol = 0.,                  //!< Gauss-Seidel tolerance. 0. means GS's default
-			unsigned maxIters = 0             //!< Max number of iterations. 0 means GS's default
+			unsigned maxIters = 0,            //!< Max number of iterations. 0 means GS's default
+			bool staticProblem = false        //! If true, do not use DeSaxce change of variable
 			);
 
 protected:

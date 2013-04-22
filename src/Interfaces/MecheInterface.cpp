@@ -138,13 +138,12 @@ void MecheFrictionProblem::fromPrimal (
 }
 
 
-double MecheFrictionProblem::solve(
-		double *r,
+double MecheFrictionProblem::solve(double *r,
 		double *v,
 		bool deterministic, //!< Whether the Gauss-Seidel should be eterministic
 		double tol,                  //!< Gauss-Seidel tolerance. 0. means GS's default
-		unsigned maxIters //!< Max number of iterations. 0 means GS's default
-		)
+		unsigned maxIters, //!< Max number of iterations. 0 means GS's default
+		bool staticProblem)
 {
 	assert( m_data ) ;
 	const unsigned m = m_data->H.cols() ;
@@ -185,7 +184,10 @@ double MecheFrictionProblem::solve(
 	if( maxIters != 0 ) gs.setMaxIters( maxIters );
 	gs.setDeterministic( deterministic );
 
-	double res = gs.solve( bogus::Coulomb3D( n, m_data->mu ), m_data->b, r_loc ) ;
+	double res = staticProblem
+			? gs.solve( bogus::SOC3D    ( n, m_data->mu ), m_data->b, r_loc )
+			: gs.solve( bogus::Coulomb3D( n, m_data->mu ), m_data->b, r_loc ) ;
+
 
 	// compute v
 	if( v )
