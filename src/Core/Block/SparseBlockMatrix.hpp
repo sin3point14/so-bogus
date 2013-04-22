@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -172,8 +172,8 @@ public:
 
 
 #ifdef BOGUS_WITH_BOOST_SERIALIZATION
-	template < typename Archive > void serialize( Archive & ar,
-												  const unsigned int file_version ) ;
+	template < typename Archive >
+	void serialize( Archive & ar, const unsigned int file_version ) ;
 #endif
 
 protected:

@@ -8,10 +8,18 @@
 #include "MecheInterface.hpp"
 
 #include "../Core/Block.impl.hpp"
+#include "../Core/Block.io.hpp"
 #include "../Core/BlockSolvers.impl.hpp"
 #include "../Core/SecondOrder.impl.hpp"
 
 #include <algorithm>
+
+#ifdef BOGUS_WITH_BOOST_SERIALIZATION
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+
+#include <fstream>
+#endif
 
 namespace bogus
 {
@@ -30,6 +38,7 @@ struct MecheFrictionProblem::Data
 	const double *f ;
 	const double *w ;
 	const double *mu ;
+	bool f_w_mu_allocated ;
 
 	//Dual
 
@@ -49,13 +58,31 @@ struct MecheFrictionProblem::Data
 	SparseBlockMatrix< HtBlock, bogus::flags::COL_MAJOR > MInvHt ;
 
 	Eigen::VectorXd MInvf ;
-
 } ;
 
 MecheFrictionProblem::~MecheFrictionProblem()
 {
+	if( m_data && m_data->f_w_mu_allocated )
+	{
+		delete[] m_data->f ;
+		delete[] m_data->w ;
+		delete[] m_data->mu ;
+	}
 	delete m_data ;
 }
+
+void MecheFrictionProblem::destroy()
+{
+	if( m_data && m_data->f_w_mu_allocated )
+	{
+		delete[] m_data->f ;
+		delete[] m_data->w ;
+		delete[] m_data->mu ;
+	}
+	delete m_data ;
+	m_data = 0 ;
+}
+
 
 void MecheFrictionProblem::fromPrimal (
 		unsigned int NObj, //!< number of subsystems
@@ -74,6 +101,7 @@ void MecheFrictionProblem::fromPrimal (
 {
 	delete m_data ;
 	m_data = new Data() ;
+	m_data->f_w_mu_allocated = false ;
 
 	std::vector< unsigned > dofs( NObj ) ;
 	std::copy( ndof, ndof + NObj, dofs.begin() ) ;
@@ -185,8 +213,8 @@ double MecheFrictionProblem::solve(double *r,
 	gs.setDeterministic( deterministic );
 
 	double res = staticProblem
-			? gs.solve( bogus::SOC3D    ( n, m_data->mu ), m_data->b, r_loc )
-			: gs.solve( bogus::Coulomb3D( n, m_data->mu ), m_data->b, r_loc ) ;
+	        ? gs.solve( bogus::SOC3D    ( n, m_data->mu ), m_data->b, r_loc )
+	        : gs.solve( bogus::Coulomb3D( n, m_data->mu ), m_data->b, r_loc ) ;
 
 
 	// compute v
@@ -202,6 +230,58 @@ double MecheFrictionProblem::solve(double *r,
 	return res ;
 }
 
+#ifdef BOGUS_WITH_BOOST_SERIALIZATION
+bool MecheFrictionProblem::dumpToFile( const char* fileName ) const
+{
+	if( !m_data ) return false ;
+
+	std::ofstream ofs( fileName );
+	boost::archive::binary_oarchive oa(ofs);
+	oa << m_data->M << m_data->H << m_data->E ;
+	oa << boost::serialization::make_array( m_data->f , m_data->M.rows() ) ;
+	oa << boost::serialization::make_array( m_data->w , 3 * m_data->H.rows() ) ;
+	oa << boost::serialization::make_array( m_data->mu, m_data->H.rows() ) ;
+
+	return true ;
+}
+
+bool MecheFrictionProblem::fromFile( const char* fileName )
+{
+	std::ifstream ifs( fileName );
+	if( !ifs.is_open() ) return false ;
+
+	delete m_data ;
+	m_data = new Data() ;
+
+	boost::archive::binary_iarchive ia(ifs);
+	ia >> m_data->M >> m_data->H >> m_data->E ;
+
+	double* f  = new double[ m_data->M.rows() ] ;
+	double* w  = new double[ 3 * m_data->H.rows() ] ;
+	double* mu = new double[ m_data->H.rows() ] ;
+
+	ia >> boost::serialization::make_array( f , m_data->M.rows() ) ;
+	ia >> boost::serialization::make_array( w , 3 * m_data->H.rows() ) ;
+	ia >> boost::serialization::make_array( mu, m_data->H.rows() ) ;
+
+	m_data->f = f ;
+	m_data->w = w ;
+	m_data->mu = mu ;
+	m_data->f_w_mu_allocated = true ;
+	return true ;
+}
+
+#else
+bool MecheFrictionProblem::dumpToFile( const char* ) const
+{
+	std::cerr << "MecheInterface::dumpToFile: Error, bogus compiled without serialization capabilities" ;
+	return false ;
+}
+bool MecheFrictionProblem::fromFile( const char* ) {
+	std::cerr << "MecheInterface::fromFile: Error, bogus compiled without serialization capabilities" ;
+	return false ;
+}
+#endif
 
 }
 

@@ -44,7 +44,13 @@ public:
 			bool staticProblem = false        //! If true, do not use DeSaxce change of variable
 			);
 
+	bool dumpToFile( const char* fileName ) const ;
+	bool fromFile( const char* fileName ) ;
+
 protected:
+
+	void destroy() ;
+
 	struct Data  ;
 
 	Data* m_data ;
