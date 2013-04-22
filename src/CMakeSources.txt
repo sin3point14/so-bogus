@@ -1,11 +1,13 @@
 Core/Block.fwd.hpp
 Core/Block.hpp
 Core/Block.impl.hpp
+Core/Block.io.hpp
 Core/Block/BlockMatrix.hpp
 Core/Block/BlockMatrix.impl.hpp
 Core/Block/BlockTranspose.hpp
 Core/Block/CompoundSparseBlockIndex.hpp
 Core/Block/Expressions.hpp
+Core/Block/Serialization.hpp
 Core/Block/SparseBlockIndex.hpp
 Core/Block/SparseBlockIndexComputer.hpp
 Core/Block/SparseBlockMatrix.hpp

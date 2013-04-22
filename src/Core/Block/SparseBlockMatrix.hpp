@@ -16,9 +16,7 @@
 namespace bogus
 {
 
-template < typename BlockT, int Flags >
-class SparseBlockMatrix  ;
-
+template < typename BlockT, int Flags > class SparseBlockMatrix  ;
 template < bool Symmetric > struct SparseBlockMatrixFinalizer ;
 template < typename Derived, bool Major > struct SparseBlockIndexGetter ;
 
@@ -171,6 +169,12 @@ public:
 
 	template < bool ColWise, typename LhsT, typename RhsT >
 	void setFromProduct( const Product< LhsT, RhsT > &prod ) ;
+
+
+#ifdef BOGUS_WITH_BOOST_SERIALIZATION
+	template < typename Archive > void serialize( Archive & ar,
+												  const unsigned int file_version ) ;
+#endif
 
 protected:
 

@@ -12,6 +12,8 @@
 #include "GaussSeidel.hpp"
 #include "../Block/BlockMatrix.hpp"
 
+#include <iostream>
+
 namespace bogus
 {
 

@@ -106,7 +106,7 @@ const typename SparseBlockMatrixBase< Derived >::ColIndexType &SparseBlockMatrix
 
 template < typename Derived >
 SparseBlockMatrixBase< Derived >::SparseBlockMatrixBase()
-	: m_nBlocks(0)
+	: Base(), m_nBlocks(0)
 {
 	setRows( 0, 0 ) ;
 	setCols( 0, 0 ) ;

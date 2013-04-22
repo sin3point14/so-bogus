@@ -5,20 +5,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
-#ifndef BOGUS_BLOCK_IMPL_HPP
-#define BOGUS_BLOCK_IMPL_HPP
-
 #include "Block.hpp"
+#include "Block/Streams.hpp"
 
-#ifndef BOGUS_WITHOUT_EIGEN
-#include "Eigen/BlockBindings.hpp"
+#ifdef BOGUS_WITH_BOOST_SERIALIZATION
+#include <boost/serialization/split_free.hpp>
+#include <boost/serialization/array.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/utility.hpp>
+
+#include "Eigen/EigenSerialization.hpp"
+#include "Block/Serialization.hpp"
 #endif
 
-#include "Block/BlockMatrix.impl.hpp"
-#include "Block/SparseBlockMatrix.impl.hpp"
-#include "Block/SparseTranspose.impl.hpp"
-#include "Block/SparseMatrixVectorProduct.impl.hpp"
-#include "Block/SparseMatrixMatrixProduct.impl.hpp"
-
-#endif

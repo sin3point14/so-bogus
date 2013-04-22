@@ -46,7 +46,6 @@ public:
 
 	using Base::derived ;
 
-
 	BlockMatrixBase() : m_rows(0), m_cols(0)
 	{}
 
