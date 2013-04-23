@@ -38,7 +38,6 @@ struct MecheFrictionProblem::Data
 	const double *f ;
 	const double *w ;
 	const double *mu ;
-	bool f_w_mu_allocated ;
 
 	//Dual
 
@@ -60,25 +59,24 @@ struct MecheFrictionProblem::Data
 	Eigen::VectorXd MInvf ;
 } ;
 
+MecheFrictionProblem::MecheFrictionProblem()
+	: m_data( 0 ), m_f( 0 ), m_w( 0 ), m_mu( 0 )
+{
+}
+
 MecheFrictionProblem::~MecheFrictionProblem()
 {
-	if( m_data && m_data->f_w_mu_allocated )
-	{
-		delete[] m_data->f ;
-		delete[] m_data->w ;
-		delete[] m_data->mu ;
-	}
-	delete m_data ;
+	destroy() ;
 }
 
 void MecheFrictionProblem::destroy()
 {
-	if( m_data && m_data->f_w_mu_allocated )
-	{
-		delete[] m_data->f ;
-		delete[] m_data->w ;
-		delete[] m_data->mu ;
-	}
+	delete[] m_f ;
+	m_f = 0 ;
+	delete[] m_w ;
+	m_w = 0 ;
+	delete[] m_mu ;
+	m_mu = 0 ;
 	delete m_data ;
 	m_data = 0 ;
 }
@@ -101,7 +99,6 @@ void MecheFrictionProblem::fromPrimal (
 {
 	delete m_data ;
 	m_data = new Data() ;
-	m_data->f_w_mu_allocated = false ;
 
 	std::vector< unsigned > dofs( NObj ) ;
 	std::copy( ndof, ndof + NObj, dofs.begin() ) ;
@@ -165,6 +162,17 @@ void MecheFrictionProblem::fromPrimal (
 	m_data->mu = mu_in ;
 }
 
+unsigned MecheFrictionProblem::nDegreesOfFreedom() const
+{
+	return m_data ? m_data->M.rows() : 0u ;
+}
+
+unsigned MecheFrictionProblem::nContacts() const
+{
+	return m_data ? m_data->H.rowsOfBlocks() : 0u ;
+}
+
+
 
 double MecheFrictionProblem::solve(double *r,
 		double *v,
@@ -213,8 +221,8 @@ double MecheFrictionProblem::solve(double *r,
 	gs.setDeterministic( deterministic );
 
 	double res = staticProblem
-	        ? gs.solve( bogus::SOC3D    ( n, m_data->mu ), m_data->b, r_loc )
-	        : gs.solve( bogus::Coulomb3D( n, m_data->mu ), m_data->b, r_loc ) ;
+			? gs.solve( bogus::SOC3D    ( n, m_data->mu ), m_data->b, r_loc )
+			: gs.solve( bogus::Coulomb3D( n, m_data->mu ), m_data->b, r_loc ) ;
 
 
 	// compute v
@@ -231,53 +239,71 @@ double MecheFrictionProblem::solve(double *r,
 }
 
 #ifdef BOGUS_WITH_BOOST_SERIALIZATION
-bool MecheFrictionProblem::dumpToFile( const char* fileName ) const
+bool MecheFrictionProblem::dumpToFile( const char* fileName, const double * r0 ) const
 {
 	if( !m_data ) return false ;
 
 	std::ofstream ofs( fileName );
 	boost::archive::binary_oarchive oa(ofs);
 	oa << m_data->M << m_data->H << m_data->E ;
-	oa << boost::serialization::make_array( m_data->f , m_data->M.rows() ) ;
-	oa << boost::serialization::make_array( m_data->w , 3 * m_data->H.rows() ) ;
-	oa << boost::serialization::make_array( m_data->mu, m_data->H.rows() ) ;
+	oa << boost::serialization::make_array( m_data->f , nDegreesOfFreedom() ) ;
+	oa << boost::serialization::make_array( m_data->w , 3 * nContacts() ) ;
+	oa << boost::serialization::make_array( m_data->mu, nContacts() ) ;
+	bool has_r0 = r0 != 0 ;
+	oa << has_r0 ; ;
+	if( r0 )
+	{
+		oa << boost::serialization::make_array( r0, 3*nContacts() ) ;
+	}
 
 	return true ;
 }
 
-bool MecheFrictionProblem::fromFile( const char* fileName )
+bool MecheFrictionProblem::fromFile( const char* fileName, double *& r0 )
 {
 	std::ifstream ifs( fileName );
 	if( !ifs.is_open() ) return false ;
 
-	delete m_data ;
+	destroy() ;
 	m_data = new Data() ;
 
 	boost::archive::binary_iarchive ia(ifs);
 	ia >> m_data->M >> m_data->H >> m_data->E ;
 
-	double* f  = new double[ m_data->M.rows() ] ;
-	double* w  = new double[ 3 * m_data->H.rows() ] ;
-	double* mu = new double[ m_data->H.rows() ] ;
+	m_f  = new double[ nDegreesOfFreedom() ] ;
+	m_w  = new double[ 3 * nContacts() ] ;
+	m_mu = new double[ nContacts() ] ;
 
-	ia >> boost::serialization::make_array( f , m_data->M.rows() ) ;
-	ia >> boost::serialization::make_array( w , 3 * m_data->H.rows() ) ;
-	ia >> boost::serialization::make_array( mu, m_data->H.rows() ) ;
+	std::cout << fileName << ": " << nDegreesOfFreedom() << " dofs, " << nContacts() << " contacts" << std::endl ;
 
-	m_data->f = f ;
-	m_data->w = w ;
-	m_data->mu = mu ;
-	m_data->f_w_mu_allocated = true ;
+	ia >> boost::serialization::make_array( m_f , nDegreesOfFreedom() ) ;
+	ia >> boost::serialization::make_array( m_w , 3 * nContacts() ) ;
+	ia >> boost::serialization::make_array( m_mu, nContacts() ) ;
+
+	m_data->f  = m_f ;
+	m_data->w  = m_w ;
+	m_data->mu = m_mu ;
+
+	r0 = new double[ 3 * nContacts() ] ;
+
+	bool has_r0 ;
+	ia >> has_r0 ;
+	if ( has_r0 ) {
+		ia >> boost::serialization::make_array( r0, 3*nContacts() ) ;
+	} else {
+		Eigen::VectorXd::Map( r0, 3*nContacts() ).setZero() ;
+	}
+
 	return true ;
 }
 
 #else
-bool MecheFrictionProblem::dumpToFile( const char* ) const
+bool MecheFrictionProblem::dumpToFile( const char*, const double* ) const
 {
 	std::cerr << "MecheInterface::dumpToFile: Error, bogus compiled without serialization capabilities" ;
 	return false ;
 }
-bool MecheFrictionProblem::fromFile( const char* ) {
+bool MecheFrictionProblem::fromFile(const char*, double *& ) {
 	std::cerr << "MecheInterface::fromFile: Error, bogus compiled without serialization capabilities" ;
 	return false ;
 }

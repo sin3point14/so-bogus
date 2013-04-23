@@ -15,9 +15,8 @@ namespace bogus
 class MecheFrictionProblem
 {
 public:
-	MecheFrictionProblem()
-		: m_data( 0 )
-	{}
+
+	MecheFrictionProblem() ;
 	~MecheFrictionProblem() ;
 
 	void fromPrimal (
@@ -44,8 +43,11 @@ public:
 			bool staticProblem = false        //! If true, do not use DeSaxce change of variable
 			);
 
-	bool dumpToFile( const char* fileName ) const ;
-	bool fromFile( const char* fileName ) ;
+	unsigned nDegreesOfFreedom() const ;
+	unsigned nContacts() const ;
+
+	bool dumpToFile( const char* fileName, const double *r0 = 0 ) const ;
+	bool fromFile( const char* fileName, double* &r0 ) ;
 
 protected:
 
@@ -54,6 +56,12 @@ protected:
 	struct Data  ;
 
 	Data* m_data ;
+
+private:
+	// Used to store data when loading problem from file
+	double *m_f ;
+	double *m_w ;
+	double *m_mu ;
 
 } ;
 

@@ -7,11 +7,11 @@ include( ExternalProject )
 
 # Add gtest
 ExternalProject_Add(
-	googletest
-	URL https://googletest.googlecode.com/files/gtest-1.6.0.zip
-	UPDATE_COMMAND ""
-	INSTALL_COMMAND ""
-	)
+        googletest
+        URL https://googletest.googlecode.com/files/gtest-1.6.0.zip
+        UPDATE_COMMAND ""
+        INSTALL_COMMAND ""
+        )
 
 ExternalProject_Get_Property(googletest source_dir)
 include_directories( ../src ${source_dir}/include)
