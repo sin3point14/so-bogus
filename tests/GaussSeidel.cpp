@@ -90,17 +90,17 @@ TEST( GaussSeidel, Small )
 	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 
 	x.setOnes() ;
-	res = gs.solve( bogus::SOCLaw< Eigen::Matrix3d, true, bogus::local_soc_solver::PureNewton >( 2, mu ), b, x ) ;
+	res = gs.solve( bogus::SOCLaw< 3u, double, true, bogus::local_soc_solver::PureNewton >( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 
 	x.setOnes() ;
-	res = gs.solve( bogus::SOCLaw< Eigen::Matrix3d, true, bogus::local_soc_solver::PureEnumerative >( 2, mu ), b, x ) ;
+	res = gs.solve( bogus::SOCLaw< 3u, double, true, bogus::local_soc_solver::PureEnumerative >( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 
 	x.setOnes() ;
-	res = gs.solve( bogus::SOCLaw< Eigen::Matrix3d, true, bogus::local_soc_solver::RevHybrid >( 2, mu ), b, x ) ;
+	res = gs.solve( bogus::SOCLaw< 3u, double, true, bogus::local_soc_solver::RevHybrid >( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 }

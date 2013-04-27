@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -33,7 +33,7 @@ struct ProblemTraits : public MatrixTraits< LocalMatrixType >
 } ;
 
 template< unsigned Dimension, typename Scalar >
-struct LocalProblemTraits : public MatrixTraits< Eigen::Matrix< Scalar, Dimension, Dimension > >
+struct LocalProblemTraits : public ProblemTraits< Eigen::Matrix< Scalar, Dimension, Dimension > >
 {
 
 	typedef Eigen::Matrix< Scalar, Dimension, 1 > Vector ;

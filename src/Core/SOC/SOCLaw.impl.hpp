@@ -18,15 +18,15 @@
 
 namespace bogus {
 
-template < typename LocalMatrixType, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
-SOCLaw< LocalMatrixType, DeSaxceCOV, Strat >::SOCLaw(const unsigned n, const double *mu )
+template < unsigned Dimension, typename Scalar, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
+SOCLaw< Dimension, Scalar, DeSaxceCOV, Strat >::SOCLaw(const unsigned n, const double *mu )
 	: m_mu(mu), m_n(n), m_localTol( std::pow( NumTraits< Scalar >::epsilon(), .75 ) )
 {
 }
 
 
-template < typename LocalMatrixType, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
-bool SOCLaw< LocalMatrixType, DeSaxceCOV, Strat >::solveLocal(const unsigned problemIndex,
+template < unsigned Dimension, typename Scalar, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
+bool SOCLaw< Dimension, Scalar, DeSaxceCOV, Strat >::solveLocal(const unsigned problemIndex,
 			const typename Traits::Matrix &A,
 			const typename Traits::Vector &b,
 			typename Traits::Vector &xm , const Scalar scaling ) const

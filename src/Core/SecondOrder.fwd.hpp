@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -28,7 +28,7 @@ enum Strategy
 template< unsigned Dimension, typename Scalar >
 struct LocalProblemTraits ;
 
-template < typename LocalMatrixType, bool DeSaxceCOV,
+template < unsigned Dimension, typename Scalar, bool DeSaxceCOV,
 		   local_soc_solver::Strategy Strat = local_soc_solver::Hybrid  >
 class SOCLaw ;
 

@@ -18,14 +18,12 @@
 namespace bogus
 {
 
-template < typename LocalMatrixType, bool DeSaxceCOV,
+template < unsigned Dimension, typename Scalar, bool DeSaxceCOV,
 		   local_soc_solver::Strategy Strat >
 class SOCLaw
 {
 public:
-	typedef ProblemTraits< LocalMatrixType > GlobalProblemTraits ;
-	typedef LocalProblemTraits< GlobalProblemTraits::dimension, typename GlobalProblemTraits::Scalar > Traits ;
-	typedef typename Traits::Scalar Scalar ;
+	typedef LocalProblemTraits< Dimension, Scalar > Traits ;
 
 	SOCLaw( const unsigned n, const double * mu ) ;
 
@@ -45,8 +43,8 @@ public:
 #endif
 		for( int i = 0 ; i < (int) m_n ; ++ i )
 		{
-			lx = GlobalProblemTraits::segment( i, x ) ;
-			ly = GlobalProblemTraits::segment( i, y ) ;
+			lx = Traits::segment( i, x ) ;
+			ly = Traits::segment( i, y ) ;
 			FBFunction::compute( m_mu[i], lx, ly, fb ) ;
 			sum += fb.squaredNorm() ;
 		}
@@ -69,6 +67,11 @@ private:
 	Scalar m_localTol ;
 
 } ;
+
+typedef SOCLaw< 2u, double,  true > Coulomb2D ;
+typedef SOCLaw< 3u, double,  true > Coulomb3D ;
+typedef SOCLaw< 2u, double, false > SOC2D ;
+typedef SOCLaw< 3u, double, false > SOC3D ;
 
 }
 
