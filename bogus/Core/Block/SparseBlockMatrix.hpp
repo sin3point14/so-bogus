@@ -77,6 +77,8 @@ public:
 
 	Index rowsOfBlocks() const { return rowOffsets().size() - 1 ; }
 	Index colsOfBlocks() const { return colOffsets().size() - 1 ; }
+	Index blockRows( Index row ) const { return rowOffsets()[ row + 1 ] - rowOffsets()[ row ] ; }
+	Index blockCols( Index col ) const { return colOffsets()[ col + 1 ] - colOffsets()[ col ] ; }
 
 	void reserve( std::size_t nBlocks )
 	{
@@ -205,8 +207,6 @@ protected:
 
 	const UncompressedIndexType& getOrComputeMinorIndex( UncompressedIndexType &tempIndex) const ;
 
-	Index blockRows( Index row ) const { return rowOffsets()[ row + 1 ] - rowOffsets()[ row ] ; }
-	Index blockCols( Index col ) const { return colOffsets()[ col + 1 ] - colOffsets()[ col ] ; }
 	Index rowOffset( Index row ) const { return rowOffsets()[row] ; }
 	Index colOffset( Index col ) const { return colOffsets()[col] ; }
 	const std::vector< Index >& rowOffsets() const { return colMajorIndex().innerOffsets ; }

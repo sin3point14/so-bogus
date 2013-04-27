@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -12,6 +12,10 @@
 #include "../Utils/LinearSolverBase.hpp"
 
 #include <Eigen/Core>
+
+#if EIGEN_VERSION_AT_LEAST(3,1,0)
+#include <Eigen/Sparse>
+#endif
 
 namespace bogus
 {
@@ -27,6 +31,19 @@ struct MatrixTraits
 	typedef LDLT< Eigen::MatrixBase< MatrixType > > LDLTType ;
 
 } ;
+
+#if EIGEN_VERSION_AT_LEAST(3,1,0)
+template < typename _Scalar, int _Options, typename _Index >
+struct MatrixTraits< Eigen::SparseMatrix< _Scalar, _Options, _Index > >
+{
+	typedef _Scalar Scalar ;
+	typedef Eigen::SparseMatrix< Scalar, _Options, _Index > MatrixType ;
+
+	typedef LU< Eigen::SparseMatrixBase< Eigen::SparseMatrix< Scalar, _Options, _Index > > > LUType ;
+	typedef LDLT< Eigen::SparseMatrixBase< Eigen::SparseMatrix< Scalar, _Options, _Index > > > LDLTType ;
+
+} ;
+#endif
 
 }
 

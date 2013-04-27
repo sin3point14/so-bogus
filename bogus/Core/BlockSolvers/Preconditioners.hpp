@@ -13,8 +13,9 @@
 namespace bogus {
 
 template < typename MatrixType >
-struct TrivialPreconditioner
+class TrivialPreconditioner
 {
+public:
 	explicit TrivialPreconditioner( const MatrixType & )
 	{}
 
@@ -26,24 +27,18 @@ struct TrivialPreconditioner
 } ;
 
 template < typename MatrixType >
-struct DiagonalPreconditioner
+class DiagonalPreconditioner
 {
 } ;
 
-template < typename BlockMatrixType >
-struct DiagonalPreconditioner< BlockMatrixBase< BlockMatrixType > >
+template < typename MatrixType >
+class DiagonalLUPreconditioner
 {
-	typedef typename BlockMatrixTraits< BlockMatrixType >::BlockType LocalMatrixType ;
-	typedef ProblemTraits< LocalMatrixType > GlobalProblemTraits ;
-	typedef typename GlobalProblemTraits::DynVector Vector ;
+} ;
 
-	explicit DiagonalPreconditioner( const BlockMatrixBase< BlockMatrixType > &matrix ) ;
-
-	template < bool transpose, typename ResT, typename RhsT >
-	void apply( const RhsT& rhs, ResT &res ) const ;
-
-private:
-	Vector m_diagonal ;
+template < typename MatrixType >
+class DiagonalLDLTPreconditioner
+{
 } ;
 
 }

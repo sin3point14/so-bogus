@@ -1,6 +1,8 @@
 #include "Core/Block.impl.hpp"
 #include "Core/BlockSolvers.impl.hpp"
 
+#include <Eigen/Eigenvalues>
+
 #include <gtest/gtest.h>
 
 TEST( ConjugateGradient, CG )
@@ -77,6 +79,23 @@ TEST( ConjugateGradient, Preconditioner )
 	err = pcg.solve( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 
+	res.setZero() ;
+	err = pcg.solve_BiCG( rhs, res ) ;
+	EXPECT_GT( 1.e-16, err ) ;
 
+	res.setZero() ;
+	bogus::ConjugateGradient< Mat, bogus::DiagonalLUPreconditioner > lucg( sbm ) ;
+	lucg.setMaxIters( 1 );
+	err = lucg.solve( rhs, res ) ;
+	EXPECT_GT( 1.e-16, err ) ;
+
+	// Making the block positive definite
+	sbm.block(0) *= sbm.block(0) ;
+
+	res.setZero() ;
+	bogus::ConjugateGradient< Mat, bogus::DiagonalLDLTPreconditioner > ldltcg( sbm ) ;
+	ldltcg.setMaxIters( 1 );
+	err = ldltcg.solve( rhs, res ) ;
+	EXPECT_GT( 1.e-16, err ) ;
 }
 

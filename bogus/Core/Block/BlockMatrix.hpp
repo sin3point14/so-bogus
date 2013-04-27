@@ -75,8 +75,10 @@ public:
 
 	Index rows() const { return m_rows ; }
 	Index cols() const { return m_cols ; }
-	Index rowsOfBlocks() const { return this->derived().rowsOfBlocks() ; }
-	Index colsOfBlocks() const { return this->derived().colsOfBlocks() ; }
+	Index blockRows( Index row ) const { return derived().blockRows( row ) ; }
+	Index blockCols( Index col ) const { return derived().blockCols( col ) ; }
+	Index rowsOfBlocks() const { return derived().rowsOfBlocks() ; }
+	Index colsOfBlocks() const { return derived().colsOfBlocks() ; }
 
 	const std::vector< BlockType >& blocks() const { return  m_blocks ; }
 
