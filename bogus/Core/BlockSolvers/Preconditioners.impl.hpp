@@ -33,7 +33,7 @@ public:
 		{
 			const BlockType &b = matrix.diagonal( i ) ;
 			m_diagonal.segment( cur_row, b.rows() ) = b.diagonal() ;
-			for( Index k = 0 ; k < b.rows() ; ++k, ++cur_row )
+			for( Index k = 0 ; k < (Index) b.rows() ; ++k, ++cur_row )
 			{
 				if( NumTraits< Scalar >::isSquareZero( m_diagonal[ cur_row ] ) )
 				{
@@ -63,7 +63,8 @@ public:
 	template < bool transpose, typename ResT, typename RhsT >
 	void apply( const RhsT& rhs, ResT &res ) const
 	{
-		res = m_fact * rhs  ;
+		res.setZero() ;
+		m_fact.template multiply< transpose >( rhs, res )  ;
 	}
 
 protected:

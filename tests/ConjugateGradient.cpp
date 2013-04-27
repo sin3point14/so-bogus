@@ -97,5 +97,34 @@ TEST( ConjugateGradient, Preconditioner )
 	ldltcg.setMaxIters( 1 );
 	err = ldltcg.solve( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
+
+#if EIGEN_VERSION_AT_LEAST(3,1,0)
+    typedef Eigen::SparseMatrix< double > SparseBlock ;
+	typedef bogus::SparseBlockMatrix< SparseBlock > SparseMat ;
+	SparseMat ssbm ;
+	ssbm.setRows( 1, 5 ) ;
+	ssbm.setCols( 1, 5 ) ;
+	ssbm.insertBack(0,0) =  sbm.block(0).sparseView() ;
+	ssbm.finalize() ;
+
+	res.setZero() ;
+	bogus::ConjugateGradient< SparseMat > scg( ssbm ) ;
+	err = scg.solve( rhs, res ) ;
+	EXPECT_GT( 1.e-16, err ) ;
+
+	res.setZero() ;
+	bogus::ConjugateGradient< SparseMat, bogus::DiagonalPreconditioner > spcg( ssbm ) ;
+	err = spcg.solve( rhs, res ) ;
+	EXPECT_GT( 1.e-16, err ) ;
+
+	res.setZero() ;
+	bogus::ConjugateGradient< SparseMat, bogus::DiagonalLDLTPreconditioner > sldltcg( ssbm ) ;
+	sldltcg.setMaxIters( 1 );
+	err = sldltcg.solve( rhs, res ) ;
+	EXPECT_GT( 1.e-16, err ) ;
+	res.setZero() ;
+	err = sldltcg.solve_BiCGSTAB( rhs, res ) ;
+	EXPECT_GT( 1.e-16, err ) ;
+#endif
 }
 

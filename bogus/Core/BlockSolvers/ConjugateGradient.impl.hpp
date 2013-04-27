@@ -42,7 +42,7 @@ ConjugateGradient< BlockMatrixType, PreconditionerType >::solve( const RhsT &b, 
 
 	if( res < m_tol ) return res ;
 
-	Vector z ;
+	Vector z( r.rows() ) ;
 	m_preconditioner.template apply< false >( r, z ) ;
 	Vector p = z;
 
@@ -101,7 +101,7 @@ ConjugateGradient< BlockMatrixType, PreconditionerType >::solve_BiCG( const RhsT
 	Vector r_ = b_ ;
 	m_matrix.template multiply< true >( x_, r_ );
 
-	Vector p, p_ ;
+	Vector p( r.rows() ), p_ ( r_.rows() ) ;
 	m_preconditioner.template apply< false >( r,  p ) ;
 	m_preconditioner.template apply< true >( r_, p_ ) ;
 
@@ -171,7 +171,8 @@ ConjugateGradient< BlockMatrixType, PreconditionerType >::solve_BiCGSTAB( const 
 
 	Vector nu = Vector::Zero( r.rows() );
 	Vector p = nu ;
-	Vector s, t ( m_matrix.rows() ) , u, y, z ;
+	Vector s, t ( m_matrix.rows() ) ;
+	Vector u( r.rows() ), y( r.rows() ), z( t.rows() ) ;
 
 	unsigned k  ;
 	for( k = 0 ; k < m_maxIters ; ++k )

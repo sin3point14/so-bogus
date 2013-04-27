@@ -37,6 +37,7 @@ template < typename _Scalar, int _Options, typename _Index >
 struct MatrixTraits< Eigen::SparseMatrix< _Scalar, _Options, _Index > >
 {
 	typedef _Scalar Scalar ;
+	enum { dimension = -1  } ;
 	typedef Eigen::SparseMatrix< Scalar, _Options, _Index > MatrixType ;
 
 	typedef LU< Eigen::SparseMatrixBase< Eigen::SparseMatrix< Scalar, _Options, _Index > > > LUType ;
