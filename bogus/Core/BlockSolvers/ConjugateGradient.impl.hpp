@@ -16,7 +16,8 @@ namespace bogus {
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 ConjugateGradient< BlockMatrixType, PreconditionerType >::ConjugateGradient(
         const BlockMatrixBase< BlockMatrixType > & matrix )
-    : Base( matrix, matrix.rows(), NumTraits< Scalar >::epsilon() )
+    : Base( matrix, matrix.rows(), NumTraits< Scalar >::epsilon() ),
+      m_preconditioner( matrix )
 {
 }
 

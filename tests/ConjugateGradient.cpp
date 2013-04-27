@@ -44,3 +44,39 @@ TEST( ConjugateGradient, CG )
     cg.solve_BiCGSTAB( rhs, res ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 }
+
+TEST( ConjugateGradient, Preconditioner )
+{
+
+    typedef Eigen::Matrix< double, 5, 5 > Block ;
+    Block M_L ;
+    M_L <<  1.72194,           0 ,            0,            0,            0,
+           0.027804,      1.78422,            0,            0,            0,
+            0.26607,     0.097189,            0,            0,            0,
+            0.96157,      0.71437,      0.98738,      1.66828,            0,
+           0.024571,     0.046486,      0.94515,      0.38009,     1.087634 ;
+
+	typedef bogus::SparseBlockMatrix< Block > Mat ;
+	Mat sbm ;
+	sbm.setRows( 1, 5 ) ;
+	sbm.setCols( 1, 5 ) ;
+	sbm.insertBack(0,0) = .5 * ( M_L + M_L.transpose() ) ;
+	sbm.finalize() ;
+
+	Eigen::Matrix< double, 5, 1 > rhs, res ;
+	rhs.setOnes() ;
+	double err ;
+
+	res.setZero() ;
+	bogus::ConjugateGradient< Mat > cg( sbm ) ;
+	err = cg.solve( rhs, res ) ;
+	EXPECT_GT( 1.e-16, err ) ;
+
+	res.setZero() ;
+	bogus::ConjugateGradient< Mat, bogus::DiagonalPreconditioner > pcg( sbm ) ;
+	err = pcg.solve( rhs, res ) ;
+	EXPECT_GT( 1.e-16, err ) ;
+
+
+}
+

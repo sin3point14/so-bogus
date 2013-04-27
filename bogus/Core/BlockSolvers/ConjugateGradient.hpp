@@ -9,22 +9,12 @@
 #define BOGUS_CONJUGATE_GRADIENT_HPP
 
 #include "BlockSolverBase.hpp"
+#include "Preconditioners.hpp"
 
 #include <vector>
 
 namespace bogus
 {
-
-template < typename MatrixType >
-struct TrivialPreconditioner
-{
-	template < bool transpose, typename ResT, typename RhsT >
-	void apply( const RhsT& rhs, ResT &res ) const
-	{
-		res = rhs ;
-	}
-} ;
-
 
 template < typename BlockMatrixType,
            template< typename BlockMatrixT > class PreconditionerType = TrivialPreconditioner >
