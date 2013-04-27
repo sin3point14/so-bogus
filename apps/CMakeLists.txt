@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 execute_process( COMMAND ../updateCMakeSources.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
 file(STRINGS CMakeSources.txt SRC_LIST)
 
-include_directories( ../src ${source_dir}/include)
+include_directories( ../bogus ${source_dir}/include)
 
 FOREACH( test_file ${SRC_LIST} )
   STRING(REGEX REPLACE "([a-zA-Z0-9]+).cpp" "\\1" test_name ${test_file} )

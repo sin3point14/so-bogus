@@ -72,7 +72,7 @@ endif()
 
 include_directories( ${EXTERNAL_INCLUDES} )
 
-add_subdirectory( src )
+add_subdirectory( bogus )
 if( TESTS )
 		enable_testing()
 		add_subdirectory( tests )
