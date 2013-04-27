@@ -37,6 +37,8 @@ public:
 	typedef typename Traits::BlockType BlockType ;
 	typedef typename Traits::BlockPtr BlockPtr ;
 
+	typedef typename Base::ConstTransposeReturnType  ConstTransposeReturnType ;
+
 	using Base::rows ;
 	using Base::cols ;
 	using Base::blocks ;
@@ -156,7 +158,7 @@ public:
 	const ColIndexType& colMajorIndex() const ;
 	const RowIndexType& rowMajorIndex() const ;
 
-	Transpose< SparseBlockMatrixBase > transpose() const { return Transpose< SparseBlockMatrixBase< Derived > >( *this ) ; }
+	ConstTransposeReturnType transpose() const { return Transpose< SparseBlockMatrixBase< Derived > >( *this ) ; }
 
 	template < bool Transpose, typename RhsT, typename ResT >
 	void multiply( const RhsT& rhs, ResT& res ) const ;
@@ -285,6 +287,8 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMat
 	typedef SparseBlockIndex< false, Index, BlockPtr  > UncompressedIndexType ;
 	typedef SparseBlockIndex< is_compressed && !is_col_major, Index, BlockPtr > RowIndexType ;
 	typedef SparseBlockIndex< is_compressed && is_col_major , Index, BlockPtr > ColIndexType ;
+
+	typedef Transpose< SparseBlockMatrixBase< SparseBlockMatrix< BlockT, Flags > > > ConstTransposeReturnType ;
 } ;
 
 template < typename BlockT, int Flags >

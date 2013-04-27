@@ -1,3 +1,4 @@
+ConjugateGradient.cpp
 GaussSeidel.cpp
 Polynomial.cpp
 Serialization.cpp

@@ -19,6 +19,10 @@ Core/Block/Streams.hpp
 Core/BlockSolvers.fwd.hpp
 Core/BlockSolvers.hpp
 Core/BlockSolvers.impl.hpp
+Core/BlockSolvers/BlockSolverBase.hpp
+Core/BlockSolvers/BlockSolverBase.impl.hpp
+Core/BlockSolvers/ConjugateGradient.hpp
+Core/BlockSolvers/ConjugateGradient.impl.hpp
 Core/BlockSolvers/GaussSeidel.hpp
 Core/BlockSolvers/GaussSeidel.impl.hpp
 Core/Eigen/BlockBindings.hpp

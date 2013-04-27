@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -23,6 +23,12 @@ const Derived& BlockObjectBase< Derived >::derived() const
 template < typename Derived >
 Derived& BlockObjectBase< Derived >::derived() {
 	return static_cast< Derived& >( *this ) ;
+}
+
+template < typename Derived >
+typename BlockMatrixBase< Derived >::ConstTransposeReturnType BlockMatrixBase< Derived >::transpose() const
+{
+	return derived().transpose() ;
 }
 
 }

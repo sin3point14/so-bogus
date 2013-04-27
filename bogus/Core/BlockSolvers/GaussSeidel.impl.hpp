@@ -10,6 +10,7 @@
 #define BOGUS_BLOCK_GAUSS_SEIDEL_IMPL_HPP
 
 #include "GaussSeidel.hpp"
+#include "BlockSolverBase.impl.hpp"
 #include "../Block/BlockMatrix.hpp"
 
 #include <iostream>
@@ -20,8 +21,7 @@ namespace bogus
 
 template < typename BlockMatrixType >
 GaussSeidel< BlockMatrixType >::GaussSeidel( const BlockMatrixBase< BlockMatrixType > & M )
-	: m_matrix( M ),
-	  m_maxIters( 250 ), m_tol( 1.e-6 ), m_deterministic( true ),
+	: Base( M, 250, 1.e-6 ), m_deterministic( true ),
 	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 )
 {
 	const unsigned d = GlobalProblemTraits::dimension ;

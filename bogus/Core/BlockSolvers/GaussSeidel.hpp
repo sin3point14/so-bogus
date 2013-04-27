@@ -9,37 +9,38 @@
 #ifndef BOGUS_BLOCK_GAUSS_SEIDEL_HPP
 #define BOGUS_BLOCK_GAUSS_SEIDEL_HPP
 
-#include "../Block.fwd.hpp"
-#include "../BlockSolvers.fwd.hpp"
+#include "BlockSolverBase.hpp"
+
+#include <vector>
 
 namespace bogus
 {
 
 template < typename BlockMatrixType >
-class GaussSeidel
+class GaussSeidel : public BlockSolverBase< BlockMatrixType >
 {
 public:
+	typedef BlockSolverBase< BlockMatrixType > Base ;
 
-	typedef typename BlockMatrixTraits< BlockMatrixType >::BlockType LocalMatrixType ;
-	typedef ProblemTraits< LocalMatrixType > GlobalProblemTraits ;
+	typedef typename Base::LocalMatrixType LocalMatrixType ;
+	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 
-	explicit GaussSeidel( const BlockMatrixBase< BlockMatrixType > & M ) ;
+	explicit GaussSeidel( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
 
 	template < typename NSLaw, typename RhsT, typename ResT >
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const ;
 
-	void setMaxIters( unsigned maxIters ) { m_maxIters = maxIters ; }
-	void setTol( double tol ) { m_tol = tol ; }
 	void setDeterministic( bool deterministic ) { m_deterministic = deterministic ; }
 
-private:
-	const BlockMatrixBase< BlockMatrixType > & m_matrix ;
+protected:
+	using Base::m_matrix ;
+	using Base::m_maxIters ;
+	using Base::m_tol ;
+
 	std::vector< LocalMatrixType > m_localMatrices ;
 	typename GlobalProblemTraits::DynVector m_scaling ;
 
-	unsigned m_maxIters ;
-	Scalar m_tol ;
 	bool m_deterministic ;
 
 	unsigned m_evalEvery ;
