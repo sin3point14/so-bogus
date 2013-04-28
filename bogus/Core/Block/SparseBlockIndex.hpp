@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -110,6 +110,14 @@ struct SparseBlockIndex
 
 	struct InnerIterator
 	{
+		typedef std::forward_iterator_tag iterator_category;
+		typedef Index                     value_type;
+		typedef ptrdiff_t                 difference_type;
+		typedef const Index*              pointer;
+		typedef const Index&              reference;
+
+		InnerIterator() {}
+
 		InnerIterator( const SparseBlockIndex& index, Index outer )
 			: m_it( index.outer[ outer ].begin() ), m_end( index.outer[ outer ].end() )
 		{
@@ -126,11 +134,27 @@ struct SparseBlockIndex
 			return *this ;
 		}
 
+		Index operator* () const
+		{
+			return inner() ;
+		}
+
+		InnerIterator end() const
+		{
+			return InnerIterator( m_end, m_end ) ;
+		}
+
 		Index inner() const { return m_it->first ; }
 		BlockPtr ptr() const { return m_it->second ; }
 
 		typename Inner::const_iterator asStdIterator() const { return m_it ; }
 	private:
+
+		InnerIterator( const typename Inner::const_iterator &it,
+		        const typename Inner::const_iterator &end )
+		    : m_it( it ), m_end( end )
+		{}
+
 		typename Inner::const_iterator m_it ;
 		typename Inner::const_iterator m_end ;
 	} ;
@@ -275,9 +299,17 @@ struct SparseBlockIndex< true, _Index, _BlockPtr >
 
 	struct InnerIterator
 	{
+		typedef std::forward_iterator_tag iterator_category;
+		typedef Index                     value_type;
+		typedef ptrdiff_t                 difference_type;
+		typedef const Index*              pointer;
+		typedef const Index&              reference;
+
+		InnerIterator( ) : m_inner( NULL ) { }
+
 		InnerIterator( const SparseBlockIndex& index, Index outer )
 			: m_it( index.outer[ outer ] ), m_end( index.outer[ outer + 1] ),
-			  m_base( index.base ), m_inner( index.inner )
+			  m_base( index.base ), m_inner( &index.inner[0] )
 		{
 		}
 
@@ -292,15 +324,31 @@ struct SparseBlockIndex< true, _Index, _BlockPtr >
 			return *this ;
 		}
 
+		Index operator* () const
+		{
+			return inner() ;
+		}
+
+		InnerIterator end() const
+		{
+			return InnerIterator( m_end, m_end, m_base, m_inner ) ;
+		}
+
 		Index inner() const { return m_inner[ m_it ] ; }
 		BlockPtr ptr() const { return m_it + m_base ; }
 
 		BlockPtr rawIndex() const { return m_it ; }
 	private:
+
+		InnerIterator( Index it, Index end,
+		               BlockPtr base, const Index* inner )
+		    : m_it( it ), m_end( end ), m_base( base ), m_inner( inner )
+		{}
+
 		Index m_it ;
 		Index m_end ;
 		BlockPtr m_base ;
-		const Inner& m_inner ;
+		const Index* m_inner ;
 	} ;
 
 	void setPtr( const InnerIterator& it, BlockPtr ptr )
@@ -349,5 +397,6 @@ SparseBlockIndex< Compressed, Index, BlockPtr > & SparseBlockIndex< Compressed, 
 }
 
 }
+
 
 #endif // SPARSEBLOCKINDEX_HPP

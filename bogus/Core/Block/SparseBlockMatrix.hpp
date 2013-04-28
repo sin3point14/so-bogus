@@ -36,6 +36,7 @@ public:
 
 	typedef typename Traits::BlockType BlockType ;
 	typedef typename Traits::BlockPtr BlockPtr ;
+	static const BlockPtr InvalidBlockPtr ;
 
 	typedef typename Base::ConstTransposeReturnType  ConstTransposeReturnType ;
 
@@ -140,10 +141,16 @@ public:
 		return m_blocks[ ptr ] ;
 	}
 
+	BlockPtr blockPtr( Index row, Index col ) const ;
+
 	// Warning: block has to exists
 	const BlockType& diagonal( const Index row ) const ;
-	// Warning: inefficient ; block has to exist
-	const BlockType& block( Index row, Index col ) const ;
+
+	// Warning: block has to exist
+	BlockType& block( Index row, Index col )
+	{ return block( blockPtr( row, col ) ) ; }
+	const BlockType& block( Index row, Index col ) const
+	{ return block( blockPtr( row, col ) ) ; }
 
 	const SparseIndexType& majorIndex() const
 	{

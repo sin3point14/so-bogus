@@ -29,6 +29,10 @@ TEST( SparseBlock, MatrixVector )
 	sbm.finalize();
 	//std::cout << sbm << std::endl ;
 
+	EXPECT_EQ( 2u, sbm.blockPtr( 3, 1 ) ) ;
+	EXPECT_EQ( sbm.InvalidBlockPtr, sbm.blockPtr( 0, 0 ) ) ;
+	EXPECT_EQ( sbm.InvalidBlockPtr, sbm.blockPtr( 1, 1 ) ) ;
+
 	Eigen::VectorXd rhs ( sbm.cols() ) ;
 	Eigen::VectorXd res ( sbm.rows() ) ;
 
@@ -72,6 +76,10 @@ TEST( SparseBlock, MatrixVector )
 	EXPECT_TRUE( copyofsbm.majorIndex().valid ) ;
 	EXPECT_TRUE( copyofsbm.transposeCached() ) ;
 	EXPECT_TRUE( copyofsbm.minorIndex().valid ) ;
+
+	EXPECT_EQ( 2u, copyofsbm.blockPtr( 3, 1 ) ) ;
+	EXPECT_EQ( copyofsbm.InvalidBlockPtr, copyofsbm.blockPtr( 0, 0 ) ) ;
+	EXPECT_EQ( copyofsbm.InvalidBlockPtr, copyofsbm.blockPtr( 1, 1 ) ) ;
 
 	rhs.setOnes() ;
 	EXPECT_EQ( expected_1, copyofsbm * rhs ) ;

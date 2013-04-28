@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -12,6 +12,8 @@
 #include "SparseBlockMatrix.hpp"
 #include "Expressions.hpp"
 #include "BlockTranspose.hpp"
+
+#include <algorithm>
 
 namespace bogus {
 
@@ -82,6 +84,8 @@ struct SparseBlockIndexGetter< Derived, true >
 } ;
 
 // Sparse Block Matrix
+template < typename Derived >
+const typename SparseBlockMatrixBase< Derived >::BlockPtr SparseBlockMatrixBase< Derived >::InvalidBlockPtr( -1 );
 
 template < typename Derived >
 typename SparseBlockMatrixBase< Derived >::RowIndexType &SparseBlockMatrixBase< Derived >::rowMajorIndex( )
@@ -257,30 +261,20 @@ template < typename Derived >
 const typename SparseBlockMatrixBase< Derived >::BlockType& SparseBlockMatrixBase< Derived >::diagonal( const Index row ) const
 {
 	if( Traits::is_symmetric ) return block( m_majorIndex.last( row ) );
-
-	for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( majorIndex(), row ) ;
-		 it ; ++ it )
-	{
-		if( it.inner() == row )
-			return m_blocks[ it.ptr() ] ;
-	}
-	assert( 0 && "No diagonal block" ) ;
-	return m_blocks[ (BlockPtr)-1 ] ;
+	return block( row, row ) ;
 }
 
 template < typename Derived >
-const typename SparseBlockMatrixBase< Derived >::BlockType& SparseBlockMatrixBase< Derived >::block( Index row, Index col ) const
+typename SparseBlockMatrixBase< Derived >::BlockPtr SparseBlockMatrixBase< Derived >::blockPtr( Index row, Index col ) const
 {
 	if( Traits::is_col_major ) std::swap( row, col ) ;
 
-	for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( majorIndex(), row ) ;
-		 it ; ++ it )
-	{
-		if( it.inner() == col )
-			return m_blocks[ it.ptr() ] ;
-	}
-	assert( 0 && "Bock does not exist" ) ;
-	return m_blocks[ (BlockPtr)-1 ] ;
+	const typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator
+	        innerIt( majorIndex(), row ) ;
+	const typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator
+	        found( std::lower_bound( innerIt, innerIt.end(), col ) ) ;
+
+	return found && found.inner() == col ? found.ptr() : InvalidBlockPtr ;
 }
 
 
