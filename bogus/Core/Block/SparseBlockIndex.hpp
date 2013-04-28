@@ -110,11 +110,13 @@ struct SparseBlockIndex
 
 	struct InnerIterator
 	{
-		typedef std::forward_iterator_tag iterator_category;
-		typedef Index                     value_type;
-		typedef ptrdiff_t                 difference_type;
-		typedef const Index*              pointer;
-		typedef const Index&              reference;
+		// Warning: This class does not implement the full RandomAccessIterator concept ;
+		// only the operations that are required by std::lower_bound are implemented
+		typedef std::random_access_iterator_tag iterator_category;
+		typedef Index                           value_type;
+		typedef std::ptrdiff_t                  difference_type;
+		typedef const Index*                    pointer;
+		typedef const Index&                    reference;
 
 		InnerIterator() {}
 
@@ -132,6 +134,17 @@ struct SparseBlockIndex
 		{
 			++ m_it ;
 			return *this ;
+		}
+
+		InnerIterator& operator+= ( const std::size_t n )
+		{
+			m_it += n ;
+			return *this ;
+		}
+
+		difference_type operator- ( const InnerIterator& other ) const
+		{
+			return m_it - other.m_it ;
 		}
 
 		Index operator* () const
@@ -299,11 +312,13 @@ struct SparseBlockIndex< true, _Index, _BlockPtr >
 
 	struct InnerIterator
 	{
-		typedef std::forward_iterator_tag iterator_category;
-		typedef Index                     value_type;
-		typedef ptrdiff_t                 difference_type;
-		typedef const Index*              pointer;
-		typedef const Index&              reference;
+		// Warning: This class does not implement the full RandomAccessIterator concept ;
+		// only the operations that are required by std::lower_bound are implemented
+		typedef std::random_access_iterator_tag iterator_category;
+		typedef Index                           value_type;
+		typedef ptrdiff_t                       difference_type;
+		typedef const Index*                    pointer;
+		typedef const Index&                    reference;
 
 		InnerIterator( ) : m_inner( NULL ) { }
 
@@ -322,6 +337,17 @@ struct SparseBlockIndex< true, _Index, _BlockPtr >
 		{
 			++ m_it ;
 			return *this ;
+		}
+
+		InnerIterator& operator+= ( const std::size_t n )
+		{
+			m_it = std::min( m_it + (Index) n, m_end ) ;
+			return *this ;
+		}
+
+		difference_type operator- ( const InnerIterator& other ) const
+		{
+			return ( (difference_type) m_it ) - ( difference_type ) other.m_it ;
 		}
 
 		Index operator* () const
