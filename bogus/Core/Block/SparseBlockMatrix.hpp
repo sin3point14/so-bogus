@@ -56,24 +56,32 @@ public:
 	template < typename LhsT, typename RhsT >
 	Derived& operator= ( const Product< LhsT, RhsT > &prod ) ;
 
-	void setRows( const std::vector< Index > &rowsPerBlocks ) ;
-	void setRows( Index n_blocks, Index rows_per_block )
+	void setRows( const Index nBlocks, const Index* rowsPerBlock ) ;
+	void setRows( const std::vector< Index > &rowsPerBlock )
 	{
-		setRows( std::vector< Index >( n_blocks, rows_per_block ) ) ;
+		setRows( rowsPerBlock.size(), &rowsPerBlock[0] ) ;
 	}
-	void setRows( Index n_blocks )
+	void setRows( const Index nBlocks, const Index rowsPerBlock )
 	{
-		setRows( n_blocks, BlockType::RowsAtCompileTime ) ;
+		setRows( std::vector< Index >( nBlocks, rowsPerBlock ) ) ;
+	}
+	void setRows( const Index nBlocks )
+	{
+		setRows( nBlocks, BlockType::RowsAtCompileTime ) ;
 	}
 
-	void setCols( const std::vector< Index > &colsPerBlocks ) ;
-	void setCols( Index n_blocks, Index cols_per_block )
+	void setCols( const Index nBlocks, const Index* colsPerBlock ) ;
+	void setCols( const std::vector< Index > &colsPerBlock )
 	{
-		setCols( std::vector< Index >( n_blocks, cols_per_block ) ) ;
+		setCols( colsPerBlock.size(), &colsPerBlock[0] ) ;
 	}
-	void setCols( Index n_blocks )
+	void setCols( const Index nBlocks, const Index colsPerBlock )
 	{
-		setCols( n_blocks, BlockType::ColsAtCompileTime ) ;
+		setCols( std::vector< Index >( nBlocks, colsPerBlock ) ) ;
+	}
+	void setCols( const Index nBlocks )
+	{
+		setCols( nBlocks, BlockType::ColsAtCompileTime ) ;
 	}
 
 	Index rowsOfBlocks() const { return rowOffsets().size() - 1 ; }
@@ -175,6 +183,9 @@ public:
 	template < typename RhsT, typename ResT >
 	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
 
+	template< typename OtherDerived >
+	void cloneDimensions( const BlockMatrixBase< OtherDerived > &source ) ;
+
 	template < typename BlockT2 >
 	void cloneStructure( const SparseBlockMatrix< BlockT2, Traits::flags > &source ) ;
 
@@ -252,7 +263,7 @@ protected:
 	void innerColMultiply( const IndexT &index, const GetterT &getter, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
 
 	template< typename IndexT >
-	void setInnerOffets( IndexT& index, const std::vector< Index > &blockSizes ) const ;
+	void setInnerOffets( IndexT& index, const Index nBlocks, const Index *blockSizes ) const ;
 
 	template < bool ColWise, typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock, typename LhsGetter, typename RhsGetter  >
 	void setFromProduct( const LhsIndex &lhsIdx, const RhsIndex &rhsIdx,

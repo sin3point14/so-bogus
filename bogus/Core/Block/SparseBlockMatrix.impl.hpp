@@ -112,41 +112,43 @@ template < typename Derived >
 SparseBlockMatrixBase< Derived >::SparseBlockMatrixBase()
 	: Base(), m_nBlocks(0)
 {
-	setRows( 0, 0 ) ;
-	setCols( 0, 0 ) ;
+	setRows( 0, (const Index*) 0 ) ;
+	setCols( 0, (const Index*) 0 ) ;
 	m_transposeIndex.resizeOuter(0) ;
 	m_transposeIndex.valid = false ;
 }
 
 template < typename Derived >
 void SparseBlockMatrixBase< Derived >::setRows(
-		const std::vector< Index > &rowsPerBlocks )
+        const Index nBlocks,
+        const Index* rowsPerBlock )
 {
-	setInnerOffets( colMajorIndex(), rowsPerBlocks );
+	setInnerOffets( colMajorIndex(), nBlocks, rowsPerBlock );
 	m_rows = colMajorIndex().innerOffsets.back() ;
-	rowMajorIndex().resizeOuter( rowsPerBlocks.size() ) ;
+	rowMajorIndex().resizeOuter( nBlocks ) ;
 
-	if( Traits::is_symmetric ) setCols( rowsPerBlocks ) ;
+	if( Traits::is_symmetric ) setCols( nBlocks, rowsPerBlock ) ;
 }
 
 template < typename Derived >
 void SparseBlockMatrixBase< Derived >::setCols(
-		const std::vector< Index > &colsPerBlocks )
+        const Index nBlocks,
+		const Index* colsPerBlock )
 {
-	setInnerOffets( rowMajorIndex(), colsPerBlocks );
+	setInnerOffets( rowMajorIndex(), nBlocks, colsPerBlock );
 	m_cols = rowMajorIndex().innerOffsets.back() ;
 
-	colMajorIndex().resizeOuter( colsPerBlocks.size() ) ;
+	colMajorIndex().resizeOuter( nBlocks ) ;
 }
 
 template < typename Derived >
 template < typename IndexT >
 void SparseBlockMatrixBase< Derived >::setInnerOffets(
-		IndexT &index, const std::vector<Index> &blockSizes) const
+		IndexT &index, const Index nBlocks, const Index *blockSizes) const
 {
-	index.innerOffsets.resize( blockSizes.size() + 1 ) ;
+	index.innerOffsets.resize( nBlocks + 1 ) ;
 	index.innerOffsets[0] = 0 ;
-	for ( unsigned i = 0 ; i < blockSizes.size() ; ++ i )
+	for ( unsigned i = 0 ; i < nBlocks ; ++ i )
 	{
 		index.innerOffsets[ i+1 ] = index.innerOffsets[ i ] + blockSizes[i] ;
 	}
@@ -277,6 +279,27 @@ typename SparseBlockMatrixBase< Derived >::BlockPtr SparseBlockMatrixBase< Deriv
 	return found && found.inner() == col ? found.ptr() : InvalidBlockPtr ;
 }
 
+template< typename Derived >
+template< typename OtherDerived >
+void SparseBlockMatrixBase<Derived>::cloneDimensions( const BlockMatrixBase< OtherDerived > &source )
+{
+	std::vector< Index > dims( source.rowsOfBlocks() ) ;
+
+	for( unsigned i = 0 ; i < dims.size() ; ++i )
+	{
+		dims[i] = source.blockRows( i ) ;
+	}
+
+	setRows( dims ) ;
+	dims.resize( source.colsOfBlocks() ) ;
+
+	for( unsigned i = 0 ; i < dims.size() ; ++i )
+	{
+		dims[i] = source.blockCols( i )  ;
+	}
+
+	setCols( dims ) ;
+}
 
 template < typename Derived >
 template < typename BlockT2 >

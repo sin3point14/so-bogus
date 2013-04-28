@@ -14,12 +14,10 @@ TEST( GaussSeidel, Small )
 	bogus::SparseBlockMatrix< Eigen::MatrixXd > MassMat ;
 	bogus::SparseBlockMatrix< Eigen::MatrixXd > InvMassMat ;
 
-	std::vector < unsigned > dofs ;
-	dofs.push_back( 4 ) ;
-	dofs.push_back( 2 ) ;
+	const unsigned dofs[2] = { 4, 2 } ;
 
-	MassMat.setRows( dofs ) ;
-	MassMat.setCols( dofs ) ;
+	MassMat.setRows( 2, dofs ) ;
+	MassMat.setCols( 2, dofs ) ;
 
 	MassMat.insertBackAndResize( 0, 0 ) << 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 ;
 	MassMat.insertBackAndResize( 1 ,1 ) << 2, 0, 0, 2 ;
@@ -36,7 +34,7 @@ TEST( GaussSeidel, Small )
 	typedef Eigen::Matrix< double, 3, Eigen::Dynamic > GradBlockT ;
 	bogus::SparseBlockMatrix< GradBlockT > H ;
 
-	H.setCols( dofs ) ;
+	H.setCols( 2, dofs ) ;
 	H.setRows( 2, 3 ) ;
 	H.insertBackAndResize( 0, 0 ) << 3, 5, 7, -1, 2, 4, 5, 4, 1, 6, 9, 1 ;
 	H.insertBackAndResize( 0, 1 ) << -3, -6, -6, -5, -5, -8 ;

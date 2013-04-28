@@ -100,18 +100,15 @@ void MecheFrictionProblem::fromPrimal (
 	delete m_data ;
 	m_data = new Data() ;
 
-	std::vector< unsigned > dofs( NObj ) ;
-	std::copy( ndof, ndof + NObj, dofs.begin() ) ;
-
 	// Build M^-1
 
 	m_data->M.reserve( NObj ) ;
-	m_data->M.setRows( dofs ) ;
-	m_data->M.setCols( dofs ) ;
+	m_data->M.setRows( NObj, ndof ) ;
+	m_data->M.setCols( NObj, ndof ) ;
 
 	for( unsigned i = 0 ; i < NObj ; ++i )
 	{
-		m_data->M.insertBackAndResize( i, i ) = Eigen::MatrixXd::Map( MassMat[i], dofs[i], dofs[i] ) ;
+		m_data->M.insertBack( i, i ) = Eigen::MatrixXd::Map( MassMat[i], ndof[i], ndof[i] ) ;
 	}
 	m_data->M.finalize() ;
 
@@ -132,7 +129,7 @@ void MecheFrictionProblem::fromPrimal (
 	// Build H
 	m_data->H.reserve( 2*n_in ) ;
 	m_data->H.setRows( n_in, 3 ) ;
-	m_data->H.setCols( dofs ) ;
+	m_data->H.setCols( NObj, ndof ) ;
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
@@ -142,17 +139,17 @@ void MecheFrictionProblem::fromPrimal (
 		if( ObjB[i] == -1 )
 		{
 			m_data->H.insertBack( i, ObjA[i] ) =  Et *
-					Eigen::MatrixXd::Map( HA[i], 3, dofs[ ObjA[i] ] ) ;
+					Eigen::MatrixXd::Map( HA[i], 3, ndof[ ObjA[i] ] ) ;
 		} else if( ObjB[i] == ObjA[i] )
 		{
 			m_data->H.insertBack( i, ObjA[i] ) =  Et *
-					( Eigen::MatrixXd::Map( HA[i], 3, dofs[ ObjA[i] ] ) -
-					Eigen::MatrixXd::Map( HB[i], 3, dofs[ ObjA[i] ] ) ) ;
+					( Eigen::MatrixXd::Map( HA[i], 3, ndof[ ObjA[i] ] ) -
+					Eigen::MatrixXd::Map( HB[i], 3, ndof[ ObjA[i] ] ) ) ;
 		} else {
 			m_data->H.insertBack( i, ObjA[i] ) =  Et *
-					Eigen::MatrixXd::Map( HA[i], 3, dofs[ ObjA[i] ] ) ;
+					Eigen::MatrixXd::Map( HA[i], 3, ndof[ ObjA[i] ] ) ;
 			m_data->H.insertBack( i, ObjB[i] ) =  - Et *
-					Eigen::MatrixXd::Map( HB[i], 3, dofs[ ObjB[i] ] ) ;
+					Eigen::MatrixXd::Map( HB[i], 3, ndof[ ObjB[i] ] ) ;
 		}
 	}
 	m_data->H.finalize() ;

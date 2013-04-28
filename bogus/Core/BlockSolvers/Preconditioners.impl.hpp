@@ -1,4 +1,4 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
  * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -70,16 +70,7 @@ public:
 protected:
 	DiagonalFactorizationPreconditioner( const BlockMatrixBase< BlockMatrixType > &matrix )
 	{
-		std::vector< unsigned > rows ;
-		std::vector< unsigned > cols ;
-
-		for( Index i = 0 ; i < matrix.rowsOfBlocks() ; ++i )
-		{
-			rows.push_back( matrix.blockRows( i ) ) ;
-			cols.push_back( matrix.blockCols( i ) ) ;
-		}
-		m_fact.setRows( rows ) ;
-		m_fact.setCols( rows ) ;
+		m_fact.cloneDimensions( matrix ) ;
 
 		for( Index i = 0 ; i < matrix.rowsOfBlocks() ; ++i )
 		{

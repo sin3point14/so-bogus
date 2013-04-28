@@ -25,6 +25,8 @@ Core/BlockSolvers/ConjugateGradient.hpp
 Core/BlockSolvers/ConjugateGradient.impl.hpp
 Core/BlockSolvers/GaussSeidel.hpp
 Core/BlockSolvers/GaussSeidel.impl.hpp
+Core/BlockSolvers/Preconditioners.hpp
+Core/BlockSolvers/Preconditioners.impl.hpp
 Core/Eigen/BlockBindings.hpp
 Core/Eigen/EigenLinearSolvers.hpp
 Core/Eigen/EigenMatrixTraits.hpp
