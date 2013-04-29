@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -75,7 +75,7 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 
 
 	setFromProduct< ColWise >( lhsIndexComputer.get(), rhsIndexComputer.get(),
-							   prod.lhs.blocks(), prod.rhs.blocks(),
+							   &prod.lhs.blocks()[0], &prod.rhs.blocks()[0],
 							   lhsGetter, rhsGetter ) ;
 
 }
@@ -276,8 +276,8 @@ template < bool ColWise, typename LhsIndex, typename RhsIndex, typename LhsBlock
 void SparseBlockMatrixBase<Derived>::setFromProduct(
 		const LhsIndex &lhsIdx,
 		const RhsIndex &rhsIdx,
-		const std::vector< LhsBlock > &lhsData,
-		const std::vector< RhsBlock > &rhsData,
+		const LhsBlock *lhsData,
+		const RhsBlock *rhsData,
 		const LhsGetter &lhsGetter, const RhsGetter &rhsGetter
 		)
 {

@@ -11,12 +11,6 @@
 
 #include "../Block.fwd.hpp"
 
-#include <vector>
-
-#if !( defined( _OPENMP ) || defined( BOGUS_DONT_PARALLELIZE ) )
-#define BOGUS_DONT_PARALLELIZE
-#endif
-
 namespace bogus
 {
 
@@ -80,13 +74,13 @@ public:
 	Index rowsOfBlocks() const { return derived().rowsOfBlocks() ; }
 	Index colsOfBlocks() const { return derived().colsOfBlocks() ; }
 
-	const std::vector< BlockType >& blocks() const { return  m_blocks ; }
+	const typename BlockContainerTraits< BlockType >::Type& blocks() const { return  m_blocks ; }
 
 protected:
 	Index m_rows ;
 	Index m_cols ;
 
-	std::vector< BlockType > m_blocks ;
+	typename BlockContainerTraits< BlockType >::Type m_blocks ;
 } ;
 
 

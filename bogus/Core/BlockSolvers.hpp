@@ -11,6 +11,7 @@
 
 #include "BlockSolvers.fwd.hpp"
 #ifndef BOGUS_WITHOUT_EIGEN
+#include "Eigen/EigenBlockContainers.hpp"
 #include "Eigen/EigenProblemTraits.hpp"
 #endif
 #include "BlockSolvers/GaussSeidel.hpp"

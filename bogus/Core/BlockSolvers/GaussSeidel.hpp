@@ -38,7 +38,7 @@ protected:
 	using Base::m_maxIters ;
 	using Base::m_tol ;
 
-	std::vector< LocalMatrixType > m_localMatrices ;
+	typename BlockContainerTraits< LocalMatrixType >::Type m_localMatrices ;
 	typename GlobalProblemTraits::DynVector m_scaling ;
 
 	bool m_deterministic ;

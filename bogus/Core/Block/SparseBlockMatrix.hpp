@@ -267,8 +267,8 @@ protected:
 
 	template < bool ColWise, typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock, typename LhsGetter, typename RhsGetter  >
 	void setFromProduct( const LhsIndex &lhsIdx, const RhsIndex &rhsIdx,
-						 const std::vector< LhsBlock > &lhsData,
-						 const std::vector< RhsBlock > &rhsData,
+						 const LhsBlock  *lhsData,
+						 const RhsBlock  *rhsData,
 						 const LhsGetter &lhsGetter,
 						 const RhsGetter &rhsGetter
 						  ) ;
