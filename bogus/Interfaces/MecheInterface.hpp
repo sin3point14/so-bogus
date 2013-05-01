@@ -5,6 +5,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include <iosfwd>
 
 #ifndef BOGUS_MECHE_INTERFACE_HPP
 #define BOGUS_MECHE_INTERFACE_HPP
@@ -46,8 +47,13 @@ public:
 	unsigned nDegreesOfFreedom() const ;
 	unsigned nContacts() const ;
 
+	void setOutStream( std::ostream *out ) { m_out = out ; }
+
 	bool dumpToFile( const char* fileName, const double *r0 = 0 ) const ;
 	bool fromFile( const char* fileName, double* &r0 ) ;
+
+	// Gauss-Seidel's Callback
+	void ackCurrentResidual( unsigned GSIter, double err ) ;
 
 protected:
 
@@ -63,6 +69,7 @@ private:
 	double *m_w ;
 	double *m_mu ;
 
+	std::ostream *m_out ;
 } ;
 
 }

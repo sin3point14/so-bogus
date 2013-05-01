@@ -8,6 +8,12 @@
 
 #include <gtest/gtest.h>
 
+void ackCurrentResidual( unsigned GSIter, double err )
+{
+	EXPECT_TRUE( 0 == ( GSIter % 25 ) ) ;
+	std::cout << "GS: " << GSIter << " ==> " << err << std::endl ;
+}
+
 TEST( GaussSeidel, Small )
 {
 
@@ -74,6 +80,7 @@ TEST( GaussSeidel, Small )
 	Eigen::VectorXd b = w - H * ( InvMassMat * f );
 
 	bogus::GaussSeidel< WType > gs( W ) ;
+	gs.callback().connect( &ackCurrentResidual );
 
 	double mu[2] = { 0.5, 0.7 } ;
 

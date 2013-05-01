@@ -11,6 +11,8 @@
 #include "../Block.fwd.hpp"
 #include "../BlockSolvers.fwd.hpp"
 
+#include "../Utils/Signal.hpp"
+
 namespace bogus
 {
 
@@ -22,11 +24,14 @@ public:
 	typedef typename BlockMatrixTraits< BlockMatrixType >::BlockType LocalMatrixType ;
 	typedef ProblemTraits< LocalMatrixType > GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
+	typedef Signal< unsigned, Scalar > CallBackType ;
 
 	virtual ~BlockSolverBase() { }
 
 	void setMaxIters( unsigned maxIters ) { m_maxIters = maxIters ; }
-	void setTol( double tol ) { m_tol = tol ; }
+	void setTol( Scalar tol ) { m_tol = tol ; }
+
+	CallBackType &callback() { return m_callback ; }
 
 protected:
 
@@ -37,6 +42,8 @@ protected:
 
 	unsigned m_maxIters ;
 	Scalar m_tol ;
+
+	CallBackType m_callback ;
 } ;
 
 } //namespace bogus

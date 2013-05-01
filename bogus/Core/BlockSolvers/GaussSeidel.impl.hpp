@@ -13,8 +13,6 @@
 #include "BlockSolverBase.impl.hpp"
 #include "../Block/BlockMatrix.hpp"
 
-#include <iostream>
-
 namespace bogus
 {
 
@@ -67,6 +65,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 		x_best = x ;
 	}
 
+	this->m_callback.trigger( 0, err_best ) ;
 //	std::cout << err_init << " /// " << err_zero << std::endl ;
 
 	std::vector< unsigned > skip( n, 0 ) ;
@@ -109,9 +108,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 			x_scaled = x.array() * m_scaling.array() ;
 			const double err = law.eval( x_scaled, y ) ;
 
-			std::cout << "Finished iteration " << GSIter
-					  << " with residual " << err
-					  << " (target: " << m_tol << " )" << std::endl ;
+			this->m_callback.trigger( GSIter, err ) ;
 
 			if( err < m_tol )
 			{

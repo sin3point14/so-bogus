@@ -60,9 +60,11 @@ struct MecheFrictionProblem::Data
 } ;
 
 MecheFrictionProblem::MecheFrictionProblem()
-	: m_data( 0 ), m_f( 0 ), m_w( 0 ), m_mu( 0 )
+	: m_data( 0 ), m_f( 0 ), m_w( 0 ), m_mu( 0 ),
+      m_out( &std::cout )
 {
 }
+
 
 MecheFrictionProblem::~MecheFrictionProblem()
 {
@@ -81,6 +83,15 @@ void MecheFrictionProblem::destroy()
 	m_data = 0 ;
 }
 
+void MecheFrictionProblem::ackCurrentResidual( unsigned GSIter, double err )
+{
+	if( m_out )
+	{
+		*m_out << "Finished iteration " << GSIter
+		       << " with residual " << err
+		       << std::endl ;
+	}
+}
 
 void MecheFrictionProblem::fromPrimal (
 		unsigned int NObj, //!< number of subsystems
@@ -216,6 +227,8 @@ double MecheFrictionProblem::solve(double *r,
 	if( tol != 0. ) gs.setTol( tol );
 	if( maxIters != 0 ) gs.setMaxIters( maxIters );
 	gs.setDeterministic( deterministic );
+
+	gs.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual );
 
 	double res = staticProblem
 			? gs.solve( bogus::SOC3D    ( n, m_data->mu ), m_data->b, r_loc )
