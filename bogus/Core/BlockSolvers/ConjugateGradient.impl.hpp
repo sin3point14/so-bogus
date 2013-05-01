@@ -51,8 +51,7 @@ ConjugateGradient< BlockMatrixType, PreconditionerType >::solve( const RhsT &b, 
 
 	Vector Mp( m_matrix.rows() ) ;
 
-	unsigned k ;
-	for( k = 0 ; k < m_maxIters ; ++k )
+	for( unsigned k = 0 ; k < m_maxIters ; ++k )
 	{
 		Mp.setZero() ;
 		m_matrix.template multiply< false >( p, Mp ) ;
@@ -61,6 +60,7 @@ ConjugateGradient< BlockMatrixType, PreconditionerType >::solve( const RhsT &b, 
 		r -= alpha * Mp ;
 
 		res = r.squaredNorm() * scale ;
+		this->m_callback.trigger( k, res ) ;
 		if( res < m_tol ) break ;
 
 		m_preconditioner.template apply< false >( r, z ) ;
@@ -111,8 +111,7 @@ ConjugateGradient< BlockMatrixType, PreconditionerType >::solve_BiCG( const RhsT
 
 	Vector Mp( m_matrix.rows() ) ;
 
-	unsigned k ;
-	for( k = 0 ; k < m_maxIters ; ++k )
+	for( unsigned k = 0 ; k < m_maxIters ; ++k )
 	{
 		Mp.setZero() ;
 		m_matrix.template multiply< false >( p, Mp ) ;
@@ -124,6 +123,7 @@ ConjugateGradient< BlockMatrixType, PreconditionerType >::solve_BiCG( const RhsT
 		r_ -= alpha * ( m_matrix.transpose() * p_ );
 
 		res = r.squaredNorm() * scale ;
+		this->m_callback.trigger( k, res ) ;
 		if( res < m_tol ) break ;
 
 		m_preconditioner.template apply< false >( r, z ) ;
@@ -155,12 +155,12 @@ ConjugateGradient< BlockMatrixType, PreconditionerType >::solve_BiCGSTAB( const 
 	Vector r = b - m_matrix*x ;
 	Scalar res = r.squaredNorm() * scale;
 
-/*	const Scalar res0 = b.squaredNorm() * scale ;
+	const Scalar res0 = b.squaredNorm() * scale ;
 	if( res > res0 ) {
 		x.setZero() ;
 		r = b;
 		res = res0 ;
-	}*/
+	}
 
 	if( res < m_tol ) return res ;
 
@@ -174,8 +174,7 @@ ConjugateGradient< BlockMatrixType, PreconditionerType >::solve_BiCGSTAB( const 
 	Vector s, t ( m_matrix.rows() ) ;
 	Vector u( r.rows() ), y( r.rows() ), z( t.rows() ) ;
 
-	unsigned k  ;
-	for( k = 0 ; k < m_maxIters ; ++k )
+	for( unsigned k = 0 ; k < m_maxIters ; ++k )
 	{
 		rho1 = r0h.dot( r ) ;
 		const Scalar beta = ( rho1 / rho0 ) * ( alpha / w ) ;
@@ -203,6 +202,7 @@ ConjugateGradient< BlockMatrixType, PreconditionerType >::solve_BiCGSTAB( const 
 		r = s - w*t ;
 
 		res = r.squaredNorm() * scale;
+		this->m_callback.trigger( k, res ) ;
 		if( res < m_tol ) break ;
 
 	}
