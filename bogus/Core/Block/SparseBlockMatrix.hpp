@@ -152,6 +152,7 @@ public:
 	BlockPtr blockPtr( Index row, Index col ) const ;
 
 	// Warning: block has to exists
+	BlockType& diagonal( const Index row ) ;
 	const BlockType& diagonal( const Index row ) const ;
 
 	// Warning: block has to exist

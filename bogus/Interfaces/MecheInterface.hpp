@@ -41,7 +41,8 @@ public:
 			bool deterministic = false,       //!< Whether the Gauss-Seidel should be eterministic
 			double tol = 0.,                  //!< Gauss-Seidel tolerance. 0. means GS's default
 			unsigned maxIters = 0,            //!< Max number of iterations. 0 means GS's default
-			bool staticProblem = false        //! If true, do not use DeSaxce change of variable
+			bool staticProblem = false,       //!< If true, do not use DeSaxce change of variable
+			double staticRegularization = 0.  //!< Coefficient to add on the diagonal of static problems
 			);
 
 	unsigned nDegreesOfFreedom() const ;

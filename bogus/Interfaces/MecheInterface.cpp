@@ -61,7 +61,7 @@ struct MecheFrictionProblem::Data
 
 MecheFrictionProblem::MecheFrictionProblem()
 	: m_data( 0 ), m_f( 0 ), m_w( 0 ), m_mu( 0 ),
-      m_out( &std::cout )
+	  m_out( &std::cout )
 {
 }
 
@@ -88,8 +88,8 @@ void MecheFrictionProblem::ackCurrentResidual( unsigned GSIter, double err )
 	if( m_out )
 	{
 		*m_out << "Finished iteration " << GSIter
-		       << " with residual " << err
-		       << std::endl ;
+			   << " with residual " << err
+			   << std::endl ;
 	}
 }
 
@@ -187,7 +187,9 @@ double MecheFrictionProblem::solve(double *r,
 		bool deterministic, //!< Whether the Gauss-Seidel should be eterministic
 		double tol,                  //!< Gauss-Seidel tolerance. 0. means GS's default
 		unsigned maxIters, //!< Max number of iterations. 0 means GS's default
-		bool staticProblem)
+		bool staticProblem,
+		double staticRegularization
+								   )
 {
 	assert( m_data ) ;
 	const unsigned m = m_data->H.cols() ;
@@ -211,6 +213,15 @@ double MecheFrictionProblem::solve(double *r,
 
 		//W
 		m_data->W = m_data->H * m_data->MInvHt ;
+
+		if( staticProblem )
+		{
+			for( unsigned i = 0 ; i < n ; ++ i )
+			{
+				m_data->W.diagonal( i ).diagonal() += Eigen::Vector3d::Constant( staticRegularization ) ;
+			}
+		}
+
 		m_data->W.cacheTranspose() ;
 
 		// M^-1 f, b
@@ -240,6 +251,8 @@ double MecheFrictionProblem::solve(double *r,
 	{
 		Eigen::VectorXd::Map( v, m ) = m_data->MInvHt * r_loc -  m_data->MInvf ;
 	}
+
+	*m_out << "Max coeff : " << r_loc.lpNorm< Eigen::Infinity >() << std::endl ;
 
 	// r to world coords
 	Eigen::VectorXd::Map( r, 3*n ) = m_data->E * r_loc ;
