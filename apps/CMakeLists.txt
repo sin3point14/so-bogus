@@ -1,14 +1,15 @@
-cmake_minimum_required(VERSION 2.8)
 
-execute_process( COMMAND ../updateCMakeSources.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
-file(STRINGS CMakeSources.txt SRC_LIST)
+include_directories( ../${CMAKE_PROJECT_NAME} )
 
-include_directories( ../bogus ${source_dir}/include)
+if( BOOST_SERIALIZATION )
+		add_executable (LoadFrictionProblem LoadFrictionProblem.cpp)
+		target_link_libraries (LoadFrictionProblem ${CMAKE_PROJECT_NAME} )
+endif()
 
-FOREACH( test_file ${SRC_LIST} )
-  STRING(REGEX REPLACE "([a-zA-Z0-9]+).cpp" "\\1" test_name ${test_file} )
+find_package(FCLib)
+if( FCLIB_FOUND )
+	include_directories( ${FCLib_INCLUDE_DIR} )
+	add_executable (FCLibLoader FCLibLoader.cpp)
+	target_link_libraries (FCLibLoader ${CMAKE_PROJECT_NAME} ${FCLib_LIBRARIES} )
+endif()
 
-  add_executable (${test_name} ${test_file})
-  target_link_libraries (${test_name} ${CMAKE_PROJECT_NAME} )
-
-ENDFOREACH()

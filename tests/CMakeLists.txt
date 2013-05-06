@@ -14,7 +14,7 @@ ExternalProject_Add(
         )
 
 ExternalProject_Get_Property(googletest source_dir)
-include_directories( ../bogus ${source_dir}/include)
+include_directories( ../${CMAKE_PROJECT_NAME} ${source_dir}/include)
 
 ExternalProject_Get_Property(googletest binary_dir)
 link_directories( ${binary_dir} )
