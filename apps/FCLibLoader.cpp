@@ -52,13 +52,10 @@ int main( int argc, const char* argv[] )
 		  {
 			  std::cout << " Compressed row storage " << problem->W->nzmax << std::endl ;
 
-			  Eigen::SparseMatrix< double, Eigen::RowMajor > ei_W ;
-			  ei_W.resize( problem->W->m, problem->W->n );
-			  ei_W.resizeNonZeros( problem->W->nzmax ) ;
-
-			  memcpy( ei_W.outerIndexPtr(), problem->W->p, (problem->W->m+1) * sizeof( int ) ) ;
-			  memcpy( ei_W.innerIndexPtr(), problem->W->i, problem->W->nzmax * sizeof( int ) ) ;
-			  memcpy( ei_W.valuePtr(), problem->W->x, problem->W->nzmax * sizeof( double ) ) ;
+              Eigen::MappedSparseMatrix< double, Eigen::RowMajor > ei_W
+                      ( problem->W->m, problem->W->n,
+                        problem->W->nzmax, problem->W->p, problem->W->i,
+                        problem->W->x ) ;
 
               bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC | bogus::flags::COMPRESSED > W ;
 			  bogus::convert( ei_W, W ) ;

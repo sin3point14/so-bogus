@@ -1,7 +1,10 @@
 #ifndef BOGUS_EIGEN_SPARSE_CONVERSIONS_HPP
 #define BOGUS_EIGEN_SPARSE_CONVERSIONS_HPP
 
+#include "SparseHeader.hpp"
+
 #include "../Block/SparseBlockMatrix.hpp"
+#include "../Block/BlockTranspose.hpp"
 
 #include <map>
 
@@ -11,7 +14,7 @@ namespace bogus
 
 template< typename EigenDerived, typename BogusDerived >
 void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
-			  SparseBlockMatrixBase< BogusDerived >& dest )
+              SparseBlockMatrixBase< BogusDerived >& dest )
 {
 	typedef BlockMatrixTraits< BogusDerived > Traits ;
     typedef typename Traits::Index Index ;
@@ -70,11 +73,22 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 
                 dest.block( nzBlocks[ blockId ] ) ( row, col ) = innerIt.value() ;
 			}
-		}
+        }
+
+        // IV - Symmetrify diagonal block if required
+        if( Traits::is_symmetric )
+        {
+            typename std::map< Index, BlockPtr >::const_iterator diagPtr = nzBlocks.find( outer ) ;
+            if( diagPtr != nzBlocks.end() )
+            {
+                const typename Traits::BlockType diagBlock = dest.block( diagPtr->second ) ;
+                dest.block( diagPtr->second ) = .5 * ( diagBlock + BlockGetter< Traits::is_symmetric >::get( diagBlock ) ) ;
+            }
+        }
 
 	}
 
-	dest.finalize() ;
+    dest.finalize() ;
 
 }
 

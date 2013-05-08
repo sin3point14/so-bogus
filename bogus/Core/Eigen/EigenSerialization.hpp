@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -9,8 +9,9 @@
 #define BOGUS_EIGEN_SERIALIZATION_HPP
 
 #include <Eigen/Core>
-#if EIGEN_VERSION_AT_LEAST(3,1,0)
-#include <Eigen/SparseCore>
+
+#ifndef BOGUS_BLOCK_WITHOUT_EIGEN_SPARSE
+#include "SparseHeader.hpp"
 #endif
 
 namespace boost
@@ -135,7 +136,7 @@ inline void serialize(
 	split_free( ar, matrix, file_version ) ;
 }
 
-#if EIGEN_VERSION_AT_LEAST(3,1,0)
+#ifndef BOGUS_BLOCK_WITHOUT_EIGEN_SPARSE
 
 template<typename Archive, typename _Scalar, int _Options, typename _Index >
 inline void load(

@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -14,7 +14,12 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/utility.hpp>
 
+#ifndef BOGUS_WITHOUT_EIGEN
 #include "Eigen/EigenSerialization.hpp"
+#endif
 #include "Block/Serialization.hpp"
 #endif
 
+#ifndef BOGUS_BLOCK_WITHOUT_EIGEN_SPARSE
+#include "Eigen/SparseConversions.hpp"
+#endif
