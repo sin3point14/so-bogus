@@ -6,6 +6,9 @@ extern "C"
 
 #include <Eigen/Sparse>
 
+#include <Core/Block.impl.hpp>
+#include <Core/Block.io.hpp>
+
 #include <iostream>
 #include <cstdlib>
 
@@ -47,17 +50,20 @@ int main( int argc, const char* argv[] )
 
 		  if( problem->W->nz == -2 )
 		  {
-			  std::cout << " Compressed row storage " << problem->W->nz << std::endl ;
+			  std::cout << " Compressed row storage " << problem->W->nzmax << std::endl ;
 
 			  Eigen::SparseMatrix< double, Eigen::RowMajor > ei_W ;
 			  ei_W.resize( problem->W->m, problem->W->n );
 			  ei_W.resizeNonZeros( problem->W->nzmax ) ;
 
-			  memcpy( ei_W.outerIndexPtr(), problem->W->p, problem->W->m+1 * sizeof( int ) ) ;
+			  memcpy( ei_W.outerIndexPtr(), problem->W->p, (problem->W->m+1) * sizeof( int ) ) ;
 			  memcpy( ei_W.innerIndexPtr(), problem->W->i, problem->W->nzmax * sizeof( int ) ) ;
 			  memcpy( ei_W.valuePtr(), problem->W->x, problem->W->nzmax * sizeof( double ) ) ;
 
+			  bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC | bogus::flags::COMPRESSED > W ;
+			  bogus::convert( ei_W, W ) ;
 
+			  std::cout<< W << std::endl ;
 
 		  }
 	  }
