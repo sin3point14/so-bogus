@@ -51,5 +51,7 @@ Core/Utils/NumTraits.hpp
 Core/Utils/Polynomial.hpp
 Core/Utils/Polynomial.impl.hpp
 Core/Utils/Signal.hpp
+Interfaces/FrictionProblem.cpp
+Interfaces/FrictionProblem.hpp
 Interfaces/MecheInterface.cpp
 Interfaces/MecheInterface.hpp

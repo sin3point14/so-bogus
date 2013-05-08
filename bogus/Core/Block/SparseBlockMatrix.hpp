@@ -19,6 +19,8 @@ namespace bogus
 template < typename BlockT, int Flags > class SparseBlockMatrix  ;
 template < bool Symmetric > struct SparseBlockMatrixFinalizer ;
 template < typename Derived, bool Major > struct SparseBlockIndexGetter ;
+template < bool Symmetric, bool NativeOrder, bool Transpose > struct SparseBlockMatrixVectorMultiplier ;
+template < bool Symmetric > struct OutOfOrderSparseBlockMatrixVectorMultiplier ;
 
 template < typename Derived >
 class SparseBlockMatrixBase : public BlockMatrixBase< Derived >

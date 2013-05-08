@@ -36,7 +36,7 @@ public:
 protected:
 
 	BlockSolverBase( const BlockMatrixBase< BlockMatrixType > & matrix,
-	                 unsigned maxIters, Scalar tol ) ;
+					 unsigned maxIters, Scalar tol ) ;
 
 	const BlockMatrixBase< BlockMatrixType > & m_matrix ;
 
