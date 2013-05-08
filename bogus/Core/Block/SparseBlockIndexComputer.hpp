@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -14,6 +14,58 @@
 namespace bogus
 {
 
+// Index getter
+
+template < typename Derived, bool Major >
+struct SparseBlockIndexGetter
+{
+	typedef SparseBlockMatrixBase< Derived > MatrixType ;
+	typedef typename MatrixType::UncompressedIndexType ReturnType ;
+
+	static ReturnType& get( MatrixType& matrix )
+	{
+		return matrix.m_minorIndex ;
+	}
+
+	static const ReturnType& get( const MatrixType& matrix )
+	{
+		return matrix.minorIndex() ;
+	}
+
+	static const ReturnType&
+	getOrCompute( const MatrixType& matrix,
+				  typename MatrixType::UncompressedIndexType& tempIndex
+				  )
+	{
+		return matrix.getOrComputeMinorIndex( tempIndex ) ;
+	}
+} ;
+
+template < typename Derived >
+struct SparseBlockIndexGetter< Derived, true >
+{
+	typedef SparseBlockMatrixBase< Derived > MatrixType ;
+	typedef typename MatrixType::SparseIndexType ReturnType ;
+
+	static ReturnType& get( MatrixType& matrix )
+	{
+		return matrix.m_majorIndex ;
+	}
+	static const ReturnType& get( const MatrixType& matrix )
+	{
+		return matrix.majorIndex() ;
+	}
+
+	static const ReturnType&
+	getOrCompute( const MatrixType& matrix,
+				  typename MatrixType::UncompressedIndexType& )
+	{
+		return matrix.majorIndex() ;
+	}
+} ;
+
+
+// Index computer
 
 template < typename MatrixType, bool Symmetric, bool ColWise, bool Transpose >
 struct SparseBlockIndexComputer

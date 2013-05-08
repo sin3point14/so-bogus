@@ -5,6 +5,7 @@
 
 #include "../Block/SparseBlockMatrix.hpp"
 #include "../Block/BlockTranspose.hpp"
+#include "../Block/SparseBlockIndexComputer.hpp"
 
 #include <map>
 
@@ -25,7 +26,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 	assert( RowsPerBlock != (Index) -1 ) ;
 	assert( ColsPerBlock != (Index) -1 ) ;
 
-	assert( ( (bool) Eigen::SparseMatrixBase< EigenDerived >::IsRowMajor ) ^
+    assert( ( (bool) Eigen::SparseMatrixBase< EigenDerived >::IsRowMajor ) ^
 			( (bool) Traits::is_col_major ) ) ;
 
 	assert( 0 == ( source.rows() % RowsPerBlock ) ) ;
@@ -36,7 +37,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 	dest.setCols( source.cols() / ColsPerBlock, ColsPerBlock ) ;
 
 	const Index blockSize = Traits::is_col_major ? ColsPerBlock : RowsPerBlock ;
-	for( Index outer = 0 ; outer < dest.majorIndex().outerSize() ; ++outer )
+    for( Index outer = 0 ; outer < dest.majorIndex().outerSize() ; ++outer )
 	{
 		// I - compute non-zero blocks
         std::map < Index, BlockPtr > nzBlocks ;
@@ -67,11 +68,11 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 			{
 				const Index blockId = (Index) ( innerIt.index() ) / blockSize  ;
                 if( Traits::is_symmetric && blockId > outer ) break ;
-				const Index bin = innerIt.index() - blockId * blockSize  ;
-				const Index row = Traits::is_col_major ? bin : i ;
-				const Index col = Traits::is_col_major ? i : bin ;
+                const Index binn = innerIt.index() - blockId * blockSize  ;
+                const Index brow = Traits::is_col_major ? binn : i ;
+                const Index bcol = Traits::is_col_major ? i : binn ;
 
-                dest.block( nzBlocks[ blockId ] ) ( row, col ) = innerIt.value() ;
+                dest.block( nzBlocks[ blockId ] ) ( brow, bcol ) = innerIt.value() ;
 			}
         }
 
@@ -89,6 +90,56 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 	}
 
     dest.finalize() ;
+
+}
+
+template< typename BogusDerived, typename EigenScalar, int EigenOptions, typename EigenIndex >
+void convert( const SparseBlockMatrixBase< BogusDerived >& source,
+              Eigen::SparseMatrix< EigenScalar, EigenOptions, EigenIndex >& dest )
+{
+    typedef BlockMatrixTraits< BogusDerived > Traits ;
+    typedef typename Traits::Index Index ;
+    typedef typename Traits::BlockPtr BlockPtr ;
+
+    typedef Eigen::SparseMatrix< EigenScalar, EigenOptions, EigenIndex > EigenMatrixType ;
+
+    typedef SparseBlockIndexGetter< BogusDerived, Traits::is_symmetric  ||
+            ( (bool) EigenMatrixType::IsRowMajor ) != ( (bool) Traits::is_col_major ) > IndexGetter ;
+
+    dest.setZero() ;
+    dest.resize( source.rows(), source.cols() ) ;
+
+    typename BogusDerived::UncompressedIndexType auxIndex ;
+    const typename IndexGetter::ReturnType& index = IndexGetter::getOrCompute( source, auxIndex )  ;
+
+    const std::vector< Index > &outerOffsets =
+            ( (bool) EigenMatrixType::IsRowMajor ) == ( (bool) Traits::is_col_major )
+            ? source.majorIndex().innerOffsets : source.minorIndex().innerOffsets ;
+
+    for( Index outerBlock = 0 ; outerBlock < index.outerSize() ; ++outerBlock )
+    {
+        for( Index outer = outerOffsets[ outerBlock ] ; outer < outerOffsets[ outerBlock+1 ] ; ++outer )
+        {
+            dest.startVec( outer ) ;
+            for( typename IndexGetter::ReturnType::InnerIterator it( index, outerBlock ) ;
+                 it ; ++it )
+            {
+                for( Index inner = index.innerOffsets[ it.inner() ] ; inner <  index.innerOffsets[ it.inner()+1 ] ; ++inner )
+                {
+                    if( Traits::is_symmetric && inner > outer ) break ;
+
+                    const Index bout = outer - outerOffsets[ outerBlock ] ;
+                    const Index binn = inner - index.innerOffsets[ it.inner() ] ;
+                    const Index brow = Traits::is_col_major ? binn : bout ;
+                    const Index bcol = Traits::is_col_major ? bout : binn ;
+                    const EigenScalar val = source.block( it.ptr() )( brow, bcol ) ;
+
+                    dest.insertBackByOuterInner( outer, inner ) = val;
+                }
+            }
+        }
+
+    }
 
 }
 

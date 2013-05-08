@@ -60,7 +60,13 @@ int main( int argc, const char* argv[] )
               bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC | bogus::flags::COMPRESSED > W ;
 			  bogus::convert( ei_W, W ) ;
 
-			  std::cout<< W << std::endl ;
+              // Just for fun
+              Eigen::SparseMatrix< double > ei_W_back ;
+              bogus::convert( W, ei_W_back ) ;
+
+              std::cout << ei_W_back << std::endl ;
+              std::cout << W << std::endl ;
+
 
 		  }
 	  }

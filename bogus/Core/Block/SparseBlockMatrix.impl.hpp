@@ -12,6 +12,7 @@
 #include "SparseBlockMatrix.hpp"
 #include "Expressions.hpp"
 #include "BlockTranspose.hpp"
+#include "SparseBlockIndexComputer.hpp"
 
 #include <algorithm>
 
@@ -31,56 +32,6 @@ struct SparseBlockMatrixFinalizer<  true >
 	template < typename Derived >
 	static void finalize( SparseBlockMatrixBase< Derived >& matrix )
 	{ matrix.computeMinorIndex() ; }
-} ;
-
-// Index getter
-
-template < typename Derived, bool Major >
-struct SparseBlockIndexGetter
-{
-	typedef SparseBlockMatrixBase< Derived > MatrixType ;
-	typedef typename MatrixType::UncompressedIndexType ReturnType ;
-
-	static ReturnType& get( MatrixType& matrix )
-	{
-		return matrix.m_minorIndex ;
-	}
-
-	static const ReturnType& get( const MatrixType& matrix )
-	{
-		return matrix.minorIndex() ;
-	}
-
-	static const ReturnType&
-	getOrCompute( const MatrixType& matrix,
-				  typename MatrixType::UncompressedIndexType& tempIndex
-				  )
-	{
-		return matrix.getOrComputeMinorIndex( tempIndex) ;
-	}
-} ;
-
-template < typename Derived >
-struct SparseBlockIndexGetter< Derived, true >
-{
-	typedef SparseBlockMatrixBase< Derived > MatrixType ;
-	typedef typename MatrixType::SparseIndexType ReturnType ;
-
-	static ReturnType& get( MatrixType& matrix )
-	{
-		return matrix.m_majorIndex ;
-	}
-	static const ReturnType& get( const MatrixType& matrix )
-	{
-		return matrix.majorIndex() ;
-	}
-
-	static const ReturnType&
-	getOrCompute( const MatrixType& matrix,
-				  typename MatrixType::UncompressedIndexType& )
-	{
-		return matrix.majorIndex() ;
-	}
 } ;
 
 // Sparse Block Matrix
