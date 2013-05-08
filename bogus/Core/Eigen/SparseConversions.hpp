@@ -4,7 +4,6 @@
 #include "../Block/SparseBlockMatrix.hpp"
 
 #include <map>
-#include <iostream>
 
 // Conversions to Sparse Matrix
 namespace bogus
@@ -15,8 +14,9 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 			  SparseBlockMatrixBase< BogusDerived >& dest )
 {
 	typedef BlockMatrixTraits< BogusDerived > Traits ;
-	typedef typename Traits::Index Index ;
-	const Index RowsPerBlock = Traits::BlockType::RowsAtCompileTime ;
+    typedef typename Traits::Index Index ;
+    typedef typename Traits::BlockPtr BlockPtr ;
+    const Index RowsPerBlock = Traits::BlockType::RowsAtCompileTime ;
 	const Index ColsPerBlock = Traits::BlockType::ColsAtCompileTime ;
 
 	assert( RowsPerBlock != (Index) -1 ) ;
@@ -36,51 +36,40 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 	for( Index outer = 0 ; outer < dest.majorIndex().outerSize() ; ++outer )
 	{
 		// I - compute non-zero blocks
-		std::map < Index, Index > nzBlocks ;
+        std::map < Index, BlockPtr > nzBlocks ;
 
 		for( unsigned i = 0 ; i < blockSize ; ++i )
 		{
-			for( typename EigenDerived::InnerIterator innerIt( source, outer*blockSize + i ) ;
+            for( typename EigenDerived::InnerIterator innerIt( source.derived(), outer*blockSize + i ) ;
 				 innerIt ; ++innerIt )
 			{
 				const Index blockId = (Index) ( innerIt.index() ) / blockSize  ;
-				//if( Traits::is_symmetric && blockId > outer ) break ;
+                if( Traits::is_symmetric && blockId > outer ) break ;
 				nzBlocks[ blockId ] = 0 ;
 			}
 		}
 
-		typename BlockContainerTraits< typename Traits::BlockType >::Type values ;
-		values.resize( nzBlocks.size() ) ;
-
-		Index blockId = 0 ;
-		for( typename std::map< Index, Index >::iterator bIt = nzBlocks.begin() ; bIt != nzBlocks.end() ; ++bIt )
+        // II - Insert them in block mat
+        for( typename std::map< Index, BlockPtr >::iterator bIt = nzBlocks.begin() ; bIt != nzBlocks.end() ; ++bIt )
 		{
-			values[ blockId ].setZero() ;
-			bIt->second = blockId ++ ;
-		}
+            bIt->second = (BlockPtr) dest.nBlocks() ;
+            dest.insertBackOuterInner( outer, bIt->first ).setZero() ;
+        }
 
-		// II - copy values
+        // III - copy values
 		for( unsigned i = 0 ; i < blockSize ; ++i )
 		{
-			for( typename EigenDerived::InnerIterator innerIt( source, outer*blockSize + i ) ;
+            for( typename EigenDerived::InnerIterator innerIt( source.derived(), outer*blockSize + i ) ;
 				 innerIt ; ++innerIt )
 			{
 				const Index blockId = (Index) ( innerIt.index() ) / blockSize  ;
-				//if( Traits::is_symmetric && blockId > outer ) break ;
+                if( Traits::is_symmetric && blockId > outer ) break ;
 				const Index bin = innerIt.index() - blockId * blockSize  ;
 				const Index row = Traits::is_col_major ? bin : i ;
 				const Index col = Traits::is_col_major ? i : bin ;
 
-				std::cout << blockId << " " << outer << " " << i << " " << innerIt.value() << std::endl ;
-				values[ nzBlocks[ blockId ] ] ( row, col ) = innerIt.value() ;
+                dest.block( nzBlocks[ blockId ] ) ( row, col ) = innerIt.value() ;
 			}
-		}
-
-
-		// III - Insert them in block mat
-		for( typename std::map< Index, Index >::const_iterator bIt = nzBlocks.begin() ; bIt != nzBlocks.end() ; ++bIt )
-		{
-			dest.insertBackOuterInner( outer, bIt->first ) = values[ bIt->second ] ;
 		}
 
 	}
