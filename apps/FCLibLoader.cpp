@@ -8,9 +8,16 @@ extern "C"
 
 #include <Core/Block.impl.hpp>
 #include <Core/Block.io.hpp>
+#include <Core/BlockSolvers.impl.hpp>
+#include <Interfaces/FrictionProblem.hpp>
 
 #include <iostream>
 #include <cstdlib>
+
+void ackCurrentResidual( unsigned GSIter, double err )
+{
+	std::cout << "GS: " << GSIter << " ==> " << err << std::endl ;
+}
 
 int main( int argc, const char* argv[] )
 {
@@ -43,29 +50,94 @@ int main( int argc, const char* argv[] )
 	  const unsigned d = problem->spacedim  ;
 	  const unsigned n = problem->W->m / d  ;
 
-	  if( problem->W && !problem->V )
+	  if( problem->W && !problem->V && !problem->R )
 	  {
 		  std::cout << " Pure " << d << "D Coulomb friction problem with "
 		  			<< n << " contacts " << std::endl ;
 
 		  if( problem->W->nz == -2 )
 		  {
-			  std::cout << " Compressed row storage " << problem->W->nzmax << std::endl ;
+			  std::cout << " Compressed row storage " << problem->W->m << " / " << problem->W->n << " / " << problem->W->nzmax << std::endl ;
 
+			  /*
               Eigen::MappedSparseMatrix< double, Eigen::RowMajor > ei_W
                       ( problem->W->m, problem->W->n,
                         problem->W->nzmax, problem->W->p, problem->W->i,
                         problem->W->x ) ;
+			  */
+			  Eigen::SparseMatrix< double, Eigen::RowMajor > ei_W ;
+			  ei_W.resize( problem->W->m, problem->W->n );
+			  ei_W.resizeNonZeros( problem->W->nzmax ) ;
 
-              bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC | bogus::flags::COMPRESSED > W ;
-			  bogus::convert( ei_W, W ) ;
+			  memcpy( ei_W.outerIndexPtr(), problem->W->p, ( problem->W->m+1 ) * sizeof( int ) ) ;
+			  memcpy( ei_W.innerIndexPtr(), problem->W->i, problem->W->nzmax * sizeof( int ) ) ;
+			  memcpy( ei_W.valuePtr(), problem->W->x, problem->W->nzmax * sizeof( double ) ) ;
+
+			  if( 0 == problem->W->p[ problem->W->m ] )
+			  {
+				  std::cout << " /!\\ Malformed spase matrix ; entering repair mode " << std::endl ;
+				  assert( problem->W->nzmax == problem->W->n * problem->W->m ) ;
+
+				  ei_W.outerIndexPtr()[ 0 ] = 0 ;
+				  for( int row = 0 ; row < problem->W->m ; ++row )
+				  {
+					  const int start = ei_W.outerIndexPtr()[ row ] ;
+					  ei_W.outerIndexPtr()[ row+1 ] = start + problem->W->n ;
+					  for( int col = 0 ; col < problem->W->n ; ++col )
+					  {
+						  ei_W.innerIndexPtr()[ start + col ] = col ;
+					  }
+				  }
+//				  std::cout << ei_W << std::endl ;
+			  }
+
+
+			  double res = -1. ;
+			  Eigen::VectorXd r, u ;
+			  r.setZero( problem->W->n ) ;
+
+			  if( problem->spacedim == 3 )
+			  {
+				  bogus::DualFrictionProblem<3u> dual ;
+				  bogus::convert( ei_W, dual.W ) ;
+
+				  dual.b = Eigen::VectorXd::Map( problem->q, problem->W->n ) ;
+				  dual.mu = problem->mu ;
+
+				  bogus::DualFrictionProblem<3u>::GaussSeidelType gs ;
+//				  gs.callback().connect( &ackCurrentResidual );
+				  res = dual.solveWith( gs, r.data() ) ;
+
+				  u = dual.W * r + dual.b ;
+			  } else {
+				  bogus::DualFrictionProblem<2u> dual ;
+				  bogus::convert( ei_W, dual.W ) ;
+
+				  dual.b = Eigen::VectorXd::Map( problem->q, problem->W->n ) ;
+				  dual.mu = problem->mu ;
+
+				  bogus::DualFrictionProblem<2u>::GaussSeidelType gs ;
+//				  gs.callback().connect( &ackCurrentResidual );
+				  res = dual.solveWith( gs, r.data() ) ;
+
+				  u = dual.W * r + dual.b ;
+			  }
+
+			  std::cout << " => Res: " << res << std::endl ;
+			  //			  std::cout << r.transpose() << std::endl ;
+
+			  fclib_solution sol ;
+			  sol.v = NULL ;
+			  sol.u = u.data();
+			  sol.r = r.data() ;
+			  sol.v = NULL ;
+
+//			  std::cout << fclib_merit_local( problem, MERIT_2, &sol ) << std::endl ;
 
               // Just for fun
-              Eigen::SparseMatrix< double > ei_W_back ;
-              bogus::convert( W, ei_W_back ) ;
-
-              std::cout << ei_W_back << std::endl ;
-              std::cout << W << std::endl ;
+              // Eigen::SparseMatrix< double > ei_W_back ;
+              // bogus::convert( dual.W, ei_W_back ) ;
+              // std::cout << ei_W_back << std::endl ;
 
 
 		  }

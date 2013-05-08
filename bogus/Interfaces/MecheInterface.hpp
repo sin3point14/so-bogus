@@ -13,8 +13,8 @@
 namespace bogus
 {
 
-struct PrimalFrictionProblem ;
-struct DualFrictionProblem ;
+template< unsigned Dimension > struct PrimalFrictionProblem ;
+template< unsigned Dimension > struct DualFrictionProblem ;
 
 class MecheFrictionProblem
 {
@@ -63,8 +63,8 @@ protected:
 
 	void destroy() ;
 
-	PrimalFrictionProblem* m_primal ;
-	DualFrictionProblem  * m_dual ;
+	PrimalFrictionProblem<3u> * m_primal ;
+	DualFrictionProblem<3u>  * m_dual ;
 
 private:
 	// Used to store data when loading problem from file

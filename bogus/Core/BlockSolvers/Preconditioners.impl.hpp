@@ -21,7 +21,7 @@ public:
 	typedef ProblemTraits< LocalMatrixType > GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::DynVector Vector ;
 
-	explicit DiagonalPreconditioner( const BlockMatrixBase< BlockMatrixType > &matrix )
+	void setMatrix( const BlockMatrixBase< BlockMatrixType > &matrix )
 	{
 		typedef BlockMatrixTraits< BlockMatrixType > Traits ;
 		typedef typename Traits::BlockType BlockType ;
@@ -67,8 +67,7 @@ public:
 		m_fact.template multiply< transpose >( rhs, res )  ;
 	}
 
-protected:
-	DiagonalFactorizationPreconditioner( const BlockMatrixBase< BlockMatrixType > &matrix )
+	void setMatrix ( const BlockMatrixBase< BlockMatrixType > &matrix )
 	{
 		m_fact.cloneDimensions( matrix ) ;
 
@@ -89,15 +88,6 @@ class DiagonalLUPreconditioner< BlockMatrixBase< BlockMatrixType > >
 		: public DiagonalFactorizationPreconditioner< BlockMatrixType ,
 		typename MatrixTraits< typename BlockMatrixTraits< BlockMatrixType >::BlockType >::LUType >
 {
-public:
-	typedef DiagonalFactorizationPreconditioner< BlockMatrixType,
-		typename MatrixTraits< typename BlockMatrixTraits< BlockMatrixType >::BlockType >::LUType >
-	Base ;
-
-	explicit DiagonalLUPreconditioner( const BlockMatrixBase< BlockMatrixType > &matrix )
-		: Base( matrix )
-	{}
-
 } ;
 
 template < typename BlockMatrixType >
@@ -105,15 +95,6 @@ class DiagonalLDLTPreconditioner< BlockMatrixBase< BlockMatrixType > >
 		: public DiagonalFactorizationPreconditioner< BlockMatrixType ,
 		typename MatrixTraits< typename BlockMatrixTraits< BlockMatrixType >::BlockType >::LDLTType >
 {
-public:
-	typedef DiagonalFactorizationPreconditioner< BlockMatrixType,
-		typename MatrixTraits< typename BlockMatrixTraits< BlockMatrixType >::BlockType >::LDLTType >
-	Base ;
-
-	explicit DiagonalLDLTPreconditioner( const BlockMatrixBase< BlockMatrixType > &matrix )
-		: Base( matrix )
-	{}
-
 } ;
 
 } //naemspace bogus

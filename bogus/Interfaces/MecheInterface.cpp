@@ -79,7 +79,7 @@ void MecheFrictionProblem::fromPrimal (
 {
 	destroy() ;
 
-	m_primal = new PrimalFrictionProblem() ;
+	m_primal = new PrimalFrictionProblem<3u>() ;
 
 	// Build M^-1
 
@@ -168,7 +168,7 @@ double MecheFrictionProblem::solve(double *r,
 	// If dual has not been computed yet
 	if( !m_dual )
 	{
-		m_dual = new DualFrictionProblem() ;
+		m_dual = new DualFrictionProblem<3u>() ;
 		m_dual->computeFrom( *m_primal );
 
 		if( staticProblem )
@@ -184,14 +184,14 @@ double MecheFrictionProblem::solve(double *r,
 	// r to local coords
 	Eigen::VectorXd r_loc = m_primal->E.transpose() * Eigen::VectorXd::Map( r, 3*n ) ; ;
 
-	bogus::GaussSeidel< DualFrictionProblem::WType > gs( m_dual->W ) ;
+	bogus::DualFrictionProblem<3u>::GaussSeidelType gs ;
 	if( tol != 0. ) gs.setTol( tol );
 	if( maxIters != 0 ) gs.setMaxIters( maxIters );
 	gs.setDeterministic( deterministic );
 
 	gs.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual );
 
-	const double res = m_dual->solveWith( gs, staticProblem, r_loc.data() ) ;
+	const double res = m_dual->solveWith( gs, r_loc.data(), staticProblem ) ;
 
 	// compute v
 	if( v )
@@ -235,7 +235,7 @@ bool MecheFrictionProblem::fromFile( const char* fileName, double *& r0 )
 	if( !ifs.is_open() ) return false ;
 
 	destroy() ;
-	m_primal = new PrimalFrictionProblem() ;
+	m_primal = new PrimalFrictionProblem<3u>() ;
 
 	boost::archive::binary_iarchive ia(ifs);
 	ia >> m_primal->M >> m_primal->H >> m_primal->E ;

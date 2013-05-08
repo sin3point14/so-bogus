@@ -11,15 +11,16 @@
 namespace bogus
 {
 
+template< unsigned Dimension >
 struct PrimalFrictionProblem
 {
     // Primal Data
     //! M^-1
     SparseBlockMatrix< Eigen::MatrixXd, flags::COMPRESSED  > M ;
     //! E
-    bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::COMPRESSED > E ;
+    bogus::SparseBlockMatrix< Eigen::Matrix< double, Dimension, Dimension >, bogus::flags::COMPRESSED > E ;
     //! H
-    typedef Eigen::Matrix< double, 3, Eigen::Dynamic > HBlock ;
+    typedef Eigen::Matrix< double, Dimension, Eigen::Dynamic > HBlock ;
     SparseBlockMatrix< HBlock > H;
 
     const double *f ;
@@ -32,26 +33,29 @@ struct PrimalFrictionProblem
     SparseBlockMatrix< LU< Eigen::MatrixBase< Eigen::MatrixXd > >, flags::COMPRESSED > MInv ;
 
     //! M^-1 * H'
-    typedef Eigen::Matrix< double, Eigen::Dynamic, 3 > HtBlock ;
+    typedef Eigen::Matrix< double, Eigen::Dynamic, Dimension > HtBlock ;
     SparseBlockMatrix< HtBlock, bogus::flags::COL_MAJOR > MInvHt ;
 
     Eigen::VectorXd MInvf ;
 } ;
 
 
+template< unsigned Dimension >
 struct DualFrictionProblem
 {
-    //! W
-    typedef bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC | bogus::flags::COMPRESSED > WType ;
+    typedef SparseBlockMatrix< Eigen::Matrix< double, Dimension, Dimension >,
+							   flags::SYMMETRIC | flags::COMPRESSED > WType ;
+   	typedef GaussSeidel< WType > GaussSeidelType ;
+
+	//! W
     WType W ;
 
     Eigen::VectorXd b ;
-
     const double *mu ;
 
-    void computeFrom( PrimalFrictionProblem& primal ) ;
+    void computeFrom( PrimalFrictionProblem< Dimension >& primal ) ;
 
-    double solveWith(const GaussSeidel< WType > &gs, const bool staticProblem, double * r ) const ;
+    double solveWith( GaussSeidelType &gs, double * r, const bool staticProblem = false ) const ;
 
 } ;
 

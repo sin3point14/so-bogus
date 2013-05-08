@@ -6,7 +6,8 @@
 
 namespace bogus {
 
-void DualFrictionProblem::computeFrom( PrimalFrictionProblem& primal )
+template< unsigned Dimension >
+void DualFrictionProblem< Dimension >::computeFrom(PrimalFrictionProblem<Dimension> &primal )
 {
 
     // M^-1
@@ -29,24 +30,30 @@ void DualFrictionProblem::computeFrom( PrimalFrictionProblem& primal )
 
     // M^-1 f, b
     primal.MInvf = primal.MInv * Eigen::VectorXd::Map( primal.f, primal.H.cols() ) ;
-    b = ( primal.E.transpose() * Eigen::VectorXd::Map( primal.w, 3*primal.H.rowsOfBlocks()) )
+    b = ( primal.E.transpose() * Eigen::VectorXd::Map( primal.w, Dimension*primal.H.rowsOfBlocks()) )
             - primal.H * ( primal.MInvf );
 
     mu = primal.mu ;
 }
 
 
-double DualFrictionProblem::solveWith(const GaussSeidel<WType> &gs, const bool staticProblem,
-                                      double *r ) const
+template< unsigned Dimension >
+double DualFrictionProblem< Dimension >::solveWith( GaussSeidel<WType> &gs, double *r,
+                                       const bool staticProblem ) const
 {
+	gs.setMatrix( W );
     Eigen::Map< Eigen::VectorXd > r_map ( r, W.rows() ) ;
 
     double res = staticProblem
-            ? gs.solve( bogus::SOC3D    ( W.rowsOfBlocks(), mu ), b, r_map )
-            : gs.solve( bogus::Coulomb3D( W.rowsOfBlocks(), mu ), b, r_map ) ;
+            ? gs.solve( bogus::SOCLaw< Dimension, double, false > ( W.rowsOfBlocks(), mu ), b, r_map )
+            : gs.solve( bogus::SOCLaw< Dimension, double, true  > ( W.rowsOfBlocks(), mu ), b, r_map ) ;
 
     return res ;
 }
 
+template struct DualFrictionProblem< 2u > ;
+template struct DualFrictionProblem< 3u > ;
+template struct PrimalFrictionProblem< 2u > ;
+template struct PrimalFrictionProblem< 3u > ;
 
 } //namespace bogus

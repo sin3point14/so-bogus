@@ -26,7 +26,10 @@ public:
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 
+	GaussSeidel( ) ;
 	explicit GaussSeidel( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
+
+	void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
 
 	template < typename NSLaw, typename RhsT, typename ResT >
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const ;

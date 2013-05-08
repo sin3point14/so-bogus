@@ -16,12 +16,26 @@
 namespace bogus
 {
 
+template < typename BlockMatrixType >
+GaussSeidel< BlockMatrixType >::GaussSeidel( )
+	: Base( NULL, 250, 1.e-6 ), m_deterministic( true ),
+	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 )
+{
+}
 
 template < typename BlockMatrixType >
 GaussSeidel< BlockMatrixType >::GaussSeidel( const BlockMatrixBase< BlockMatrixType > & M )
-	: Base( M, 250, 1.e-6 ), m_deterministic( true ),
+	: Base( &M, 250, 1.e-6 ), m_deterministic( true ),
 	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 )
 {
+	setMatrix( M ) ;
+}
+
+template < typename BlockMatrixType >
+void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatrixType > & M )
+{
+	m_matrix = &M ;
+
 	const unsigned d = GlobalProblemTraits::dimension ;
 	const unsigned n = M.rowsOfBlocks() ;
 	m_localMatrices.resize( n ) ;
@@ -41,6 +55,8 @@ template < typename NSLaw, typename RhsT, typename ResT >
 typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
 							const RhsT &b, ResT &x ) const
 {
+	assert( m_matrix ) ;
+
 	typedef LocalProblemTraits< GlobalProblemTraits::dimension, typename GlobalProblemTraits::Scalar > LocalProblemTraits ;
 
 	const unsigned d = GlobalProblemTraits::dimension ;
@@ -48,7 +64,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	assert( n*d == b.rows() ) ;
 	assert( n*d == x.rows() ) ;
 
-	typename GlobalProblemTraits::DynVector y ( b + m_matrix*x ) ;
+	typename GlobalProblemTraits::DynVector y ( b + (*m_matrix)*x ) ;
 	typename GlobalProblemTraits::DynVector x_best( GlobalProblemTraits::DynVector::Zero( x.rows() ) ) ;
 	typename GlobalProblemTraits::DynVector x_scaled( x.array() * m_scaling.array() ) ;
 
@@ -85,7 +101,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 				continue ;
 			}
 			lb = GlobalProblemTraits::segment( i, b ) ;
-			m_matrix.splitRowMultiply( i, x, lb ) ;
+			m_matrix->splitRowMultiply( i, x, lb ) ;
 			lx = GlobalProblemTraits::segment( i, x ) ;
 			ldx = -lx ;
 
@@ -104,7 +120,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 
 		if( 0 == ( GSIter % m_evalEvery ) )
 		{
-			y = b + m_matrix * x ;
+			y = b + (*m_matrix) * x ;
 			x_scaled = x.array() * m_scaling.array() ;
 			const double err = law.eval( x_scaled, y ) ;
 

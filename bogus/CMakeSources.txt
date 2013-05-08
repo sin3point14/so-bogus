@@ -35,6 +35,8 @@ Core/Eigen/EigenMatrixTraits.hpp
 Core/Eigen/EigenProblemTraits.hpp
 Core/Eigen/EigenSerialization.hpp
 Core/Eigen/EigenSparseLinearSolvers.hpp
+Core/Eigen/SparseConversions.hpp
+Core/Eigen/SparseHeader.hpp
 Core/SOC/FischerBurmeister.hpp
 Core/SOC/FischerBurmeister.impl.hpp
 Core/SOC/LocalSOCSolver.hpp

@@ -27,7 +27,10 @@ public:
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 
+	ConjugateGradient( ) ;
 	explicit ConjugateGradient( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
+
+	void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
 
 	template < typename RhsT, typename ResT >
 	Scalar solve( const RhsT &b, ResT &x ) const ;

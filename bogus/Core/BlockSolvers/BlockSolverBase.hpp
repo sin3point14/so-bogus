@@ -35,10 +35,10 @@ public:
 
 protected:
 
-	BlockSolverBase( const BlockMatrixBase< BlockMatrixType > & matrix,
+	BlockSolverBase( const BlockMatrixBase< BlockMatrixType > * matrix,
 					 unsigned maxIters, Scalar tol ) ;
 
-	const BlockMatrixBase< BlockMatrixType > & m_matrix ;
+	const BlockMatrixBase< BlockMatrixType > * m_matrix ;
 
 	unsigned m_maxIters ;
 	Scalar m_tol ;
