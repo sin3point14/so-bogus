@@ -9,33 +9,34 @@
 int main( int argc, const char* argv[] )
 {
 
-  if( argc < 2 )
-  {
-    std::cerr << " Please provide a problem data file " << std::endl ;
-    return 1 ;
-  }
+	if( argc < 2 )
+	{
+		std::cerr << " Please provide a problem data file " << std::endl ;
+		return 1 ;
+	}
 
-  bogus::MecheFrictionProblem mfp ;
+	bogus::MecheFrictionProblem mfp ;
 
-  double * r = NULL ;
-  if( mfp.fromFile( argv[1], r ) )
-  {
+	double * r = NULL ;
+	if( mfp.fromFile( argv[1], r ) )
+	{
 
-    const int deterministic = argc > 2 ? std::atoi( argv[2] ) : 0 ;
-    const double tol        = argc > 3 ? std::strtod( argv[3], NULL ) : 0 ;
-    const int maxIters      = argc > 4 ? std::atoi( argv[4] ) : 0 ;
-    const int staticPb      = argc > 5 ? std::atoi( argv[5] ) : 0 ;
+		const int deterministic = argc > 2 ? std::atoi( argv[2] ) : 0 ;
+		const double tol        = argc > 3 ? std::strtod( argv[3], NULL ) : 0 ;
+		const int maxIters      = argc > 4 ? std::atoi( argv[4] ) : 0 ;
+		const int staticPb      = argc > 5 ? std::atoi( argv[5] ) : 0 ;
+		const double regul      = argc > 6 ? std::strtod( argv[6], NULL ) : 0 ;
 
-    mfp.solve( r, NULL, deterministic, tol, maxIters, staticPb ) ;
+		mfp.solve( r, NULL, deterministic, tol, maxIters, staticPb, regul ) ;
 
-    delete[] r ;
-  
-    return 0 ;
-  } 
-    
-  std::cerr << " Could not load " << argv[1] << std::endl ;
+		delete[] r ;
 
-  return 1 ;
+		return 0 ;
+	}
+
+	std::cerr << " Could not load " << argv[1] << std::endl ;
+
+	return 1 ;
 
 }
 
