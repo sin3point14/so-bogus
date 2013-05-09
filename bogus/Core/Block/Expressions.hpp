@@ -83,11 +83,6 @@ struct SelfTransposeTraits {} ;
 template< typename Derived >
 struct BlockVectorProductTraits {} ;
 
-template< > struct SelfTransposeTraits< double   > { typedef double   ReturnType ; } ;
-template< > struct SelfTransposeTraits< float    > { typedef float    ReturnType ; } ;
-template< > struct SelfTransposeTraits< int      > { typedef int      ReturnType ; } ;
-template< > struct SelfTransposeTraits< unsigned > { typedef unsigned ReturnType ; } ;
-
 }
 
 

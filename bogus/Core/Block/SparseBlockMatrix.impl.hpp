@@ -125,6 +125,35 @@ void SparseBlockMatrixBase< Derived >::clear()
 }
 
 template < typename Derived >
+template < typename PrecisionT >
+void SparseBlockMatrixBase< Derived >::prune( const PrecisionT &precision )
+{
+	SparseIndexType oldIndex = m_majorIndex ;
+	
+	typename BlockContainerTraits< BlockType >::Type old_blocks ;
+	old_blocks.swap( m_blocks ) ;
+	
+	reserve( m_nBlocks ) ;
+	clear() ;
+	
+	for( Index outer = 0 ; outer < oldIndex.outerSize() ; ++outer )
+	{
+		for( typename SparseIndexType::InnerIterator it( oldIndex, outer ) ; it ; ++it )
+		{
+			if( ! is_zero( old_blocks[ it.ptr() ], precision ) ) 
+			{
+				m_majorIndex.insertBack( outer, it.inner(), m_nBlocks++ ) ;
+				m_blocks.push_back( old_blocks[ it.ptr() ] ) ;
+			}
+		}
+	}
+	
+	m_minorIndex.valid = 0 == m_nBlocks ;
+	finalize() ;
+	
+}
+
+template < typename Derived >
 bool SparseBlockMatrixBase< Derived >::computeMinorIndex()
 {
 	if ( m_minorIndex.valid ) return true ;

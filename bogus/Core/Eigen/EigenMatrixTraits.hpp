@@ -12,10 +12,7 @@
 #include "../Utils/LinearSolverBase.hpp"
 
 #include <Eigen/Core>
-
-#if EIGEN_VERSION_AT_LEAST(3,1,0)
-#include <Eigen/Sparse>
-#endif
+#include "SparseHeader.hpp"
 
 namespace bogus
 {
@@ -32,7 +29,6 @@ struct MatrixTraits
 
 } ;
 
-#if EIGEN_VERSION_AT_LEAST(3,1,0)
 template < typename _Scalar, int _Options, typename _Index >
 struct MatrixTraits< Eigen::SparseMatrix< _Scalar, _Options, _Index > >
 {
@@ -44,7 +40,6 @@ struct MatrixTraits< Eigen::SparseMatrix< _Scalar, _Options, _Index > >
 	typedef LDLT< Eigen::SparseMatrixBase< Eigen::SparseMatrix< Scalar, _Options, _Index > > > LDLTType ;
 
 } ;
-#endif
 
 }
 

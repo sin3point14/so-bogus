@@ -11,6 +11,8 @@
 
 #include "Block.hpp"
 
+#include "Block/ScalarBindings.hpp"
+
 #ifndef BOGUS_WITHOUT_EIGEN
 #include "Eigen/BlockBindings.hpp"
 #endif

@@ -28,13 +28,20 @@
 namespace bogus
 {
 
-// Transpose
+// transpose_block, is_zero
 
 template< typename EigenDerived >
 typename EigenDerived::ConstTransposeReturnType
 transpose_block ( const Eigen::MatrixBase< EigenDerived >& block )
 {
 	return block.transpose() ;
+}
+
+template< typename EigenDerived >
+bool is_zero ( const Eigen::MatrixBase< EigenDerived >& block,
+               typename EigenDerived::Scalar precision )
+{
+	return block.isZero( precision ) ;
 }
 
 #ifndef BOGUS_BLOCK_WITHOUT_EIGEN_SPARSE
@@ -49,6 +56,14 @@ transpose_block( const Eigen::SparseMatrixBase< EigenDerived >& block )
 {
 	return block.transpose() ;
 }
+
+template< typename EigenDerived >
+bool is_zero ( const Eigen::SparseMatrixBase< EigenDerived >& block,
+               typename EigenDerived::Scalar precision )
+{
+	return block.isZero( precision ) ;
+}
+
 #endif
 
 // Matrix vector product
@@ -66,7 +81,7 @@ typename BlockVectorProductTraits< Eigen::MatrixBase< Derived > >::ResVec getBlo
 	return typename BlockVectorProductTraits< Eigen::MatrixBase< Derived > >::ResVec() ;
 }
 
-}
+} //namespace bogus
 
 template < typename Derived, typename EigenDerived >
 typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec operator* ( const bogus::BlockMatrixBase< Derived >& lhs,

@@ -102,10 +102,6 @@ public:
 
 	BlockType& insertBackOuterInner( Index outer, Index inner )
 	{
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp atomic
-#endif
-		++m_nBlocks ;
 
 		BlockPtr ptr ;
 		allocateBlock( ptr ) ;
@@ -131,6 +127,9 @@ public:
 
 	void finalize() ;
 	void clear() ;
+
+	template< typename PrecisionT >	
+	void prune( const PrecisionT& precision ) ;
 
 	bool computeMinorIndex() ;
 
@@ -215,6 +214,7 @@ protected:
 #pragma omp critical
 #endif
 		{
+			++m_nBlocks ;
 			ptr = m_blocks.size() ;
 			m_blocks.push_back( BlockType() ) ;
 		}
