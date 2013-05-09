@@ -90,7 +90,7 @@ TEST( GaussSeidel, Small )
 	Eigen::VectorXd x( W.rows() ) ;
 
 	x.setOnes() ;
-	double res = gs.solve( bogus::Coulomb3D( 2, mu ), b, x ) ;
+	double res = gs.solve( bogus::SOCLaw< 3u, double, true, bogus::local_soc_solver::Hybrid >( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 

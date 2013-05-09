@@ -29,7 +29,11 @@ template< unsigned Dimension, typename Scalar >
 struct LocalProblemTraits ;
 
 template < unsigned Dimension, typename Scalar, bool DeSaxceCOV,
-		   local_soc_solver::Strategy Strat = local_soc_solver::Hybrid  >
+#ifndef BOGUS_WITHOUT_EIGEN
+		   local_soc_solver::Strategy Strat = local_soc_solver::RevHybrid  >
+#else
+		   local_soc_solver::Strategy Strat = local_soc_solver::PureNewton  >
+#endif
 class SOCLaw ;
 
 }

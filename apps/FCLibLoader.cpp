@@ -16,7 +16,29 @@ extern "C"
 
 void ackCurrentResidual( unsigned GSIter, double err )
 {
-	std::cout << "GS: " << GSIter << " ==> " << err << std::endl ;
+	std::cout << " .. GS: " << GSIter << " ==> " << err << std::endl ;
+}
+
+template< unsigned Dimension, typename EigenDerived >
+static double solve( const fclib_local* problem, const Eigen::SparseMatrixBase< EigenDerived >& ei_W,
+                     Eigen::VectorXd &r, Eigen::VectorXd &u )
+{
+	bogus::DualFrictionProblem< Dimension > dual ;
+	bogus::convert( ei_W, dual.W ) ;
+	dual.W.cacheTranspose();
+
+	dual.b = Eigen::VectorXd::Map( problem->q, problem->W->n ) ;
+	dual.mu = problem->mu ;
+
+	typename bogus::DualFrictionProblem< Dimension >::GaussSeidelType gs ;
+	gs.setMaxIters( 1000 ) ;
+	gs.setTol( 1.e-12 ) ;
+	gs.callback().connect( &ackCurrentResidual );
+	double res = dual.solveWith( gs, r.data() ) ;
+
+	u = dual.W * r + dual.b ;
+	
+	return res ;
 }
 
 int main( int argc, const char* argv[] )
@@ -98,31 +120,11 @@ int main( int argc, const char* argv[] )
 
 			  if( problem->spacedim == 3 )
 			  {
-				  bogus::DualFrictionProblem<3u> dual ;
-				  bogus::convert( ei_W, dual.W ) ;
-
-				  dual.b = Eigen::VectorXd::Map( problem->q, problem->W->n ) ;
-				  dual.mu = problem->mu ;
-
-				  bogus::DualFrictionProblem<3u>::GaussSeidelType gs ;
-//				  gs.callback().connect( &ackCurrentResidual );
-				  res = dual.solveWith( gs, r.data() ) ;
-
-				  u = dual.W * r + dual.b ;
+				  res = solve< 3u >( problem, ei_W, r, u ) ;
 			  } else {
-				  bogus::DualFrictionProblem<2u> dual ;
-				  bogus::convert( ei_W, dual.W ) ;
-
-				  dual.b = Eigen::VectorXd::Map( problem->q, problem->W->n ) ;
-				  dual.mu = problem->mu ;
-
-				  bogus::DualFrictionProblem<2u>::GaussSeidelType gs ;
-//				  gs.callback().connect( &ackCurrentResidual );
-				  res = dual.solveWith( gs, r.data() ) ;
-
-				  u = dual.W * r + dual.b ;
+				  res = solve< 2u >( problem, ei_W, r, u ) ;
 			  }
-
+			  
 			  std::cout << " => Res: " << res << std::endl ;
 			  //			  std::cout << r.transpose() << std::endl ;
 

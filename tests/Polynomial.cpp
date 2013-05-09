@@ -51,7 +51,7 @@ TEST( Polynomial, SOQPQuartic )
 
 	u = W*r + b ;
 
-	 ASSERT_TRUE( res < 1.e-24 ) ;
+	 ASSERT_GT( 1.e-24, res ) ;
 	 ASSERT_TRUE( r[0] > 0 ) ;
 	 ASSERT_TRUE( u[0] > 0 ) ;
 	 ASSERT_FLOAT_EQ( u[0], u.segment<2>(1) .norm() * mu ) ;

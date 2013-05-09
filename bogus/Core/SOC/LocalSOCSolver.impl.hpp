@@ -25,111 +25,35 @@
 
 namespace bogus {
 
-
-template< unsigned Dimension, typename Scalar, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
-Scalar LocalSOCSolver< Dimension, Scalar, DeSaxceCOV, Strat >::solve(
-		  const typename Traits::Matrix &A,
-		  const typename Traits::Vector &b,
-		  typename Traits::Vector &x,
-		  const Scalar mu, const Scalar tol, const Scalar scaling
-		  )
+// No analytic solution in the general case
+template < unsigned Dimension, typename Scalar, bool DeSaxceCOV >
+struct AnalyticLocalSOCSolver
 {
-	typedef FischerBurmeister< Dimension, Scalar, DeSaxceCOV > FBFunc ;
-	FBFunc fb( mu, A, b, scaling ) ;
-	NonSmoothNewton< FBFunc > nsNewton( fb, tol )  ;
-
-	return nsNewton.solve( x ) ;
-}
-
-// Specialization for 3D Coulomb friction -- hybrid solver
-template< typename Scalar, local_soc_solver::Strategy Strat  >
-struct LocalSOCSolver< 3, Scalar, true, Strat >
-{
-  enum { Dimension = 3 } ;
-
   typedef LocalProblemTraits< Dimension, Scalar > Traits ;
   typedef typename Traits::Vector Vector ;
   typedef typename Traits::Matrix Matrix ;
 
-  static Scalar solve(
-		  const typename Traits::Matrix &A,
-		  const typename Traits::Vector &b,
-		  typename Traits::Vector &x,
-		  const Scalar mu, const Scalar tol, const Scalar scaling
-		  )
+  static bool solveOrthogonality(
+      const typename Traits::Matrix &,
+      const typename Traits::Vector &,
+      typename Traits::Vector &,
+      const Scalar
+      ) 
   {
-	  // see [Daviet et al 2011], Appendix B.2
-
-	  // Newton solver
-	  typedef FischerBurmeister< Dimension, Scalar, true > FBFunc ;
-	  FBFunc fb( mu, A, b, scaling ) ;
-	  NonSmoothNewton< FBFunc > nsNewton( fb, tol )  ;
-
-	  if( Strat == local_soc_solver::PureNewton )
-	  {
-		  return nsNewton.solve( x ) ;
-	  }
-
-	  if( Traits::np(b) >= 0. )
-	  {
-		  // Take-off case
-		  x.setZero() ;
-		  return 0. ;
-	  }
-	  if( NumTraits< Scalar >::isZero( mu ) )
-	  {
-		  //Frictionless case
-		  if( A(0,0) < NumTraits< Scalar >::epsilon() )
-		  {
-			  // Degenerate problem
-			  x.setZero() ;
-			  return b[0]*b[0] ;
-		  } else {
-			  Traits::tp( x ).setZero() ;
-			  Traits::np( x ) = - Traits::np( b ) / A(0,0);
-			  return 0. ;
-		  }
-	  }
-
-	  double res = 0. ;
-
-	  if( Strat == local_soc_solver::Hybrid )
-	  {
-		  res = nsNewton.solve( x ) ;
-		  if( res < tol ) return res ;
-	  }
-
-	  // Continuing enumerative fallback
-
-	  Vector x0 = x ;
-	  x = DenseLU< Scalar, Dimension >( A ).solve( -b ) ;
-	  if( mu * Traits::np( x ) >= Traits::tp( x ).norm() )
-	  {
-		  // Sticking case
-		  return 0. ;
-	  }
-
-	 // Sliding case
-	 if( !solveSliding( A, b, x, mu ) )
-		 x = x0 ;
-
-	 // Refinement of final solution
-	 if( Strat == local_soc_solver::RevHybrid ) {
-		 res = nsNewton.solve( x ) ;
-	 } else if( Strat == local_soc_solver::Hybrid  ) {
-		 const double refinedRes = nsNewton.solve( x ) ;
-		 if( refinedRes <= res )
-			 return refinedRes ;
-
-		 //This can happen if the quartic solver returned a very bad value, like an
-		 // unreastically huge alpha
-		 x = x0 ;
-	 }
-
-	 return res ;
+    return false ;
   }
+} ;
 
-  static bool solveSliding(
+// Specialization for Coulomb 3D Friction
+template< typename Scalar >
+struct AnalyticLocalSOCSolver< 3u, Scalar, true >
+{
+  enum { Dimension = 3 } ;
+  typedef LocalProblemTraits< Dimension, Scalar > Traits ;
+  typedef typename Traits::Vector Vector ;
+  typedef typename Traits::Matrix Matrix ;
+
+static bool solveOrthogonality(
 		  const typename Traits::Matrix &W,
 		  const typename Traits::Vector &b,
 		  typename Traits::Vector &r,
@@ -193,7 +117,221 @@ struct LocalSOCSolver< 3, Scalar, true, Strat >
 
 } ;
 
-// Specialization for 3D SOC complementarity -- hybrid solver
+
+// Specialization for Coulomb 2D Friction
+template< typename Scalar >
+struct AnalyticLocalSOCSolver< 2u, Scalar, true >
+{
+  enum { Dimension = 2 } ;
+  typedef LocalProblemTraits< Dimension, Scalar > Traits ;
+  typedef typename Traits::Vector Vector ;
+  typedef typename Traits::Matrix Matrix ;
+
+static bool solveOrthogonality(
+		  const typename Traits::Matrix &W,
+		  const typename Traits::Vector &b,
+		  typename Traits::Vector &r,
+		  const Scalar mu
+		  )
+  {
+    bool found = false ;
+
+    // Case rT = mu * rN
+    const Scalar w_p = W(0,0) + mu * W(0,1) ;
+    if( w_p > NumTraits< Scalar >::epsilon( ) )
+    {
+      r[ 0 ] = -b[0] / w_p ; 
+      r[ 1 ] = mu * r[0] ;
+      const Scalar minus_alpha = W(1,0)/mu + W(1,1) + b(1)/(mu*r[0]) ; 
+      found = 0 > minus_alpha ;
+    }
+
+    if( !found )
+    {
+      // Case rT = mu * rN
+      const Scalar w_m = W(0,0) - mu * W(0,1) ;
+      if( w_m > NumTraits< Scalar >::epsilon( ) )
+      {
+        r[ 0 ] = -b[0] / w_m ; 
+        r[ 1 ] = -mu * r[0] ;
+        const Scalar alpha = W(1,0)/mu - W(1,1) + b(1)/(mu*r[0]) ; 
+        found = 0 < alpha ;
+      }
+    }
+
+    return found ;
+  }
+} ;
+
+// Specialization for 3D SOC complementarity
+template< typename Scalar >
+struct AnalyticLocalSOCSolver< 3u, Scalar, false > 
+{
+  enum { Dimension = 3 } ;
+  typedef LocalProblemTraits< Dimension, Scalar > Traits ;
+  typedef typename Traits::Vector Vector ;
+  typedef typename Traits::Matrix Matrix ;
+  
+  static bool solveOrthogonality(
+		  const typename Traits::Matrix &W,
+		  const typename Traits::Vector &b,
+		  typename Traits::Vector &r,
+		  const Scalar mu
+		  )
+  {
+	  // see doc/sage/poySOC.sage
+
+	 typedef typename LocalProblemTraits< 2, Scalar >::Vector Vec2 ;
+	 typedef typename LocalProblemTraits< 2, Scalar >::Matrix Mat2 ;
+
+	 const Scalar wN = W(0,0) ;
+	 if( wN < NumTraits< Scalar >::epsilon() )
+		 return false ; // Could we do something better ?
+
+	 const Scalar A = (b[1]*W(1,2) - b[2]*W(1,1))*mu*mu + b[0]*W(0,2) - b[2]*W(0,0) ;
+	 const Scalar B = (b[0]*W(1,2) + b[1]*W(0,2) - 2*b[2]*W(0,1))*mu ;
+	 const Scalar C = 2*( (b[1]*W(2,2) - b[2]*W(1,2))*mu*mu - b[0]*W(0,1) + b[1]*W(0,0) );
+	 const Scalar D = 2*( b[0]*(W(1,1) - W(2,2)) - b[1]*W(0,1) + b[2]*W(0,2))*mu ;
+	 const Scalar E = -6*(b[0]*W(1,2) - b[1]*W(0,2))*mu ;
+
+	 Scalar coeffs[5] ;
+	 coeffs[0] =  A + B ;
+	 coeffs[1] =  C - D ;
+	 coeffs[2] =  E ;
+	 coeffs[3] =  C + D ;
+	 coeffs[4] =  B - A ;
+
+	 Scalar roots[4] ;
+	 const unsigned nRoots =
+			 bogus::polynomial::getRealRoots( coeffs, roots, bogus::polynomial::AllRoots ) ;
+
+	 bool found = false ;
+
+	 for ( unsigned i = 0 ; i != nRoots ; ++ i )
+	 {
+		 Scalar t = roots[i] ;
+
+		 const Scalar CT = ( 1 - t*t ) / ( 1 + t*t ) ;
+		 const Scalar ST = 2*t / ( 1 + t*t ) ;
+
+		 const typename Traits::Vector dir ( 1, mu*CT, mu*ST ) ;
+
+		 Scalar den, rN ;
+
+		 den = ( mu * W.col(1) + CT * W.col( 0 )).dot( dir ) ;
+		 if( bogus::NumTraits< Scalar >::isZero( den ) ) {
+			 den = ( mu * W.col(2) + ST * W.col( 0 )).dot( dir ) ;
+			 if( bogus::NumTraits< Scalar >::isZero( den ) ) {
+				 continue ;
+			 } else {
+				 rN = -(ST*b[0] + b[2]*mu)/den ;
+			 }
+		 } else {
+			 rN = -(CT*b[0] + b[1]*mu)/den ;
+		 }
+
+		 if( rN <= 0 )
+			 continue ;
+
+		 r = rN * dir ;
+		 const Scalar uN = W.col(0).dot(r) + b[0] ;
+
+		 if( uN > 0 )
+		 {
+			 found = true ;
+			 break ;
+		 }
+	 }
+
+	 return found ;
+  }
+
+} ;
+
+
+template< unsigned Dimension, typename Scalar, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
+Scalar LocalSOCSolver< Dimension, Scalar, DeSaxceCOV, Strat >::solve(
+		  const typename Traits::Matrix &A,
+		  const typename Traits::Vector &b,
+		  typename Traits::Vector &x,
+		  const Scalar mu, const Scalar tol, const Scalar scaling
+		  )
+{
+	  // see [Daviet et al 2011], Appendix B.2
+
+	  // Newton solver
+	  typedef FischerBurmeister< Dimension, Scalar, DeSaxceCOV > FBFunc ;
+	  FBFunc fb( mu, A, b, scaling ) ;
+	  NonSmoothNewton< FBFunc > nsNewton( fb, tol )  ;
+
+	  if( Strat == local_soc_solver::PureNewton )
+	  {
+		  return nsNewton.solve( x ) ;
+	  }
+
+	  if( Traits::np(b) >= ( DeSaxceCOV ? 0 : mu * Traits::tp(b).norm() ) )
+	  {
+		  // Take-off case ( -b in normal cone of constraint )
+		  x.setZero() ;
+		  return 0. ;
+	  }
+	  if( NumTraits< Scalar >::isZero( mu ) )
+	  {
+		  //Frictionless case
+		  if( A(0,0) < NumTraits< Scalar >::epsilon() )
+		  {
+			  // Degenerate problem
+			  x.setZero() ;
+			  return b[0]*b[0] ;
+		  } else {
+			  Traits::tp( x ).setZero() ;
+			  Traits::np( x ) = - Traits::np( b ) / A(0,0);
+			  return 0. ;
+		  }
+	  }
+
+	  double res = 0. ;
+
+	  if( Strat == local_soc_solver::Hybrid )
+	  {
+		  res = nsNewton.solve( x ) ;
+		  if( res < tol ) return res ;
+	  }
+
+	  // Continuing enumerative fallback
+
+	  Vector x0 = x ;
+	  x = DenseLU< Scalar, Dimension >( A ).solve( -b ) ;
+	  if( mu * Traits::np( x ) >= Traits::tp( x ).norm() )
+	  {
+		  // Sticking case
+		  return 0. ;
+	  }
+
+	 // Sliding case
+	 if( ! AnalyticLocalSOCSolver< Dimension, Scalar, DeSaxceCOV >::solveOrthogonality( A, b, x, mu ) )
+         {
+		 x = x0 ;
+         }
+
+	 // Refinement of final solution
+	 if( Strat == local_soc_solver::RevHybrid ) {
+		 res = nsNewton.solve( x ) ;
+	 } else if( Strat == local_soc_solver::Hybrid  ) {
+		 const double refinedRes = nsNewton.solve( x ) ;
+		 if( refinedRes <= res )
+			 return refinedRes ;
+
+		 //This can happen if the quartic solver returned a very bad value, like an
+		 // unreastically huge alpha
+		 x = x0 ;
+	 }
+
+	 return res ;
+  }
+
+/*
+
 template< typename Scalar, local_soc_solver::Strategy Strat  >
 struct LocalSOCSolver< 3, Scalar, false, Strat >
 {
@@ -279,81 +417,8 @@ struct LocalSOCSolver< 3, Scalar, false, Strat >
 	 return res ;
   }
 
-  static bool solveOrthogonality(
-		  const typename Traits::Matrix &W,
-		  const typename Traits::Vector &b,
-		  typename Traits::Vector &r,
-		  const Scalar mu
-		  )
-  {
-	  // see doc/sage/poySOC.sage
 
-	 typedef typename LocalProblemTraits< 2, Scalar >::Vector Vec2 ;
-	 typedef typename LocalProblemTraits< 2, Scalar >::Matrix Mat2 ;
-
-	 const Scalar wN = W(0,0) ;
-	 if( wN < NumTraits< Scalar >::epsilon() )
-		 return false ; // Could we do something better ?
-
-	 const Scalar A = (b[1]*W(1,2) - b[2]*W(1,1))*mu*mu + b[0]*W(0,2) - b[2]*W(0,0) ;
-	 const Scalar B = (b[0]*W(1,2) + b[1]*W(0,2) - 2*b[2]*W(0,1))*mu ;
-	 const Scalar C = 2*( (b[1]*W(2,2) - b[2]*W(1,2))*mu*mu - b[0]*W(0,1) + b[1]*W(0,0) );
-	 const Scalar D = 2*( b[0]*(W(1,1) - W(2,2)) - b[1]*W(0,1) + b[2]*W(0,2))*mu ;
-	 const Scalar E = -6*(b[0]*W(1,2) - b[1]*W(0,2))*mu ;
-
-	 Scalar coeffs[5] ;
-	 coeffs[0] =  A + B ;
-	 coeffs[1] =  C - D ;
-	 coeffs[2] =  E ;
-	 coeffs[3] =  C + D ;
-	 coeffs[4] =  B - A ;
-
-	 Scalar roots[4] ;
-	 const unsigned nRoots =
-			 bogus::polynomial::getRealRoots( coeffs, roots, bogus::polynomial::AllRoots ) ;
-
-	 bool found = false ;
-
-	 for ( unsigned i = 0 ; i != nRoots ; ++ i )
-	 {
-		 Scalar t = roots[i] ;
-
-		 const Scalar CT = ( 1 - t*t ) / ( 1 + t*t ) ;
-		 const Scalar ST = 2*t / ( 1 + t*t ) ;
-
-		 const typename Traits::Vector dir ( 1, mu*CT, mu*ST ) ;
-
-		 Scalar den, rN ;
-
-		 den = ( mu * W.col(1) + CT * W.col( 0 )).dot( dir ) ;
-		 if( bogus::NumTraits< Scalar >::isZero( den ) ) {
-			 den = ( mu * W.col(2) + ST * W.col( 0 )).dot( dir ) ;
-			 if( bogus::NumTraits< Scalar >::isZero( den ) ) {
-				 continue ;
-			 } else {
-				 rN = -(ST*b[0] + b[2]*mu)/den ;
-			 }
-		 } else {
-			 rN = -(CT*b[0] + b[1]*mu)/den ;
-		 }
-
-		 if( rN <= 0 )
-			 continue ;
-
-		 r = rN * dir ;
-		 const Scalar uN = W.col(0).dot(r) + b[0] ;
-
-		 if( uN > 0 )
-		 {
-			 found = true ;
-			 break ;
-		 }
-	 }
-
-	 return found ;
-  }
-
-} ;
+*/
 
 }
 
