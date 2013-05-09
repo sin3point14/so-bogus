@@ -14,8 +14,10 @@
 namespace bogus
 {
 
+struct Object {} ;
+
 template < typename Derived >
-struct BlockObjectBase
+struct BlockObjectBase : public Object
 {
 	typedef Derived PlainObjectType ;
 
@@ -75,6 +77,7 @@ public:
 	Index colsOfBlocks() const { return derived().colsOfBlocks() ; }
 
 	const typename BlockContainerTraits< BlockType >::Type& blocks() const { return  m_blocks ; }
+	const BlockType* data() const { return  &m_blocks[0] ; }
 
 protected:
 	Index m_rows ;

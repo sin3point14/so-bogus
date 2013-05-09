@@ -19,8 +19,6 @@ namespace bogus
 template < typename BlockT, int Flags > class SparseBlockMatrix  ;
 template < bool Symmetric > struct SparseBlockMatrixFinalizer ;
 template < typename Derived, bool Major > struct SparseBlockIndexGetter ;
-template < bool Symmetric, bool NativeOrder, bool Transpose > struct SparseBlockMatrixVectorMultiplier ;
-template < bool Symmetric > struct OutOfOrderSparseBlockMatrixVectorMultiplier ;
 
 template < typename Derived >
 class SparseBlockMatrixBase : public BlockMatrixBase< Derived >
@@ -210,8 +208,6 @@ protected:
 	typedef SparseBlockMatrixFinalizer< Traits::is_symmetric > Finalizer ;
 	friend struct SparseBlockIndexGetter< Derived, true > ;
 	friend struct SparseBlockIndexGetter< Derived, false > ;
-	template < bool Symmetric, bool NativeOrder, bool Transpose > friend struct SparseBlockMatrixVectorMultiplier ;
-	template < bool Symmetric > friend struct OutOfOrderSparseBlockMatrixVectorMultiplier ;
 
 	void allocateBlock( BlockPtr &ptr )
 	{
@@ -259,11 +255,6 @@ protected:
 	{
 		return v.segment( colOffset( colBlockIdx ), blockCols( colBlockIdx ) ) ;
 	}
-
-	template < typename IndexT, typename GetterT, typename RhsT, typename ResT >
-	void innerRowMultiply( const IndexT &index, const GetterT &getter, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
-	template < typename IndexT, typename GetterT, typename RhsT, typename ResT >
-	void innerColMultiply( const IndexT &index, const GetterT &getter, const Index outerIdx, const RhsT& rhs, ResT& res ) const ;
 
 	template< typename IndexT >
 	void setInnerOffets( IndexT& index, const Index nBlocks, const Index *blockSizes ) const ;

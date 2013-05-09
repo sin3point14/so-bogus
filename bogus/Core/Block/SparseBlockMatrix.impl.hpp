@@ -23,8 +23,7 @@ namespace bogus {
 template < bool Symmetric >
 struct SparseBlockMatrixFinalizer
 {
-	template < typename Derived >
-	static void finalize( SparseBlockMatrixBase< Derived >& ) { }
+	static void finalize( Object& ) { }
 } ;
 template < >
 struct SparseBlockMatrixFinalizer<  true >

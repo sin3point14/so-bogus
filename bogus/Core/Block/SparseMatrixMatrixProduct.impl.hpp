@@ -75,18 +75,14 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 
 
 	setFromProduct< ColWise >( lhsIndexComputer.get(), rhsIndexComputer.get(),
-							   &prod.lhs.blocks()[0], &prod.rhs.blocks()[0],
+							   prod.lhs.data(), prod.rhs.data(),
 							   lhsGetter, rhsGetter ) ;
 
 }
 
-template < bool ColWise, typename Derived >
+template < bool ColWise, typename Index, typename BlockPtr, bool is_symmetric, bool is_col_major >
 struct SparseBlockProductIndex
 {
-	typedef SparseBlockMatrixBase<Derived> SparseMatrixT ;
-	typedef typename SparseMatrixT::Traits Traits ;
-	typedef typename SparseMatrixT::BlockPtr BlockPtr ;
-	typedef typename SparseMatrixT::Index Index ;
 	typedef std::vector< std::pair< bool, BlockPtr > > BlockComputationFactor ;
 	typedef std::pair< BlockComputationFactor, BlockComputationFactor > BlockComputation ;
 
@@ -100,14 +96,13 @@ struct SparseBlockProductIndex
 
 	template< typename LhsIndex, typename RhsIndex >
 	void compute(
-		const SparseMatrixT &matrix,
+		const Index outerSize,
+		const Index innerSize,
 		const LhsIndex &lhsIdx,
 		const RhsIndex &rhsIdx )
 	{
 		assert( lhsIdx.innerSize() == rhsIdx.innerSize() ) ;
 
-		const Index outerSize = matrix.majorIndex().outerSize() ;
-		const Index innerSize = matrix.minorIndex().outerSize() ;
 		to_compute.resize( outerSize ) ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
@@ -124,11 +119,11 @@ struct SparseBlockProductIndex
 #endif
 		for( int i = 0 ; i < (int) outerSize ; ++i )
 		{
-			const Index last = Traits::is_symmetric ? i+1 : innerSize ;
+			const Index last = is_symmetric ? i+1 : innerSize ;
 			for( Index j = 0 ; j != last ; ++ j )
 			{
-				const Index lhsOuter = Traits::is_col_major ? j : i ;
-				const Index rhsOuter = Traits::is_col_major ? i : j ;
+				const Index lhsOuter = is_col_major ? j : i ;
+				const Index rhsOuter = is_col_major ? i : j ;
 				typename LhsIndex::InnerIterator lhs_it ( lhsIdx, lhsOuter ) ;
 				typename RhsIndex::InnerIterator rhs_it ( rhsIdx, rhsOuter ) ;
 
@@ -168,13 +163,9 @@ struct SparseBlockProductIndex
 
 } ;
 
-template < typename Derived >
-struct SparseBlockProductIndex< true, Derived >
+template < typename Index, typename BlockPtr, bool is_symmetric, bool is_col_major >
+struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_major >
 {
-	typedef SparseBlockMatrixBase<Derived> SparseMatrixT ;
-	typedef typename SparseMatrixT::Traits Traits ;
-	typedef typename SparseMatrixT::BlockPtr BlockPtr ;
-	typedef typename SparseMatrixT::Index Index ;
 	typedef std::vector< std::pair< bool, BlockPtr > > BlockComputationFactor ;
 	typedef std::pair< BlockComputationFactor, BlockComputationFactor > BlockComputation ;
 
@@ -188,13 +179,14 @@ struct SparseBlockProductIndex< true, Derived >
 
 	template< typename LhsIndex, typename RhsIndex >
 	void compute(
-		const SparseMatrixT &matrix,
+		const Index outerSize,
+		const Index innerSize,
 		const LhsIndex &lhsIdx,
 		const RhsIndex &rhsIdx )
 	{
 		assert( lhsIdx.outerSize() == rhsIdx.outerSize() ) ;
+		( void ) innerSize ;
 
-		const Index outerSize = matrix.majorIndex().outerSize() ;
 		const Index productSize = lhsIdx.outerSize() ;
 
 		to_compute.resize( outerSize ) ;
@@ -212,12 +204,12 @@ struct SparseBlockProductIndex< true, Derived >
 		{
 			const Index i = (Index) ii ;
 
-			if( Traits::is_col_major )
+			if( is_col_major )
 			{
 				for( typename RhsIndex::InnerIterator rhs_it ( rhsIdx, i ) ; rhs_it ; ++rhs_it )
 				{
 					for( typename LhsIndex::InnerIterator lhs_it ( lhsIdx, i ) ;
-						 lhs_it && ( !Traits::is_symmetric || lhs_it.inner() <= rhs_it.inner() ) ;
+						 lhs_it && ( !is_symmetric || lhs_it.inner() <= rhs_it.inner() ) ;
 						 ++lhs_it )
 					{
 						BlockComputation &bc = loc_compute[ rhs_it.inner() ][ lhs_it.inner() ] ;
@@ -229,7 +221,7 @@ struct SparseBlockProductIndex< true, Derived >
 				for( typename LhsIndex::InnerIterator lhs_it ( lhsIdx, i ) ; lhs_it ; ++lhs_it )
 				{
 					for( typename RhsIndex::InnerIterator rhs_it ( rhsIdx, i ) ;
-						 rhs_it && ( !Traits::is_symmetric || rhs_it.inner() <= lhs_it.inner() ) ;
+						 rhs_it && ( !is_symmetric || rhs_it.inner() <= lhs_it.inner() ) ;
 						 ++rhs_it )
 					{
 						BlockComputation &bc = loc_compute[ lhs_it.inner() ][ rhs_it.inner() ] ;
@@ -281,7 +273,7 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(
 		const LhsGetter &lhsGetter, const RhsGetter &rhsGetter
 		)
 {
-	typedef SparseBlockProductIndex< ColWise, Derived > ProductIndex ;
+	typedef SparseBlockProductIndex< ColWise, Index, BlockPtr, Traits::is_symmetric, Traits::is_col_major> ProductIndex ;
 	typedef typename ProductIndex::BlockComputation BlockComputation ;
 
 	clear() ;
@@ -295,7 +287,7 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(
 
 	ProductIndex productIndex  ;
 
-	productIndex.compute( *this, lhsIdx, rhsIdx ) ;
+	productIndex.compute( majorIndex().outerSize(), minorIndex().outerSize(), lhsIdx, rhsIdx ) ;
 
 
 	prealloc( productIndex.compressed.outer[ outerSize ] ) ;
