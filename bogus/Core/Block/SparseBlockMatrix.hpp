@@ -93,24 +93,7 @@ public:
 	{
 		m_blocks.reserve( nBlocks ) ;
 	}
-
-	void prealloc( std::size_t nBlocks )
-	{
-		m_blocks.resize( nBlocks ) ;
-		m_nBlocks = nBlocks ;
-	}
-
-	BlockType& insertBackOuterInner( Index outer, Index inner )
-	{
-
-		BlockPtr ptr ;
-		allocateBlock( ptr ) ;
-
-		m_majorIndex.insertBack( outer, inner, ptr ) ;
-		m_minorIndex.valid = false ;
-
-		return block(ptr) ;
-	}
+	
 	BlockType& insertBack( Index row, Index col )
 	{
 		if( Traits::is_col_major )
@@ -124,6 +107,8 @@ public:
 		block.resize( blockRows( row ), blockCols( col ) ) ;
 		return block ;
 	}
+	
+	BlockType& insertBackOuterInner( Index outer, Index inner ) ;
 
 	void finalize() ;
 	void clear() ;
@@ -191,8 +176,7 @@ public:
 
 	template < bool ColWise, typename LhsT, typename RhsT >
 	void setFromProduct( const Product< LhsT, RhsT > &prod ) ;
-
-
+	
 #ifdef BOGUS_WITH_BOOST_SERIALIZATION
 	template < typename Archive >
 	void serialize( Archive & ar, const unsigned int file_version ) ;
@@ -208,17 +192,8 @@ protected:
 	friend struct SparseBlockIndexGetter< Derived, true > ;
 	friend struct SparseBlockIndexGetter< Derived, false > ;
 
-	void allocateBlock( BlockPtr &ptr )
-	{
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp critical
-#endif
-		{
-			++m_nBlocks ;
-			ptr = m_blocks.size() ;
-			m_blocks.push_back( BlockType() ) ;
-		}
-	}
+	void allocateBlock( BlockPtr &ptr ) ;
+	void prealloc( std::size_t nBlocks ) ;
 
 	void computeMinorIndex( UncompressedIndexType &cmIndex) const ;
 

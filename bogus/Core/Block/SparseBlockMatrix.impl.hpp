@@ -103,6 +103,38 @@ void SparseBlockMatrixBase< Derived >::setInnerOffets(
 		index.innerOffsets[ i+1 ] = index.innerOffsets[ i ] + blockSizes[i] ;
 	}
 }
+	
+template < typename Derived >
+typename SparseBlockMatrixBase< Derived >::BlockType& SparseBlockMatrixBase< Derived >::insertBackOuterInner( Index outer, Index inner ) 
+{
+	BlockPtr ptr ;
+	allocateBlock( ptr ) ;
+
+	m_majorIndex.insertBack( outer, inner, ptr ) ;
+	m_minorIndex.valid = false ;
+
+	return block(ptr) ;
+}
+
+template < typename Derived >
+void SparseBlockMatrixBase< Derived >::allocateBlock( BlockPtr &ptr )
+{
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp critical
+#endif
+	{
+		++m_nBlocks ;
+		ptr = m_blocks.size() ;
+		m_blocks.push_back( BlockType() ) ;
+	}
+}
+
+template < typename Derived >
+void SparseBlockMatrixBase< Derived >::prealloc ( std::size_t nBlocks ) 
+{
+	m_blocks.resize( nBlocks ) ;
+	m_nBlocks = nBlocks ;
+}
 
 template < typename Derived >
 void SparseBlockMatrixBase< Derived >::finalize()
@@ -175,7 +207,7 @@ void SparseBlockMatrixBase< Derived >::computeMinorIndex( UncompressedIndexType 
 		for ( Index i = 0 ; i < m_majorIndex.outerSize() ; ++ i )
 		{
 			// For a symmetric matrix, do not store diagonal block in col-major index
-			for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( m_majorIndex, i ) ;
+			for( typename SparseIndexType::InnerIterator it( m_majorIndex, i ) ;
 				 it && it.inner() != i ; ++ it )
 			{
 				cmIndex.insertBack( it.inner(), i, it.ptr() );
