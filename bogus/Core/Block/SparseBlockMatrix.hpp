@@ -20,6 +20,9 @@ template < typename BlockT, int Flags > class SparseBlockMatrix  ;
 template < bool Symmetric > struct SparseBlockMatrixFinalizer ;
 template < typename Derived, bool Major > struct SparseBlockIndexGetter ;
 
+//! Base class for SparseBlockMatrix
+/*! Most of the useful functions are defined and implemented here, but instantiation
+  should be done throught derived classes such as SparseBlockMatrix */
 template < typename Derived >
 class SparseBlockMatrixBase : public BlockMatrixBase< Derived >
 {
@@ -36,6 +39,8 @@ public:
 
 	typedef typename Traits::BlockType BlockType ;
 	typedef typename Traits::BlockPtr BlockPtr ;
+
+	//! Return value of \ref blockPtr() for non-existing block
 	static const BlockPtr InvalidBlockPtr ;
 
 	typedef typename Base::ConstTransposeReturnType  ConstTransposeReturnType ;
@@ -45,40 +50,46 @@ public:
 	using Base::blocks ;
 	using Base::derived ;
 
-	SparseBlockMatrixBase() ;
+	//! \name Setting and accessing the matrix structure
+	///@{
 
-	template < typename OtherDerived >
-	Derived& operator= ( const SparseBlockMatrixBase< OtherDerived > &source ) ;
-
-	template < typename OtherDerived >
-	Derived& operator= ( const Transpose< SparseBlockMatrixBase< OtherDerived > > &source ) ;
-
-	template < typename LhsT, typename RhsT >
-	Derived& operator= ( const Product< LhsT, RhsT > &prod ) ;
-
-	void setRows( const Index nBlocks, const Index* rowsPerBlock ) ;
-	void setRows( const std::vector< Index > &rowsPerBlock )
+	//! Defines the row structure of the matrix
+	/*! \param nBlocks the number of rows of blocks
+		\param rowsPerBlock array containing the number of row of each block
+	*/
+	void setRows( const Index nBlocks, const unsigned* rowsPerBlock ) ;
+	//! Same, using a std::vector
+	void setRows( const std::vector< unsigned > &rowsPerBlock )
 	{
 		setRows( rowsPerBlock.size(), &rowsPerBlock[0] ) ;
 	}
+	//! Same, setting each block to have exactly \p rowsPerBlock
 	void setRows( const Index nBlocks, const Index rowsPerBlock )
 	{
-		setRows( std::vector< Index >( nBlocks, rowsPerBlock ) ) ;
+		setRows( std::vector< unsigned >( nBlocks, rowsPerBlock ) ) ;
 	}
+	//! Same, deducing the (constant) number of rows per block from the BlockType
 	void setRows( const Index nBlocks )
 	{
 		setRows( nBlocks, BlockType::RowsAtCompileTime ) ;
 	}
 
-	void setCols( const Index nBlocks, const Index* colsPerBlock ) ;
-	void setCols( const std::vector< Index > &colsPerBlock )
+	//! Defines the column structure of the matrix
+	/*! \param nBlocks the number of columns of blocks
+		\param rowsPerBlock array containing the number of columns of each block
+	*/
+	void setCols( const Index nBlocks, const unsigned* colsPerBlock ) ;
+	//! Same, using a std::vector
+	void setCols( const std::vector< unsigned > &colsPerBlock )
 	{
 		setCols( colsPerBlock.size(), &colsPerBlock[0] ) ;
 	}
+	//! Same, setting each block to have exactly \p rowsPerBlock
 	void setCols( const Index nBlocks, const Index colsPerBlock )
 	{
-		setCols( std::vector< Index >( nBlocks, colsPerBlock ) ) ;
+		setCols( std::vector< unsigned >( nBlocks, colsPerBlock ) ) ;
 	}
+	//! Same, deducing the (constant) number of rows per block from the BlockType
 	void setCols( const Index nBlocks )
 	{
 		setCols( nBlocks, BlockType::ColsAtCompileTime ) ;
@@ -86,14 +97,30 @@ public:
 
 	Index rowsOfBlocks() const { return rowOffsets().size() - 1 ; }
 	Index colsOfBlocks() const { return colOffsets().size() - 1 ; }
+
 	Index blockRows( Index row ) const { return rowOffsets()[ row + 1 ] - rowOffsets()[ row ] ; }
 	Index blockCols( Index col ) const { return colOffsets()[ col + 1 ] - colOffsets()[ col ] ; }
 
+	///@}
+
+	//! \name Inserting and accessing blocks
+	///@{
+
+	//! Reserve enouch memory to accomodate \p nBlocks
 	void reserve( std::size_t nBlocks )
 	{
 		m_blocks.reserve( nBlocks ) ;
 	}
-	
+
+	//! Inserts a block in the matrix, and returns a reference to it
+	/*! \warning If the matrix is Compressed, the insertion order should be such that the pair
+	  ( outerIndex, innerIndex ) is always strictly increasing.
+	  That is, if the matrix is row-major, the insertion should be done one row at a time,
+	  and for each row from the left-most column to the right most.
+
+	  For non-compressed matrices, no such limitation apply, though out of order insertion might lead
+	  to bad cache performance.
+	  */
 	BlockType& insertBack( Index row, Index col )
 	{
 		if( Traits::is_col_major )
@@ -101,26 +128,32 @@ public:
 		else
 			return insertBackOuterInner( row, col ) ;
 	}
+	//! Inserts a block and immediately resize it according to the dimensions given to setRows() and setCols()
 	BlockType& insertBackAndResize( Index row, Index col )
 	{
 		BlockType& block = insertBack( row, col ) ;
 		block.resize( blockRows( row ), blockCols( col ) ) ;
 		return block ;
 	}
-	
+	//! Inert a block, specifying directily the outer and inner indices instead of row and column
 	BlockType& insertBackOuterInner( Index outer, Index inner ) ;
 
+	//! Finalizes the matrix.
+	//! \warning Should always be called after all blocks have been inserted, or bad stuff may happen
 	void finalize() ;
-	void clear() ;
 
-	template< typename PrecisionT >	
+	//! Clears the matrix
+	void clear() ;
+	//! \sa clear()
+	void setZero() { clear() ; }
+
+	//! Removes all blocks for which \c is_zero( \c block, \precision ) is \c true
+	/*! This function compacts the blocks and rebuild the index, which can be slow */
+	template< typename PrecisionT >
 	void prune( const PrecisionT& precision ) ;
 
-	bool computeMinorIndex() ;
-
-	void cacheTranspose() ;
-	bool transposeCached() const { return m_transposeIndex.valid ; }
-
+	//! Returns the number of blocks of the matrices
+	/*! \warning This may differ from blocks().size() */
 	std::size_t nBlocks() const { return m_nBlocks ; }
 
 	const BlockType& block( BlockPtr ptr ) const
@@ -135,15 +168,35 @@ public:
 
 	BlockPtr blockPtr( Index row, Index col ) const ;
 
-	// Warning: block has to exists
+	//! \warning block has to exist
 	BlockType& diagonal( const Index row ) ;
+	//! \warning block has to exist
 	const BlockType& diagonal( const Index row ) const ;
 
-	// Warning: block has to exist
+	//! \warning block has to exist
 	BlockType& block( Index row, Index col )
 	{ return block( blockPtr( row, col ) ) ; }
+	//! \warning block has to exist
 	const BlockType& block( Index row, Index col ) const
 	{ return block( blockPtr( row, col ) ) ; }
+
+	///@}
+
+	//! \name Accessing and manipulating indexes
+	///@{
+
+	//! Computes the minor index of the matrix.
+	/*! That is, the column major index for row-major matrices, and vice versa.
+		This may speed up some operations, such as matrix/matrix multiplication under
+		some circumstances.
+	*/
+	bool computeMinorIndex() ;
+
+	//! Computes and caches the tranpose of the matrix.
+	/*! This will speed up some operations; especially splitRowMultiply() on symmetric matrices */
+	void cacheTranspose() ;
+	//! Returns whether the transpose has been cached
+	bool transposeCached() const { return m_transposeIndex.valid ; }
 
 	const SparseIndexType& majorIndex() const
 	{
@@ -160,6 +213,30 @@ public:
 	const ColIndexType& colMajorIndex() const ;
 	const RowIndexType& rowMajorIndex() const ;
 
+	//@}
+
+	//! \name Assignment and cloning operations
+	///@{
+
+	template < typename OtherDerived >
+	Derived& operator= ( const SparseBlockMatrixBase< OtherDerived > &source ) ;
+
+	template < typename OtherDerived >
+	Derived& operator= ( const Transpose< SparseBlockMatrixBase< OtherDerived > > &source ) ;
+
+	template < typename LhsT, typename RhsT >
+	Derived& operator= ( const Product< LhsT, RhsT > &prod ) ;
+
+	//! Clones the dimensions ( number of rows/cols blocks and rows/cols per block ) of \p source
+	template< typename OtherDerived >
+	void cloneDimensions( const BlockMatrixBase< OtherDerived > &source ) ;
+
+	//! Clones the dimensions and the indexes of \p source
+	template < typename BlockT2 >
+	void cloneStructure( const SparseBlockMatrix< BlockT2, Traits::flags > &source ) ;
+
+	//@}
+
 	ConstTransposeReturnType transpose() const { return Transpose< SparseBlockMatrixBase< Derived > >( *this ) ; }
 
 	template < bool Transpose, typename RhsT, typename ResT >
@@ -168,15 +245,9 @@ public:
 	template < typename RhsT, typename ResT >
 	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
 
-	template< typename OtherDerived >
-	void cloneDimensions( const BlockMatrixBase< OtherDerived > &source ) ;
-
-	template < typename BlockT2 >
-	void cloneStructure( const SparseBlockMatrix< BlockT2, Traits::flags > &source ) ;
-
 	template < bool ColWise, typename LhsT, typename RhsT >
 	void setFromProduct( const Product< LhsT, RhsT > &prod ) ;
-	
+
 #ifdef BOGUS_WITH_BOOST_SERIALIZATION
 	template < typename Archive >
 	void serialize( Archive & ar, const unsigned int file_version ) ;
@@ -192,7 +263,11 @@ protected:
 	friend struct SparseBlockIndexGetter< Derived, true > ;
 	friend struct SparseBlockIndexGetter< Derived, false > ;
 
+	SparseBlockMatrixBase() ;
+
+	//! Pushes a block at the back of \c m_blocks, and increments \c m_nBlocks
 	void allocateBlock( BlockPtr &ptr ) ;
+	//! Resizes \c m_blocks and set \c m_nBlocks
 	void prealloc( std::size_t nBlocks ) ;
 
 	void computeMinorIndex( UncompressedIndexType &cmIndex) const ;
@@ -232,7 +307,7 @@ protected:
 	}
 
 	template< typename IndexT >
-	void setInnerOffets( IndexT& index, const Index nBlocks, const Index *blockSizes ) const ;
+	void setInnerOffets( IndexT& index, const Index nBlocks, const unsigned* blockSizes ) const ;
 
 	template < bool ColWise, typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock, typename LhsGetter, typename RhsGetter  >
 	void setFromProduct( const LhsIndex &lhsIdx, const RhsIndex &rhsIdx,
@@ -251,6 +326,7 @@ protected:
 	SparseIndexType m_transposeIndex ;
 } ;
 
+//! Specialization of BlockMatrixTraits for SparseBlockMatrix
 template < typename BlockT, int Flags >
 struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMatrixTraits< BlockObjectBase< SparseBlockMatrix< BlockT, Flags > > >
 {
@@ -278,6 +354,12 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMat
 	typedef Transpose< SparseBlockMatrixBase< SparseBlockMatrix< BlockT, Flags > > > ConstTransposeReturnType ;
 } ;
 
+//! Sparse Block Matrix
+/*!
+  \tparam BlockT the type of the blocks of the matrix. Can be scalar, Eigen dense of sparse matrices,
+  or basically anything provided a few functions are specialized
+  \tparam Flags a combination of the values defined in \ref bogus::flags
+  */
 template < typename BlockT, int Flags >
 class SparseBlockMatrix : public  SparseBlockMatrixBase< SparseBlockMatrix< BlockT, Flags > >
 {

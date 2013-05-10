@@ -14,6 +14,7 @@
 namespace bogus
 {
 
+//! Base class for Transpose views of a BlockObjectBase
 template <typename MatrixT>
 struct Transpose : public BlockObjectBase< Transpose< MatrixT > >
 {

@@ -16,21 +16,38 @@
 namespace bogus
 {
 
-template < bool Compressed, typename _Index, typename _BlockPtr = _Index  >
-struct SparseBlockIndex
+template< typename _Index >
+struct SparseBlockIndexBase
 {
+	//! Vector encoding the size of each block of the inner dimension.
+	/*! which can be retrieved as \code innerOffsets[inner+1] - innerOffsets[inner] \endcode */
+	std::vector< _Index > innerOffsets ;
+	//! Whether this index is currently valid
+	bool valid ;
+
+	SparseBlockIndexBase() : valid( true )
+	{}
+} ;
+
+//! Uncompressed sparse block index
+template < bool Compressed, typename _Index, typename _BlockPtr = _Index  >
+struct SparseBlockIndex : public SparseBlockIndexBase< _Index >
+{
+	typedef SparseBlockIndexBase< _Index > Base ;
+	using Base::innerOffsets ;
+	using Base::valid ;
+
 	typedef _Index Index ;
 	typedef _BlockPtr BlockPtr ;
 
-	std::vector< Index > innerOffsets ;
-	bool valid ;
-
+	//! Vector of ( inner index ; block pointer ) tuples encoding an inner vector
 	typedef std::vector < std::pair< Index, BlockPtr > > Inner ;
+	//! Vector of inner vectors
 	typedef std::vector < Inner > Outer ;
 
 	Outer outer ;
 
-	SparseBlockIndex() : valid( true )
+	SparseBlockIndex() : Base( )
 	{}
 
 	void resizeOuter( Index size )
@@ -108,6 +125,7 @@ struct SparseBlockIndex
 		return outer[ outerIdx ].size() ;
 	}
 
+	//! Forward iterator
 	struct InnerIterator
 	{
 		// Warning: This class does not implement the full RandomAccessIterator concept ;
@@ -164,8 +182,8 @@ struct SparseBlockIndex
 	private:
 
 		InnerIterator( const typename Inner::const_iterator &it,
-		        const typename Inner::const_iterator &end )
-		    : m_it( it ), m_end( end )
+				const typename Inner::const_iterator &end )
+			: m_it( it ), m_end( end )
 		{}
 
 		typename Inner::const_iterator m_it ;
@@ -190,24 +208,29 @@ struct SparseBlockIndex
 
 } ;
 
+//! Compressed index, compatible with usual BSR/BSC formats
 template< typename _Index, typename _BlockPtr >
-struct SparseBlockIndex< true, _Index, _BlockPtr >
+struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase< _Index >
 {
+	typedef SparseBlockIndexBase< _Index > Base ;
 	typedef _Index Index ;
 	typedef _BlockPtr BlockPtr ;
 
-	std::vector< Index > innerOffsets ;
-	bool valid ;
+	using Base::innerOffsets ;
+	using Base::valid ;
 
 	typedef std::vector< Index > Inner ;
 	typedef std::vector< Index > Outer ;
 
+	//! Vector of inner indices
 	Inner inner ;
+	//! Vector encoding the start and end of inner vectors
 	Outer outer ;
+	//! Constant offset to add to block pointers (i.e. pointer to first block )
 	BlockPtr base ;
 
 	SparseBlockIndex( )
-		: valid( true ), base(0)
+		: Base(), base(0)
 	{}
 
 	void resizeOuter( Index size )
@@ -217,6 +240,8 @@ struct SparseBlockIndex< true, _Index, _BlockPtr >
 	Index outerSize( ) const { return outer.size() - 1 ; }
 	Index innerSize( ) const { return innerOffsets.size() - 1 ; }
 
+	//! \warning Only works for back insertion, and a call to \ref finalize()
+	//! is always required once insertion is finished
 	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
 	{
 		valid &= ( ptr == (BlockPtr) ( base + inner.size() ) ) ;
@@ -224,6 +249,13 @@ struct SparseBlockIndex< true, _Index, _BlockPtr >
 		inner.push_back( inIdx ) ;
 	}
 
+	//! Finalizes the outer indices vector
+	/*! Before calling this function, \c outer[i] contains the number of blocks
+		 in the \c i th inner vector
+
+		 After calling this functions, \c outer[i] contains the index of the start
+		 of the \c i th inner vector in \ref inner, and \c outer[i+1] its end
+	*/
 	void finalize()
 	{
 		for( unsigned i = 1 ; i < outer.size() ; ++i )
@@ -310,6 +342,7 @@ struct SparseBlockIndex< true, _Index, _BlockPtr >
 		return  outer[ outerIdx + 1 ] - outer[ outerIdx ] ;
 	}
 
+	//! Forward iterator
 	struct InnerIterator
 	{
 		// Warning: This class does not implement the full RandomAccessIterator concept ;
@@ -367,8 +400,8 @@ struct SparseBlockIndex< true, _Index, _BlockPtr >
 	private:
 
 		InnerIterator( Index it, Index end,
-		               BlockPtr base, const Index* inner )
-		    : m_it( it ), m_end( end ), m_base( base ), m_inner( inner )
+					   BlockPtr base, const Index* inner )
+			: m_it( it ), m_end( end ), m_base( base ), m_inner( inner )
 		{}
 
 		Index m_it ;

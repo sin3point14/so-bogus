@@ -17,7 +17,7 @@ namespace bogus {
 
 template < typename BlockT, typename IndexT, typename GetterT, typename RhsT, typename ResT >
 static void innerRowMultiply( const BlockT* blocks, const IndexT &index, const GetterT& getter,
-							const typename IndexT::Index outerIdx, const RhsT& rhs, ResT& res ) 
+							const typename IndexT::Index outerIdx, const RhsT& rhs, ResT& res )
 {
 	for( typename IndexT::InnerIterator it( index, outerIdx ) ; it ; ++ it )
 	{
@@ -27,7 +27,7 @@ static void innerRowMultiply( const BlockT* blocks, const IndexT &index, const G
 
 template < typename BlockT, typename IndexT, typename GetterT, typename RhsT, typename ResT >
 static void innerColMultiply( const BlockT* blocks, const IndexT &index,  const GetterT& getter,
-							const typename IndexT::Index outerIdx, const RhsT& rhs, ResT& res ) 
+							const typename IndexT::Index outerIdx, const RhsT& rhs, ResT& res )
 {
 	for( typename IndexT::InnerIterator it( index, outerIdx ) ; it ; ++ it )
 	{

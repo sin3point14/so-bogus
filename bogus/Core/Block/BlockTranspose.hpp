@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -11,9 +11,11 @@
 
 namespace bogus {
 
+//! Specialization of transpose_block() for self-adjoint types
 template < typename SelfTransposeT >
 const typename SelfTransposeTraits< SelfTransposeT >::ReturnType& transpose_block( const SelfTransposeT &block  ) { return  block ; }
 
+//! Utility struct for expressing a compile-time conditional transpose of a block
 template < bool DoTranspose >
 struct BlockGetter {
 	template < typename BlockT >
@@ -22,7 +24,7 @@ struct BlockGetter {
 } ;
 template < >
 struct BlockGetter< true > {
-	//SFINAE
+	//SFINAE, as we can't use decltype()
 
 	template < typename BlockT >
 	static typename BlockT::ConstTransposeReturnType get( const BlockT& src, bool = false )

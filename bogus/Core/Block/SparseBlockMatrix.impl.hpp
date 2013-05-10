@@ -62,8 +62,8 @@ template < typename Derived >
 SparseBlockMatrixBase< Derived >::SparseBlockMatrixBase()
 	: Base(), m_nBlocks(0)
 {
-	setRows( 0, (const Index*) 0 ) ;
-	setCols( 0, (const Index*) 0 ) ;
+	setRows( 0, (const unsigned*) 0 ) ;
+	setCols( 0, (const unsigned*) 0 ) ;
 	m_transposeIndex.resizeOuter(0) ;
 	m_transposeIndex.valid = false ;
 }
@@ -71,7 +71,7 @@ SparseBlockMatrixBase< Derived >::SparseBlockMatrixBase()
 template < typename Derived >
 void SparseBlockMatrixBase< Derived >::setRows(
 		const Index nBlocks,
-		const Index* rowsPerBlock )
+		const unsigned* rowsPerBlock )
 {
 	setInnerOffets( colMajorIndex(), nBlocks, rowsPerBlock );
 	m_rows = colMajorIndex().innerOffsets.back() ;
@@ -83,7 +83,7 @@ void SparseBlockMatrixBase< Derived >::setRows(
 template < typename Derived >
 void SparseBlockMatrixBase< Derived >::setCols(
 		const Index nBlocks,
-		const Index* colsPerBlock )
+		const unsigned* colsPerBlock )
 {
 	setInnerOffets( rowMajorIndex(), nBlocks, colsPerBlock );
 	m_cols = rowMajorIndex().innerOffsets.back() ;
@@ -94,18 +94,18 @@ void SparseBlockMatrixBase< Derived >::setCols(
 template < typename Derived >
 template < typename IndexT >
 void SparseBlockMatrixBase< Derived >::setInnerOffets(
-		IndexT &index, const Index nBlocks, const Index *blockSizes) const
+		IndexT &index, const Index nBlocks, const unsigned *blockSizes) const
 {
 	index.innerOffsets.resize( nBlocks + 1 ) ;
 	index.innerOffsets[0] = 0 ;
-	for ( unsigned i = 0 ; i < nBlocks ; ++ i )
+	for ( Index i = 0 ; i < nBlocks ; ++ i )
 	{
 		index.innerOffsets[ i+1 ] = index.innerOffsets[ i ] + blockSizes[i] ;
 	}
 }
-	
+
 template < typename Derived >
-typename SparseBlockMatrixBase< Derived >::BlockType& SparseBlockMatrixBase< Derived >::insertBackOuterInner( Index outer, Index inner ) 
+typename SparseBlockMatrixBase< Derived >::BlockType& SparseBlockMatrixBase< Derived >::insertBackOuterInner( Index outer, Index inner )
 {
 	BlockPtr ptr ;
 	allocateBlock( ptr ) ;
@@ -130,7 +130,7 @@ void SparseBlockMatrixBase< Derived >::allocateBlock( BlockPtr &ptr )
 }
 
 template < typename Derived >
-void SparseBlockMatrixBase< Derived >::prealloc ( std::size_t nBlocks ) 
+void SparseBlockMatrixBase< Derived >::prealloc ( std::size_t nBlocks )
 {
 	m_blocks.resize( nBlocks ) ;
 	m_nBlocks = nBlocks ;
@@ -161,28 +161,28 @@ template < typename PrecisionT >
 void SparseBlockMatrixBase< Derived >::prune( const PrecisionT &precision )
 {
 	SparseIndexType oldIndex = m_majorIndex ;
-	
+
 	typename BlockContainerTraits< BlockType >::Type old_blocks ;
 	old_blocks.swap( m_blocks ) ;
-	
+
 	reserve( m_nBlocks ) ;
 	clear() ;
-	
+
 	for( Index outer = 0 ; outer < oldIndex.outerSize() ; ++outer )
 	{
 		for( typename SparseIndexType::InnerIterator it( oldIndex, outer ) ; it ; ++it )
 		{
-			if( ! is_zero( old_blocks[ it.ptr() ], precision ) ) 
+			if( ! is_zero( old_blocks[ it.ptr() ], precision ) )
 			{
 				m_majorIndex.insertBack( outer, it.inner(), m_nBlocks++ ) ;
 				m_blocks.push_back( old_blocks[ it.ptr() ] ) ;
 			}
 		}
 	}
-	
+
 	m_minorIndex.valid = 0 == m_nBlocks ;
 	finalize() ;
-	
+
 }
 
 template < typename Derived >
@@ -301,11 +301,11 @@ template< typename Derived >
 template< typename OtherDerived >
 void SparseBlockMatrixBase<Derived>::cloneDimensions( const BlockMatrixBase< OtherDerived > &source )
 {
-	std::vector< Index > dims( source.rowsOfBlocks() ) ;
+	std::vector< unsigned > dims( source.rowsOfBlocks() ) ;
 
 	for( unsigned i = 0 ; i < dims.size() ; ++i )
 	{
-		dims[i] = source.blockRows( i ) ;
+		dims[i] = (unsigned) source.blockRows( i ) ;
 	}
 
 	setRows( dims ) ;
@@ -313,7 +313,7 @@ void SparseBlockMatrixBase<Derived>::cloneDimensions( const BlockMatrixBase< Oth
 
 	for( unsigned i = 0 ; i < dims.size() ; ++i )
 	{
-		dims[i] = source.blockCols( i )  ;
+		dims[i] = (unsigned) source.blockCols( i )  ;
 	}
 
 	setCols( dims ) ;
@@ -382,7 +382,7 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 			uncompressed.setToTranspose( source.majorIndex() ) ;
 		}
 
-		for( unsigned i = 0 ; i < uncompressed.outerSize() ; ++i )
+		for( Index i = 0 ; i < uncompressed.outerSize() ; ++i )
 		{
 			for( typename UncompressedIndexType::InnerIterator src_it( uncompressed, i ) ;
 				 src_it ; ++ src_it )

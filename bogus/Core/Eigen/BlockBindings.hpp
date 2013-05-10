@@ -5,6 +5,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/*! \file
+	Necessary bindings to use Eigen matrices as block types, and
+	\c operator* specialization for matrix/vector products
+*/
+
 
 #ifndef BLOCK_EIGENBINDINGS_HPP
 #define BLOCK_EIGENBINDINGS_HPP
@@ -39,7 +44,7 @@ transpose_block ( const Eigen::MatrixBase< EigenDerived >& block )
 
 template< typename EigenDerived >
 bool is_zero ( const Eigen::MatrixBase< EigenDerived >& block,
-               typename EigenDerived::Scalar precision )
+			   typename EigenDerived::Scalar precision )
 {
 	return block.isZero( precision ) ;
 }
@@ -59,7 +64,7 @@ transpose_block( const Eigen::SparseMatrixBase< EigenDerived >& block )
 
 template< typename EigenDerived >
 bool is_zero ( const Eigen::SparseMatrixBase< EigenDerived >& block,
-               typename EigenDerived::Scalar precision )
+			   typename EigenDerived::Scalar precision )
 {
 	return block.isZero( precision ) ;
 }

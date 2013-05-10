@@ -41,7 +41,7 @@ TEST( GaussSeidel, Small )
 	bogus::SparseBlockMatrix< GradBlockT > H ;
 
 	H.setCols( 2, dofs ) ;
-	H.setRows( 2, 3 ) ;
+	H.setRows( 2 ) ;
 	H.insertBackAndResize( 0, 0 ) << 3, 5, 7, -1, 2, 4, 5, 4, 1, 6, 9, 1 ;
 	H.insertBackAndResize( 0, 1 ) << -3, -6, -6, -5, -5, -8 ;
 	H.insertBackAndResize( 1, 0 ) << 3, 7, 1, -1, 3, 6, 3, 2, 4, 4, 7, -1 ;
