@@ -50,7 +50,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 		// I - compute non-zero blocks
         std::map < Index, BlockPtr > nzBlocks ;
 
-		for( unsigned i = 0 ; i < blockSize ; ++i )
+        for( Index i = 0 ; i < blockSize ; ++i )
 		{
             for( typename EigenDerived::InnerIterator innerIt( source.derived(), outer*blockSize + i ) ;
 				 innerIt ; ++innerIt )
@@ -69,7 +69,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
         }
 
         // III - copy values
-		for( unsigned i = 0 ; i < blockSize ; ++i )
+        for( Index i = 0 ; i < blockSize ; ++i )
 		{
             for( typename EigenDerived::InnerIterator innerIt( source.derived(), outer*blockSize + i ) ;
 				 innerIt ; ++innerIt )
@@ -85,7 +85,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
         }
 
         // IV - Symmetrify diagonal block if required
-		/*if( Traits::is_symmetric )
+        if( Traits::is_symmetric )
         {
             typename std::map< Index, BlockPtr >::const_iterator diagPtr = nzBlocks.find( outer ) ;
             if( diagPtr != nzBlocks.end() )
@@ -93,7 +93,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
                 const typename Traits::BlockType diagBlock = dest.block( diagPtr->second ) ;
                 dest.block( diagPtr->second ) = .5 * ( diagBlock + BlockGetter< Traits::is_symmetric >::get( diagBlock ) ) ;
             }
-		}*/
+        }
 
 	}
 

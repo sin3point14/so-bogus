@@ -132,8 +132,8 @@ int main( int argc, const char* argv[] )
 			  fclib_solution sol ;
 			  sol.v = NULL ;
 			  sol.u = u.data();
-			  sol.r = r.data() ;
-			  sol.v = NULL ;
+              sol.r = r.data() ;
+              sol.l = NULL ;
 
 //			  std::cout << fclib_merit_local( problem, MERIT_2, &sol ) << std::endl ;
 
