@@ -13,6 +13,9 @@ extern "C"
 
 #include <iostream>
 #include <cstdlib>
+#include <string>
+#include <fstream>
+#include <sys/stat.h>
 
 void ackCurrentResidual( unsigned GSIter, double err )
 {
@@ -94,7 +97,7 @@ int main( int argc, const char* argv[] )
 
 			  memcpy( ei_W.outerIndexPtr(), problem->W->p, ( problem->W->m+1 ) * sizeof( int ) ) ;
 			  memcpy( ei_W.innerIndexPtr(), problem->W->i, problem->W->nzmax * sizeof( int ) ) ;
-			  memcpy( ei_W.valuePtr(), problem->W->x, problem->W->nzmax * sizeof( double ) ) ;
+              memcpy( ei_W.valuePtr(), problem->W->x, problem->W->nzmax * sizeof( double ) ) ;
 
 			  if( 0 == problem->W->p[ problem->W->m ] )
 			  {
@@ -110,8 +113,8 @@ int main( int argc, const char* argv[] )
 					  {
 						  ei_W.innerIndexPtr()[ start + col ] = col ;
 					  }
-				  }
-//				  std::cout << ei_W << std::endl ;
+                  }
+
 			  }
 
 
@@ -134,6 +137,39 @@ int main( int argc, const char* argv[] )
 			  sol.u = u.data();
               sol.r = r.data() ;
               sol.l = NULL ;
+
+
+              std::string fname ( file ) ;
+              const std::size_t dir_pos = fname.rfind( '/' ) ;
+              const std::string dir_name = fname.substr( 0, dir_pos ) + "/fix" ;
+
+              struct stat info ;
+              int exists = stat( dir_name.c_str(), &info ) ;
+
+              if( exists == 0 && 0 != ( info.st_mode & S_IFDIR ) )
+              {
+                  std::string outfname = dir_name + "/" + fname.substr(dir_pos+1) ;
+
+                  if( ! std::ifstream( outfname.c_str() ) )
+                  {
+
+                      std::cout << "Re-writing problem to " << outfname << std::endl ;
+
+                      ei_W.prune(1.e-12) ;
+                      problem->W->nzmax = ei_W.nonZeros() ;
+                      memcpy( problem->W->p, ei_W.outerIndexPtr(), ( problem->W->m+1 ) * sizeof( int ) ) ;
+                      memcpy( problem->W->i, ei_W.innerIndexPtr(), problem->W->nzmax * sizeof( int ) ) ;
+                      memcpy( problem->W->x, ei_W.valuePtr(), problem->W->nzmax * sizeof( double ) ) ;
+
+                      if (fclib_write_local (problem, outfname.c_str()))
+                      {
+                          if (fclib_write_solution (&sol, outfname.c_str() ))
+                          {
+                              std::cout << "Ok." << std::endl ;
+                          }
+                      }
+                  }
+              }
 
 //			  std::cout << fclib_merit_local( problem, MERIT_2, &sol ) << std::endl ;
 
