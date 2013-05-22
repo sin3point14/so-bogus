@@ -98,9 +98,8 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 	typedef typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
 
 	ResVec res ( lhs.rows() ) ;
-	res.setZero() ;
 
-	lhs.template multiply< false >( rhs, res ) ;
+	lhs.template multiply< false >( rhs, res, 1, 0 ) ;
 	return res ;
 }
 
@@ -113,9 +112,8 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 
 	typedef typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
 	ResVec res ( lhs.matrix.cols() ) ;
-	res.setZero() ;
 
-	lhs.matrix.template multiply< true >( rhs, res ) ;
+	lhs.matrix.template multiply< true >( rhs, res, 1, 0 ) ;
 	return res ;
 }
 
@@ -128,10 +126,9 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 
 	typedef typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec ResVec ;
 	ResVec res ( rhs.cols() ) ;
-	res.setZero() ;
 
 	Eigen::Transpose< ResVec > resTrans ( res ) ;
-	rhs.template multiply< true >( lhs.transpose(), resTrans ) ;
+	rhs.template multiply< true >( lhs.transpose(), resTrans, 1, 0 ) ;
 	return res ;
 }
 
@@ -144,10 +141,9 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 
 	typedef typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec ResVec ;
 	ResVec res ( rhs.matrix.rows() ) ;
-	res.setZero() ;
 
 	Eigen::Transpose< ResVec > resTrans ( res ) ;
-	rhs.matrix.template multiply< false >( lhs.transpose(), resTrans ) ;
+	rhs.matrix.template multiply< false >( lhs.transpose(), resTrans, 1, 0 ) ;
 	return res ;
 }
 

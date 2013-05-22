@@ -329,9 +329,6 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(
 	m_majorIndex = productIndex.compressed ;
 	assert( m_majorIndex.valid ) ;
 
-	m_minorIndex.valid = false ;
-	m_transposeIndex.clear() ;
-	m_transposeIndex.valid = false ;
 	Finalizer::finalize( *this ) ;
 
 }

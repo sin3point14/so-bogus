@@ -240,7 +240,7 @@ public:
 	ConstTransposeReturnType transpose() const { return Transpose< SparseBlockMatrixBase< Derived > >( *this ) ; }
 
 	template < bool Transpose, typename RhsT, typename ResT >
-	void multiply( const RhsT& rhs, ResT& res ) const ;
+	void multiply( const RhsT& rhs, ResT& res, typename RhsT::Scalar alpha = 1, typename ResT::Scalar beta = 0 ) const ;
 
 	template < typename RhsT, typename ResT >
 	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
@@ -252,6 +252,15 @@ public:
 	template < typename Archive >
 	void serialize( Archive & ar, const unsigned int file_version ) ;
 #endif
+
+
+	//! Direct access to major index.
+	/*! Could be used in conjunction with prealloc() to devise a custom way of building the index.
+		Dragons, etc. */
+	SparseIndexType& majorIndex() { return m_majorIndex ; }
+
+	//! Resizes \c m_blocks and set \c m_nBlocks to \p nBlocks
+	void prealloc( std::size_t nBlocks ) ;
 
 protected:
 
@@ -267,8 +276,6 @@ protected:
 
 	//! Pushes a block at the back of \c m_blocks, and increments \c m_nBlocks
 	void allocateBlock( BlockPtr &ptr ) ;
-	//! Resizes \c m_blocks and set \c m_nBlocks
-	void prealloc( std::size_t nBlocks ) ;
 
 	void computeMinorIndex( UncompressedIndexType &cmIndex) const ;
 
@@ -317,6 +324,7 @@ protected:
 						 const RhsGetter &rhsGetter
 						  ) ;
 
+	//! Number of blocks on the matrix. Can be different of blocks().size(), for example when the transpose is cached.
 	std::size_t m_nBlocks ;
 
 	SparseIndexType m_majorIndex ;

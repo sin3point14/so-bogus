@@ -132,8 +132,10 @@ void SparseBlockMatrixBase< Derived >::allocateBlock( BlockPtr &ptr )
 template < typename Derived >
 void SparseBlockMatrixBase< Derived >::prealloc ( std::size_t nBlocks )
 {
+	clear() ;
 	m_blocks.resize( nBlocks ) ;
 	m_nBlocks = nBlocks ;
+	m_minorIndex.valid = false ;
 }
 
 template < typename Derived >

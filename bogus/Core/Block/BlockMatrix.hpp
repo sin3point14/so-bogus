@@ -58,12 +58,13 @@ public:
 	ConstTransposeReturnType transpose() const ;
 
 	//! Performs a matrix vector multiplication
-	/*! \tparam Transpose If true, performs \c res = \c M' * \c rhs, otherwise \c res = M * \c rhs
+	/*! \tparam Transpose If true, performs \c res = alpha * \c M' * \c rhs + beta * res,
+						  otherwise \c res = alpha * M * \c rhs + beta * res
 	  */
 	template < bool Transpose, typename RhsT, typename ResT >
-	void multiply( const RhsT& rhs, ResT& res ) const
+	void multiply( const RhsT& rhs, ResT& res, typename RhsT::Scalar alpha = 1, typename ResT::Scalar beta = 0 ) const
 	{
-		derived().template multiply< Transpose >( rhs, res ) ;
+		derived().template multiply< Transpose >( rhs, res, alpha, beta ) ;
 	}
 
 	//! Multiplies a given block-row of the matrix with \p rhs, omitting the diagonal block

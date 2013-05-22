@@ -14,12 +14,14 @@
 namespace bogus {
 
 //! Flags for compile-time tuning of the behavior of objects such as SparseBlockMatrix
-/*! Any combination if those is theoretically possible, using the binary or '|' operator */
+/*! Any combination if those is theoretically possible, using the binary or '|' operator.
+	By default, the matrix will use an uncompressed index, will be row-major, and not symmetric
+ */
 namespace flags
 {
 	enum {
 		NONE = 0,
-		//! Use a compressed index instead of a sparse one>
+		//! Use a compressed index
 		//! This adds some restrictions on the order in which elements can be inserted,
 		//! but can be more efficient and allow interoperability with other formats
 		//! such as MKL's BSR

@@ -15,21 +15,21 @@ namespace bogus {
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 ConjugateGradient< BlockMatrixType, PreconditionerType >::ConjugateGradient(
-        const BlockMatrixBase< BlockMatrixType > & matrix )
-    : Base( &matrix, matrix.rows(), NumTraits< Scalar >::epsilon() )
+		const BlockMatrixBase< BlockMatrixType > & matrix )
+	: Base( &matrix, matrix.rows(), NumTraits< Scalar >::epsilon() )
 {
 	setMatrix( matrix ) ;
 }
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 ConjugateGradient< BlockMatrixType, PreconditionerType >::ConjugateGradient()
-    : Base( NULL, 100, NumTraits< Scalar >::epsilon() )
+	: Base( NULL, 100, NumTraits< Scalar >::epsilon() )
 {
 }
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 void ConjugateGradient< BlockMatrixType, PreconditionerType >::setMatrix(
-        const BlockMatrixBase< BlockMatrixType > & matrix )
+		const BlockMatrixBase< BlockMatrixType > & matrix )
 {
 	m_matrix = &matrix ;
 	m_preconditioner.setMatrix( matrix ) ;
@@ -67,7 +67,6 @@ ConjugateGradient< BlockMatrixType, PreconditionerType >::solve( const RhsT &b, 
 
 	for( unsigned k = 0 ; k < m_maxIters ; ++k )
 	{
-		Mp.setZero() ;
 		m_matrix->template multiply< false >( p, Mp ) ;
 		const Scalar alpha = zr0 / ( p.dot( Mp ) ) ;
 		x += alpha * p ;
@@ -113,7 +112,7 @@ ConjugateGradient< BlockMatrixType, PreconditionerType >::solve_BiCG( const RhsT
 	Vector x_ = x ;
 
 	Vector r_ = b_ ;
-	m_matrix->template multiply< true >( x_, r_ );
+	m_matrix->template multiply< true >( x_, r_, 1, 1 );
 
 	Vector p( r.rows() ), p_ ( r_.rows() ) ;
 	m_preconditioner.template apply< false >( r,  p ) ;
@@ -127,14 +126,13 @@ ConjugateGradient< BlockMatrixType, PreconditionerType >::solve_BiCG( const RhsT
 
 	for( unsigned k = 0 ; k < m_maxIters ; ++k )
 	{
-		Mp.setZero() ;
-		m_matrix->template multiply< false >( p, Mp ) ;
+		m_matrix->template multiply< false >( p, Mp, 1, 0 ) ;
 		const Scalar alpha = zr0 / ( p_.dot( Mp ) ) ;
 		x  += alpha * p  ;
 		x_ += alpha * p_ ;
 
 		r  -= alpha * Mp ;
-		r_ -= alpha * ( m_matrix->transpose() * p_ );
+		m_matrix->template multiply< true >( p_, r_, -alpha, 1 ) ;
 
 		res = r.squaredNorm() * scale ;
 		this->m_callback.trigger( k, res ) ;
@@ -195,14 +193,12 @@ ConjugateGradient< BlockMatrixType, PreconditionerType >::solve_BiCGSTAB( const 
 		p = r + beta * ( p - w * nu ) ;
 		m_preconditioner.template apply< false >( p, y ) ;
 
-		nu.setZero() ;
-		m_matrix->template multiply< false >( y, nu ) ;
+		m_matrix->template multiply< false >( y, nu, 1, 0 ) ;
 		alpha = rho1 / r0h.dot( nu ) ;
 		s = r - alpha * nu ;
 		m_preconditioner.template apply< false >( s, z ) ;
 
-		t.setZero() ;
-		m_matrix->template multiply< false >( z, t ) ;
+		m_matrix->template multiply< false >( z, t, 1, 0 ) ;
 		m_preconditioner.template apply< false >( t, u ) ;
 
 		if ( NumTraits< Scalar >::isZero( u.squaredNorm() ) )
