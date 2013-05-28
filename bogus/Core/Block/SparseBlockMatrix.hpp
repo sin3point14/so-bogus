@@ -40,7 +40,7 @@ public:
 	typedef typename Traits::BlockType BlockType ;
 	typedef typename Traits::BlockPtr BlockPtr ;
 
-	//! Return value of \ref blockPtr() for non-existing block
+	//! Return value of blockPtr( Index, Index ) for non-existing block
 	static const BlockPtr InvalidBlockPtr ;
 
 	typedef typename Base::ConstTransposeReturnType  ConstTransposeReturnType ;
@@ -76,7 +76,7 @@ public:
 
 	//! Defines the column structure of the matrix
 	/*! \param nBlocks the number of columns of blocks
-		\param rowsPerBlock array containing the number of columns of each block
+		\param colsPerBlock array containing the number of columns of each block
 	*/
 	void setCols( const Index nBlocks, const unsigned* colsPerBlock ) ;
 	//! Same, using a std::vector
@@ -147,7 +147,7 @@ public:
 	//! \sa clear()
 	void setZero() { clear() ; }
 
-	//! Removes all blocks for which \c is_zero( \c block, \precision ) is \c true
+	//! Removes all blocks for which \c is_zero( \c block, \c precision ) is \c true
 	/*! This function compacts the blocks and rebuild the index, which can be slow */
 	template< typename PrecisionT >
 	void prune( const PrecisionT& precision ) ;
@@ -237,6 +237,9 @@ public:
 
 	//@}
 
+	//! \name Linear algebra
+	//@{
+
 	ConstTransposeReturnType transpose() const { return Transpose< SparseBlockMatrixBase< Derived > >( *this ) ; }
 
 	template < bool Transpose, typename RhsT, typename ResT >
@@ -248,11 +251,20 @@ public:
 	template < bool ColWise, typename LhsT, typename RhsT >
 	void setFromProduct( const Product< LhsT, RhsT > &prod ) ;
 
+	//@}
+
+	//! \name I/O
+	//@{
+
 #ifdef BOGUS_WITH_BOOST_SERIALIZATION
 	template < typename Archive >
 	void serialize( Archive & ar, const unsigned int file_version ) ;
 #endif
 
+	//@}
+
+	//! \name Unsafe API
+	//@{
 
 	//! Direct access to major index.
 	/*! Could be used in conjunction with prealloc() to devise a custom way of building the index.
@@ -261,6 +273,8 @@ public:
 
 	//! Resizes \c m_blocks and set \c m_nBlocks to \p nBlocks
 	void prealloc( std::size_t nBlocks ) ;
+
+	//@}
 
 protected:
 

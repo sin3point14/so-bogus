@@ -1,3 +1,5 @@
+namespace bogus {
+
 /*! 
 
 \page block Block
@@ -131,3 +133,7 @@ bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC | bogus::flag
 
 
 */
+
+
+} //namespace bogus
+

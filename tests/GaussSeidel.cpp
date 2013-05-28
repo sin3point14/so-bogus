@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-void ackCurrentResidual( unsigned GSIter, double err )
+static void ackCurrentResidual( unsigned GSIter, double err )
 {
 	EXPECT_TRUE( 0 == ( GSIter % 25 ) ) ;
 	std::cout << "GS: " << GSIter << " ==> " << err << std::endl ;

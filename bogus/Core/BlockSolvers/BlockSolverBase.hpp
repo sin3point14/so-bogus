@@ -16,6 +16,7 @@
 namespace bogus
 {
 
+//! Base class for solvers that operate on BlockMatrixBase matrices
 template < typename BlockMatrixType >
 class BlockSolverBase
 {
@@ -28,9 +29,16 @@ public:
 
 	virtual ~BlockSolverBase() { }
 
+	//! For iterative solvers: sets the maximum number of iterations
 	void setMaxIters( unsigned maxIters ) { m_maxIters = maxIters ; }
+	//! For iterative solvers: sets the solver tolerance
 	void setTol( Scalar tol ) { m_tol = tol ; }
 
+	//! Callback hook; will be triggered every N iterations, depending on the solver
+	/*! Useful to monitor the convergence of the solver. Can be connected to a function
+		that takes an \c unsigned and a \c Scalar as parameters. The first argument will be
+		the current iteration number, and the second the current residual.
+		\sa Signal< unsigned, Scalar > */
 	CallBackType &callback() { return m_callback ; }
 
 protected:

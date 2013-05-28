@@ -14,12 +14,12 @@
 namespace bogus {
 
 //! Flags for compile-time tuning of the behavior of objects such as SparseBlockMatrix
-/*! Any combination if those is theoretically possible, using the binary or '|' operator.
-	By default, the matrix will use an uncompressed index, will be row-major, and not symmetric
+/*! Any combination if those is possible, using the 'binary or' ('|') operator.
  */
 namespace flags
 {
 	enum {
+		//! Default value: the matrix will use an uncompressed index, will be row-major, and not symmetric
 		NONE = 0,
 		//! Use a compressed index
 		//! This adds some restrictions on the order in which elements can be inserted,
@@ -28,8 +28,11 @@ namespace flags
 		COMPRESSED = 0x1,
 		//! Store and index blocks in a column major way
 		COL_MAJOR = 0x2,
-		//! Store only half the matrix, or rather the triangular part which verifies ( \c inner <= \c outer ),
-		//! \c outer being the row and \c inner the column for row-major matrices
+		//! Store only half the matrix, or rather the triangular part which verifies \c inner \c <= \c outer ,
+		/*! ( \c outer being the row and \c inner the column for row-major matrices )
+		  * Linear algebra operations, such as matrix vector and matrix matrix multiplication, will work
+		  * as if the matrix was fully populated, but at a lower memory access cost
+		  */
 		SYMMETRIC = 0x4
 	} ;
 }

@@ -51,7 +51,7 @@ public:
 	unsigned nDegreesOfFreedom() const ;
 	unsigned nContacts() const ;
 
-	void setOutStream( std::ostream *out ) { m_out = out ; }
+	void setOutStream( std::ostream *out ) ;
 
 	bool dumpToFile( const char* fileName, const double *r0 = 0 ) const ;
 	bool fromFile( const char* fileName, double* &r0 ) ;

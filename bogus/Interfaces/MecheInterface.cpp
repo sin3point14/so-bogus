@@ -199,13 +199,21 @@ double MecheFrictionProblem::solve(double *r,
 		Eigen::VectorXd::Map( v, m ) = m_primal->MInvHt * r_loc -  m_primal->MInvf ;
 	}
 
-	*m_out << "Max coeff : " << r_loc.lpNorm< Eigen::Infinity >() << std::endl ;
+	if( m_out )
+	{
+		*m_out << "Max coeff : " << r_loc.lpNorm< Eigen::Infinity >() << std::endl ;
+	}
 
 	// r to world coords
 	Eigen::VectorXd::Map( r, 3*n ) = m_primal->E * r_loc ;
 
 
 	return res ;
+}
+
+void MecheFrictionProblem::setOutStream( std::ostream *out )
+{
+	m_out = out ;
 }
 
 #ifdef BOGUS_WITH_BOOST_SERIALIZATION

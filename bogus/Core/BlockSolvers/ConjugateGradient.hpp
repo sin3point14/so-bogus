@@ -16,8 +16,16 @@
 namespace bogus
 {
 
+//! Preconditionned Conjugate Gradient and variations
+/*!
+  \tparam BlockMatrixT The type of system matrix, which should be a subclass of BlockMatrixBase
+  \tparam PreconditionerType The preconditioner type. It should accept BlockMatrixT as a template parameter.
+	The default value, TrivialPreconditioner, means that no preconditioning will be done.
+	\sa TrivialPreconditioner, DiagonalPreconditioner, DiagonalLUPreconditioner, DiagonalLDLTPreconditioner
+  */
+
 template < typename BlockMatrixType,
-           template< typename BlockMatrixT > class PreconditionerType = TrivialPreconditioner >
+		   template< typename BlockMatrixT > class PreconditionerType = TrivialPreconditioner >
 class ConjugateGradient : public BlockSolverBase< BlockMatrixType >
 {
 public:
@@ -27,17 +35,26 @@ public:
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 
+	//! Default constructor -- you will have to call setMatrix() before using any of the solve() functions
 	ConjugateGradient( ) ;
+	//! Constructor with the system matrix -- initializes preconditioner
 	explicit ConjugateGradient( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
 
+	//! Sets the system matrix and initializes the preconditioner
 	void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
 
+	//! Solves ( m_matrix * \p x = \p b ) using the Conjugate Gradient algorithm
+	/*! Works for symmetric positive definite linear systems.*/
 	template < typename RhsT, typename ResT >
 	Scalar solve( const RhsT &b, ResT &x ) const ;
 
+	//! Solves ( m_matrix * \p x = \p b ) using the BiConjugate Gradient algorithm
+	/*! Works for non-symmetric linear systems. Convergence not guaranteed */
 	template < typename RhsT, typename ResT >
 	Scalar solve_BiCG( const RhsT &b, ResT &x ) const ;
 
+	//! Solves ( m_matrix * \p x = \p b ) using the BiConjugate Gradient stabilized algorithm
+	/*! Works for non-symmetric linear systems. Convergence not guaranteed */
 	template < typename RhsT, typename ResT >
 	Scalar solve_BiCGSTAB( const RhsT &b, ResT &x ) const ;
 

@@ -22,7 +22,7 @@ So-Bogus regroups a set of loosely connected components, architectured as follow
 
 \ref core is a set of heavily templated, header-only libraries.
 \ref block is self-contained and independant from the rest of the libraries,
-\ref block_solvers makes use of \ref blocks, and \ref soc is probably rather useless without the two previous ones. 
+\ref block_solvers makes use of \ref block, and \ref soc is probably rather useless without the two previous ones. 
 
 \subsection core_conventions Header Naming Conventions
 For each module of the \c Core library, several header files are available, follwing this naming pattern:

@@ -184,28 +184,28 @@ ConjugateGradient< BlockMatrixType, PreconditionerType >::solve_BiCGSTAB( const 
 	Vector nu = Vector::Zero( r.rows() );
 	Vector p = nu ;
 	Vector s, t ( m_matrix->rows() ) ;
-	Vector u( r.rows() ), y( r.rows() ), z( t.rows() ) ;
+	Vector y( r.rows() ), z( t.rows() ) ;
 
 	for( unsigned k = 0 ; k < m_maxIters ; ++k )
 	{
 		rho1 = r0h.dot( r ) ;
+
 		const Scalar beta = ( rho1 / rho0 ) * ( alpha / w ) ;
 		p = r + beta * ( p - w * nu ) ;
 		m_preconditioner.template apply< false >( p, y ) ;
+		m_matrix->template multiply< false >( y, nu ) ;
 
-		m_matrix->template multiply< false >( y, nu, 1, 0 ) ;
 		alpha = rho1 / r0h.dot( nu ) ;
 		s = r - alpha * nu ;
 		m_preconditioner.template apply< false >( s, z ) ;
+		m_matrix->template multiply< false >( z, t ) ;
 
-		m_matrix->template multiply< false >( z, t, 1, 0 ) ;
-		m_preconditioner.template apply< false >( t, u ) ;
-
-		if ( NumTraits< Scalar >::isZero( u.squaredNorm() ) )
+		const Scalar nt2 = t.squaredNorm() ;
+		if ( nt2 < NumTraits< Scalar >::epsilon( ) )
 		{
 			w = 1 ;
 		} else {
-			w = z.dot( u ) / u.squaredNorm() ;
+			w = t.dot( s ) / nt2 ;
 		}
 
 		x += alpha*y + w*z ;

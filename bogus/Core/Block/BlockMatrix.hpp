@@ -79,7 +79,7 @@ public:
 		derived().splitRowMultiply( row, rhs, res ) ;
 	}
 
-	//! Returns a reference to the content of the digonal block of row \param p
+	//! Returns a reference to the content of the digonal block of row \param row
 	/*! \warning If this block does not exist, the behavior of this function is undefined */
 	const BlockType& diagonal( const Index row ) const
 	{

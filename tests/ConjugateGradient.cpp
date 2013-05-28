@@ -5,6 +5,11 @@
 
 #include <gtest/gtest.h>
 
+static void ackCurrentResidual( unsigned GSIter, double err )
+{
+	std::cout << "CG: " << GSIter << " ==> " << err << std::endl ;
+}
+
 TEST( ConjugateGradient, CG )
 {
 	const Eigen::Vector3d expected_1( .5, .5, .5 ) ;
@@ -18,6 +23,7 @@ TEST( ConjugateGradient, CG )
 	sbm.finalize() ;
 
 	bogus::ConjugateGradient< Mat > cg( sbm ) ;
+	//cg.callback().connect( &ackCurrentResidual );
 
 	Eigen::Vector3d rhs, res ;
 	rhs.setOnes( ) ;
@@ -43,20 +49,20 @@ TEST( ConjugateGradient, CG )
 
 	res.setZero() ;
 	cg.setMaxIters( 12 );
-    cg.solve_BiCGSTAB( rhs, res ) ;
+	cg.solve_BiCGSTAB( rhs, res ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 }
 
 TEST( ConjugateGradient, Preconditioner )
 {
 
-    typedef Eigen::Matrix< double, 5, 5 > Block ;
-    Block M_L ;
-    M_L <<  1.72194,           0 ,            0,            0,            0,
-           0.027804,      1.78422,            0,            0,            0,
-            0.26607,     0.097189,            0,            0,            0,
-            0.96157,      0.71437,      0.98738,      1.66828,            0,
-           0.024571,     0.046486,      0.94515,      0.38009,     1.087634 ;
+	typedef Eigen::Matrix< double, 5, 5 > Block ;
+	Block M_L ;
+	M_L <<  1.72194,           0 ,            0,            0,            0,
+		   0.027804,      1.78422,            0,            0,            0,
+			0.26607,     0.097189,            0,            0,            0,
+			0.96157,      0.71437,      0.98738,      1.66828,            0,
+		   0.024571,     0.046486,      0.94515,      0.38009,     1.087634 ;
 
 	typedef bogus::SparseBlockMatrix< Block > Mat ;
 	Mat sbm ;
@@ -99,7 +105,7 @@ TEST( ConjugateGradient, Preconditioner )
 	EXPECT_GT( 1.e-16, err ) ;
 
 #if EIGEN_VERSION_AT_LEAST(3,1,0)
-    typedef Eigen::SparseMatrix< double > SparseBlock ;
+	typedef Eigen::SparseMatrix< double > SparseBlock ;
 	typedef bogus::SparseBlockMatrix< SparseBlock > SparseMat ;
 	SparseMat ssbm ;
 	ssbm.setRows( 1, 5 ) ;

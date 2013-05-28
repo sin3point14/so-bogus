@@ -16,6 +16,7 @@
 namespace bogus
 {
 
+//! Non-smooth Gauss-Seidel iterative solver
 template < typename BlockMatrixType >
 class GaussSeidel : public BlockSolverBase< BlockMatrixType >
 {
@@ -36,12 +37,12 @@ public:
 
 	void setDeterministic( bool deterministic ) { m_deterministic = deterministic ; }
 
-	
+
 	// Debug
 	void setEvalEvery( unsigned evalEvery ) { m_evalEvery = evalEvery ; }
 	void setSkipTol  ( unsigned skipTol   ) { m_skipTol   = skipTol   ; }
 	void setSkipIters( unsigned skipIters ) { m_skipIters = skipIters ; }
-	
+
 protected:
 	using Base::m_matrix ;
 	using Base::m_maxIters ;

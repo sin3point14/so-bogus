@@ -12,6 +12,7 @@
 
 namespace bogus {
 
+//! Trivial ( identity ) preconditioner. Does nothing.
 template < typename MatrixType >
 class TrivialPreconditioner
 {
@@ -26,16 +27,31 @@ public:
 	}
 } ;
 
-template < typename MatrixType >
+//! Diagonal preconditioner
+/*! Defines the preconditioner matrix \f$ P^{-1} \f$ as a diagonal matrix
+	where each of the coefficient is the scalar inverse of the corresponding
+	diagonal coefficient in the system matrix
+	Works well for diagonally dominant matrices.
+	*/
 class DiagonalPreconditioner
 {
 } ;
 
+//! Diagonal Block-LU preconditioner
+/*! Defines the preconditioner matrix \f$ P^{-1} \f$ as a block-diagonal matrix
+	where each diagonal block is the LU factorization of the corresponding
+	diagonal block in the system matrix
+	*/
 template < typename MatrixType >
 class DiagonalLUPreconditioner
 {
 } ;
 
+//! Diagonal Block-LDLT preconditioner
+/*! Defines the preconditioner matrix \f$ P^{-1} \f$ as a block-diagonal matrix
+	where each diagonal block is the LDLT factorization of the corresponding
+	diagonal block in the system matrix
+	*/
 template < typename MatrixType >
 class DiagonalLDLTPreconditioner
 {
