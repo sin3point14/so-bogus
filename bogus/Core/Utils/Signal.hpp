@@ -19,6 +19,7 @@ struct SignalTraits
 template< typename Arg1, typename Arg2 = void >
 struct Signal ;
 
+//! Base class for Signal of different arities
 template< typename Derived >
 class SignalBase
 {
@@ -30,10 +31,15 @@ public:
 		disconnectAll();
 	}
 
+	//! Disconnects all listeners
 	void disconnectAll() ;
 
+	//! Connects the signal to a free function
+	/*! Its signature should be func( Arg 1, ..., Arg n ) ; */
 	void connect( typename Traits::Function::Type func ) ;
 
+	//! Connects the signal to a member function
+	/*! Its signature should be T::member_func( Arg 1, ..., Arg n ) ; */
 	template <typename T >
 	void connect( T& object, typename Traits::template Method< T >::Type member_func ) ;
 
@@ -98,9 +104,18 @@ struct SignalTraits< Signal< Arg, void > >
 
 } ;
 
+//! Signal class, to which an arbitrary number of listeners can be connected
+/*!
+  Each time the Signal::trigger() method is called with arguments ( Arg 1, ..., Arg n ),
+  the listener functions are called with those same arguments.
+  The number and types of arguments are determined by the template parameters of the Signal class.
+
+  At the moment, only signals with 1 or 2 parameters are supported.
+  */
 template< typename Arg1, typename Arg2 >
 struct Signal : public SignalBase< Signal< Arg1, Arg2 > >
 {
+	//! Triggers the signal
 	void trigger( Arg1 arg1, Arg2 arg2 ) const
 	{
 		typedef SignalBase< Signal< Arg1, Arg2 > > Base ;
@@ -114,6 +129,7 @@ struct Signal : public SignalBase< Signal< Arg1, Arg2 > >
 template< typename Arg >
 struct Signal< Arg, void > : public SignalBase< Signal< Arg, void > >
 {
+	//! Triggers the signal
 	void trigger( Arg arg ) const
 	{
 		typedef SignalBase< Signal< Arg, void > > Base ;

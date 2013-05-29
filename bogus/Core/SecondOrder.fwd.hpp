@@ -12,15 +12,19 @@
 namespace bogus
 {
 
+//! Namespace for configuration properties of local Second Order Cone solver
 namespace local_soc_solver
 {
+//! Strategy to be used by the local SOC solver.
+/*! Note that some strategies may be unavailable for some loval problem types,
+	in which case the solver will revert to the PureNewton strategy */
 enum Strategy
 {
-	PureNewton
+	PureNewton                //!< Newton algorithm on the SOC FischerBurmeister function. \sa NonSmoothNewton
 #ifndef BOGUS_WITHOUT_EIGEN
-	,PureEnumerative
-	,Hybrid
-	,RevHybrid
+	,PureEnumerative          //!< Enumerative algorithm, such as describer in Appendix B of \cite DBB11
+	,Hybrid                   //!< Newton algorithm, then Enumerative as failsafe
+	,RevHybrid                //!< Enumerative algorithm, then Newton to refine the solution
 #endif
 } ;
 }

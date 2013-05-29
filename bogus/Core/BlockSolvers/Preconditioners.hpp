@@ -33,6 +33,7 @@ public:
 	diagonal coefficient in the system matrix
 	Works well for diagonally dominant matrices.
 	*/
+template < typename MatrixType >
 class DiagonalPreconditioner
 {
 } ;

@@ -1,5 +1,6 @@
 /*! 
-  \file Main.h Main Doxygen documentation page
+  \file Main.h 
+  \brief Main Doxygen documentation page
 */
 
 //! Main namespace for So-Bogus
@@ -34,9 +35,6 @@ For the \ref block module, the file Block.io.hpp includes additional definitions
 
 \subsection core_configuration Configuration
 
-\subsubsection block_solvers BlockSolvers
-
-\subsubsection soc SecondOrder
 
 \section interfaces Interfaces
 

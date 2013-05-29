@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -13,6 +13,7 @@
 
 namespace bogus {
 
+//! Binary Fischer-Burmeister function and jacobian computation
 template< unsigned Dimension, typename Scalar >
 struct FBBaseFunction
 {
@@ -20,13 +21,20 @@ struct FBBaseFunction
 	typedef typename Traits::Vector Vector ;
 	typedef typename Traits::Matrix Matrix ;
 
+	//! Computation of the FB function on the cone of aperture \p mu
 	static void compute( const Scalar mu, const Vector& x, const Vector& y, Vector& fb ) ;
 
+	//! Computation of the FB function with its jacobian on the cone of aperture \p mu
 	static void computeJacobian(
 				const Scalar mu, const Vector& x, const Vector& y,
 			Vector& fb, Matrix& dFb_dx, Matrix& dFb_dy ) ;
 
-private:
+	//! Computation of the FB function and (optionally) its jacobian on the canonical second order cone
+	/*!
+	  Computes \f$ fb := x + y - \left( x \circ x + y \circ y \right)^{ \frac 1 2 } \f$
+	  according to \cite Fukushima02
+	  \tparam JacobianAsWell If true, computes the jacobian matrices \p dFb_dx and \p dFb_dy
+	  */
 	template <bool JacobianAsWell >
 	static void compute(
 			const Vector& x, const Vector& y, Vector& fb,
@@ -34,6 +42,8 @@ private:
 
 } ;
 
+//! Fischer-Burmeister function and jacobian computation, with optional change of variable
+/*! \tparam DeSaxceCOV whther to perform the DeSaxce change of variable. \sa SOCLaw */
 template< unsigned Dimension, typename Scalar, bool DeSaxceCOV >
 class FischerBurmeister
 {
@@ -44,6 +54,7 @@ public:
   typedef typename Traits::Vector Vector ;
   typedef typename Traits::Matrix Matrix ;
 
+  //! Constructs an object modeling the function \f$ f : x \mapsto FB \left( mu, scaling \times x, A x + b \right) \f$
   FischerBurmeister(
 	const Scalar mu,
 	const Matrix& A,
@@ -52,9 +63,12 @@ public:
 	  : m_mu( mu ), m_scaling( scaling ), m_A( A ), m_b( b )
   {}
 
+  //! Sets \f$ fb := f(x) \f$
   void compute( const Vector& x, Vector& fb ) const ;
+  //! Sets \f$ fb := f(x) \f$ and \f$ dFb\_dx := \frac {dF} {dx} \f$
   void computeJacobian( const Vector& x, Vector& fb, Matrix& dFb_dx ) const ;
 
+  //! Sets \f$ fb :=  FB \left( mu, x, y \right) \f$
   static void compute( const Scalar mu, const Vector& x, const Vector& y, Vector& fb ) ;
 
 private:

@@ -1,9 +1,25 @@
+/*! 
+  \file Block.h 
+  \brief High level documentation for the Core/Block module
+*/
+
 namespace bogus {
 
 /*! 
 
 \page block Block
 \tableofcontents
+
+\section block_basics Basics
+
+To use the library, 
+\code
+#include <bogus/Core/Block.impl.hpp>
+
+// If you need serialization capabilities
+#include <bogus/Core/Block.io.hpp>
+\endcode
+
 
 The main user-fronting class of this library is SparseBlockMatrix, even if most its method are actually implemented by SparseBlockMatrixBase.
 
@@ -13,6 +29,7 @@ The possible values for the \ref flags are a combination of:
  - \ref flags::COMPRESSED 
  - \ref flags::COL_MAJOR
  - \ref flags::SYMMETRIC
+
 
 \section block_create Creating a SparseBlockMatrix
 

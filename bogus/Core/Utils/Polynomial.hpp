@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -14,6 +14,7 @@ namespace bogus
 
 namespace polynomial {
 
+//! Filter values for getRealRoots() functions
 enum RealRootsFilter
 {
 	StrictlyPositiveRoots,
@@ -37,6 +38,12 @@ struct PossiblyDegenerateRootsFinder
 								  RealRootsFilter filter = AllRoots ) ;
 } ;
 
+//! Finds the real roots of a polynomial of dimension \p Dimension whose leading coeffcient is 1
+/*! \param coeffs the polynomial's coefficients, ordered by increasing degree [ x^0, ... , x^(Dimension-1) ]
+	\param the real roots, in arbitrary order
+	\param filter An optional filter
+	\return the number of real roots found
+*/
 template< unsigned Dimension, typename Scalar >
 unsigned getRealRoots( const Scalar (&coeffs)[Dimension],
 					   Scalar (&realRoots)[Dimension],
@@ -45,6 +52,12 @@ unsigned getRealRoots( const Scalar (&coeffs)[Dimension],
 	return RootsFinder< Dimension, Scalar >::getRealRoots( coeffs, realRoots, filter ) ;
 }
 
+//! Finds the real roots of a polynomial of dimension \p Dimension with arbitrary leading coefficient
+/*! \param coeffs the polynomial's coefficients, ordered by increasing degree [ x^0, ... , x^(Dimension) ]
+	\param the real roots, in arbitrary order
+	\param filter An optional filter
+	\return the number of real roots found
+*/
 template< unsigned Dimension, typename Scalar >
 unsigned getRealRoots( Scalar (&coeffs)[Dimension+1],
 					   Scalar (&realRoots)[Dimension],

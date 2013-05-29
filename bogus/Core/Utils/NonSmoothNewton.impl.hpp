@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -29,7 +29,7 @@ typename NonSmoothNewton< NSFunction >::Scalar NonSmoothNewton<NSFunction>::solv
 
   Vector F ;
   m_func.compute( x, F ) ;
-  const Scalar Phi_init = F.squaredNorm() ;
+  const Scalar Phi_init = .5 * F.squaredNorm() ;
 
   if( Phi_init < m_tol ) return Phi_init ;
 
@@ -37,7 +37,7 @@ typename NonSmoothNewton< NSFunction >::Scalar NonSmoothNewton<NSFunction>::solv
   Vector x_best = Vector::Zero() ;
 
   m_func.compute( x_best, F ) ;
-  const Scalar Phi_zero = F.squaredNorm() ;
+  const Scalar Phi_zero = .5 * F.squaredNorm() ;
 
   if( Phi_zero < Phi_init ) {
 	Phi_best = Phi_zero ;
@@ -57,7 +57,7 @@ typename NonSmoothNewton< NSFunction >::Scalar NonSmoothNewton<NSFunction>::solv
   for( unsigned iter = 0 ; iter < m_maxIters ; ++iter )
   {
 	m_func.computeJacobian( x, F, dF_dx ) ;
-	const Scalar Phi = F.squaredNorm() ;
+	const Scalar Phi = .5 * F.squaredNorm() ;
 
 	if( Phi < m_tol ) return Phi ;
 	if( Phi < Phi_best ) {

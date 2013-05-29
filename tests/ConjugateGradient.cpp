@@ -108,10 +108,8 @@ TEST( ConjugateGradient, Preconditioner )
 	typedef Eigen::SparseMatrix< double > SparseBlock ;
 	typedef bogus::SparseBlockMatrix< SparseBlock > SparseMat ;
 	SparseMat ssbm ;
-	ssbm.setRows( 1, 5 ) ;
-	ssbm.setCols( 1, 5 ) ;
-	ssbm.insertBack(0,0) =  sbm.block(0).sparseView() ;
-	ssbm.finalize() ;
+	ssbm.cloneStructure( sbm ) ;
+	ssbm.block(0) =  sbm.block(0).sparseView() ;
 
 	res.setZero() ;
 	bogus::ConjugateGradient< SparseMat > scg( ssbm ) ;
