@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <cassert>
+#include <algorithm>
 
 namespace bogus
 {
@@ -64,6 +65,13 @@ struct SparseBlockIndex : public SparseBlockIndexBase< _Index >
 
 	void finalize()
 	{
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
+		for( unsigned i = 0 ; i < outer.size() ; ++i )
+		{
+			std::sort( outer[i].begin(), outer[i].end() ) ;
+		}
 	}
 
 	void clear()
@@ -244,7 +252,8 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 	//! is always required once insertion is finished
 	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
 	{
-		valid &= ( ptr == (BlockPtr) ( base + inner.size() ) ) ;
+		valid &= ( ptr == (BlockPtr) ( base + inner.size() ) )
+				&& ( 0 == outer[ outIdx+1 ] || inIdx > inner.back() ) ;
 		++outer[ outIdx+1 ] ;
 		inner.push_back( inIdx ) ;
 	}

@@ -19,14 +19,16 @@ namespace bogus
 template < typename BlockMatrixType >
 GaussSeidel< BlockMatrixType >::GaussSeidel( )
 	: Base( NULL, 250, 1.e-6 ), m_deterministic( true ),
-	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 )
+	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 ),
+	  m_autoRegularization( 0. )
 {
 }
 
 template < typename BlockMatrixType >
 GaussSeidel< BlockMatrixType >::GaussSeidel( const BlockMatrixBase< BlockMatrixType > & M )
 	: Base( &M, 250, 1.e-6 ), m_deterministic( true ),
-	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 )
+	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 ),
+	  m_autoRegularization( 0. )
 {
 	setMatrix( M ) ;
 }
@@ -40,10 +42,18 @@ void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatr
 	const unsigned n = M.rowsOfBlocks() ;
 	m_localMatrices.resize( n ) ;
 	m_scaling.resize( n*d ) ;
+	m_regularization.resize( n ) ;
 
 	for( unsigned i = 0 ; i < n ; ++i )
 	{
 		m_localMatrices[i] = M.diagonal( i ) ;
+
+		if( m_autoRegularization > 0. )
+		{
+			m_regularization(i) = std::max( 0., m_autoRegularization - m_localMatrices[i].eigenvalues().real().minCoeff() ) ;
+			m_localMatrices[i].diagonal().array() += m_regularization(i) ;
+		} else m_regularization(i) = 0. ;
+
 		GlobalProblemTraits::segment( i, m_scaling )
 				.setConstant( std::max( 1., m_localMatrices[i].trace() ) );
 	}
@@ -104,6 +114,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 			m_matrix->splitRowMultiply( i, x, lb ) ;
 			lx = GlobalProblemTraits::segment( i, x ) ;
 			ldx = -lx ;
+			lb -= m_regularization(i) * lx ;
 
 			const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ d*i ] ) ;
 			ldx += lx ;

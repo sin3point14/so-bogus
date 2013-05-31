@@ -16,7 +16,25 @@
 namespace bogus
 {
 
-//! Projected Gauss-Seidel iterative solver. See solve() and \cite JAJ98.
+//! Projected Gauss-Seidel iterative solver.
+/*!
+   Works by taking into account only one block-row of the system at a time, and iterating
+   several times over the whole set of rows several times until convergence has been achieved.
+
+   Each inner iteration of the algorithm will try to solve the local problem
+	  \f[
+		\left\{
+		  \begin{array}{rcl}
+			y_i^{k+1} &=& M_{i,i} x_i^{k+1}  + b_i^{k} \\
+			&s.t.& law (x^{k+1},y^{k+1})
+		  \end{array}
+		\right.
+	  \f]
+	where \b k is the current global iteration, \b i the current row
+	and \f[ b_i^{k} := b_i + \sum_{ j < i }{ M_{i,j}x_j^{k+1} } +  \sum_{ j > i }{ M_{i,j}x_j^{k} } \f]
+
+   See also solve() and \cite JAJ98.
+  */
 template < typename BlockMatrixType >
 class GaussSeidel : public BlockSolverBase< BlockMatrixType >
 {
@@ -59,6 +77,30 @@ public:
 	//! Sets whether the solver is allowed to trade off determiniticity for speed
 	void setDeterministic( bool deterministic ) { m_deterministic = deterministic ; }
 
+	//! Sets the auto-regularization coefficient
+	/*!
+	  The regularization works by slightly altering the local problems, so at each iteration
+	  we try to solve
+	  \f[
+		\left\{
+		  \begin{array}{rcl}
+			y^{k+1} &=& ( M + \alpha I ) x^{k+1} - \alpha x^k + b^{k} \\
+			&s.t.& law (x^{k+1},y^{k+1})
+		  \end{array}
+		\right.
+	  \f]
+	  where \f$\alpha\f$ is the regularization coefficient.
+
+	  Note that as \f$ | x^{k+1} - x^{k} | \rightarrow 0 \f$ when the algorithm converges, we are still
+	  trying to find a solution of the same global problem.
+
+	  For under-determined problems, regularization might helps preventing \b x reaching problematically high values.
+	  Setting \f$\alpha\f$ to a too big value will however degrade the convergence of the global algorithm.
+
+	  \param maxRegul If greater than zero, then positive terms will be added to the diagonal
+	  of the local matrices so that their minimal eigenvalue become greater than \p maxRegul.
+	  */
+	void setAutoRegularization( Scalar maxRegul ) { m_autoRegularization = maxRegul ; }
 
 	// Debug
 
@@ -77,12 +119,14 @@ protected:
 
 	typename BlockContainerTraits< LocalMatrixType >::Type m_localMatrices ;
 	typename GlobalProblemTraits::DynVector m_scaling ;
+	typename GlobalProblemTraits::DynVector m_regularization ;
 
 	bool m_deterministic ;
 
 	unsigned m_evalEvery ;
 	Scalar m_skipTol ;
-	Scalar m_skipIters ;
+	unsigned m_skipIters ;
+	Scalar m_autoRegularization ;
 } ;
 
 } //namespace bogus

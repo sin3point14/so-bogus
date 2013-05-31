@@ -158,7 +158,7 @@ double MecheFrictionProblem::solve(double *r,
 		double tol,                  //!< Gauss-Seidel tolerance. 0. means GS's default
 		unsigned maxIters, //!< Max number of iterations. 0 means GS's default
 		bool staticProblem,
-		double staticRegularization
+		double regularization
 								   )
 {
 	assert( m_primal ) ;
@@ -175,7 +175,7 @@ double MecheFrictionProblem::solve(double *r,
 		{
 			for( unsigned i = 0 ; i < n ; ++ i )
 			{
-				m_dual->W.diagonal( i ).diagonal() += Eigen::Vector3d::Constant( staticRegularization ) ;
+				m_dual->W.diagonal( i ).diagonal() += Eigen::Vector3d::Constant( regularization ) ;
 			}
 		}
 	}
@@ -190,6 +190,7 @@ double MecheFrictionProblem::solve(double *r,
 	gs.setDeterministic( deterministic );
 
 	gs.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual );
+	gs.setAutoRegularization( regularization ) ;
 
 	const double res = m_dual->solveWith( gs, r_loc.data(), staticProblem ) ;
 

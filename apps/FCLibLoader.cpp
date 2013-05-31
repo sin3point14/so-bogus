@@ -24,7 +24,7 @@ void ackCurrentResidual( unsigned GSIter, double err )
 
 template< unsigned Dimension, typename EigenDerived >
 static double solve( const fclib_local* problem, const Eigen::SparseMatrixBase< EigenDerived >& ei_W,
-                     Eigen::VectorXd &r, Eigen::VectorXd &u )
+					 Eigen::VectorXd &r, Eigen::VectorXd &u )
 {
 	bogus::DualFrictionProblem< Dimension > dual ;
 	bogus::convert( ei_W, dual.W ) ;
@@ -41,7 +41,7 @@ static double solve( const fclib_local* problem, const Eigen::SparseMatrixBase< 
 	double res = dual.solveWith( gs, r.data() ) ;
 
 	u = dual.W * r + dual.b ;
-	
+
 	return res ;
 }
 
@@ -50,8 +50,8 @@ int main( int argc, const char* argv[] )
 
   if( argc < 2 )
   {
-    std::cerr << " Please provide a problem data file " << std::endl ;
-    return 1 ;
+	std::cerr << " Please provide a problem data file " << std::endl ;
+	return 1 ;
   }
 
   const char* file = argv[1] ;
@@ -79,17 +79,17 @@ int main( int argc, const char* argv[] )
 	  if( problem->W && !problem->V && !problem->R )
 	  {
 		  std::cout << " Pure " << d << "D Coulomb friction problem with "
-		  			<< n << " contacts " << std::endl ;
+					<< n << " contacts " << std::endl ;
 
 		  if( problem->W->nz == -2 )
 		  {
 			  std::cout << " Compressed row storage " << problem->W->m << " / " << problem->W->n << " / " << problem->W->nzmax << std::endl ;
 
 			  /*
-              Eigen::MappedSparseMatrix< double, Eigen::RowMajor > ei_W
-                      ( problem->W->m, problem->W->n,
-                        problem->W->nzmax, problem->W->p, problem->W->i,
-                        problem->W->x ) ;
+			  Eigen::MappedSparseMatrix< double, Eigen::RowMajor > ei_W
+					  ( problem->W->m, problem->W->n,
+						problem->W->nzmax, problem->W->p, problem->W->i,
+						problem->W->x ) ;
 			  */
 			  Eigen::SparseMatrix< double, Eigen::RowMajor > ei_W ;
 			  ei_W.resize( problem->W->m, problem->W->n );
@@ -97,7 +97,7 @@ int main( int argc, const char* argv[] )
 
 			  memcpy( ei_W.outerIndexPtr(), problem->W->p, ( problem->W->m+1 ) * sizeof( int ) ) ;
 			  memcpy( ei_W.innerIndexPtr(), problem->W->i, problem->W->nzmax * sizeof( int ) ) ;
-              memcpy( ei_W.valuePtr(), problem->W->x, problem->W->nzmax * sizeof( double ) ) ;
+			  memcpy( ei_W.valuePtr(), problem->W->x, problem->W->nzmax * sizeof( double ) ) ;
 
 			  if( 0 == problem->W->p[ problem->W->m ] )
 			  {
@@ -113,7 +113,7 @@ int main( int argc, const char* argv[] )
 					  {
 						  ei_W.innerIndexPtr()[ start + col ] = col ;
 					  }
-                  }
+				  }
 
 			  }
 
@@ -128,55 +128,55 @@ int main( int argc, const char* argv[] )
 			  } else {
 				  res = solve< 2u >( problem, ei_W, r, u ) ;
 			  }
-			  
+
 			  std::cout << " => Res: " << res << std::endl ;
 			  //			  std::cout << r.transpose() << std::endl ;
 
 			  fclib_solution sol ;
 			  sol.v = NULL ;
 			  sol.u = u.data();
-              sol.r = r.data() ;
-              sol.l = NULL ;
+			  sol.r = r.data() ;
+			  sol.l = NULL ;
 
 
-              std::string fname ( file ) ;
-              const std::size_t dir_pos = fname.rfind( '/' ) ;
-              const std::string dir_name = fname.substr( 0, dir_pos ) + "/fix" ;
+			  std::string fname ( file ) ;
+			  const std::size_t dir_pos = fname.rfind( '/' ) ;
+			  const std::string dir_name = fname.substr( 0, dir_pos ) + "/fix" ;
 
-              struct stat info ;
-              int exists = stat( dir_name.c_str(), &info ) ;
+			  struct stat info ;
+			  int exists = stat( dir_name.c_str(), &info ) ;
 
-              if( exists == 0 && 0 != ( info.st_mode & S_IFDIR ) )
-              {
-                  std::string outfname = dir_name + "/" + fname.substr(dir_pos+1) ;
+			  if( exists == 0 && 0 != ( info.st_mode & S_IFDIR ) )
+			  {
+				  std::string outfname = dir_name + "/" + fname.substr(dir_pos+1) ;
 
-                  if( ! std::ifstream( outfname.c_str() ) )
-                  {
+				  if( ! std::ifstream( outfname.c_str() ) )
+				  {
 
-                      std::cout << "Re-writing problem to " << outfname << std::endl ;
+					  std::cout << "Re-writing problem to " << outfname << std::endl ;
 
-                      ei_W.prune(1.e-12) ;
-                      problem->W->nzmax = ei_W.nonZeros() ;
-                      memcpy( problem->W->p, ei_W.outerIndexPtr(), ( problem->W->m+1 ) * sizeof( int ) ) ;
-                      memcpy( problem->W->i, ei_W.innerIndexPtr(), problem->W->nzmax * sizeof( int ) ) ;
-                      memcpy( problem->W->x, ei_W.valuePtr(), problem->W->nzmax * sizeof( double ) ) ;
+					  ei_W.prune(1.e-12) ;
+					  problem->W->nzmax = ei_W.nonZeros() ;
+					  memcpy( problem->W->p, ei_W.outerIndexPtr(), ( problem->W->m+1 ) * sizeof( int ) ) ;
+					  memcpy( problem->W->i, ei_W.innerIndexPtr(), problem->W->nzmax * sizeof( int ) ) ;
+					  memcpy( problem->W->x, ei_W.valuePtr(), problem->W->nzmax * sizeof( double ) ) ;
 
-                      if (fclib_write_local (problem, outfname.c_str()))
-                      {
-                          if (fclib_write_solution (&sol, outfname.c_str() ))
-                          {
-                              std::cout << "Ok." << std::endl ;
-                          }
-                      }
-                  }
-              }
+					  if (fclib_write_local (problem, outfname.c_str()))
+					  {
+						  if (fclib_write_solution (&sol, outfname.c_str() ))
+						  {
+							  std::cout << "Ok." << std::endl ;
+						  }
+					  }
+				  }
+			  }
 
 //			  std::cout << fclib_merit_local( problem, MERIT_2, &sol ) << std::endl ;
 
-              // Just for fun
-              // Eigen::SparseMatrix< double > ei_W_back ;
-              // bogus::convert( dual.W, ei_W_back ) ;
-              // std::cout << ei_W_back << std::endl ;
+			  // Just for fun
+			  // Eigen::SparseMatrix< double > ei_W_back ;
+			  // bogus::convert( dual.W, ei_W_back ) ;
+			  // std::cout << ei_W_back << std::endl ;
 
 
 		  }

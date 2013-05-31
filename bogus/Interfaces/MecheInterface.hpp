@@ -38,14 +38,13 @@ public:
 			const double *const HB[] //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjB[i] </c> (\c NULL for an external object)
 			);
 
-	double solve(
-			double * r, //!< length \a nd : initialization for \a r (in world space coordinates) + used to return computed r
+	double solve(double * r, //!< length \a nd : initialization for \a r (in world space coordinates) + used to return computed r
 			double * v, //!< length \a m: to return computed v ( or NULL if not needed )
 			bool deterministic = false,       //!< Whether the Gauss-Seidel should be eterministic
 			double tol = 0.,                  //!< Gauss-Seidel tolerance. 0. means GS's default
 			unsigned maxIters = 0,            //!< Max number of iterations. 0 means GS's default
 			bool staticProblem = false,       //!< If true, do not use DeSaxce change of variable
-			double staticRegularization = 0.  //!< Coefficient to add on the diagonal of static problems
+			double regularization = 0.  //!< Coefficient to add on the diagonal of static problems
 			);
 
 	unsigned nDegreesOfFreedom() const ;
@@ -58,6 +57,18 @@ public:
 
 	// Gauss-Seidel's Callback
 	void ackCurrentResidual( unsigned GSIter, double err ) ;
+
+	// Accessors
+
+	const PrimalFrictionProblem<3u> & primal() const { return *m_primal ; }
+	const DualFrictionProblem<3u> & dual() const { return *m_dual ; }
+
+	PrimalFrictionProblem<3u> & primal() { return *m_primal ; }
+	DualFrictionProblem<3u> & dual() { return *m_dual ; }
+
+	double *f (){ return m_f  ; }
+	double *w (){ return m_w  ; }
+	double *mu(){ return m_mu ; }
 
 protected:
 
