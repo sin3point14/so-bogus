@@ -24,6 +24,12 @@ struct BlockContainerTraits {
 	typedef std::vector< BlockType > Type ;
 } ;
 
+template< typename BlockType >
+struct BlockTraits
+{
+   typedef typename BlockType::Scalar Scalar ;
+} ;
+
 } // namespace bogus
 
 #endif

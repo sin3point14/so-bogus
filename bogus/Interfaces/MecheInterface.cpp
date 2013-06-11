@@ -150,6 +150,20 @@ unsigned MecheFrictionProblem::nContacts() const
 	return m_primal ? m_primal->H.rowsOfBlocks() : 0u ;
 }
 
+void MecheFrictionProblem::computeDual( double regularization )
+{
+	delete m_dual ;
+	m_dual = new DualFrictionProblem<3u>() ;
+	m_dual->computeFrom( *m_primal );
+
+	if( regularization > 0. )
+	{
+		for( int i = 0 ; i < m_dual->W.rowsOfBlocks() ; ++ i )
+		{
+			m_dual->W.diagonal( i ).diagonal() += Eigen::Vector3d::Constant( regularization ) ;
+		}
+	}
+}
 
 
 double MecheFrictionProblem::solve(double *r,
@@ -168,16 +182,7 @@ double MecheFrictionProblem::solve(double *r,
 	// If dual has not been computed yet
 	if( !m_dual )
 	{
-		m_dual = new DualFrictionProblem<3u>() ;
-		m_dual->computeFrom( *m_primal );
-
-		if( staticProblem )
-		{
-			for( unsigned i = 0 ; i < n ; ++ i )
-			{
-				m_dual->W.diagonal( i ).diagonal() += Eigen::Vector3d::Constant( regularization ) ;
-			}
-		}
+		computeDual( staticProblem ? regularization : 0. );
 	}
 
 

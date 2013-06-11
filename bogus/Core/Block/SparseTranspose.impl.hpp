@@ -25,19 +25,20 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 
 	typedef typename SparseBlockMatrixBase< OtherDerived >::Traits OtherTraits ;
 
-	const bool sameMajorness = ( (bool) Traits::is_col_major ) ^ !( OtherTraits::is_col_major ) ;
+	if( OtherTraits::is_symmetric )
+	{
+		return derived() = source ;
+	}
+
+	// sameMajorness will be true if the majorIndex of the untransposed source can be reused for the dest
+	const bool sameMajorness =
+			( (bool) Traits::is_col_major ) != ( (bool) OtherTraits::is_col_major ) ;
 
 	m_nBlocks = source.nBlocks() ;
 
 	bool needTranspose = false ;
 
-	if( Traits::is_symmetric )
-	{
-		m_majorIndex = source.majorIndex() ;
-		m_minorIndex = source.minorIndex() ;
-		m_transposeIndex = source.transposeIndex() ;
-	}
-	else if( source.transposeIndex().valid && sameMajorness )
+	if( source.transposeIndex().valid && !sameMajorness )
 	{
 		m_majorIndex = source.transposeIndex() ;
 		m_transposeIndex = source.majorIndex() ;
@@ -49,8 +50,15 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 		rowMajorIndex() = source.colMajorIndex() ;
 		colMajorIndex() = source.rowMajorIndex() ;
 
-		// Will be valid if !sameMajorness && source.transposeIndex().valid
+		// Will be valid if sameMajorness && source.transposeIndex().valid
 		m_transposeIndex = source.transposeIndex()  ;
+	}
+
+	if( Traits::is_symmetric )
+	{
+		// Source is symmetric and dest is not -- we may have too many blocks
+		// Assume nothing is valid
+		m_majorIndex.valid = false ;
 	}
 
 	m_cols = source.rows() ;
@@ -69,6 +77,8 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 		} else {
 			std::copy( source.blocks().begin(), source.blocks().end(), m_blocks.begin() ) ;
 		}
+
+		Finalizer::finalize( *this ) ;
 	} else {
 		// If we're here, this means that :
 		//  - either both matrices have the same ordering
@@ -82,10 +92,10 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 		UncompressedIndexType uncompressed ;
 		if( sameMajorness )
 		{
-			uncompressed.setToTranspose( source.majorIndex() ) ;
-		} else {
 			// Same col-major-ness
 			uncompressed = source.majorIndex() ;
+		} else {
+			uncompressed.setToTranspose( source.majorIndex() ) ;
 		}
 
 		for( Index i = 0 ; i < uncompressed.outerSize() ; ++i )
@@ -93,13 +103,12 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 			for( typename UncompressedIndexType::InnerIterator src_it( uncompressed, i ) ;
 				 src_it ; ++ src_it )
 			{
+				if( Traits::is_symmetric && i < src_it.inner() ) break ;
 				insertBackOuterInner( i, src_it.inner() ) = transpose_block( source.block( src_it.ptr() ) ) ;
 			}
 		}
 		finalize() ;
 	}
-
-	Finalizer::finalize( *this ) ;
 
 	return derived();
 }

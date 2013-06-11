@@ -28,7 +28,7 @@ As such, the user interested in those implementations may want to look at
  - FischerBurmeister and FBBaseFunction for the computation of the \b MFB function 
  - LocalSOCSolver specializations for the hybrid algorithm and the degree 4 polynomial computation.
 
-Experementing with these different algorithm for solving the 1-contact problem may be done by specifying the local_soc_solver::Strategy template argument of the SOCLaw class.
+Experimenting with these different algorithm for solving the 1-contact problem may be done by specifying the local_soc_solver::Strategy template argument of the SOCLaw class.
 
 
 */

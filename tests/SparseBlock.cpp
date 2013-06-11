@@ -3,6 +3,7 @@
 //#define BOGUS_DONT_PARALLELIZE
 
 #include "Core/Block.impl.hpp"
+#include "Core/Block.io.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Sparse>
@@ -143,7 +144,7 @@ TEST( SparseBlock, Symmetric )
 	EXPECT_EQ( expected_2, res ) ;
 
 	bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC | bogus::flags::COMPRESSED | bogus::flags::COL_MAJOR > ssbm_col_major = ssbm ;
-	//std::cout << ssbm_copy << std::endl ;
+	std::cout << ssbm_col_major << std::endl ;
 
 	res.setZero() ;
 
@@ -179,6 +180,20 @@ TEST( SparseBlock, Symmetric )
 	}
 	EXPECT_EQ( expected_2, res ) ;
 
+
+	bogus::SparseBlockMatrix< Eigen::Matrix3d > nsbm ( ssbm );
+	std::cout << nsbm << std::endl ;
+
+	bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::COL_MAJOR | bogus::flags::SYMMETRIC > resbm
+			= nsbm.transpose() ;
+	res.setZero() ;
+	for( unsigned k = 0 ; k < 3 ; ++ k )
+	{
+		Eigen::VectorXd::SegmentReturnType seg ( res.segment ( 3*k, 3 ) ) ;
+		resbm.splitRowMultiply( k, rhs, seg ) ;
+	}
+	EXPECT_EQ( expected_2, res ) ;
+	std::cout << resbm << std::endl ;
 }
 
 
@@ -473,6 +488,9 @@ TEST( SparseBlock, Scalar )
 	EXPECT_EQ( expected_1, ssm.transpose() * rhs );
 
 	EXPECT_EQ( Eigen::Vector2d::Zero(), res ) ;
+
+	ssm.scale( .5 ) ;
+	EXPECT_EQ( expected_1, 2 * ( ssm * rhs ) );
 
 }
 

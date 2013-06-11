@@ -47,6 +47,8 @@ public:
 			double regularization = 0.  //!< Coefficient to add on the diagonal of static problems
 			);
 
+	void computeDual( double regularization ) ;
+
 	unsigned nDegreesOfFreedom() const ;
 	unsigned nContacts() const ;
 

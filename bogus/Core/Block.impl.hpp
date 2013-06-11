@@ -11,12 +11,6 @@
 
 #include "Block.hpp"
 
-#include "Block/ScalarBindings.hpp"
-
-#ifndef BOGUS_WITHOUT_EIGEN
-#include "Eigen/BlockBindings.hpp"
-#endif
-
 #include "Block/BlockMatrix.impl.hpp"
 #include "Block/SparseTranspose.impl.hpp"
 #include "Block/SparseMatrixVectorProduct.impl.hpp"

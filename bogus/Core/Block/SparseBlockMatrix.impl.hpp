@@ -143,6 +143,7 @@ void SparseBlockMatrixBase< Derived >::finalize()
 {
 	assert( m_majorIndex.valid ) ;
 	m_majorIndex.finalize() ;
+	m_minorIndex.valid = false ;
 
 	Finalizer::finalize( *this ) ;
 }
@@ -159,8 +160,7 @@ void SparseBlockMatrixBase< Derived >::clear()
 }
 
 template < typename Derived >
-template < typename PrecisionT >
-void SparseBlockMatrixBase< Derived >::prune( const PrecisionT &precision )
+Derived& SparseBlockMatrixBase< Derived >::prune( const Scalar precision )
 {
 	SparseIndexType oldIndex = m_majorIndex ;
 
@@ -185,6 +185,22 @@ void SparseBlockMatrixBase< Derived >::prune( const PrecisionT &precision )
 	m_minorIndex.valid = 0 == m_nBlocks ;
 	finalize() ;
 
+	return derived() ;
+}
+
+template < typename Derived >
+Derived& SparseBlockMatrixBase< Derived >::scale( const Scalar alpha )
+{
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
+	for( int i = 0 ; i < (int) blocks().size() ;  ++i )
+	{
+		block( i ) *= alpha ;
+	}
+
+	return derived() ;
 }
 
 template < typename Derived >

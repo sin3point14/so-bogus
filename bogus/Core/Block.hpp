@@ -14,5 +14,10 @@
 #include "Eigen/EigenBlockContainers.hpp"
 #endif
 #include "Block/SparseBlockMatrix.hpp"
+#include "Block/ScalarBindings.hpp"
+
+#ifndef BOGUS_WITHOUT_EIGEN
+#include "Eigen/BlockBindings.hpp"
+#endif
 
 #endif

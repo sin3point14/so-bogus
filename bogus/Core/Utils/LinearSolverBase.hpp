@@ -11,6 +11,8 @@
 
 #include <cassert>
 
+#include "../Block.fwd.hpp"
+
 namespace bogus {
 
 template < typename LSDerived >
@@ -28,17 +30,21 @@ struct LinearSolverBase
 	   return static_cast< const Derived& >( *this ).solve( rhs ) ;
 	}
 
+	typedef typename BlockTraits< typename LinearSolverTraits< Derived >::MatrixType >::Scalar Scalar ;
+
 } ;
 
 //! Base class for LU factorizations
 template < typename MatrixType >
 struct LU : public LinearSolverBase< LU< MatrixType > >
-{ } ;
+{
+} ;
 
 //! Base class for LDLT factorizations
 template < typename MatrixType >
 struct LDLT : public LinearSolverBase< LDLT< MatrixType > >
-{ } ;
+{
+} ;
 
 }
 

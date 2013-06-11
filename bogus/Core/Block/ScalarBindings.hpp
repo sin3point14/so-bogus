@@ -27,6 +27,11 @@ BOGUS_BLOCK_SCALAR_TYPES
 BOGUS_BLOCK_SCALAR_TYPES
 #undef BOGUS_PROCESS_SCALAR
 
+#define BOGUS_PROCESS_SCALAR( Scalar_ ) \
+    template< > struct BlockTraits< Scalar_ > { typedef Scalar_ Scalar ; } ;
+BOGUS_BLOCK_SCALAR_TYPES
+#undef BOGUS_PROCESS_SCALAR
+
 }
 
 

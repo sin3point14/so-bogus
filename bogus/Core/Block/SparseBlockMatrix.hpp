@@ -39,6 +39,7 @@ public:
 
 	typedef typename Traits::BlockType BlockType ;
 	typedef typename Traits::BlockPtr BlockPtr ;
+	typedef typename Traits::Scalar Scalar ;
 
 	//! Return value of blockPtr( Index, Index ) for non-existing block
 	static const BlockPtr InvalidBlockPtr ;
@@ -149,8 +150,7 @@ public:
 
 	//! Removes all blocks for which \c is_zero( \c block, \c precision ) is \c true
 	/*! This function compacts the blocks and rebuild the index, which can be slow */
-	template< typename PrecisionT >
-	void prune( const PrecisionT& precision ) ;
+	Derived& prune( const Scalar precision = 0 ) ;
 
 	//! Returns the number of blocks of the matrices
 	/*! \warning This may differ from blocks().size() */
@@ -250,6 +250,17 @@ public:
 
 	template < bool ColWise, typename LhsT, typename RhsT >
 	void setFromProduct( const Product< LhsT, RhsT > &prod ) ;
+
+	//! Performs *this *= alpha
+	Derived& scale( Scalar alpha ) ;
+
+	//! Performs *this += alpha * rhs (SAXPY)
+	template < typename RhsT >
+	void scaleAdd( const BlockObjectBase< RhsT > &rhs, Scalar alpha ) ;
+
+
+	Derived& operator *= ( Scalar alpha ) { return scale( alpha ) ; }
+	Derived& operator /= ( Scalar alpha ) { return scale( 1./alpha ) ; }
 
 	//@}
 
@@ -357,6 +368,7 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMat
 	typedef typename BaseTraits::BlockPtr BlockPtr ;
 
 	typedef BlockT BlockType ;
+	typedef typename BlockTraits< BlockT >::Scalar Scalar ;
 
 	enum {
 		is_compressed  = Flags & flags::COMPRESSED,
@@ -396,9 +408,9 @@ public:
 	}
 
 	template < typename RhsT >
-	SparseBlockMatrix< BlockT, Flags>& operator=( const RhsT& rhs )
+	SparseBlockMatrix& operator=( const RhsT& rhs )
 	{
-		return Base::operator= ( rhs ) ;
+		return ( Base::operator= ( rhs ) ).derived() ;
 	}
 } ;
 
