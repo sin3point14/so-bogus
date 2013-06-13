@@ -40,23 +40,23 @@ template < typename RhsT, typename ResT >
 void SparseBlockMatrixBase< Derived >::splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const
 {
 	assert( Traits::is_symmetric || !Traits::is_col_major ) ;
+	BlockGetter< Traits::is_col_major > getter ;
+	BlockGetter< !Traits::is_col_major > t_getter ;
 
 	for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( m_majorIndex, row ) ;
 		 it ; ++ it )
 	{
 		if( it.inner() != row )
-			res += block( it.ptr() ) * colSegment( rhs, it.inner() ) ;
+			res += getter.get( block( it.ptr() ) ) * colSegment( rhs, it.inner() ) ;
 	}
 	if( Traits::is_symmetric )
 	{
 		if( m_transposeIndex.valid )
 		{
-			BlockGetter< false > getter ;
 			innerRowMultiply( this->data(), m_transposeIndex, getter, row, rhs, res, 1 ) ;
 		} else {
-			BlockGetter< true > getter ;
 			assert( m_minorIndex.valid ) ;
-			innerRowMultiply( this->data(), m_minorIndex, getter, row, rhs, res, 1 ) ;
+			innerRowMultiply( this->data(), m_minorIndex, t_getter, row, rhs, res, 1 ) ;
 		}
 	}
 }

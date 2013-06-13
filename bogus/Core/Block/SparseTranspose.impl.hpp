@@ -56,7 +56,7 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Transpose< SparseBlock
 
 	if( Traits::is_symmetric )
 	{
-		// Source is symmetric and dest is not -- we may have too many blocks
+		// Dest is symmetric and source is not -- we may have too many blocks
 		// Assume nothing is valid
 		m_majorIndex.valid = false ;
 	}

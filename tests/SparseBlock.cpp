@@ -166,7 +166,7 @@ TEST( SparseBlock, Symmetric )
 	for( unsigned k = 0 ; k < 3 ; ++ k )
 	{
 		Eigen::VectorXd::SegmentReturnType seg ( res.segment ( 3*k, 3 ) ) ;
-		ssbm.splitRowMultiply( k, rhs, seg ) ;
+		ussbm.splitRowMultiply( k, rhs, seg ) ;
 	}
 	EXPECT_EQ( 2*expected_2, res ) ;
 
@@ -176,7 +176,7 @@ TEST( SparseBlock, Symmetric )
 	for( unsigned k = 0 ; k < 3 ; ++ k )
 	{
 		Eigen::VectorXd::SegmentReturnType seg ( res.segment ( 3*k, 3 ) ) ;
-		ssbm.splitRowMultiply( k, rhs, seg ) ;
+		ussbm.splitRowMultiply( k, rhs, seg ) ;
 	}
 	EXPECT_EQ( expected_2, res ) ;
 

@@ -358,9 +358,11 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 	if( static_cast< const void* >( this ) == static_cast< const void* >( &source ) ) return derived() ;
 
 	typedef typename SparseBlockMatrixBase< OtherDerived >::Traits OtherTraits ;
-	const bool sameMajorness = ( (bool) Traits::is_col_major ) ^ !( OtherTraits::is_col_major ) ;
+	const bool sameMajorness = ( (bool) Traits::is_col_major )  == ( (bool) OtherTraits::is_col_major ) ;
 
 	m_nBlocks = source.nBlocks() ;
+
+	bool needTranspose = false ;
 
 	if( Traits::is_symmetric || sameMajorness )
 	{
@@ -374,13 +376,36 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 		m_transposeIndex.valid = false ;
 	}
 
+	if( Traits::is_symmetric  )
+	{
+		if( OtherTraits::is_symmetric )
+		{
+			needTranspose = !sameMajorness ;
+		} else {
+			// Dest is symmetric and source is not -- we may have too many blocks
+			// Assume nothing is valid
+			m_majorIndex.valid = false ;
+		}
+	}
+
 	m_cols = source.cols() ;
 	m_rows = source.rows() ;
 
 	if( m_majorIndex.valid )
 	{
 		m_blocks.resize( source.blocks().size() ) ;
-		std::copy( source.blocks().begin(), source.blocks().end(), m_blocks.begin() ) ;
+
+		if( needTranspose )
+		{
+			for( unsigned i = 0 ; i < m_blocks.size() ; ++i )
+			{
+				block( i ) = transpose_block( source.block(i) ) ;
+			}
+		} else {
+			std::copy( source.blocks().begin(), source.blocks().end(), m_blocks.begin() ) ;
+		}
+
+		Finalizer::finalize( *this ) ;
 	} else {
 		// If we're here, this means that :
 		//  - either one matrix is column major, the other row major
@@ -411,7 +436,6 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 		finalize() ;
 	}
 
-	Finalizer::finalize( *this ) ;
 
 	return derived();
 }
