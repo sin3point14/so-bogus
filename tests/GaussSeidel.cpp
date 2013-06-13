@@ -67,7 +67,8 @@ TEST( GaussSeidel, Small )
 //	std::cout << MInvHt << std::endl ;
 
 	typedef bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC | bogus::flags::COMPRESSED > WType ;
-	WType W = H * MInvHt ;
+	WType W ;
+	W = H * MInvHt ;
 
 //	std::cout << W << std::endl ;
 //	W.cacheTranspose();

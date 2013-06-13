@@ -144,7 +144,7 @@ TEST( SparseBlock, Symmetric )
 	EXPECT_EQ( expected_2, res ) ;
 
 	bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC | bogus::flags::COMPRESSED | bogus::flags::COL_MAJOR > ssbm_col_major = ssbm ;
-	std::cout << ssbm_col_major << std::endl ;
+	//std::cout << ssbm_col_major << std::endl ;
 
 	res.setZero() ;
 
@@ -182,7 +182,14 @@ TEST( SparseBlock, Symmetric )
 
 
 	bogus::SparseBlockMatrix< Eigen::Matrix3d > nsbm ( ssbm );
-	std::cout << nsbm << std::endl ;
+	//std::cout << nsbm << std::endl ;
+	res.setZero() ;
+	for( unsigned k = 0 ; k < 3 ; ++ k )
+	{
+		Eigen::VectorXd::SegmentReturnType seg ( res.segment ( 3*k, 3 ) ) ;
+		nsbm.splitRowMultiply( k, rhs, seg ) ;
+	}
+	EXPECT_EQ( expected_2, res ) ;
 
 	bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::COL_MAJOR | bogus::flags::SYMMETRIC > resbm
 			= nsbm.transpose() ;
@@ -193,7 +200,7 @@ TEST( SparseBlock, Symmetric )
 		resbm.splitRowMultiply( k, rhs, seg ) ;
 	}
 	EXPECT_EQ( expected_2, res ) ;
-	std::cout << resbm << std::endl ;
+	//std::cout << resbm << std::endl ;
 }
 
 

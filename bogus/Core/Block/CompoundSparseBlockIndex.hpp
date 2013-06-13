@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -9,24 +9,35 @@
 #ifndef BOGUS_COMPOUND_SPARSE_BLOCK_INDEX_HPP
 #define BOGUS_COMPOUND_SPARSE_BLOCK_INDEX_HPP
 
+#include <vector>
+
+#include "SparseBlockIndex.hpp"
+
 namespace bogus
 {
 
 template < typename FirstIndexType, typename SecondIndexType >
-struct CompoundSparseBlockIndex
+struct CompoundSparseBlockIndex : public SparseBlockIndexBase< CompoundSparseBlockIndex< FirstIndexType, SecondIndexType > >
 {
 	typedef typename FirstIndexType::Index Index ;
 	typedef typename FirstIndexType::BlockPtr BlockPtr ;
 
-	CompoundSparseBlockIndex( const FirstIndexType& index1, const SecondIndexType &index2 )
-		: first( index1 ), second( index2 ), valid( first.valid && second.valid )
+	typedef SparseBlockIndexBase< CompoundSparseBlockIndex< FirstIndexType, SecondIndexType > > Base ;
+	typedef typename Base::InnerOffsetsType InnerOffsetsType ;
+	using Base::valid ;
+
+	CompoundSparseBlockIndex( const SparseBlockIndexBase<FirstIndexType >& index1,
+							  const SparseBlockIndexBase<SecondIndexType>& index2 )
+		: Base( index1.valid && index2.valid ),
+		  first( index1.derived() ), second( index2.derived() ),
+		  innerOffsets( index1.innerOffsetsArray() )
 	{
-		assert( index1.outerSize() == index2.outerSize() ) ;
-		assert( index1.innerSize() == index2.innerSize() ) ;
+		assert( first.outerSize() == first.outerSize() ) ;
+		assert( second.innerSize() == second.innerSize() ) ;
 	}
 
 	Index outerSize() const { return first.outerSize() ; }
-	Index innerSize() const { return first.innerSize() ; }
+	const InnerOffsetsType& innerOffsetsArray() const { return innerOffsets ; }
 
 	struct InnerIterator
 	{
@@ -61,8 +72,15 @@ struct CompoundSparseBlockIndex
 
 	const FirstIndexType& first ;
 	const SecondIndexType& second ;
-	bool valid ;
+	const InnerOffsetsType &innerOffsets ;
 } ;
+
+template < typename FirstIndexType, typename SecondIndexType >
+struct SparseBlockIndexTraits< CompoundSparseBlockIndex< FirstIndexType, SecondIndexType > >
+		: public SparseBlockIndexTraits< FirstIndexType >
+{
+} ;
+
 
 }
 

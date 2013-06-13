@@ -386,6 +386,9 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 			// Assume nothing is valid
 			m_majorIndex.valid = false ;
 		}
+	} else if( OtherTraits::is_symmetric ){
+		// Symmetric -> non-symmetric ; we need to compute the whole matrix
+		m_majorIndex.valid = false ;
 	}
 
 	m_cols = source.cols() ;
@@ -414,23 +417,22 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const SparseBlockMatrixBase<
 		clear() ;
 		m_blocks.reserve( source.blocks().size() ) ;
 
-		assert( source.majorIndex().valid ) ;
+		SparseBlockIndexComputer< OtherDerived, OtherTraits::is_symmetric, Traits::is_col_major, false >
+				indexComputer( source ) ;
+		typedef typename SparseBlockIndexComputer< OtherDerived, OtherTraits::is_symmetric, Traits::is_col_major, false >::ReturnType
+				SourceIndexType ;
+		const SourceIndexType &sourceIndex = indexComputer.get() ;
 
-		UncompressedIndexType uncompressed ;
-		if( sameMajorness )
-		{
-			// Same col-major-ness
-			uncompressed = source.majorIndex() ;
-		} else {
-			uncompressed.setToTranspose( source.majorIndex() ) ;
-		}
+		BlockTransposeOption< OtherTraits::is_symmetric, false > blockGetter ;
 
-		for( Index i = 0 ; i < uncompressed.outerSize() ; ++i )
+		assert( sourceIndex.valid ) ;
+
+		for( Index i = 0 ; i < sourceIndex.outerSize() ; ++i )
 		{
-			for( typename UncompressedIndexType::InnerIterator src_it( uncompressed, i ) ;
+			for( typename SourceIndexType::InnerIterator src_it( sourceIndex, i ) ;
 				 src_it ; ++ src_it )
 			{
-				insertBackOuterInner( i, src_it.inner() ) = source.block( src_it.ptr() ) ;
+				insertBackOuterInner( i, src_it.inner() ) = blockGetter.get( source.block( src_it.ptr() ), src_it.inner() > i ) ;
 			}
 		}
 		finalize() ;

@@ -32,7 +32,7 @@ class SparseBlockMatrixBase ;
 template <typename MatrixT>
 struct Transpose< SparseBlockMatrixBase< MatrixT > > : public Transpose< BlockMatrixBase< MatrixT > >
 {
-	Transpose( const SparseBlockMatrixBase< MatrixT > &m )
+	explicit Transpose( const SparseBlockMatrixBase< MatrixT > &m )
 		: Transpose< BlockMatrixBase< MatrixT > > ( m.derived() )
 	{}
 } ;
@@ -55,7 +55,7 @@ struct TransposeOption< Transpose< MatrixT > >
 } ;
 
 template <typename LhsMatrixT, typename RhsMatrixT>
-struct Product
+struct Product : public BlockObjectBase< Product< LhsMatrixT, RhsMatrixT > >
 {
 	typedef TransposeOption< LhsMatrixT > LhsTransposeOption ;
 	typedef TransposeOption< RhsMatrixT > RhsTransposeOption ;

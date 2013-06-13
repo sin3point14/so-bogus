@@ -96,7 +96,6 @@ Currently, the following operations are supported:
 \subsection block_assign Assignment
 
 Any SparseBlockmatrix can be assigned to another one, as long as their block types are compatible.
-\warning Assigning a SparseBlockMatrix with \ref flags::SYMMETRIC to a non-symmetric one will result in only the triangular part being copied, instead of the full matrix
 
 \code
 bogus::SparseBlockMatrix< Eigen::Matrix3d > sbm ;

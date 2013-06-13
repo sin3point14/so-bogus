@@ -11,6 +11,7 @@
 
 #include "BlockMatrix.hpp"
 #include "SparseBlockIndex.hpp"
+#include "CompressedSparseBlockIndex.hpp"
 #include "Expressions.hpp"
 
 namespace bogus
@@ -402,13 +403,25 @@ public:
 	SparseBlockMatrix() : Base() {}
 
 	template < typename RhsT >
-	SparseBlockMatrix( const RhsT& rhs ) : Base()
+	SparseBlockMatrix( const BlockObjectBase< RhsT >& rhs ) : Base()
+	{
+		Base::operator= ( rhs.derived() ) ;
+	}
+
+	template < typename RhsT >
+	SparseBlockMatrix& operator=( const BlockObjectBase< RhsT >& rhs )
+	{
+		return ( Base::operator= ( rhs.derived() ) ).derived() ;
+	}
+
+	template < typename RhsT >
+	SparseBlockMatrix( const Transpose< SparseBlockMatrixBase< RhsT > > & rhs ) : Base()
 	{
 		Base::operator= ( rhs ) ;
 	}
 
 	template < typename RhsT >
-	SparseBlockMatrix& operator=( const RhsT& rhs )
+	SparseBlockMatrix& operator=( const Transpose< SparseBlockMatrixBase< RhsT > > & rhs )
 	{
 		return ( Base::operator= ( rhs ) ).derived() ;
 	}
