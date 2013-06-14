@@ -261,8 +261,8 @@ public:
 	Derived& scale( Scalar alpha ) ;
 
 	//! Performs *this += alpha * rhs (SAXPY)
-	template < typename RhsT >
-	void scaleAdd( const BlockObjectBase< RhsT > &rhs, Scalar alpha ) ;
+	template < bool Transpose, typename OtherDerived >
+	Derived& add( const SparseBlockMatrixBase< OtherDerived > &rhs, Scalar alpha = 1) ;
 
 
 	Derived& operator *= ( Scalar alpha ) { return scale( alpha ) ; }

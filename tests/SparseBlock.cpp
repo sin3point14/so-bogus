@@ -501,3 +501,77 @@ TEST( SparseBlock, Scalar )
 
 }
 
+TEST( SparseBlock, Add )
+{
+	typedef Eigen::Matrix< double, 3, 4 > BlockT ;
+	BlockT sample ;
+	sample<< 1, 2, 3, 4, 3, 2, 1, 0, 1, 2, 3, 4 ;
+
+	Eigen::VectorXd rhs( 8 ) ;
+	rhs << 4, 2, 1, 0, 7, 6, 9, 8 ;
+
+	{
+		bogus::SparseBlockMatrix< BlockT, bogus::flags::COMPRESSED > sbm1 ;
+		sbm1.setRows( 4, 3 ) ;
+		sbm1.setCols( 2, 4 ) ;
+
+		sbm1.insertBack( 0, 1 ) = BlockT::Ones() ;
+		sbm1.insertBack( 1, 0 ) = sample ;
+		sbm1.insertBack( 2, 0 ) = 3 * BlockT::Ones() ;
+		sbm1.insertBack( 3, 1 ) = 5 * BlockT::Ones() ;
+
+		sbm1.finalize() ;
+
+		const Eigen::VectorXd res1 = sbm1*rhs ;
+
+		bogus::SparseBlockMatrix< BlockT, bogus::flags::COL_MAJOR > sbm2 ;
+		sbm2.setRows( 4, 3 ) ;
+		sbm2.setCols( 2, 4 ) ;
+
+		sbm2.insertBackOuterInner( 0, 1 ) = BlockT::Ones() ;
+		sbm2.insertBackOuterInner( 1, 0 ) = sample ;
+		sbm2.insertBackOuterInner( 1, 1 ) = 3 * BlockT::Ones() ;
+		sbm2.insertBackOuterInner( 1, 2 ) = 5 * BlockT::Ones() ;
+
+		sbm2.finalize() ;
+
+		const Eigen::VectorXd res2 = sbm2*rhs ;
+
+		sbm1.add< false >( sbm2 ) ;
+		EXPECT_EQ( res1+res2, sbm1*rhs ) ;
+
+		sbm1.add< false >( sbm2, -1 ) ;
+		EXPECT_EQ( res1, sbm1*rhs ) ;
+
+	}
+
+	{
+		bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::COMPRESSED > sbm ;
+		unsigned dims[3] = {3,3,2} ;
+		sbm.setRows( 3, dims ) ;
+		sbm.setCols( 3, dims ) ;
+
+		sbm.insertBackAndResize( 0, 0 ).setZero() ;
+		sbm.insertBackAndResize( 1, 0 ) = sample.block< 3, 3 >( 0, 0 ) ;
+		sbm.insertBackAndResize( 1, 1 ).setZero() ;
+		sbm.insertBackAndResize( 2, 0 ) = sample.block< 2, 3 >( 1, 1 ) ;
+		sbm.insertBackAndResize( 2, 2 ).setZero() ;
+
+		sbm.finalize() ;
+
+		bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::COMPRESSED | bogus::flags::SYMMETRIC > ssbm (sbm) ;
+		const Eigen::VectorXd sym_res =  (ssbm*rhs) ;
+
+		sbm.add< true >( sbm ) ;
+		EXPECT_EQ( sym_res, sbm*rhs ) ;
+
+		sbm.add< true >( ssbm ) ;
+		EXPECT_EQ( 2*sym_res, sbm*rhs ) ;
+
+		ssbm.add< true >( sbm ) ;
+		EXPECT_EQ( 3*sym_res, ssbm*rhs ) ;
+
+	}
+
+}
+

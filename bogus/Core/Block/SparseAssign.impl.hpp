@@ -129,6 +129,120 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 	return derived();
 }
 
+template < typename Derived >
+template < bool Transpose, typename OtherDerived >
+Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< OtherDerived > &rhs, Scalar alpha )
+{
+	typedef typename SparseBlockMatrixBase< OtherDerived >::Traits OtherTraits ;
+	typedef std::pair< BlockPtr, typename OtherTraits::BlockPtr > PtrPair ;
+	typedef std::pair< Index, PtrPair > NonZero ;
+
+	std::vector< std::vector< NonZero > > nonZeros ;
+
+	// I - Compute non-zeros
+	{
+
+		SparseBlockIndexComputer< OtherDerived, OtherTraits::is_symmetric, Traits::is_col_major, Transpose >
+				indexComputer( rhs ) ;
+		typedef typename SparseBlockIndexComputer< OtherDerived, OtherTraits::is_symmetric, Traits::is_col_major, Transpose >::ReturnType
+				SourceIndexType ;
+		const SourceIndexType &rhsIndex = indexComputer.get() ;
+
+		const SparseIndexType &lhsIndex = majorIndex() ;
+
+		assert( rhsIndex.outerSize() == lhsIndex.outerSize() ) ;
+		assert( rhsIndex.innerSize() == lhsIndex.innerSize() ) ;
+
+		nonZeros.resize( lhsIndex.outerSize() ) ;
+
+	#ifndef BOGUS_DONT_PARALLELIZE
+	#pragma omp parallel for
+	#endif
+		for ( int i = 0 ; i < (int) lhsIndex.outerSize() ; ++i )
+		{
+			typename SparseIndexType::InnerIterator lhs_it ( lhsIndex, i ) ;
+			typename SourceIndexType::InnerIterator rhs_it ( rhsIndex, i ) ;
+
+			NonZero nz ;
+			while( lhs_it || rhs_it )
+			{
+				if( lhs_it && ( !rhs_it || lhs_it.inner() < rhs_it.inner() ) )
+				{
+					nz.first = lhs_it.inner() ;
+					nz.second.first = lhs_it.ptr() ;
+					nz.second.second = OtherDerived::InvalidBlockPtr ;
+					++ lhs_it ;
+				} else if ( rhs_it && ( !lhs_it || rhs_it.inner() < lhs_it.inner() ) ) {
+					nz.first = rhs_it.inner() ;
+					nz.second.first = InvalidBlockPtr ;
+					nz.second.second = rhs_it.ptr() ;
+					++ rhs_it ;
+				} else {
+					nz.first = lhs_it.inner() ;
+					nz.second.first = lhs_it.ptr() ;
+					nz.second.second = rhs_it.ptr() ;
+					++lhs_it ;
+					++rhs_it ;
+				}
+
+				if( Traits::is_symmetric && nz.first > i )
+					break ;
+
+				nonZeros[i].push_back( nz ) ;
+			}
+		}
+	}
+
+
+	std::vector< BlockPtr > offsets( nonZeros.size() + 1 ) ;
+	offsets[0] = 0 ;
+	for( unsigned i = 0 ; i < nonZeros.size() ; ++i )
+	{
+		offsets[i+1] = offsets[i] + nonZeros[i].size() ;
+	}
+
+	SparseIndexType resIndex ;
+	resIndex.resizeOuter( nonZeros.size() ) ;
+	typename BlockContainerTraits< BlockType >::Type resBlocks( offsets.back() ) ;
+
+	BlockTransposeOption< OtherTraits::is_symmetric, Transpose > rhsGetter ;
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
+	for( int i = 0 ; i < (int) nonZeros.size() ; ++i )
+	{
+		for( unsigned j = 0 ; j < nonZeros[i].size() ; ++j )
+		{
+			const BlockPtr ptr = offsets[i]+j ;
+			const NonZero &nz = nonZeros[i][j] ;
+			resIndex.insertBack( i, nz.first, ptr ) ;
+
+			BlockType &res = resBlocks[ptr] ;
+			if( nz.second.first == InvalidBlockPtr )
+			{
+				res = alpha * rhsGetter.get( rhs.block( nz.second.second ), nz.first > i ) ;
+			} else if( nz.second.second == OtherDerived::InvalidBlockPtr )
+			{
+				res = block( nz.second.first ) ;
+			} else {
+				res = block( nz.second.first) + alpha * rhsGetter.get( rhs.block( nz.second.second ), nz.first > i ) ;
+			}
+		}
+	}
+	resIndex.finalize() ;
+
+	clear() ;
+	m_majorIndex = resIndex ;
+	resBlocks.swap( m_blocks ) ;
+	m_nBlocks = m_blocks.size() ;
+	m_minorIndex.valid = false ;
+
+	Finalizer::finalize( *this ) ;
+
+	return derived() ;
+}
+
 }
 
 #endif // SPARSETRANSPOSE_IMPL_HPP
