@@ -219,11 +219,16 @@ public:
 	//! \name Assignment and cloning operations
 	///@{
 
-	template < typename OtherDerived >
-	Derived& operator= ( const SparseBlockMatrixBase< OtherDerived > &source ) ;
+	template < bool Transpose, typename OtherDerived >
+	Derived& assign ( const SparseBlockMatrixBase< OtherDerived > &source, const Scalar scale = 1 ) ;
 
 	template < typename OtherDerived >
-	Derived& operator= ( const Transpose< SparseBlockMatrixBase< OtherDerived > > &source ) ;
+	Derived& operator= ( const SparseBlockMatrixBase< OtherDerived > &source )
+	{ return assign< false >( source ) ; }
+
+	template < typename OtherDerived >
+	Derived& operator= ( const Transpose< SparseBlockMatrixBase< OtherDerived > > &source )
+	{ return assign< true >( source.matrix ) ; }
 
 	template < typename LhsT, typename RhsT >
 	Derived& operator= ( const Product< LhsT, RhsT > &prod ) ;

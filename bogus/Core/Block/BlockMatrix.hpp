@@ -105,6 +105,8 @@ public:
 	const typename BlockContainerTraits< BlockType >::Type& blocks() const { return  m_blocks ; }
 	//! Access to blocks data as a raw pointer
 	const BlockType* data() const { return  &m_blocks[0] ; }
+	//! Access to blocks data as a raw pointer
+	BlockType* data() { return &m_blocks[0] ; }
 
 protected:
 	Index m_rows ;

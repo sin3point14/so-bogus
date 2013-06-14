@@ -1,17 +1,23 @@
 cmake_minimum_required(VERSION 2.8)
 
-execute_process( COMMAND ../updateCMakeSources.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
-file(STRINGS CMakeSources.txt SRC_LIST)
+if( TESTS_NAMES )
+	SET( SRC_LIST ${TESTS_NAMES} )
+	MESSAGE( STATUS "Building tests: " ${SRC_LIST} )
+else()
+	execute_process( COMMAND ../updateCMakeSources.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
+	file(STRINGS CMakeSources.txt SRC_LIST)
+	MESSAGE( STATUS "Building all tests" )
+endif()
 
 include( ExternalProject )
 
 # Add gtest
 ExternalProject_Add(
-        googletest
-        URL https://googletest.googlecode.com/files/gtest-1.6.0.zip
-        UPDATE_COMMAND ""
-        INSTALL_COMMAND ""
-        )
+	googletest
+	URL https://googletest.googlecode.com/files/gtest-1.6.0.zip
+	UPDATE_COMMAND ""
+	INSTALL_COMMAND ""
+	)
 
 ExternalProject_Get_Property(googletest source_dir)
 include_directories( ../${CMAKE_PROJECT_NAME} ${source_dir}/include)

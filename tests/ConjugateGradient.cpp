@@ -23,7 +23,7 @@ TEST( ConjugateGradient, CG )
 	sbm.finalize() ;
 
 	bogus::ConjugateGradient< Mat > cg( sbm ) ;
-	//cg.callback().connect( &ackCurrentResidual );
+	cg.callback().connect( &ackCurrentResidual );
 
 	Eigen::Vector3d rhs, res ;
 	rhs.setOnes( ) ;

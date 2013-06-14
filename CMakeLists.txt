@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.6)
 
 OPTION( TESTS "Build tests" ON )
 OPTION( APPS "Build apps" ON )
+OPTION( LIB "Build lib" ON )
 OPTION( BOOST_SERIALIZATION "Use boost::serialization" ON )
 
 SET( BOGUS_ROOT ${CMAKE_CURRENT_SOURCE_DIR} )
@@ -72,7 +73,9 @@ endif()
 
 include_directories( ${EXTERNAL_INCLUDES} )
 
-add_subdirectory( bogus )
+if( LIB )
+	add_subdirectory( bogus )
+endif()
 if( TESTS )
 		enable_testing()
 		add_subdirectory( tests )
