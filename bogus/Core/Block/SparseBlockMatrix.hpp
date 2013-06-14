@@ -233,6 +233,12 @@ public:
 	template < typename LhsT, typename RhsT >
 	Derived& operator= ( const Product< LhsT, RhsT > &prod ) ;
 
+	template < typename LhsT, typename RhsT >
+	Derived& operator= ( const Addition< LhsT, RhsT > &prod ) ;
+
+	template < typename LhsT, typename RhsT >
+	Derived& operator= ( const Substraction< LhsT, RhsT > &prod ) ;
+
 	//! Clones the dimensions ( number of rows/cols blocks and rows/cols per block ) of \p source
 	template< typename OtherDerived >
 	void cloneDimensions( const BlockMatrixBase< OtherDerived > &source ) ;
@@ -264,9 +270,22 @@ public:
 	template < bool Transpose, typename OtherDerived >
 	Derived& add( const SparseBlockMatrixBase< OtherDerived > &rhs, Scalar alpha = 1) ;
 
-
 	Derived& operator *= ( Scalar alpha ) { return scale( alpha ) ; }
 	Derived& operator /= ( Scalar alpha ) { return scale( 1./alpha ) ; }
+
+	template < typename OtherDerived >
+	Derived& operator+= ( const SparseBlockMatrixBase< OtherDerived > &source )
+	{ return add< false >( source ) ; }
+	template < typename OtherDerived >
+	Derived& operator+= ( const Transpose< SparseBlockMatrixBase< OtherDerived > > &source )
+	{ return add< true >( source.matrix ) ; }
+
+	template < typename OtherDerived >
+	Derived& operator-= ( const SparseBlockMatrixBase< OtherDerived > &source )
+	{ return add< false >( source, -1 ) ; }
+	template < typename OtherDerived >
+	Derived& operator-= ( const Transpose< SparseBlockMatrixBase< OtherDerived > > &source )
+	{ return add< true >( source.matrix, -1 ) ; }
 
 	//@}
 

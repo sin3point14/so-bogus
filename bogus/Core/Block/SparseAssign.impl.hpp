@@ -13,6 +13,20 @@
 #include "BlockTranspose.hpp"
 #include "SparseBlockIndexComputer.hpp"
 
+template < typename LhsT, typename RhsT >
+bogus::Addition< LhsT, RhsT > operator+ ( const bogus::BlockObjectBase< LhsT >& lhs,
+			 const bogus::BlockObjectBase< RhsT > &rhs )
+{
+	return bogus::Addition<  LhsT, RhsT >( lhs, rhs ) ;
+}
+
+template < typename LhsT, typename RhsT >
+bogus::Substraction< LhsT, RhsT > operator- ( const bogus::BlockObjectBase< LhsT >& lhs,
+			 const bogus::BlockObjectBase< RhsT > &rhs )
+{
+	return bogus::Substraction<  LhsT, RhsT >( lhs, rhs ) ;
+}
+
 namespace bogus
 {
 
@@ -118,8 +132,10 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 			for( typename SourceIndexType::InnerIterator src_it( sourceIndex, i ) ;
 				 src_it && !( Traits::is_symmetric && i < src_it.inner() ) ; ++ src_it )
 			{
+				const bool afterDiag = ( (bool) Traits::is_col_major )  == ( (bool) OtherTraits::is_col_major )
+						 ? (src_it.inner() > i) : (src_it.inner() < i ) ;
 				insertBackOuterInner( i, src_it.inner() ) = scale *
-						blockGetter.get( source.block( src_it.ptr() ), src_it.inner() > i ) ;
+						blockGetter.get( source.block( src_it.ptr() ), afterDiag ) ;
 			}
 		}
 		finalize() ;
@@ -219,14 +235,16 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 			resIndex.insertBack( i, nz.first, ptr ) ;
 
 			BlockType &res = resBlocks[ptr] ;
+			const bool afterDiag = ( (bool) Traits::is_col_major )  == ( (bool) OtherTraits::is_col_major )
+									? (nz.first > i) : (nz.first < i) ;
 			if( nz.second.first == InvalidBlockPtr )
 			{
-				res = alpha * rhsGetter.get( rhs.block( nz.second.second ), nz.first > i ) ;
+				res = alpha * rhsGetter.get( rhs.block( nz.second.second ), afterDiag ) ;
 			} else if( nz.second.second == OtherDerived::InvalidBlockPtr )
 			{
 				res = block( nz.second.first ) ;
 			} else {
-				res = block( nz.second.first) + alpha * rhsGetter.get( rhs.block( nz.second.second ), nz.first > i ) ;
+				res = block( nz.second.first) + alpha * rhsGetter.get( rhs.block( nz.second.second ), afterDiag ) ;
 			}
 		}
 	}
@@ -241,6 +259,24 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 	Finalizer::finalize( *this ) ;
 
 	return derived() ;
+}
+
+template < typename Derived >
+template < typename LhsT, typename RhsT >
+Derived& SparseBlockMatrixBase<Derived>::operator=( const Addition< LhsT, RhsT > &addition )
+{
+	typedef Addition< LhsT, RhsT> Add ;
+	assign< Add::transposeLhs >( addition.lhs) ;
+	return add< Add::transposeRhs >( addition.rhs ) ;
+}
+
+template < typename Derived >
+template < typename LhsT, typename RhsT >
+Derived& SparseBlockMatrixBase<Derived>::operator=( const Substraction< LhsT, RhsT > &addition )
+{
+	typedef Substraction< LhsT, RhsT> Add ;
+	assign< Add::transposeLhs >( addition.lhs) ;
+	return add< Add::transposeRhs >( addition.rhs, -1 ) ;
 }
 
 }

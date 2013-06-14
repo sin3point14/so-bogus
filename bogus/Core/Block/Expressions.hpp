@@ -54,8 +54,8 @@ struct TransposeOption< Transpose< MatrixT > >
 	static const MatrixType &get( const Transpose< MatrixT > &m ) { return m.matrix.derived() ; }
 } ;
 
-template <typename LhsMatrixT, typename RhsMatrixT>
-struct Product : public BlockObjectBase< Product< LhsMatrixT, RhsMatrixT > >
+template < template < typename LhsT, typename RhsT > class BlockOp, typename LhsMatrixT, typename RhsMatrixT>
+struct BinaryBlockOp : public BlockObjectBase< BlockOp< LhsMatrixT, RhsMatrixT > >
 {
 	typedef TransposeOption< LhsMatrixT > LhsTransposeOption ;
 	typedef TransposeOption< RhsMatrixT > RhsTransposeOption ;
@@ -67,8 +67,35 @@ struct Product : public BlockObjectBase< Product< LhsMatrixT, RhsMatrixT > >
 	enum { transposeLhs = LhsTransposeOption::do_transpose };
 	enum { transposeRhs = RhsTransposeOption::do_transpose };
 
-	Product( const BlockObjectBase< LhsMatrixT >& l, const BlockObjectBase< RhsMatrixT > &r )
+	BinaryBlockOp( const BlockObjectBase< LhsMatrixT >& l, const BlockObjectBase< RhsMatrixT > &r )
 		: lhs( LhsTransposeOption::get( l.derived() ) ), rhs ( RhsTransposeOption::get( r.derived() ) )
+	{}
+} ;
+
+template <typename LhsMatrixT, typename RhsMatrixT>
+struct Product : public BinaryBlockOp< Product, LhsMatrixT, RhsMatrixT >
+{
+	typedef BinaryBlockOp< bogus::Product, LhsMatrixT, RhsMatrixT > Base ;
+	Product( const BlockObjectBase< LhsMatrixT >& l, const BlockObjectBase< RhsMatrixT > &r )
+		: Base( l, r )
+	{}
+} ;
+
+template <typename LhsMatrixT, typename RhsMatrixT>
+struct Addition : public BinaryBlockOp< Addition, LhsMatrixT, RhsMatrixT >
+{
+	typedef BinaryBlockOp< bogus::Addition, LhsMatrixT, RhsMatrixT > Base ;
+	Addition( const BlockObjectBase< LhsMatrixT >& l, const BlockObjectBase< RhsMatrixT > &r )
+		: Base( l, r )
+	{}
+} ;
+
+template <typename LhsMatrixT, typename RhsMatrixT>
+struct Substraction : public BinaryBlockOp< Substraction, LhsMatrixT, RhsMatrixT >
+{
+	typedef BinaryBlockOp< bogus::Substraction, LhsMatrixT, RhsMatrixT > Base ;
+	Substraction( const BlockObjectBase< LhsMatrixT >& l, const BlockObjectBase< RhsMatrixT > &r )
+		: Base( l, r )
 	{}
 } ;
 
