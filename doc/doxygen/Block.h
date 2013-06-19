@@ -89,7 +89,9 @@ Note that this constraint can be safely ignored when using an uncompressed index
 
 Currently, the following operations are supported:
  - \ref block_assign
+ - \ref block_scaling
  - \ref block_transpose
+ - \ref block_add
  - \ref block_mv
  - \ref block_mm
 
@@ -108,18 +110,43 @@ bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::COMPRESSED | bogus::fla
 
 \endcode
 
+\subsection block_scaling Coefficient-wise scaling
+
+The multiplication of each block of a SparseBlockMatrix with a scalar can be conveniently done using the SparseBlockMatrixBase::scale() method or the \c '*=' and \c '+=' operators.  
+
 
 \subsection block_transpose Transpose
 
 Transposing a block matrix can be done with the SparseBlockMatrixBase::transpose() method.
-Note that this method does not do any work; it can only be use as the right hand side of an affectation operation,
+Note that this method does not do any work; it can only be used as the right hand side of an affectation operation,
 or inside an arithmetic operation ( see below )
 
+\subsection block_add Block Matrix/Block Matrix addition
+
+Two block matrix can be added together using the standard \c '+' operator, provided they have the same block structure
+( that is, their rows and columns of blocks must have similar dimensions ). This operator does no do any work, but just returns an Addition expression which will be evaluated when it is assigned to another SparseBlockMatrix.
+
+Alternatively, the SparseBlockMatrixBase::add method provides a ?axpy-like interface which allows on-the-fly scaling of the right-hand-side. \c '-', \c '+=' and \c '-=' are also defined.
+
+Examples
+\code
+
+bogus::SparseBlockMatrix< Eigen::MatrixXd > sbm1 ;
+
+// [...] fill sbm1
+
+bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::SYMMETRIC > sbm2 ;
+
+sbm2 = sbm1 + sbm1.transpose() ;
+sbm1 -= sbm2 ;
+sbm1.add< false >( sbm2, .5 ) ;
+
+\endcode 
 
 \subsection block_mv Block Matrix/Dense Vector multiplication
 
 Multiplication against a Eigen dense vector can ben done using simply the standard \c '*' operator,
-or using the BlockMatrixBase::multiply() method for more flexibility ( BLAS ???mv-like )and no temporary memory allocation.
+or using the BlockMatrixBase::multiply() method for more flexibility ( BLAS ??mv-like )and no temporary memory allocation.
 
 Some examples
 \code

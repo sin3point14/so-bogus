@@ -21,19 +21,34 @@ struct Object {} ;
 template < typename Derived >
 struct BlockObjectBase : public Object
 {
-	typedef Derived PlainObjectType ;
 
 	const Derived& derived() const ;
 	Derived& derived() ;
+
+	typedef BlockMatrixTraits< Derived > Traits ;
+	typedef typename Traits::ConstTransposeReturnType ConstTransposeReturnType ;
+	typedef typename Traits::Index Index ;
+	typedef typename Traits::PlainObjectType PlainObjectType ;
+	enum { is_transposed = Traits::is_transposed } ;
+
+	//! Returns the total number of rows of the matrix ( expanding blocks )
+	Index rows() const { return derived().rows() ; }
+	//! Returns the total number of columns of the matrix ( expanding blocks )
+	Index cols() const { return derived().cols() ; }
+
+	const PlainObjectType& eval() const { return derived().eval() ; }
 };
 
 //! Default specialization of traits for BlockMatrices
 /*! Re-specialiazed for derived classes, see e.g. BlockMatrixTraits< SparseBlockMatrix > */
-template< typename Derived >
+template< typename Derived  >
 struct BlockMatrixTraits< BlockObjectBase< Derived > > {
+
 	typedef int Index ;
 	typedef unsigned BlockPtr ;
 	typedef Derived PlainObjectType ;
+
+	typedef Transpose< Derived > ConstTransposeReturnType ;
 } ;
 
 //! Base class for dense and sparse block matrices, thought dense don't exist yet
@@ -44,8 +59,6 @@ public:
 	typedef BlockObjectBase< Derived > Base;
 	typedef typename BlockMatrixTraits< Derived >::BlockType BlockType ;
 	typedef typename BlockMatrixTraits< Derived >::Index Index ;
-	typedef typename BlockMatrixTraits< Derived >::ConstTransposeReturnType ConstTransposeReturnType ;
-
 	using Base::derived ;
 
 	BlockMatrixBase() : m_rows(0), m_cols(0)
@@ -54,17 +67,14 @@ public:
 	virtual ~BlockMatrixBase()
 	{}
 
-	//! Returns a Transpose object, which should immediately be affected to another matrix
-	ConstTransposeReturnType transpose() const ;
-
 	//! Performs a matrix vector multiplication
 	/*! \tparam Transpose If true, performs \c res = alpha * \c M' * \c rhs + beta * res,
 						  otherwise \c res = alpha * M * \c rhs + beta * res
 	  */
-	template < bool Transpose, typename RhsT, typename ResT >
+	template < bool DoTranspose, typename RhsT, typename ResT >
 	void multiply( const RhsT& rhs, ResT& res, typename RhsT::Scalar alpha = 1, typename ResT::Scalar beta = 0 ) const
 	{
-		derived().template multiply< Transpose >( rhs, res, alpha, beta ) ;
+		derived().template multiply< DoTranspose >( rhs, res, alpha, beta ) ;
 	}
 
 	//! Multiplies a given block-row of the matrix with \p rhs, omitting the diagonal block
@@ -107,6 +117,8 @@ public:
 	const BlockType* data() const { return  &m_blocks[0] ; }
 	//! Access to blocks data as a raw pointer
 	BlockType* data() { return &m_blocks[0] ; }
+
+	const Derived& eval() const { return derived() ; }
 
 protected:
 	Index m_rows ;

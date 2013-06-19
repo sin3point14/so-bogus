@@ -104,22 +104,22 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 }
 
 template < typename Derived, typename EigenDerived >
-typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec operator* ( const bogus::Transpose< bogus::BlockMatrixBase< Derived > >& lhs,
+typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec operator* ( const bogus::BlockObjectBase< Derived >& lhs,
 						 const Eigen::MatrixBase< EigenDerived > &rhs )
 {
 	assert( rhs.cols() == 1 ) ;
-	assert( rhs.rows() == lhs.matrix.rows() ) ;
+	assert( rhs.rows() == lhs.cols() ) ;
 
 	typedef typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
-	ResVec res ( lhs.matrix.cols() ) ;
+	ResVec res ( lhs.rows() ) ;
 
-	lhs.matrix.template multiply< true >( rhs, res, 1, 0 ) ;
+	lhs.eval().template multiply< Derived::is_transposed >( rhs, res, 1, 0 ) ;
 	return res ;
 }
 
 template < typename Derived, typename EigenDerived >
 typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec operator* ( const Eigen::MatrixBase< EigenDerived > &lhs,
-						 const bogus::BlockMatrixBase< Derived >& rhs )
+						 const bogus::BlockObjectBase< Derived >& rhs )
 {
 	assert( lhs.rows() == 1 ) ;
 	assert( lhs.cols() == rhs.rows() ) ;
@@ -128,22 +128,7 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 	ResVec res ( rhs.cols() ) ;
 
 	Eigen::Transpose< ResVec > resTrans ( res ) ;
-	rhs.template multiply< true >( lhs.transpose(), resTrans, 1, 0 ) ;
-	return res ;
-}
-
-template < typename Derived, typename EigenDerived >
-typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec operator* ( const Eigen::MatrixBase< EigenDerived > &lhs,
-						 const bogus::Transpose< bogus::BlockMatrixBase< Derived > >& rhs )
-{
-	assert( lhs.rows() == 1 ) ;
-	assert( lhs.cols() == rhs.matrix.cols() ) ;
-
-	typedef typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::RowResVec ResVec ;
-	ResVec res ( rhs.matrix.rows() ) ;
-
-	Eigen::Transpose< ResVec > resTrans ( res ) ;
-	rhs.matrix.template multiply< false >( lhs.transpose(), resTrans, 1, 0 ) ;
+	rhs.eval().template multiply< !Derived::is_transposed >( lhs.transpose(), resTrans, 1, 0 ) ;
 	return res ;
 }
 

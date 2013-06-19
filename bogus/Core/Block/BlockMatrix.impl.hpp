@@ -25,12 +25,6 @@ Derived& BlockObjectBase< Derived >::derived() {
 	return static_cast< Derived& >( *this ) ;
 }
 
-template < typename Derived >
-typename BlockMatrixBase< Derived >::ConstTransposeReturnType BlockMatrixBase< Derived >::transpose() const
-{
-	return derived().transpose() ;
-}
-
 }
 
 #endif

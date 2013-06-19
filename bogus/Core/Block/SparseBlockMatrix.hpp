@@ -223,21 +223,14 @@ public:
 	Derived& assign ( const SparseBlockMatrixBase< OtherDerived > &source, const Scalar scale = 1 ) ;
 
 	template < typename OtherDerived >
-	Derived& operator= ( const SparseBlockMatrixBase< OtherDerived > &source )
-	{ return assign< false >( source ) ; }
-
-	template < typename OtherDerived >
-	Derived& operator= ( const Transpose< SparseBlockMatrixBase< OtherDerived > > &source )
-	{ return assign< true >( source.matrix ) ; }
+	Derived& operator= ( const BlockObjectBase< OtherDerived > &source )
+	{ return assign< OtherDerived::is_transposed >( source.eval() ) ; }
 
 	template < typename LhsT, typename RhsT >
 	Derived& operator= ( const Product< LhsT, RhsT > &prod ) ;
 
 	template < typename LhsT, typename RhsT >
 	Derived& operator= ( const Addition< LhsT, RhsT > &prod ) ;
-
-	template < typename LhsT, typename RhsT >
-	Derived& operator= ( const Substraction< LhsT, RhsT > &prod ) ;
 
 	//! Clones the dimensions ( number of rows/cols blocks and rows/cols per block ) of \p source
 	template< typename OtherDerived >
@@ -252,7 +245,7 @@ public:
 	//! \name Linear algebra
 	//@{
 
-	ConstTransposeReturnType transpose() const { return Transpose< SparseBlockMatrixBase< Derived > >( *this ) ; }
+	ConstTransposeReturnType transpose() const { return Transpose< Derived >( derived() ) ; }
 
 	template < bool Transpose, typename RhsT, typename ResT >
 	void multiply( const RhsT& rhs, ResT& res, typename RhsT::Scalar alpha = 1, typename ResT::Scalar beta = 0 ) const ;
@@ -270,22 +263,20 @@ public:
 	template < bool Transpose, typename OtherDerived >
 	Derived& add( const SparseBlockMatrixBase< OtherDerived > &rhs, Scalar alpha = 1) ;
 
+	//! Coeff-wise multiplication with a scalar
 	Derived& operator *= ( Scalar alpha ) { return scale( alpha ) ; }
+	//! Coeff-wise division with a scalar
 	Derived& operator /= ( Scalar alpha ) { return scale( 1./alpha ) ; }
 
+	//! Adds another SparseBlockMatrixBase to this one
 	template < typename OtherDerived >
-	Derived& operator+= ( const SparseBlockMatrixBase< OtherDerived > &source )
-	{ return add< false >( source ) ; }
-	template < typename OtherDerived >
-	Derived& operator+= ( const Transpose< SparseBlockMatrixBase< OtherDerived > > &source )
-	{ return add< true >( source.matrix ) ; }
+	Derived& operator+= ( const BlockObjectBase< OtherDerived > &source )
+	{ return add< OtherDerived::is_transposed >( source.eval() ) ; }
 
+	//! Substracts another SparseBlockMatrixBase from this one
 	template < typename OtherDerived >
-	Derived& operator-= ( const SparseBlockMatrixBase< OtherDerived > &source )
-	{ return add< false >( source, -1 ) ; }
-	template < typename OtherDerived >
-	Derived& operator-= ( const Transpose< SparseBlockMatrixBase< OtherDerived > > &source )
-	{ return add< true >( source.matrix, -1 ) ; }
+	Derived& operator-= ( const BlockObjectBase< OtherDerived > &source )
+	{ return add< OtherDerived::is_transposed >( source.eval(), -1 ) ; }
 
 	//@}
 
@@ -395,6 +386,7 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMat
 	typedef BlockT BlockType ;
 	typedef typename BlockTraits< BlockT >::Scalar Scalar ;
 
+	enum { is_transposed = 0 } ;
 	enum {
 		is_compressed  = Flags & flags::COMPRESSED,
 		is_symmetric   = Flags & flags::SYMMETRIC,
@@ -410,7 +402,6 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMat
 	typedef SparseBlockIndex< is_compressed && !is_col_major, Index, BlockPtr > RowIndexType ;
 	typedef SparseBlockIndex< is_compressed && is_col_major , Index, BlockPtr > ColIndexType ;
 
-	typedef Transpose< SparseBlockMatrixBase< SparseBlockMatrix< BlockT, Flags > > > ConstTransposeReturnType ;
 } ;
 
 //! Sparse Block Matrix
@@ -438,17 +429,6 @@ public:
 		return ( Base::operator= ( rhs.derived() ) ).derived() ;
 	}
 
-	template < typename RhsT >
-	SparseBlockMatrix( const Transpose< SparseBlockMatrixBase< RhsT > > & rhs ) : Base()
-	{
-		Base::operator= ( rhs ) ;
-	}
-
-	template < typename RhsT >
-	SparseBlockMatrix& operator=( const Transpose< SparseBlockMatrixBase< RhsT > > & rhs )
-	{
-		return ( Base::operator= ( rhs ) ).derived() ;
-	}
 } ;
 
 }

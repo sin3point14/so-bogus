@@ -41,6 +41,9 @@ template < typename Derived >
 struct BlockObjectBase ;
 
 template < typename Derived >
+struct Transpose ;
+
+template < typename Derived >
 class BlockMatrixBase ;
 
 template < typename Derived >

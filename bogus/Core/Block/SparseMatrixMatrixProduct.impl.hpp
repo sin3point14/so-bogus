@@ -17,11 +17,11 @@
 
 #include <map>
 
-template < typename LhsT, typename RhsT >
+template < typename LhsT, typename RhsT  >
 bogus::Product< LhsT, RhsT > operator* ( const bogus::BlockObjectBase< LhsT >& lhs,
 			 const bogus::BlockObjectBase< RhsT > &rhs )
 {
-	return bogus::Product<  LhsT, RhsT >( lhs, rhs ) ;
+	return bogus::Product< LhsT, RhsT >( lhs.derived(), rhs.derived() ) ;
 }
 
 namespace bogus
@@ -41,6 +41,9 @@ template < bool ColWise, typename LhsT, typename RhsT >
 void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT > &prod )
 {
 	typedef Product< LhsT, RhsT> Prod ;
+
+	const typename Prod::PlainLhsMatrixType& lhs = prod.lhs.object.eval() ;
+	const typename Prod::PlainRhsMatrixType& rhs = prod.rhs.object.eval() ;
 	typedef BlockMatrixTraits< typename Prod::PlainLhsMatrixType > LhsTraits ;
 	typedef BlockMatrixTraits< typename Prod::PlainRhsMatrixType > RhsTraits ;
 
@@ -52,30 +55,30 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 	clear() ;
 	if( Prod::transposeLhs )
 	{
-		m_rows = prod.lhs.cols() ;
-		colMajorIndex().innerOffsets = prod.lhs.rowMajorIndex().innerOffsets;
+		m_rows = lhs.cols() ;
+		colMajorIndex().innerOffsets = lhs.rowMajorIndex().innerOffsets;
 	} else {
-		m_rows = prod.lhs.rows() ;
-		colMajorIndex().innerOffsets = prod.lhs.colMajorIndex().innerOffsets;
+		m_rows = lhs.rows() ;
+		colMajorIndex().innerOffsets = lhs.colMajorIndex().innerOffsets;
 	}
 	if( Prod::transposeRhs )
 	{
-		m_cols = prod.rhs.rows() ;
-		rowMajorIndex().innerOffsets = prod.rhs.colMajorIndex().innerOffsets;
+		m_cols = rhs.rows() ;
+		rowMajorIndex().innerOffsets = rhs.colMajorIndex().innerOffsets;
 	} else {
-		m_cols = prod.rhs.cols() ;
-		rowMajorIndex().innerOffsets = prod.rhs.rowMajorIndex().innerOffsets;
+		m_cols = rhs.cols() ;
+		rowMajorIndex().innerOffsets = rhs.rowMajorIndex().innerOffsets;
 	}
 
 
 	SparseBlockIndexComputer< typename Prod::PlainLhsMatrixType, LhsTraits::is_symmetric,
-			ColWise, Prod::transposeLhs> lhsIndexComputer ( prod.lhs ) ;
+			ColWise, Prod::transposeLhs> lhsIndexComputer ( lhs ) ;
 	SparseBlockIndexComputer< typename Prod::PlainRhsMatrixType, RhsTraits::is_symmetric,
-			!ColWise, Prod::transposeRhs> rhsIndexComputer ( prod.rhs ) ;
+			!ColWise, Prod::transposeRhs> rhsIndexComputer ( rhs ) ;
 
 
 	setFromProduct< ColWise >( lhsIndexComputer.get(), rhsIndexComputer.get(),
-							   prod.lhs.data(), prod.rhs.data(),
+							   lhs.data(), rhs.data(),
 							   lhsGetter, rhsGetter ) ;
 
 }

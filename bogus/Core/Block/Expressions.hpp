@@ -18,57 +18,71 @@ namespace bogus
 template <typename MatrixT>
 struct Transpose : public BlockObjectBase< Transpose< MatrixT > >
 {
-	typedef typename MatrixT::PlainObjectType PlainObjectType ;
+	typedef BlockMatrixTraits< Transpose< MatrixT > > Traits ;
+	typedef typename Traits::PlainObjectType PlainObjectType ;
+	typedef typename Traits::Index Index ;
+
 	const PlainObjectType &matrix ;
 
 	Transpose( const PlainObjectType &m ) : matrix( m.derived() ) {}
 
-	const PlainObjectType& transpose() { return matrix ; }
+	const PlainObjectType& transpose() const { return matrix ; }
+	const PlainObjectType& eval() const { return matrix.eval() ; }
+
+	Index rows() const { return matrix.cols() ; }
+	Index cols() const { return matrix.rows() ; }
 } ;
 
-template < typename Derived >
-class SparseBlockMatrixBase ;
 
 template <typename MatrixT>
-struct Transpose< SparseBlockMatrixBase< MatrixT > > : public Transpose< BlockMatrixBase< MatrixT > >
+struct BlockMatrixTraits< Transpose< MatrixT > >
 {
-	explicit Transpose( const SparseBlockMatrixBase< MatrixT > &m )
-		: Transpose< BlockMatrixBase< MatrixT > > ( m.derived() )
+	enum { is_transposed = 1 } ;
+
+	typedef BlockMatrixTraits< MatrixT > OrigTraits;
+	typedef typename OrigTraits::Index Index ;
+	typedef typename OrigTraits::BlockPtr BlockPtr ;
+	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
+	typedef typename OrigTraits::Scalar Scalar ;
+
+	typedef PlainObjectType ConstTransposeReturnType ;
+} ;
+
+
+template < typename ObjectT >
+struct BlockOperand
+{
+	typedef typename ObjectT::PlainObjectType PlainObjectType ;
+
+	typedef BlockMatrixTraits< ObjectT > Traits ;
+	enum { do_transpose = Traits::is_transposed } ;
+	typedef typename Traits::Scalar Scalar ;
+
+	const ObjectT& object ;
+	Scalar scaling ;
+
+	BlockOperand( const ObjectT & o, Scalar s = 1 )
+		: object(o), scaling(s)
 	{}
-} ;
-
-template < typename MatrixT >
-struct TransposeOption
-{
-	enum { do_transpose = false } ;
-	typedef MatrixT MatrixType ;
-
-	static const MatrixType &get( const MatrixT &m ) { return m ; }
-} ;
-template < typename MatrixT >
-struct TransposeOption< Transpose< MatrixT > >
-{
-	enum { do_transpose = true } ;
-	typedef typename MatrixT::PlainObjectType MatrixType ;
-
-	static const MatrixType &get( const Transpose< MatrixT > &m ) { return m.matrix.derived() ; }
 } ;
 
 template < template < typename LhsT, typename RhsT > class BlockOp, typename LhsMatrixT, typename RhsMatrixT>
 struct BinaryBlockOp : public BlockObjectBase< BlockOp< LhsMatrixT, RhsMatrixT > >
 {
-	typedef TransposeOption< LhsMatrixT > LhsTransposeOption ;
-	typedef TransposeOption< RhsMatrixT > RhsTransposeOption ;
-	typedef typename LhsTransposeOption::MatrixType PlainLhsMatrixType ;
-	typedef typename RhsTransposeOption::MatrixType PlainRhsMatrixType ;
+	typedef BlockOperand< LhsMatrixT > Lhs ;
+	typedef BlockOperand< RhsMatrixT > Rhs ;
 
-	const PlainLhsMatrixType &lhs ;
-	const PlainRhsMatrixType &rhs ;
-	enum { transposeLhs = LhsTransposeOption::do_transpose };
-	enum { transposeRhs = RhsTransposeOption::do_transpose };
+	typedef typename Lhs::PlainObjectType PlainLhsMatrixType ;
+	typedef typename Rhs::PlainObjectType PlainRhsMatrixType ;
 
-	BinaryBlockOp( const BlockObjectBase< LhsMatrixT >& l, const BlockObjectBase< RhsMatrixT > &r )
-		: lhs( LhsTransposeOption::get( l.derived() ) ), rhs ( RhsTransposeOption::get( r.derived() ) )
+	const Lhs lhs ;
+	const Rhs rhs ;
+	enum { transposeLhs = Lhs::do_transpose };
+	enum { transposeRhs = Rhs::do_transpose };
+
+	BinaryBlockOp( const LhsMatrixT& l,const RhsMatrixT& r,
+				   typename Lhs::Scalar lscaling = 1, typename Lhs::Scalar rscaling = 1 )
+		: lhs( l, lscaling ), rhs ( r, rscaling )
 	{}
 } ;
 
@@ -76,27 +90,66 @@ template <typename LhsMatrixT, typename RhsMatrixT>
 struct Product : public BinaryBlockOp< Product, LhsMatrixT, RhsMatrixT >
 {
 	typedef BinaryBlockOp< bogus::Product, LhsMatrixT, RhsMatrixT > Base ;
-	Product( const BlockObjectBase< LhsMatrixT >& l, const BlockObjectBase< RhsMatrixT > &r )
-		: Base( l, r )
+
+	Product( const LhsMatrixT& l, const RhsMatrixT &r,
+			  typename Base::Lhs::Scalar lscaling = 1, typename Base::Lhs::Scalar rscaling = 1 )
+		: Base( l, r, lscaling, rscaling )
 	{}
+
+	typename Base::ConstTransposeReturnType transpose()
+	{
+		return typename Base::ConstTransposeReturnType( Base::rhs, Base::lhs ) ;
+	}
+} ;
+
+template <typename LhsMatrixT, typename RhsMatrixT>
+struct BlockMatrixTraits< Product< LhsMatrixT, RhsMatrixT > >
+{
+	enum { is_transposed = 0 } ;
+
+	typedef BlockMatrixTraits< LhsMatrixT > OrigTraits;
+	typedef typename OrigTraits::Index Index ;
+	typedef typename OrigTraits::BlockPtr BlockPtr ;
+	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
+
+	typedef Product< typename RhsMatrixT::ConstTransposeReturnType,
+					typename LhsMatrixT::ConstTransposeReturnType >
+	ConstTransposeReturnType ;
 } ;
 
 template <typename LhsMatrixT, typename RhsMatrixT>
 struct Addition : public BinaryBlockOp< Addition, LhsMatrixT, RhsMatrixT >
 {
 	typedef BinaryBlockOp< bogus::Addition, LhsMatrixT, RhsMatrixT > Base ;
-	Addition( const BlockObjectBase< LhsMatrixT >& l, const BlockObjectBase< RhsMatrixT > &r )
-		: Base( l, r )
+	Addition( const LhsMatrixT& l, const RhsMatrixT &r,
+			  typename Base::Lhs::Scalar lscaling = 1, typename Base::Lhs::Scalar rscaling = 1 )
+		: Base( l, r, lscaling, rscaling )
 	{}
+
+	typename Base::ConstTransposeReturnType transpose()
+	{
+		//FIXME find a way to copy-store permanently objects in operands
+		typename Base::ConstTransposeReturnType tr(
+					Base::lhs.object.transpose(), Base::rhs.object.transpose(),
+					Base::lhs.scaling, Base::rhs.scaling ) ;
+
+		return tr ;
+	}
 } ;
 
 template <typename LhsMatrixT, typename RhsMatrixT>
-struct Substraction : public BinaryBlockOp< Substraction, LhsMatrixT, RhsMatrixT >
+struct BlockMatrixTraits< Addition< LhsMatrixT, RhsMatrixT > >
 {
-	typedef BinaryBlockOp< bogus::Substraction, LhsMatrixT, RhsMatrixT > Base ;
-	Substraction( const BlockObjectBase< LhsMatrixT >& l, const BlockObjectBase< RhsMatrixT > &r )
-		: Base( l, r )
-	{}
+	enum { is_transposed = 0 } ;
+
+	typedef BlockMatrixTraits< LhsMatrixT > OrigTraits;
+	typedef typename OrigTraits::Index Index ;
+	typedef typename OrigTraits::BlockPtr BlockPtr ;
+	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
+
+	typedef Addition< typename LhsMatrixT::ConstTransposeReturnType,
+					 typename RhsMatrixT::ConstTransposeReturnType >
+	ConstTransposeReturnType ;
 } ;
 
 // Transpose and matrix/vector product return types

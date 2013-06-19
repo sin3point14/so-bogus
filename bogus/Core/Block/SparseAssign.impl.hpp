@@ -17,14 +17,14 @@ template < typename LhsT, typename RhsT >
 bogus::Addition< LhsT, RhsT > operator+ ( const bogus::BlockObjectBase< LhsT >& lhs,
 			 const bogus::BlockObjectBase< RhsT > &rhs )
 {
-	return bogus::Addition<  LhsT, RhsT >( lhs, rhs ) ;
+	return bogus::Addition< LhsT, RhsT >( lhs.derived(), rhs.derived() ) ;
 }
 
 template < typename LhsT, typename RhsT >
-bogus::Substraction< LhsT, RhsT > operator- ( const bogus::BlockObjectBase< LhsT >& lhs,
+bogus::Addition< LhsT, RhsT > operator- ( const bogus::BlockObjectBase< LhsT >& lhs,
 			 const bogus::BlockObjectBase< RhsT > &rhs )
 {
-	return bogus::Substraction<  LhsT, RhsT >( lhs, rhs ) ;
+	return bogus::Addition<  LhsT, RhsT >( lhs.derived(), rhs.derived(), 1, -1 ) ;
 }
 
 namespace bogus
@@ -266,17 +266,8 @@ template < typename LhsT, typename RhsT >
 Derived& SparseBlockMatrixBase<Derived>::operator=( const Addition< LhsT, RhsT > &addition )
 {
 	typedef Addition< LhsT, RhsT> Add ;
-	assign< Add::transposeLhs >( addition.lhs) ;
-	return add< Add::transposeRhs >( addition.rhs ) ;
-}
-
-template < typename Derived >
-template < typename LhsT, typename RhsT >
-Derived& SparseBlockMatrixBase<Derived>::operator=( const Substraction< LhsT, RhsT > &addition )
-{
-	typedef Substraction< LhsT, RhsT> Add ;
-	assign< Add::transposeLhs >( addition.lhs) ;
-	return add< Add::transposeRhs >( addition.rhs, -1 ) ;
+	assign< Add::transposeLhs >( addition.lhs.object.eval(), addition.lhs.scaling ) ;
+	return add< Add::transposeRhs >( addition.rhs.object.eval(), addition.rhs.scaling ) ;
 }
 
 }
