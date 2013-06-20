@@ -27,6 +27,34 @@ bogus::Addition< LhsT, RhsT > operator- ( const bogus::BlockObjectBase< LhsT >& 
 	return bogus::Addition<  LhsT, RhsT >( lhs.derived(), rhs.derived(), 1, -1 ) ;
 }
 
+template < typename Derived >
+bogus::Scaling< Derived > operator* ( const bogus::BlockObjectBase< Derived >& lhs,
+			 typename Derived::Scalar rhs )
+{
+	return bogus::Scaling< Derived >( lhs.derived(), rhs ) ;
+}
+
+template < typename Derived >
+bogus::Scaling< Derived > operator* ( typename Derived::Scalar lhs ,
+			 const bogus::BlockObjectBase< Derived >& rhs)
+{
+	return bogus::Scaling< Derived >( rhs.derived(), lhs ) ;
+}
+
+template < typename Derived >
+bogus::Scaling< Derived > operator/ ( const bogus::BlockObjectBase< Derived >& lhs,
+			 typename Derived::Scalar rhs )
+{
+	return bogus::Scaling< Derived >( lhs.derived(), 1/rhs ) ;
+}
+
+template < typename Derived >
+bogus::Scaling< Derived > operator/ ( typename Derived::Scalar lhs ,
+			 const bogus::BlockObjectBase< Derived >& rhs)
+{
+	return bogus::Scaling< Derived >( rhs.derived(), 1/lhs ) ;
+}
+
 namespace bogus
 {
 

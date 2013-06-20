@@ -388,6 +388,9 @@ TEST( SparseBlock, MMult )
 
 		bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::SYMMETRIC > mm_t2( mm_t * mm_t ) ;
 		EXPECT_EQ( mm_t2*expected_1, mm_t * ( mm_t * expected_1 ) );
+
+		bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::SYMMETRIC > mm_t3( (mm_t * mm_t).transpose() ) ;
+		EXPECT_EQ( mm_t3*expected_1, mm_t * ( mm_t * expected_1 ) );
 	}
 
 }
@@ -576,9 +579,17 @@ TEST( SparseBlock, Add )
 		EXPECT_EQ( sym_res, sbm_bis*rhs ) ;
 
 		bogus::SparseBlockMatrix< Eigen::MatrixXd > sbm_ter
-				= sbm_bis.transpose() - ssbm  ;
+				= ( sbm_bis.transpose() - ssbm ).transpose()  ;
+		EXPECT_EQ( 2*sym_res, sbm_ter*rhs ) ;
+
+		sbm_ter = -sbm_bis ;
+		EXPECT_EQ( -sym_res, sbm_ter*rhs ) ;
+		sbm_ter = (-sbm_bis).transpose() ;
+		EXPECT_EQ( -sym_res, sbm_ter*rhs ) ;
+		sbm_ter = (-2*sbm_bis).transpose() ;
+		EXPECT_EQ( -2*sym_res, sbm_ter*rhs ) ;
+		sbm_ter = sbm_bis*2 ;
 		EXPECT_EQ( 2*sym_res, sbm_ter*rhs ) ;
 	}
 
 }
-

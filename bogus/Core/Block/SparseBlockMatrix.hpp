@@ -232,6 +232,13 @@ public:
 	template < typename LhsT, typename RhsT >
 	Derived& operator= ( const Addition< LhsT, RhsT > &prod ) ;
 
+	template < typename OtherDerived >
+	Derived& operator= ( const Scaling< OtherDerived > &scaling )
+	{
+		return assign< Scaling< OtherDerived >::transposeOperand >
+				( scaling.operand.object.eval(), scaling.operand.scaling ) ;
+	}
+
 	//! Clones the dimensions ( number of rows/cols blocks and rows/cols per block ) of \p source
 	template< typename OtherDerived >
 	void cloneDimensions( const BlockMatrixBase< OtherDerived > &source ) ;
@@ -267,6 +274,10 @@ public:
 	Derived& operator *= ( Scalar alpha ) { return scale( alpha ) ; }
 	//! Coeff-wise division with a scalar
 	Derived& operator /= ( Scalar alpha ) { return scale( 1./alpha ) ; }
+
+	//! Unary minus
+	Scaling< Derived > operator-() const
+	{ return Scaling< Derived >( derived(), -1 ) ; }
 
 	//! Adds another SparseBlockMatrixBase to this one
 	template < typename OtherDerived >
@@ -387,6 +398,7 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMat
 	typedef typename BlockTraits< BlockT >::Scalar Scalar ;
 
 	enum { is_transposed = 0 } ;
+	enum { is_temporary = 0 } ;
 	enum {
 		is_compressed  = Flags & flags::COMPRESSED,
 		is_symmetric   = Flags & flags::SYMMETRIC,

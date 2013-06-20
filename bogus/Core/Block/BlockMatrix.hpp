@@ -29,6 +29,7 @@ struct BlockObjectBase : public Object
 	typedef typename Traits::ConstTransposeReturnType ConstTransposeReturnType ;
 	typedef typename Traits::Index Index ;
 	typedef typename Traits::PlainObjectType PlainObjectType ;
+	typedef typename Traits::Scalar Scalar ;
 	enum { is_transposed = Traits::is_transposed } ;
 
 	//! Returns the total number of rows of the matrix ( expanding blocks )

@@ -38,6 +38,7 @@ template <typename MatrixT>
 struct BlockMatrixTraits< Transpose< MatrixT > >
 {
 	enum { is_transposed = 1 } ;
+	enum { is_temporary = 1 } ;
 
 	typedef BlockMatrixTraits< MatrixT > OrigTraits;
 	typedef typename OrigTraits::Index Index ;
@@ -46,6 +47,17 @@ struct BlockMatrixTraits< Transpose< MatrixT > >
 	typedef typename OrigTraits::Scalar Scalar ;
 
 	typedef PlainObjectType ConstTransposeReturnType ;
+} ;
+
+template < typename ObjectT, bool IsTemporary >
+struct BlockStorage
+{
+	typedef const ObjectT& ConstValue ;
+} ;
+template < typename ObjectT >
+struct BlockStorage< ObjectT, true >
+{
+	typedef const ObjectT  ConstValue ;
 } ;
 
 
@@ -58,7 +70,7 @@ struct BlockOperand
 	enum { do_transpose = Traits::is_transposed } ;
 	typedef typename Traits::Scalar Scalar ;
 
-	const ObjectT& object ;
+	typename BlockStorage< ObjectT, Traits::is_temporary >::ConstValue object ;
 	Scalar scaling ;
 
 	BlockOperand( const ObjectT & o, Scalar s = 1 )
@@ -98,7 +110,9 @@ struct Product : public BinaryBlockOp< Product, LhsMatrixT, RhsMatrixT >
 
 	typename Base::ConstTransposeReturnType transpose()
 	{
-		return typename Base::ConstTransposeReturnType( Base::rhs, Base::lhs ) ;
+		return typename Base::ConstTransposeReturnType (
+					Base::rhs.object.transpose(), Base::lhs.object.transpose(),
+					Base::rhs.scaling, Base::lhs.scaling ) ;
 	}
 } ;
 
@@ -106,11 +120,13 @@ template <typename LhsMatrixT, typename RhsMatrixT>
 struct BlockMatrixTraits< Product< LhsMatrixT, RhsMatrixT > >
 {
 	enum { is_transposed = 0 } ;
+	enum { is_temporary = 1 } ;
 
 	typedef BlockMatrixTraits< LhsMatrixT > OrigTraits;
 	typedef typename OrigTraits::Index Index ;
 	typedef typename OrigTraits::BlockPtr BlockPtr ;
 	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
+	typedef typename OrigTraits::Scalar Scalar ;
 
 	typedef Product< typename RhsMatrixT::ConstTransposeReturnType,
 					typename LhsMatrixT::ConstTransposeReturnType >
@@ -128,12 +144,9 @@ struct Addition : public BinaryBlockOp< Addition, LhsMatrixT, RhsMatrixT >
 
 	typename Base::ConstTransposeReturnType transpose()
 	{
-		//FIXME find a way to copy-store permanently objects in operands
-		typename Base::ConstTransposeReturnType tr(
+		return typename Base::ConstTransposeReturnType (
 					Base::lhs.object.transpose(), Base::rhs.object.transpose(),
 					Base::lhs.scaling, Base::rhs.scaling ) ;
-
-		return tr ;
 	}
 } ;
 
@@ -141,14 +154,54 @@ template <typename LhsMatrixT, typename RhsMatrixT>
 struct BlockMatrixTraits< Addition< LhsMatrixT, RhsMatrixT > >
 {
 	enum { is_transposed = 0 } ;
+	enum { is_temporary = 1 } ;
 
 	typedef BlockMatrixTraits< LhsMatrixT > OrigTraits;
 	typedef typename OrigTraits::Index Index ;
 	typedef typename OrigTraits::BlockPtr BlockPtr ;
 	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
+	typedef typename OrigTraits::Scalar Scalar ;
 
 	typedef Addition< typename LhsMatrixT::ConstTransposeReturnType,
 					 typename RhsMatrixT::ConstTransposeReturnType >
+	ConstTransposeReturnType ;
+} ;
+
+template <typename MatrixT>
+struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
+{
+	typedef BlockOperand< MatrixT > Operand ;
+	typedef typename Operand::PlainObjectType PlainOperandMatrixType ;
+	Operand operand ;
+
+	enum { transposeOperand = Operand::do_transpose };
+
+	typedef BlockObjectBase< Scaling< MatrixT > > Base ;
+
+	Scaling( const MatrixT &object, const typename MatrixT::Scalar scaling )
+		: operand( object, scaling )
+	{}
+
+	typename Base::ConstTransposeReturnType transpose()
+	{
+		return typename Base::ConstTransposeReturnType (
+					operand.object.transpose(), operand.scaling ) ;
+	}
+} ;
+
+template <typename MatrixT>
+struct BlockMatrixTraits< Scaling< MatrixT > >
+{
+	enum { is_transposed = 0 } ;
+	enum { is_temporary = 1 } ;
+
+	typedef BlockMatrixTraits< MatrixT > OrigTraits;
+	typedef typename OrigTraits::Index Index ;
+	typedef typename OrigTraits::BlockPtr BlockPtr ;
+	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
+	typedef typename OrigTraits::Scalar Scalar ;
+
+	typedef Scaling< typename MatrixT::ConstTransposeReturnType >
 	ConstTransposeReturnType ;
 } ;
 
