@@ -589,7 +589,9 @@ TEST( SparseBlock, Add )
 		sbm_ter = (-2*sbm_bis).transpose() ;
 		EXPECT_EQ( -2*sym_res, sbm_ter*rhs ) ;
 		sbm_ter = sbm_bis*2 ;
-		EXPECT_EQ( 2*sym_res, sbm_ter*rhs ) ;
+		EXPECT_EQ( sym_res, (.5*sbm_ter)*rhs ) ;
+		sbm_ter = sbm_ter -  ( 2 * sbm_bis * 3 ) * .5 ;
+		EXPECT_EQ( sym_res, ( rhs.transpose() * ( - sbm_ter ).transpose() ).transpose()  ) ;
 	}
 
 }

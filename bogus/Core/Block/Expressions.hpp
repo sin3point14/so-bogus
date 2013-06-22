@@ -64,6 +64,7 @@ struct BlockStorage< ObjectT, true >
 template < typename ObjectT >
 struct BlockOperand
 {
+	typedef ObjectT ObjectType ;
 	typedef typename ObjectT::PlainObjectType PlainObjectType ;
 
 	typedef BlockMatrixTraits< ObjectT > Traits ;
@@ -187,6 +188,9 @@ struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
 		return typename Base::ConstTransposeReturnType (
 					operand.object.transpose(), operand.scaling ) ;
 	}
+
+	typename Base::Index rows() const { return operand.object.rows() ; }
+	typename Base::Index cols() const { return operand.object.rows() ; }
 } ;
 
 template <typename MatrixT>
@@ -203,6 +207,19 @@ struct BlockMatrixTraits< Scaling< MatrixT > >
 
 	typedef Scaling< typename MatrixT::ConstTransposeReturnType >
 	ConstTransposeReturnType ;
+} ;
+
+template < typename ObjectT >
+struct BlockOperand< Scaling< ObjectT > > : public BlockOperand< ObjectT >
+{
+	typedef BlockOperand< ObjectT > Base ;
+
+	BlockOperand( const Scaling< ObjectT > & o, typename Base::Scalar s = 1 )
+		: Base(o.operand.object, s*o.operand.scaling)
+	{}
+	BlockOperand( const typename Base::ObjectType & o, typename Base::Scalar s = 1 )
+		: Base(o, s)
+	{}
 } ;
 
 // Transpose and matrix/vector product return types
