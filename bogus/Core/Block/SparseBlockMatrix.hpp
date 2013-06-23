@@ -32,7 +32,7 @@ public:
 	typedef BlockMatrixBase< Derived > Base ;
 	typedef BlockMatrixTraits< Derived > Traits ;
 
-	typedef typename Traits::SparseIndexType SparseIndexType ;
+	typedef typename Traits::MajorIndexType MajorIndexType ;
 	typedef typename Traits::RowIndexType RowIndexType ;
 	typedef typename Traits::ColIndexType ColIndexType ;
 	typedef typename Traits::UncompressedIndexType UncompressedIndexType ;
@@ -199,7 +199,7 @@ public:
 	//! Returns whether the transpose has been cached
 	bool transposeCached() const { return m_transposeIndex.valid ; }
 
-	const SparseIndexType& majorIndex() const
+	const MajorIndexType& majorIndex() const
 	{
 		return m_majorIndex ;
 	}
@@ -207,7 +207,7 @@ public:
 	{
 		return m_minorIndex ;
 	}
-	const SparseIndexType& transposeIndex() const
+	const MajorIndexType& transposeIndex() const
 	{
 		return m_transposeIndex ;
 	}
@@ -219,6 +219,7 @@ public:
 	//! \name Assignment and cloning operations
 	///@{
 
+	//! Performs ( *this = scale * source ) or ( *this = scale * source.transpose() )
 	template < bool Transpose, typename OtherDerived >
 	Derived& assign ( const SparseBlockMatrixBase< OtherDerived > &source, const Scalar scale = 1 ) ;
 
@@ -239,8 +240,7 @@ public:
 	Derived& operator= ( const Scaling< OtherDerived > &scaling )
 	{
 		typename Scaling< OtherDerived >::Operand::EvalType operand( scaling.operand.object.eval() ) ;
-		return assign< Scaling< OtherDerived >::transposeOperand >
-				( *operand, scaling.operand.scaling ) ;
+		return assign< Scaling< OtherDerived >::transposeOperand >( *operand, scaling.operand.scaling ) ;
 	}
 
 	//! Clones the dimensions ( number of rows/cols blocks and rows/cols per block ) of \p source
@@ -317,7 +317,7 @@ public:
 	//! Direct access to major index.
 	/*! Could be used in conjunction with prealloc() to devise a custom way of building the index.
 		Dragons, etc. */
-	SparseIndexType& majorIndex() { return m_majorIndex ; }
+	MajorIndexType& majorIndex() { return m_majorIndex ; }
 
 	//! Resizes \c m_blocks and set \c m_nBlocks to \p nBlocks
 	void prealloc( std::size_t nBlocks ) ;
@@ -389,11 +389,11 @@ protected:
 	//! Number of blocks on the matrix. Can be different of blocks().size(), for example when the transpose is cached.
 	std::size_t m_nBlocks ;
 
-	SparseIndexType m_majorIndex ;
+	MajorIndexType m_majorIndex ;
 	// Minor index is always uncompressed, as the blocks cannot be contiguous
 	// For a symmetric matrix, do not store diagonal block in the minor and transpose index
 	UncompressedIndexType m_minorIndex ;
-	SparseIndexType m_transposeIndex ;
+	MajorIndexType m_transposeIndex ;
 } ;
 
 //! Specialization of BlockMatrixTraits for SparseBlockMatrix
@@ -418,7 +418,7 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMat
 		flags         = Flags
 	} ;
 
-	typedef SparseBlockIndex< is_compressed, Index, BlockPtr > SparseIndexType ;
+	typedef SparseBlockIndex< is_compressed, Index, BlockPtr > MajorIndexType ;
 
 	typedef SparseBlockIndex< false, Index, BlockPtr  > UncompressedIndexType ;
 	typedef SparseBlockIndex< is_compressed && !is_col_major, Index, BlockPtr > RowIndexType ;

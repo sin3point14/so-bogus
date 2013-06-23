@@ -162,7 +162,7 @@ void SparseBlockMatrixBase< Derived >::clear()
 template < typename Derived >
 Derived& SparseBlockMatrixBase< Derived >::prune( const Scalar precision )
 {
-	SparseIndexType oldIndex = m_majorIndex ;
+	MajorIndexType oldIndex = m_majorIndex ;
 
 	typename BlockContainerTraits< BlockType >::Type old_blocks ;
 	old_blocks.swap( m_blocks ) ;
@@ -172,7 +172,7 @@ Derived& SparseBlockMatrixBase< Derived >::prune( const Scalar precision )
 
 	for( Index outer = 0 ; outer < oldIndex.outerSize() ; ++outer )
 	{
-		for( typename SparseIndexType::InnerIterator it( oldIndex, outer ) ; it ; ++it )
+		for( typename MajorIndexType::InnerIterator it( oldIndex, outer ) ; it ; ++it )
 		{
 			if( ! is_zero( old_blocks[ it.ptr() ], precision ) )
 			{
@@ -225,7 +225,7 @@ void SparseBlockMatrixBase< Derived >::computeMinorIndex( UncompressedIndexType 
 		for ( Index i = 0 ; i < m_majorIndex.outerSize() ; ++ i )
 		{
 			// For a symmetric matrix, do not store diagonal block in col-major index
-			for( typename SparseIndexType::InnerIterator it( m_majorIndex, i ) ;
+			for( typename MajorIndexType::InnerIterator it( m_majorIndex, i ) ;
 				 it && it.inner() != i ; ++ it )
 			{
 				cmIndex.insertBack( it.inner(), i, it.ptr() );
@@ -275,7 +275,7 @@ void SparseBlockMatrixBase< Derived >::cacheTranspose()
 
 		typename UncompressedIndexType::InnerIterator uncompressed_it
 			 ( m_minorIndex , i ) ;
-		for( typename SparseIndexType::InnerIterator it( m_transposeIndex, i ) ;
+		for( typename MajorIndexType::InnerIterator it( m_transposeIndex, i ) ;
 			 it ; ++ it, ++uncompressed_it )
 		{
 			const BlockPtr ptr = ptrOffsets[i]++ ;
@@ -307,9 +307,9 @@ typename SparseBlockMatrixBase< Derived >::BlockPtr SparseBlockMatrixBase< Deriv
 {
 	if( Traits::is_col_major ) std::swap( row, col ) ;
 
-	const typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator
+	const typename SparseBlockMatrixBase< Derived >::MajorIndexType::InnerIterator
 			innerIt( majorIndex(), row ) ;
-	const typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator
+	const typename SparseBlockMatrixBase< Derived >::MajorIndexType::InnerIterator
 			found( std::lower_bound( innerIt, innerIt.end(), col ) ) ;
 
 	return found && found.inner() == col ? found.ptr() : InvalidBlockPtr ;

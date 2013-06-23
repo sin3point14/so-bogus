@@ -45,7 +45,7 @@ template < typename Derived >
 struct SparseBlockIndexGetter< Derived, true >
 {
 	typedef SparseBlockMatrixBase< Derived > MatrixType ;
-	typedef typename MatrixType::SparseIndexType ReturnType ;
+	typedef typename MatrixType::MajorIndexType ReturnType ;
 
 	static ReturnType& get( MatrixType& matrix )
 	{
@@ -94,7 +94,7 @@ struct SparseBlockIndexComputer< MatrixType, true, ColWise, Transpose >
 {
 	typedef BlockMatrixTraits< MatrixType > Traits ;
 	enum { is_major = true } ;
-	typedef CompoundSparseBlockIndex< typename Traits::SparseIndexType, typename Traits::UncompressedIndexType >
+	typedef CompoundSparseBlockIndex< typename Traits::MajorIndexType, typename Traits::UncompressedIndexType >
 	ReturnType ;
 
 	SparseBlockIndexComputer( const SparseBlockMatrixBase< MatrixType > &matrix )

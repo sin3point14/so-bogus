@@ -19,7 +19,7 @@ std::ostream& operator<<( std::ostream &out, const bogus::SparseBlockMatrixBase<
 	for ( unsigned i = 0 ; i < (unsigned) sbm.majorIndex().outerSize() ; ++ i )
 	{
 		out << i << ": " ;
-		for( typename bogus::SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( sbm.majorIndex(), i ) ;
+		for( typename bogus::SparseBlockMatrixBase< Derived >::MajorIndexType::InnerIterator it( sbm.majorIndex(), i ) ;
 			 it ; ++ it )
 		{
 			out << "(" << it.inner() << ";" << it.ptr() << ")" ;

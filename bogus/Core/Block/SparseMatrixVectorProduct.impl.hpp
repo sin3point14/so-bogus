@@ -43,7 +43,7 @@ void SparseBlockMatrixBase< Derived >::splitRowMultiply( const Index row, const 
 	BlockGetter< Traits::is_col_major > getter ;
 	BlockGetter< !Traits::is_col_major > t_getter ;
 
-	for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( m_majorIndex, row ) ;
+	for( typename SparseBlockMatrixBase< Derived >::MajorIndexType::InnerIterator it( m_majorIndex, row ) ;
 		 it ; ++ it )
 	{
 		if( it.inner() != row )
@@ -86,7 +86,7 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 	template < typename Derived, typename RhsT, typename ResT, typename LocalResT, typename ScalarT >
 	static void multiplyAndReduct( const SparseBlockMatrixBase< Derived >& matrix,  const RhsT& rhs, ResT& res, const LocalResT&, ScalarT alpha )
 	{
-		typedef typename SparseBlockMatrixBase< Derived >::SparseIndexType SparseIndexType ;
+		typedef typename SparseBlockMatrixBase< Derived >::MajorIndexType MajorIndexType ;
 #pragma omp parallel
 		{
 			LocalResT locRes( res.rows() ) ;
@@ -97,12 +97,12 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 			{
 				typename RhsT::ConstSegmentReturnType rhs_seg( matrix.majorIndex().innerSegment( rhs, i ) ) ;
 				typename ResT::SegmentReturnType locRes_seg( matrix.majorIndex().innerSegment( locRes, i ) ) ;
-				for( typename SparseIndexType::InnerIterator it( matrix.majorIndex(), i ) ;
+				for( typename MajorIndexType::InnerIterator it( matrix.majorIndex(), i ) ;
 					 it ; ++ it )
 				{
 					const typename Derived::BlockType &b = matrix.block( it.ptr() ) ;
 					locRes_seg += alpha * ( b * matrix.minorIndex().innerSegment( rhs, it.inner() ) ) ;
-					if( it.inner() != (typename SparseIndexType::Index) i )
+					if( it.inner() != (typename MajorIndexType::Index) i )
 						matrix.minorIndex().innerSegment( locRes, it.inner() ) += alpha * ( transpose_block( b ) * rhs_seg ) ;
 				}
 			}
@@ -134,7 +134,7 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 			{
 				typename RhsT::ConstSegmentReturnType rhs_seg( matrix.majorIndex().innerSegment( rhs, i ) ) ;
 				typename ResT::SegmentReturnType res_seg( matrix.majorIndex().innerSegment( res, i ) ) ;
-				for( typename SparseBlockMatrixBase< Derived >::SparseIndexType::InnerIterator it( matrix.majorIndex(), i ) ;
+				for( typename SparseBlockMatrixBase< Derived >::MajorIndexType::InnerIterator it( matrix.majorIndex(), i ) ;
 					 it ; ++ it )
 				{
 					const typename Derived::BlockType &b = matrix.block( it.ptr() ) ;

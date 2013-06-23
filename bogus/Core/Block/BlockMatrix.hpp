@@ -21,16 +21,20 @@ struct Object {} ;
 template < typename Derived >
 struct BlockObjectBase : public Object
 {
-
+	//! Returns a const reference to the implementation
 	const Derived& derived() const ;
+	//! Returns a reference to the implementation
 	Derived& derived() ;
 
 	typedef BlockMatrixTraits< Derived > Traits ;
-	typedef typename Traits::ConstTransposeReturnType ConstTransposeReturnType ;
+
 	typedef typename Traits::Index Index ;
+	typedef typename Traits::Scalar Scalar ;
+	typedef typename Traits::ConstTransposeReturnType ConstTransposeReturnType ;
+	typedef typename Traits::TransposeObjectType TransposeObjectType ;
+
 	typedef typename Traits::PlainObjectType PlainObjectType ;
 	typedef typename Traits::EvalType EvalType ;
-	typedef typename Traits::Scalar Scalar ;
 	enum { is_transposed = Traits::is_transposed } ;
 
 	//! Returns the total number of rows of the matrix ( expanding blocks )
@@ -38,6 +42,10 @@ struct BlockObjectBase : public Object
 	//! Returns the total number of columns of the matrix ( expanding blocks )
 	Index cols() const { return derived().cols() ; }
 
+	//! Return a const transposed view of this object
+	ConstTransposeReturnType transpose() const { return derived().transpose() ; }
+
+	//! Eval this object in a temporary. For internal use, not part of the public API
 	const PlainObjectType* eval() const { return derived().eval() ; }
 };
 
@@ -52,6 +60,7 @@ struct BlockMatrixTraits< BlockObjectBase< Derived > > {
 	typedef const PlainObjectType* EvalType ;
 
 	typedef Transpose< Derived > ConstTransposeReturnType ;
+	typedef ConstTransposeReturnType TransposeObjectType ;
 } ;
 
 //! Base class for dense and sparse block matrices, thought dense don't exist yet

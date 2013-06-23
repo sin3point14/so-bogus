@@ -20,6 +20,7 @@ namespace bogus
 template <typename MatrixT>
 struct Transpose : public BlockObjectBase< Transpose< MatrixT > >
 {
+	typedef BlockObjectBase< Transpose< MatrixT > > Base ;
 	typedef BlockMatrixTraits< Transpose< MatrixT > > Traits ;
 	typedef typename Traits::PlainObjectType PlainObjectType ;
 	typedef typename Traits::Index Index ;
@@ -28,7 +29,7 @@ struct Transpose : public BlockObjectBase< Transpose< MatrixT > >
 
 	Transpose( const PlainObjectType &m ) : matrix( m.derived() ) {}
 
-	const PlainObjectType& transpose() const { return matrix ; }
+	typename Base::ConstTransposeReturnType transpose() const { return matrix ; }
 	typename Traits::EvalType eval() const { return matrix.eval() ; }
 
 	Index rows() const { return matrix.cols() ; }
@@ -49,7 +50,8 @@ struct BlockMatrixTraits< Transpose< MatrixT > >
 	typedef typename OrigTraits::EvalType EvalType ;
 	typedef typename OrigTraits::Scalar Scalar ;
 
-	typedef PlainObjectType ConstTransposeReturnType ;
+	typedef const PlainObjectType& ConstTransposeReturnType ;
+	typedef PlainObjectType TransposeObjectType ;
 } ;
 
 template < typename ObjectT, bool IsTemporary >
@@ -156,9 +158,10 @@ struct BlockMatrixTraits< Product< LhsMatrixT, RhsMatrixT > >
 
 	typedef typename LhsTraits::Scalar Scalar ;
 
-	typedef Product< typename RhsMatrixT::ConstTransposeReturnType,
-					typename LhsMatrixT::ConstTransposeReturnType >
+	typedef Product< typename RhsMatrixT::TransposeObjectType,
+					typename LhsMatrixT::TransposeObjectType >
 	ConstTransposeReturnType ;
+	typedef ConstTransposeReturnType TransposeObjectType ;
 } ;
 
 template <typename LhsMatrixT, typename RhsMatrixT>
@@ -191,9 +194,10 @@ struct BlockMatrixTraits< Addition< LhsMatrixT, RhsMatrixT > >
 	typedef std::auto_ptr< const PlainObjectType > EvalType ;
 	typedef typename OrigTraits::Scalar Scalar ;
 
-	typedef Addition< typename LhsMatrixT::ConstTransposeReturnType,
-					 typename RhsMatrixT::ConstTransposeReturnType >
+	typedef Addition< typename LhsMatrixT::TransposeObjectType,
+					 typename RhsMatrixT::TransposeObjectType >
 	ConstTransposeReturnType ;
+	typedef ConstTransposeReturnType TransposeObjectType ;
 } ;
 
 template <typename MatrixT>
@@ -243,6 +247,7 @@ struct BlockMatrixTraits< Scaling< MatrixT > >
 
 	typedef Scaling< typename MatrixT::ConstTransposeReturnType >
 	ConstTransposeReturnType ;
+	typedef ConstTransposeReturnType TransposeObjectType ;
 } ;
 
 template < typename ObjectT >
