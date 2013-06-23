@@ -30,6 +30,23 @@ struct BlockTraits
    typedef typename BlockType::Scalar Scalar ;
 } ;
 
+// Transpose and matrix/vector product return types
+// Specialization of these structures should define a ReturnType if the operation is allowed
+
+template< typename BlockT >
+struct BlockTransposeTraits {} ;
+
+template< typename BlockT >
+struct SelfTransposeTraits {} ;
+
+template< typename BlockT >
+struct BlockVectorProductTraits {} ;
+
+template< typename LhsBlockT, typename RhsBlockT, bool TransposeLhs, bool TransposeRhs >
+struct BlockBlockProductTraits {
+	typedef LhsBlockT ReturnType ;
+} ;
+
 } // namespace bogus
 
 #endif

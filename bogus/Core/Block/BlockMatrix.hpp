@@ -59,9 +59,10 @@ template < typename Derived >
 class BlockMatrixBase : public BlockObjectBase< Derived >
 {
 public:
-	typedef BlockObjectBase< Derived > Base;
 	typedef typename BlockMatrixTraits< Derived >::BlockType BlockType ;
 	typedef typename BlockMatrixTraits< Derived >::Index Index ;
+
+	typedef BlockObjectBase< Derived > Base;
 	using Base::derived ;
 
 	BlockMatrixBase() : m_rows(0), m_cols(0)

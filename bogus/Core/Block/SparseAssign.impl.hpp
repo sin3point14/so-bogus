@@ -295,6 +295,8 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Addition< LhsT, RhsT >
 {
 	typedef Addition< LhsT, RhsT> Add ;
 
+	// WARNING -- Not safe w.r.t aliasing
+
 	Scaling< typename Add::Lhs::ObjectType> lhs ( addition.lhs.object, addition.lhs.scaling ) ;
 	*this = lhs ;
 

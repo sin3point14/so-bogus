@@ -71,7 +71,41 @@ bool is_zero ( const Eigen::SparseMatrixBase< EigenDerived >& block,
 
 #endif
 
-// Matrix vector product
+// Block/block product return type
+
+template<bool Transpose, int _Rows, int _Cols >
+struct RowsColsComputer
+{
+	enum { Rows = _Rows } ;
+	enum { Cols = _Cols } ;
+} ;
+
+template< int _Rows, int _Cols >
+struct RowsColsComputer< true, _Rows, _Cols >
+{
+	enum { Rows = _Cols } ;
+	enum { Cols = _Rows } ;
+} ;
+
+template<
+	typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols,
+	typename _Scalar2, int _Rows2, int _Cols2, int _Options2, int _MaxRows2, int _MaxCols2,
+	bool TransposeLhs, bool TransposeRhs >
+struct BlockBlockProductTraits <
+	   Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>,
+	   Eigen::Matrix<_Scalar2, _Rows2, _Cols2, _Options2, _MaxRows2, _MaxCols2>,
+		TransposeLhs, TransposeRhs >
+{
+	typedef Eigen::Matrix< _Scalar,
+		RowsColsComputer< TransposeLhs, _Rows, _Cols >::Rows,
+		RowsColsComputer< TransposeRhs, _Rows2, _Cols2 >::Cols,
+		_Options,
+		RowsColsComputer< TransposeLhs, _MaxRows, _MaxCols >::Rows,
+		RowsColsComputer< TransposeRhs, _MaxRows2, _MaxCols2 >::Cols >
+	ReturnType ;
+} ;
+
+// Matrix vector product traits and operator*
 
 template< typename EigenDerived >
 struct BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >

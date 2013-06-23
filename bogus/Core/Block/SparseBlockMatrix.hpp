@@ -32,25 +32,25 @@ public:
 	typedef BlockMatrixBase< Derived > Base ;
 	typedef BlockMatrixTraits< Derived > Traits ;
 
-	typedef typename Traits::Index Index ;
 	typedef typename Traits::SparseIndexType SparseIndexType ;
 	typedef typename Traits::RowIndexType RowIndexType ;
 	typedef typename Traits::ColIndexType ColIndexType ;
 	typedef typename Traits::UncompressedIndexType UncompressedIndexType ;
-
-	typedef typename Traits::BlockType BlockType ;
 	typedef typename Traits::BlockPtr BlockPtr ;
-	typedef typename Traits::Scalar Scalar ;
 
 	//! Return value of blockPtr( Index, Index ) for non-existing block
 	static const BlockPtr InvalidBlockPtr ;
 
-	typedef typename Base::ConstTransposeReturnType  ConstTransposeReturnType ;
+	using typename Base::Index ;
+	using typename Base::BlockType ;
+	using typename Base::Scalar ;
+	using typename Base::ConstTransposeReturnType  ;
 
 	using Base::rows ;
 	using Base::cols ;
 	using Base::blocks ;
 	using Base::derived ;
+
 
 	//! \name Setting and accessing the matrix structure
 	///@{
@@ -401,8 +401,8 @@ template < typename BlockT, int Flags >
 struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMatrixTraits< BlockObjectBase< SparseBlockMatrix< BlockT, Flags > > >
 {
 	typedef BlockMatrixTraits< BlockObjectBase< SparseBlockMatrix< BlockT, Flags > > > BaseTraits ;
-	typedef typename BaseTraits::Index Index ;
-	typedef typename BaseTraits::BlockPtr BlockPtr ;
+	using typename BaseTraits::Index ;
+	using typename BaseTraits::BlockPtr ;
 
 	typedef BlockT BlockType ;
 	typedef typename BlockTraits< BlockT >::Scalar Scalar ;
@@ -424,6 +424,12 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMat
 	typedef SparseBlockIndex< is_compressed && !is_col_major, Index, BlockPtr > RowIndexType ;
 	typedef SparseBlockIndex< is_compressed && is_col_major , Index, BlockPtr > ColIndexType ;
 
+
+	template < typename OtherBlockType >
+	struct WithBlock
+	{
+		typedef SparseBlockMatrix< OtherBlockType, Flags > Type ;
+	} ;
 } ;
 
 //! Sparse Block Matrix

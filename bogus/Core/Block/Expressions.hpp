@@ -112,6 +112,7 @@ struct BinaryBlockOp : public BlockObjectBase< BlockOp< LhsMatrixT, RhsMatrixT >
 	}
 } ;
 
+
 template <typename LhsMatrixT, typename RhsMatrixT>
 struct Product : public BinaryBlockOp< Product, LhsMatrixT, RhsMatrixT >
 {
@@ -136,12 +137,24 @@ struct BlockMatrixTraits< Product< LhsMatrixT, RhsMatrixT > >
 	enum { is_transposed = 0 } ;
 	enum { is_temporary = 1 } ;
 
-	typedef BlockMatrixTraits< LhsMatrixT > OrigTraits;
-	typedef typename OrigTraits::Index Index ;
-	typedef typename OrigTraits::BlockPtr BlockPtr ;
-	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
-	typedef std::auto_ptr< PlainObjectType > EvalType ;
-	typedef typename OrigTraits::Scalar Scalar ;
+	typedef BlockMatrixTraits< LhsMatrixT > LhsTraits;
+	typedef BlockMatrixTraits< RhsMatrixT > RhsTraits;
+
+	typedef typename LhsTraits::Index Index ;
+	typedef typename LhsTraits::BlockPtr BlockPtr ;
+
+	typedef Product< LhsMatrixT, RhsMatrixT > ProductType ;
+	typedef typename LhsTraits::PlainObjectType::BlockType LhsBlockType ;
+	typedef typename RhsTraits::PlainObjectType::BlockType RhsBlockType ;
+
+	typedef typename BlockBlockProductTraits< LhsBlockType, RhsBlockType,
+		LhsTraits::is_transposed, RhsTraits::is_transposed >::ReturnType ResBlockType ;
+
+	typedef typename BlockMatrixTraits< typename LhsTraits::PlainObjectType >
+		::template WithBlock< ResBlockType >::Type PlainObjectType ;
+	typedef std::auto_ptr< const PlainObjectType > EvalType ;
+
+	typedef typename LhsTraits::Scalar Scalar ;
 
 	typedef Product< typename RhsMatrixT::ConstTransposeReturnType,
 					typename LhsMatrixT::ConstTransposeReturnType >
@@ -175,7 +188,7 @@ struct BlockMatrixTraits< Addition< LhsMatrixT, RhsMatrixT > >
 	typedef typename OrigTraits::Index Index ;
 	typedef typename OrigTraits::BlockPtr BlockPtr ;
 	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
-	typedef std::auto_ptr< PlainObjectType > EvalType ;
+	typedef std::auto_ptr< const PlainObjectType > EvalType ;
 	typedef typename OrigTraits::Scalar Scalar ;
 
 	typedef Addition< typename LhsMatrixT::ConstTransposeReturnType,
@@ -225,7 +238,7 @@ struct BlockMatrixTraits< Scaling< MatrixT > >
 	typedef typename OrigTraits::Index Index ;
 	typedef typename OrigTraits::BlockPtr BlockPtr ;
 	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
-	typedef std::auto_ptr< PlainObjectType > EvalType ;
+	typedef std::auto_ptr< const PlainObjectType > EvalType ;
 	typedef typename OrigTraits::Scalar Scalar ;
 
 	typedef Scaling< typename MatrixT::ConstTransposeReturnType >
@@ -245,17 +258,6 @@ struct BlockOperand< Scaling< ObjectT > > : public BlockOperand< ObjectT >
 	{}
 } ;
 
-// Transpose and matrix/vector product return types
-// Specialization of these structures should define a ReturnType if the operation is allowed
-
-template< typename BlockT >
-struct BlockTransposeTraits {} ;
-
-template< typename BlockT >
-struct SelfTransposeTraits {} ;
-
-template< typename Derived >
-struct BlockVectorProductTraits {} ;
 
 }
 
