@@ -42,8 +42,8 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 {
 	typedef Product< LhsT, RhsT> Prod ;
 
-	const typename Prod::PlainLhsMatrixType& lhs = prod.lhs.object.eval() ;
-	const typename Prod::PlainRhsMatrixType& rhs = prod.rhs.object.eval() ;
+	typename Prod::Lhs::EvalType lhs = prod.lhs.object.eval() ;
+	typename Prod::Rhs::EvalType rhs = prod.rhs.object.eval() ;
 	typedef BlockMatrixTraits< typename Prod::PlainLhsMatrixType > LhsTraits ;
 	typedef BlockMatrixTraits< typename Prod::PlainRhsMatrixType > RhsTraits ;
 
@@ -55,30 +55,30 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 	clear() ;
 	if( Prod::transposeLhs )
 	{
-		m_rows = lhs.cols() ;
-		colMajorIndex().innerOffsets = lhs.rowMajorIndex().innerOffsets;
+		m_rows = lhs->cols() ;
+		colMajorIndex().innerOffsets = lhs->rowMajorIndex().innerOffsets;
 	} else {
-		m_rows = lhs.rows() ;
-		colMajorIndex().innerOffsets = lhs.colMajorIndex().innerOffsets;
+		m_rows = lhs->rows() ;
+		colMajorIndex().innerOffsets = lhs->colMajorIndex().innerOffsets;
 	}
 	if( Prod::transposeRhs )
 	{
-		m_cols = rhs.rows() ;
-		rowMajorIndex().innerOffsets = rhs.colMajorIndex().innerOffsets;
+		m_cols = rhs->rows() ;
+		rowMajorIndex().innerOffsets = rhs->colMajorIndex().innerOffsets;
 	} else {
-		m_cols = rhs.cols() ;
-		rowMajorIndex().innerOffsets = rhs.rowMajorIndex().innerOffsets;
+		m_cols = rhs->cols() ;
+		rowMajorIndex().innerOffsets = rhs->rowMajorIndex().innerOffsets;
 	}
 
 
 	SparseBlockIndexComputer< typename Prod::PlainLhsMatrixType, LhsTraits::is_symmetric,
-			ColWise, Prod::transposeLhs> lhsIndexComputer ( lhs ) ;
+			ColWise, Prod::transposeLhs> lhsIndexComputer ( *lhs ) ;
 	SparseBlockIndexComputer< typename Prod::PlainRhsMatrixType, RhsTraits::is_symmetric,
-			!ColWise, Prod::transposeRhs> rhsIndexComputer ( rhs ) ;
+			!ColWise, Prod::transposeRhs> rhsIndexComputer ( *rhs ) ;
 
 
 	setFromProduct< ColWise >( lhsIndexComputer.get(), rhsIndexComputer.get(),
-							   lhs.data(), rhs.data(),
+							   lhs->data(), rhs->data(),
 							   lhsGetter, rhsGetter ) ;
 
 }

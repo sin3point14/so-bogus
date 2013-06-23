@@ -99,7 +99,7 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 	typedef typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
 	ResVec res ( lhs.rows() ) ;
 
-	lhs.eval().template multiply< Derived::is_transposed >( rhs, res, 1, 0 ) ;
+	lhs.eval()->template multiply< Derived::is_transposed >( rhs, res, 1, 0 ) ;
 	return res ;
 }
 
@@ -113,7 +113,7 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 	typedef typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
 	ResVec res ( lhs.rows() ) ;
 
-	lhs.operand.object.eval().template multiply< Derived::is_transposed >( rhs, res, lhs.operand.scaling, 0 ) ;
+	lhs.operand.object.eval()->template multiply< Derived::is_transposed >( rhs, res, lhs.operand.scaling, 0 ) ;
 	return res ;
 }
 
@@ -128,7 +128,7 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 	ResVec res ( rhs.cols() ) ;
 
 	Eigen::Transpose< ResVec > resTrans ( res ) ;
-	rhs.eval().template multiply< !Derived::is_transposed >( lhs.transpose(), resTrans, 1, 0 ) ;
+	rhs.eval()->template multiply< !Derived::is_transposed >( lhs.transpose(), resTrans, 1, 0 ) ;
 	return res ;
 }
 
@@ -143,7 +143,7 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 	ResVec res ( rhs.cols() ) ;
 
 	Eigen::Transpose< ResVec > resTrans ( res ) ;
-	rhs.operand.object.eval().template multiply< !Derived::is_transposed >( lhs.transpose(), resTrans, rhs.operand.scaling, 0 ) ;
+	rhs.operand.object.eval()->template multiply< !Derived::is_transposed >( lhs.transpose(), resTrans, rhs.operand.scaling, 0 ) ;
 	return res ;
 }
 

@@ -224,7 +224,10 @@ public:
 
 	template < typename OtherDerived >
 	Derived& operator= ( const BlockObjectBase< OtherDerived > &source )
-	{ return assign< OtherDerived::is_transposed >( source.eval() ) ; }
+	{
+		typename OtherDerived::EvalType rhs ( source.eval() ) ;
+		return assign< OtherDerived::is_transposed >( *rhs ) ;
+	}
 
 	template < typename LhsT, typename RhsT >
 	Derived& operator= ( const Product< LhsT, RhsT > &prod ) ;
@@ -235,8 +238,9 @@ public:
 	template < typename OtherDerived >
 	Derived& operator= ( const Scaling< OtherDerived > &scaling )
 	{
+		typename Scaling< OtherDerived >::Operand::EvalType operand( scaling.operand.object.eval() ) ;
 		return assign< Scaling< OtherDerived >::transposeOperand >
-				( scaling.operand.object.eval(), scaling.operand.scaling ) ;
+				( *operand, scaling.operand.scaling ) ;
 	}
 
 	//! Clones the dimensions ( number of rows/cols blocks and rows/cols per block ) of \p source
@@ -282,12 +286,18 @@ public:
 	//! Adds another SparseBlockMatrixBase to this one
 	template < typename OtherDerived >
 	Derived& operator+= ( const BlockObjectBase< OtherDerived > &source )
-	{ return add< OtherDerived::is_transposed >( source.eval() ) ; }
+	{
+		typename OtherDerived::EvalType rhs ( source.eval() ) ;
+		return add< OtherDerived::is_transposed >( *rhs ) ;
+	}
 
 	//! Substracts another SparseBlockMatrixBase from this one
 	template < typename OtherDerived >
 	Derived& operator-= ( const BlockObjectBase< OtherDerived > &source )
-	{ return add< OtherDerived::is_transposed >( source.eval(), -1 ) ; }
+	{
+		typename OtherDerived::EvalType rhs ( source.eval() ) ;
+		return add< OtherDerived::is_transposed >( *rhs, -1 ) ;
+	}
 
 	//@}
 

@@ -29,6 +29,7 @@ struct BlockObjectBase : public Object
 	typedef typename Traits::ConstTransposeReturnType ConstTransposeReturnType ;
 	typedef typename Traits::Index Index ;
 	typedef typename Traits::PlainObjectType PlainObjectType ;
+	typedef typename Traits::EvalType EvalType ;
 	typedef typename Traits::Scalar Scalar ;
 	enum { is_transposed = Traits::is_transposed } ;
 
@@ -37,7 +38,7 @@ struct BlockObjectBase : public Object
 	//! Returns the total number of columns of the matrix ( expanding blocks )
 	Index cols() const { return derived().cols() ; }
 
-	const PlainObjectType& eval() const { return derived().eval() ; }
+	const PlainObjectType* eval() const { return derived().eval() ; }
 };
 
 //! Default specialization of traits for BlockMatrices
@@ -48,6 +49,7 @@ struct BlockMatrixTraits< BlockObjectBase< Derived > > {
 	typedef int Index ;
 	typedef unsigned BlockPtr ;
 	typedef Derived PlainObjectType ;
+	typedef const PlainObjectType* EvalType ;
 
 	typedef Transpose< Derived > ConstTransposeReturnType ;
 } ;
@@ -119,7 +121,7 @@ public:
 	//! Access to blocks data as a raw pointer
 	BlockType* data() { return &m_blocks[0] ; }
 
-	const Derived& eval() const { return derived() ; }
+	const Derived* eval() const { return &derived() ; }
 
 protected:
 	Index m_rows ;

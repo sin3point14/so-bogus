@@ -294,8 +294,12 @@ template < typename LhsT, typename RhsT >
 Derived& SparseBlockMatrixBase<Derived>::operator=( const Addition< LhsT, RhsT > &addition )
 {
 	typedef Addition< LhsT, RhsT> Add ;
-	assign< Add::transposeLhs >( addition.lhs.object.eval(), addition.lhs.scaling ) ;
-	return add< Add::transposeRhs >( addition.rhs.object.eval(), addition.rhs.scaling ) ;
+
+	Scaling< typename Add::Lhs::ObjectType> lhs ( addition.lhs.object, addition.lhs.scaling ) ;
+	*this = lhs ;
+
+	typename Add::Rhs::EvalType rhs = addition.rhs.object.eval() ;
+	return add< Add::transposeRhs >( *rhs, addition.rhs.scaling ) ;
 }
 
 }
