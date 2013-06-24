@@ -133,6 +133,38 @@ public:
 
 	const Derived* eval() const { return &derived() ; }
 
+
+	Index rowOffset( Index row ) const { return derived().rowOffset( row ) ; }
+
+	Index colOffset( Index col ) const { return derived().colOffset( col ) ; }
+
+	//! \name Access to segment of a vector corresponding to a given block-row
+	//@{
+	template < typename VecT >
+	typename VecT::SegmentReturnType rowSegment( VecT& v, Index rowBlockIdx ) const
+	{
+		return v.segment( rowOffset( rowBlockIdx ), blockRows( rowBlockIdx ) ) ;
+	}
+
+	template < typename VecT >
+	typename VecT::ConstSegmentReturnType rowSegment( const VecT& v, Index rowBlockIdx ) const
+	{
+		return v.segment( rowOffset( rowBlockIdx ), blockRows( rowBlockIdx ) ) ;
+	}
+
+	template < typename VecT >
+	typename VecT::SegmentReturnType colSegment( VecT& v, Index colBlockIdx ) const
+	{
+		return v.segment( colOffset( colBlockIdx ), blockCols( colBlockIdx ) ) ;
+	}
+
+	template < typename VecT >
+	typename VecT::ConstSegmentReturnType colSegment( const VecT& v, Index colBlockIdx ) const
+	{
+		return v.segment( colOffset( colBlockIdx ), blockCols( colBlockIdx ) ) ;
+	}
+	//@}
+
 protected:
 	Index m_rows ;
 	Index m_cols ;

@@ -310,6 +310,7 @@ public:
 
 	//@}
 
+
 	//! \name Unsafe API
 	//@{
 
@@ -322,6 +323,9 @@ public:
 	void prealloc( std::size_t nBlocks ) ;
 
 	//@}
+
+	Index rowOffset( Index row ) const { return rowOffsets()[row] ; }
+	Index colOffset( Index col ) const { return colOffsets()[col] ; }
 
 protected:
 
@@ -342,37 +346,11 @@ protected:
 
 	const UncompressedIndexType& getOrComputeMinorIndex( UncompressedIndexType &tempIndex) const ;
 
-	Index rowOffset( Index row ) const { return rowOffsets()[row] ; }
-	Index colOffset( Index col ) const { return colOffsets()[col] ; }
 	const std::vector< Index >& rowOffsets() const { return colMajorIndex().innerOffsets ; }
 	const std::vector< Index >& colOffsets() const { return rowMajorIndex().innerOffsets ; }
 
 	ColIndexType& colMajorIndex() ;
 	RowIndexType& rowMajorIndex() ;
-
-	template < typename VecT >
-	typename VecT::SegmentReturnType rowSegment( VecT& v, Index rowBlockIdx ) const
-	{
-		return v.segment( rowOffset( rowBlockIdx ), blockRows( rowBlockIdx ) ) ;
-	}
-
-	template < typename VecT >
-	typename VecT::ConstSegmentReturnType rowSegment( const VecT& v, Index rowBlockIdx ) const
-	{
-		return v.segment( rowOffset( rowBlockIdx ), blockRows( rowBlockIdx ) ) ;
-	}
-
-	template < typename VecT >
-	typename VecT::SegmentReturnType colSegment( VecT& v, Index colBlockIdx ) const
-	{
-		return v.segment( colOffset( colBlockIdx ), blockCols( colBlockIdx ) ) ;
-	}
-
-	template < typename VecT >
-	typename VecT::ConstSegmentReturnType colSegment( const VecT& v, Index colBlockIdx ) const
-	{
-		return v.segment( colOffset( colBlockIdx ), blockCols( colBlockIdx ) ) ;
-	}
 
 	template< typename IndexT >
 	void setInnerOffets( IndexT& index, const Index nBlocks, const unsigned* blockSizes ) const ;

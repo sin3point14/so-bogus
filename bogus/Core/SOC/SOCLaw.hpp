@@ -40,30 +40,17 @@ public:
 	  */
 	SOCLaw( const unsigned n, const double * mu ) ;
 
-	//! \return \f$ \frac 1 {1 + n} \vert fb( mu, x, y ) \vert^2_2 \f$, where fb is the SOC Fischer-Burmeister function
-	template< typename VectorT, typename OtherVectorT >
-	Scalar eval( const VectorT &x, const OtherVectorT &y ) const
+	//! \return \f$ \vert fb( mu, x, y ) \vert^2_2 \f$, where fb is the SOC Fischer-Burmeister function
+	Scalar eval( const unsigned problemIndex,
+				 const typename Traits::Vector &x,
+				 const typename Traits::Vector &y ) const
 	{
 		typedef FischerBurmeister< Traits::dimension, typename Traits::Scalar, DeSaxceCOV > FBFunction ;
 
-		assert( (unsigned) x.rows() == m_n * Traits::dimension ) ;
-		assert( (unsigned) y.rows() == m_n * Traits::dimension ) ;
+		typename Traits::Vector fb( x.rows() ) ;
+		FBFunction::compute( m_mu[problemIndex], x, y, fb ) ;
 
-		Scalar sum = 0. ;
-		typename Traits::Vector lx, ly, fb ;
-
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp parallel for private( lx, ly, fb ) reduction ( + : sum )
-#endif
-		for( int i = 0 ; i < (int) m_n ; ++ i )
-		{
-			lx = Traits::segment( i, x ) ;
-			ly = Traits::segment( i, y ) ;
-			FBFunction::compute( m_mu[i], lx, ly, fb ) ;
-			sum += fb.squaredNorm() ;
-		}
-
-		return sum / ( 1 + m_n );
+		return fb.squaredNorm() ;
 	}
 
 	//! Solves the local problem

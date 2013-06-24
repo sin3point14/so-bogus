@@ -113,6 +113,12 @@ public:
 	void setSkipIters( unsigned skipIters ) { m_skipIters = skipIters ; }
 
 protected:
+
+	//! Eval the current global reisual
+	/*! \p y should be such that \p y = m_matrix * \p x */
+	template < typename NSLaw, typename RhsT, typename ResT >
+	Scalar eval ( const NSLaw &law, const RhsT &x, const ResT &y ) const ;
+
 	using Base::m_matrix ;
 	using Base::m_maxIters ;
 	using Base::m_tol ;

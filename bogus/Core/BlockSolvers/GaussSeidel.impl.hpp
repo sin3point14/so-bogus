@@ -38,10 +38,9 @@ void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatr
 {
 	m_matrix = &M ;
 
-	const unsigned d = GlobalProblemTraits::dimension ;
 	const unsigned n = M.rowsOfBlocks() ;
 	m_localMatrices.resize( n ) ;
-	m_scaling.resize( n*d ) ;
+	m_scaling.resize( n ) ;
 	m_regularization.resize( n ) ;
 
 	for( unsigned i = 0 ; i < n ; ++i )
@@ -54,9 +53,33 @@ void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatr
 			m_localMatrices[i].diagonal().array() += m_regularization(i) ;
 		} else m_regularization(i) = 0. ;
 
-		GlobalProblemTraits::segment( i, m_scaling )
-				.setConstant( std::max( 1., m_localMatrices[i].trace() ) );
+		m_scaling[i] = std::max( 1., m_localMatrices[i].trace() ) ;
 	}
+
+}
+
+template < typename BlockMatrixType >
+template < typename NSLaw, typename RhsT, typename ResT >
+typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::eval( const NSLaw &law,
+							const RhsT &x, const ResT &y ) const
+{
+	const int n = (int) m_localMatrices.size() ;
+	Scalar sum = 0., res ;
+
+	typename NSLaw::Traits::Vector lx, ly ;
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for private( lx, ly, res ) reduction ( + : sum )
+#endif
+	for( int i = 0 ; i < n ; ++ i )
+	{
+		lx = m_matrix->rowSegment( x, i ) * m_scaling[i] ;
+		ly = m_matrix->rowSegment( y, i ) ;
+		res = law.eval( i, lx, ly ) ;
+		sum += res ;
+	}
+
+	return sum / ( 1 + n );
 
 }
 
@@ -69,17 +92,13 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 
 	typedef LocalProblemTraits< GlobalProblemTraits::dimension, typename GlobalProblemTraits::Scalar > LocalProblemTraits ;
 
-	const unsigned d = GlobalProblemTraits::dimension ;
 	const unsigned n = m_localMatrices.size() ;
-	assert( n*d == b.rows() ) ;
-	assert( n*d == x.rows() ) ;
 
 	typename GlobalProblemTraits::DynVector y ( b + (*m_matrix)*x ) ;
 	typename GlobalProblemTraits::DynVector x_best( GlobalProblemTraits::DynVector::Zero( x.rows() ) ) ;
-	typename GlobalProblemTraits::DynVector x_scaled( x.array() * m_scaling.array() ) ;
 
-	const Scalar err_init = law.eval( x_scaled, y ) ;
-	const Scalar err_zero = law.eval( x_best, b ) ;
+	const Scalar err_init = eval( law, x, y ) ;
+	const Scalar err_zero = eval( law, x_best, b ) ;
 
 	Scalar err_best ;
 	if( err_zero < err_init )
@@ -110,19 +129,19 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 				--skip[i] ;
 				continue ;
 			}
-			lb = GlobalProblemTraits::segment( i, b ) ;
+			lb = m_matrix->rowSegment( b, i ) ;
 			m_matrix->splitRowMultiply( i, x, lb ) ;
-			lx = GlobalProblemTraits::segment( i, x ) ;
+			lx = m_matrix->rowSegment( x, i ) ;
 			ldx = -lx ;
 			lb -= m_regularization(i) * lx ;
 
-			const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ d*i ] ) ;
+			const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ i ] ) ;
 			ldx += lx ;
 
 			if( !ok ) ldx *= .7 ;
-			GlobalProblemTraits::segment( i, x ) += ldx ;
+			m_matrix->rowSegment( x, i ) += ldx ;
 
-			const Scalar scaledSkipTol = m_scaling[ d*i ] * m_scaling[ d*i ] * m_skipTol ;
+			const Scalar scaledSkipTol = m_scaling[ i ] * m_scaling[ i ] * m_skipTol ;
 			if( ldx.squaredNorm() < scaledSkipTol || lx.squaredNorm() < scaledSkipTol )
 			{
 				skip[i] = m_skipIters ;
@@ -132,8 +151,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 		if( 0 == ( GSIter % m_evalEvery ) )
 		{
 			y = b + (*m_matrix) * x ;
-			x_scaled = x.array() * m_scaling.array() ;
-			const double err = law.eval( x_scaled, y ) ;
+			const double err = eval( law, x, y ) ;
 
 			this->m_callback.trigger( GSIter, err ) ;
 

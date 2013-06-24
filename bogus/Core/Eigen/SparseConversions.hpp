@@ -23,13 +23,16 @@ namespace bogus
 
 template< typename EigenDerived, typename BogusDerived >
 void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
-			  SparseBlockMatrixBase< BogusDerived >& dest )
+			  SparseBlockMatrixBase< BogusDerived >& dest,
+			  int destRowsPerBlock = 0, int destColsPerBlock = 0
+			)
 {
 	typedef BlockMatrixTraits< BogusDerived > Traits ;
 	typedef typename Traits::Index Index ;
 	typedef typename Traits::BlockPtr BlockPtr ;
-	const Index RowsPerBlock = Traits::BlockType::RowsAtCompileTime ;
-	const Index ColsPerBlock = Traits::BlockType::ColsAtCompileTime ;
+
+	const Index RowsPerBlock = destRowsPerBlock ? (Index) destRowsPerBlock : Traits::BlockType::RowsAtCompileTime ;
+	const Index ColsPerBlock = destColsPerBlock ? (Index) destColsPerBlock : Traits::BlockType::ColsAtCompileTime ;
 
 	assert( RowsPerBlock != (Index) -1 ) ;
 	assert( ColsPerBlock != (Index) -1 ) ;
@@ -65,7 +68,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 		for( typename std::map< Index, BlockPtr >::iterator bIt = nzBlocks.begin() ; bIt != nzBlocks.end() ; ++bIt )
 		{
 			bIt->second = (BlockPtr) dest.nBlocks() ;
-			dest.insertBackOuterInner( outer, bIt->first ).setZero() ;
+			dest.insertBackOuterInner( outer, bIt->first ).setZero( RowsPerBlock, ColsPerBlock ) ;
 		}
 
 		// III - copy values

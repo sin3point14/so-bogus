@@ -34,7 +34,7 @@ typename NonSmoothNewton< NSFunction >::Scalar NonSmoothNewton<NSFunction>::solv
   if( Phi_init < m_tol ) return Phi_init ;
 
   Scalar Phi_best ;
-  Vector x_best = Vector::Zero() ;
+  Vector x_best = Vector::Zero( x.rows() ) ;
 
   m_func.compute( x_best, F ) ;
   const Scalar Phi_zero = .5 * F.squaredNorm() ;

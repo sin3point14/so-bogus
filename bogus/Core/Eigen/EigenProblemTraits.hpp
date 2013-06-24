@@ -39,6 +39,8 @@ struct LocalProblemTraits : public ProblemTraits< Eigen::Matrix< Scalar, Dimensi
 	typedef Eigen::Matrix< Scalar, Dimension, 1 > Vector ;
 	typedef Eigen::Matrix< Scalar, Dimension, Dimension > Matrix ;
 
+	typedef Eigen::Matrix< Scalar, Dimension-1, Dimension-1 > TgMatrix ;
+
 	static Scalar np( const Vector & v )
 	{ return v[0] ; }
 	static Scalar& np( Vector & v )
@@ -48,6 +50,54 @@ struct LocalProblemTraits : public ProblemTraits< Eigen::Matrix< Scalar, Dimensi
 	tp( const Vector & v )  { return v.template segment< Dimension - 1 >( 1 ) ; }
 	static typename Vector::template FixedSegmentReturnType< Dimension - 1 >::Type
 	tp(       Vector & v )  { return v.template segment< Dimension - 1 >( 1 ) ; }
+
+	static typename Matrix::ColXpr
+	nc(      Matrix & m )  { return m.col( 0 ) ; }
+	static Eigen::Block< Matrix, Dimension, Dimension -1 >
+	tc(      Matrix & m )  { return m.template block< Dimension, Dimension - 1 >( 0, 1 ) ; }
+
+	static Scalar&
+	nnb(      Matrix & m )  { return m( 0, 0 ) ; }
+	static Eigen::Block< Matrix, Dimension - 1, Dimension -1 >
+	ttb(      Matrix & m )  { return m.template block< Dimension - 1, Dimension - 1 >( 1, 1 ) ; }
+	static Eigen::Block< Matrix, Dimension - 1, 1 >
+	tnb(      Matrix & m )  { return m.template block< Dimension - 1, 1 >( 1, 0 ) ; }
+	static Eigen::Block< Matrix, 1, Dimension -1 >
+	ntb(      Matrix & m )  { return m.template block< 1, Dimension - 1 >( 0, 1 ) ; }
+} ;
+
+template< typename Scalar >
+struct LocalProblemTraits< Eigen::Dynamic, Scalar > : public ProblemTraits< Eigen::MatrixXd >
+{
+
+	typedef Eigen::VectorXd Vector ;
+	typedef Eigen::MatrixXd Matrix ;
+
+	typedef Eigen::MatrixXd TgMatrix ;
+
+	static Scalar np( const Vector & v )
+	{ return v[0] ; }
+	static Scalar& np( Vector & v )
+	{ return v[0] ; }
+
+	static typename Vector::ConstSegmentReturnType
+	tp( const Vector & v )  { return v.segment( 1, v.rows() - 1 ) ; }
+	static typename Vector::SegmentReturnType
+	tp(       Vector & v )  { return v.segment( 1, v.rows() - 1 ) ; }
+
+	static typename Matrix::ColXpr
+	nc(      Matrix & m )  { return m.col( 0 ) ; }
+	static Eigen::Block< Matrix >
+	tc(      Matrix & m )  { return m.block( 0, 1, m.rows(), m.cols()-1 ) ; }
+
+	static Scalar&
+	nnb(      Matrix & m )  { return m( 0, 0 ) ; }
+	static Eigen::Block< Matrix >
+	ttb(      Matrix & m )  { return m.block( 1, 1, m.rows()-1, m.cols()-1 ) ; }
+	static Eigen::Block< Matrix >
+	tnb(      Matrix & m )  { return m.block( 1, 0, m.rows()-1, 1 ) ; }
+	static Eigen::Block< Matrix >
+	ntb(      Matrix & m )  { return m.block( 0, 1, 1, m.cols()-1 ) ; }
 } ;
 
 

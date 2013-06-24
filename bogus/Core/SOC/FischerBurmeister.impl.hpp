@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -56,8 +56,8 @@ void FBBaseFunction< Dimension, Scalar >::computeJacobian(
 		Traits::np( xh ) *= mu ;
 		Traits::tp( yh ) *= mu ;
 		compute< true >( xh, yh, fb, dFb_dx, dFb_dy ) ;
-		dFb_dx.col( 0 ) *= mu ;
-		dFb_dy.template block< Dimension, Dimension-1 > ( 0, 1 ) *= mu ;
+		Traits::nc( dFb_dx ) *= mu ;
+		Traits::tc( dFb_dy ) *= mu ;
 	}
 
 }
@@ -68,15 +68,17 @@ void FBBaseFunction< Dimension, Scalar >::compute(
 			const Vector& x, const Vector& y, Vector& fb,
 			Matrix& dFb_dx, Matrix& dFb_dy )
 {
+	const unsigned d = x.rows() ;
+
 	// see [Daviet et al 2011], Appendix A.1
 
-	Vector z2 ;
+	Vector z2(d) ;
 
 	z2[0] = x.squaredNorm() + y.squaredNorm() ;
 	Traits::tp( z2 ) = x[0] * Traits::tp( x ) + y[0] * Traits::tp( y ) ;
 	const Scalar nz2t = Traits::tp( z2 ).norm() ;
 
-	Vector omega1, omega2 ;
+	Vector omega1(d), omega2(d) ;
 	omega1[0] = omega2[0] = .5 ;
 
 	if( NumTraits< Scalar >::isZero( nz2t ) )
@@ -98,41 +100,42 @@ void FBBaseFunction< Dimension, Scalar >::compute(
 
 	if( JacobianAsWell )
 	{
+		const Matrix Id( Matrix::Identity( d, d ) ) ;
 
 		if( NumTraits< Scalar >::isZero( rlambda2 ) )
 		{
 			// x = y = 0
-			dFb_dx.setZero() ;
-			dFb_dy.setZero() ;
+			dFb_dx.setZero( d,d ) ;
+			dFb_dy.setZero( d,d ) ;
 		} else {
 			if( NumTraits< Scalar >::isZero( rlambda1 ) )
 			{
 				const Scalar izn = 1. / ( x[0]*x[0] + y[0]*y[0] ) ;
-				dFb_dx = ( 1. - x[0]*izn ) * Matrix::Identity() ;
-				dFb_dy = ( 1. - y[0]*izn ) * Matrix::Identity() ;
+				dFb_dx = ( 1. - x[0]*izn ) * Id ;
+				dFb_dy = ( 1. - y[0]*izn ) * Id ;
 			} else {
 				const Scalar det = rlambda1 * rlambda2 ;
 
-				Matrix L, invLz ;
+				Matrix L, invLz(d,d) ;
 
 				invLz(0, 0) = z[0] ;
-				invLz.template block< 1, Dimension - 1>( 0, 1 ) = -Traits::tp( z ).transpose() ;
-				invLz.template block< Dimension - 1, 1>( 1, 0 ) = -Traits::tp( z ) ;
-				invLz.template block< Dimension - 1, Dimension - 1>( 1, 1 ) =
-					( det * LocalProblemTraits< Dimension - 1, Scalar >::Matrix::Identity() +
+				Traits::ntb( invLz ) = -Traits::tp( z ).transpose() ;
+				Traits::tnb( invLz ) = -Traits::tp( z ) ;
+				Traits::ttb( invLz ) =
+					( det * Traits::TgMatrix::Identity( d-1, d-1 ) +
 					  Traits::tp( z ) * Traits::tp( z ).transpose() ) / z[0] ;
 				invLz /= det ;
 
-				L = x[0] * Matrix::Identity() ;
-				L.template block< 1, Dimension - 1>( 0, 1 ) = Traits::tp( x ).transpose() ;
-				L.template block< Dimension - 1, 1>( 1, 0 ) = Traits::tp( x ) ;
-				dFb_dx.setIdentity() ;
+				L = x[0] * Id ;
+				Traits::ntb( L ) = Traits::tp( x ).transpose() ;
+				Traits::tnb( L ) = Traits::tp( x ) ;
+				dFb_dx.setIdentity( d,d ) ;
 				dFb_dx.noalias() -= invLz * L ;
 
-				L = y[0] * Matrix::Identity() ;
-				L.template block< 1, Dimension - 1>( 0, 1 ) = Traits::tp( y ).transpose() ;
-				L.template block< Dimension - 1, 1>( 1, 0 ) = Traits::tp( y ) ;
-				dFb_dy.setIdentity() ;
+				L = y[0] * Id ;
+				Traits::ntb( L ) = Traits::tp( y ).transpose() ;
+				Traits::tnb( L ) = Traits::tp( y ) ;
+				dFb_dy.setIdentity( d,d ) ;
 				dFb_dy.noalias() -= invLz * L ;
 
 			}
@@ -189,8 +192,8 @@ void FischerBurmeister< Dimension, Scalar, DeSaxceCOV >::computeJacobian(
 
   if ( DeSaxceCOV && !NumTraits< Scalar >::isZero( s ) )
   {
-	dFb_dy.template block< Dimension, Dimension - 1 >( 0, 1 ).noalias() +=
-	  dFb_dy.col( 0 ) *  ( m_mu / s ) * Traits::tp( y ).transpose() ;
+	Traits::tc( dFb_dy ).noalias() +=
+	  Traits::nc( dFb_dy ) *  ( m_mu / s ) * Traits::tp( y ).transpose() ;
 
   }
 

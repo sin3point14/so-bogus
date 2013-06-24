@@ -27,7 +27,7 @@ static double solve( const fclib_local* problem, const Eigen::SparseMatrixBase< 
 					 Eigen::VectorXd &r, Eigen::VectorXd &u )
 {
 	bogus::DualFrictionProblem< Dimension > dual ;
-	bogus::convert( ei_W, dual.W ) ;
+	bogus::convert( ei_W, dual.W, Dimension, Dimension ) ;
 	dual.W.prune( 1.e-12 ) ;
 	dual.W.cacheTranspose();
 
