@@ -29,4 +29,4 @@ add_executable(test${CMAKE_PROJECT_NAME} ${SRC_LIST})
 add_test( ${CMAKE_PROJECT_NAME} test${CMAKE_PROJECT_NAME} )
 
 add_dependencies(test${CMAKE_PROJECT_NAME} googletest)
-target_link_libraries(test${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_NAME} gtest gtest_main pthread )
+target_link_libraries(test${CMAKE_PROJECT_NAME} ${EXTERNAL_LIBRARIES} gtest gtest_main pthread )

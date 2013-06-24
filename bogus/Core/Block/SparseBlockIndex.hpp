@@ -112,20 +112,29 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 		return *this ;
 	}
 
-	SparseBlockIndex &operator=( SparseBlockIndex &uncompressed )
+	template < typename SourceDerived >
+	SparseBlockIndex &operator=( const SparseBlockIndexBase< SourceDerived > &source ) ;
+
+	SparseBlockIndex & move( SparseBlockIndex &uncompressed )
 	{
-		outer.swap( uncompressed.outer ) ;
-		if( !uncompressed.innerOffsets.empty() )
-			innerOffsets.swap( uncompressed.innerOffsets ) ;
-		valid = uncompressed.valid ;
-		uncompressed.valid = false ;
+		if( &uncompressed != this )
+		{
+			outer.swap( uncompressed.outer ) ;
+			if( !uncompressed.innerOffsets.empty() )
+				innerOffsets.swap( uncompressed.innerOffsets ) ;
+			valid = uncompressed.valid ;
+			uncompressed.valid = false ;
+		}
 		return *this ;
 	}
 
 	template < typename SourceDerived >
-	SparseBlockIndex &operator=( const SparseBlockIndexBase< SourceDerived > &source ) ;
+	SparseBlockIndex &move( const SparseBlockIndexBase< SourceDerived > &source )
+	{
+		return ( *this = source ) ;
+	}
 
-	template < typename SourceDerived >
+	template < bool Symmetric, typename SourceDerived >
 	SparseBlockIndex& setToTranspose( const SparseBlockIndexBase< SourceDerived > &source )
 	{
 		clear() ;
@@ -134,12 +143,15 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 
 		for(  typename SourceDerived::Index i = 0 ; i < source.outerSize() ; ++i )
 		{
+			// For a symmetric matrix, do not store diagonal block in col-major index
 			for( typename SourceDerived::InnerIterator it( source.derived(), i ) ;
-				 it ; ++ it )
+				 it && ( !Symmetric || it.inner() < i ) ; ++ it )
 			{
 				insertBack( it.inner(), i, it.ptr() ) ;
 			}
 		}
+		finalize() ;
+
 		return *this ;
 	}
 
@@ -210,7 +222,7 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 	private:
 
 		InnerIterator( const typename Inner::const_iterator &it,
-				const typename Inner::const_iterator &end )
+					   const typename Inner::const_iterator &end )
 			: m_it( it ), m_end( end )
 		{}
 

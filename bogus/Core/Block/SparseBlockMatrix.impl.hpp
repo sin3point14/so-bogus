@@ -189,21 +189,6 @@ Derived& SparseBlockMatrixBase< Derived >::prune( const Scalar precision )
 }
 
 template < typename Derived >
-Derived& SparseBlockMatrixBase< Derived >::scale( const Scalar alpha )
-{
-
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp parallel for
-#endif
-	for( int i = 0 ; i < (int) blocks().size() ;  ++i )
-	{
-		block( i ) *= alpha ;
-	}
-
-	return derived() ;
-}
-
-template < typename Derived >
 bool SparseBlockMatrixBase< Derived >::computeMinorIndex()
 {
 	if ( m_minorIndex.valid ) return true ;
@@ -219,24 +204,7 @@ void SparseBlockMatrixBase< Derived >::computeMinorIndex( UncompressedIndexType 
 	cmIndex.clear() ;
 	cmIndex.innerOffsets = m_minorIndex.innerOffsets ;
 
-	if( Traits::is_symmetric )
-	{
-		cmIndex.resizeOuter( m_majorIndex.innerSize() );
-		for ( Index i = 0 ; i < m_majorIndex.outerSize() ; ++ i )
-		{
-			// For a symmetric matrix, do not store diagonal block in col-major index
-			for( typename MajorIndexType::InnerIterator it( m_majorIndex, i ) ;
-				 it && it.inner() != i ; ++ it )
-			{
-				cmIndex.insertBack( it.inner(), i, it.ptr() );
-			}
-		}
-
-	} else {
-		cmIndex.setToTranspose( m_majorIndex ) ;
-	}
-
-	cmIndex.finalize() ;
+	cmIndex.template setToTranspose< Traits::is_symmetric >( m_majorIndex ) ;
 }
 
 template < typename Derived >
@@ -265,7 +233,7 @@ void SparseBlockMatrixBase< Derived >::cacheTranspose()
 		base += m_minorIndex.size( i ) ;
 	}
 
-	m_transposeIndex = (const UncompressedIndexType& ) m_minorIndex ;
+	m_transposeIndex = m_minorIndex ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for

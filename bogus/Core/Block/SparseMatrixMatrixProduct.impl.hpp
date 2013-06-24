@@ -19,7 +19,7 @@
 
 template < typename LhsT, typename RhsT  >
 bogus::Product< LhsT, RhsT > operator* ( const bogus::BlockObjectBase< LhsT >& lhs,
-			 const bogus::BlockObjectBase< RhsT > &rhs )
+										 const bogus::BlockObjectBase< RhsT > &rhs )
 {
 	return bogus::Product< LhsT, RhsT >( lhs.derived(), rhs.derived() ) ;
 }
@@ -99,10 +99,10 @@ struct SparseBlockProductIndex
 
 	template< typename LhsIndex, typename RhsIndex >
 	void compute(
-		const Index outerSize,
-		const Index innerSize,
-		const LhsIndex &lhsIdx,
-		const RhsIndex &rhsIdx )
+			const Index outerSize,
+			const Index innerSize,
+			const LhsIndex &lhsIdx,
+			const RhsIndex &rhsIdx )
 	{
 		assert( lhsIdx.innerSize() == rhsIdx.innerSize() ) ;
 
@@ -182,10 +182,10 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 
 	template< typename LhsIndex, typename RhsIndex >
 	void compute(
-		const Index outerSize,
-		const Index innerSize,
-		const LhsIndex &lhsIdx,
-		const RhsIndex &rhsIdx )
+			const Index outerSize,
+			const Index innerSize,
+			const LhsIndex &lhsIdx,
+			const RhsIndex &rhsIdx )
 	{
 		assert( lhsIdx.outerSize() == rhsIdx.outerSize() ) ;
 		( void ) innerSize ;
@@ -200,55 +200,55 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 #else
 #pragma omp parallel
 		{
-		std::vector< InnerType > loc_compute( outerSize ) ;
+			std::vector< InnerType > loc_compute( outerSize ) ;
 #pragma omp for
 #endif
-		for( int ii = 0 ; ii < (int) productSize ; ++ii )
-		{
-			const Index i = (Index) ii ;
-
-			if( is_col_major )
+			for( int ii = 0 ; ii < (int) productSize ; ++ii )
 			{
-				for( typename RhsIndex::InnerIterator rhs_it ( rhsIdx, i ) ; rhs_it ; ++rhs_it )
+				const Index i = (Index) ii ;
+
+				if( is_col_major )
 				{
-					for( typename LhsIndex::InnerIterator lhs_it ( lhsIdx, i ) ;
-						 lhs_it && ( !is_symmetric || lhs_it.inner() <= rhs_it.inner() ) ;
-						 ++lhs_it )
+					for( typename RhsIndex::InnerIterator rhs_it ( rhsIdx, i ) ; rhs_it ; ++rhs_it )
 					{
-						BlockComputation &bc = loc_compute[ rhs_it.inner() ][ lhs_it.inner() ] ;
-						bc.first.push_back( std::make_pair( lhs_it.inner() > i, lhs_it.ptr() ) ) ;
-						bc.second.push_back( std::make_pair( rhs_it.inner() > i, rhs_it.ptr() ) ) ;
+						for( typename LhsIndex::InnerIterator lhs_it ( lhsIdx, i ) ;
+							 lhs_it && ( !is_symmetric || lhs_it.inner() <= rhs_it.inner() ) ;
+							 ++lhs_it )
+						{
+							BlockComputation &bc = loc_compute[ rhs_it.inner() ][ lhs_it.inner() ] ;
+							bc.first.push_back( std::make_pair( lhs_it.inner() > i, lhs_it.ptr() ) ) ;
+							bc.second.push_back( std::make_pair( rhs_it.inner() > i, rhs_it.ptr() ) ) ;
+						}
 					}
-				}
-			} else {
-				for( typename LhsIndex::InnerIterator lhs_it ( lhsIdx, i ) ; lhs_it ; ++lhs_it )
-				{
-					for( typename RhsIndex::InnerIterator rhs_it ( rhsIdx, i ) ;
-						 rhs_it && ( !is_symmetric || rhs_it.inner() <= lhs_it.inner() ) ;
-						 ++rhs_it )
+				} else {
+					for( typename LhsIndex::InnerIterator lhs_it ( lhsIdx, i ) ; lhs_it ; ++lhs_it )
 					{
-						BlockComputation &bc = loc_compute[ lhs_it.inner() ][ rhs_it.inner() ] ;
-						bc.first.push_back( std::make_pair( lhs_it.inner() > i, lhs_it.ptr() ) ) ;
-						bc.second.push_back( std::make_pair( rhs_it.inner() > i, rhs_it.ptr() ) ) ;
+						for( typename RhsIndex::InnerIterator rhs_it ( rhsIdx, i ) ;
+							 rhs_it && ( !is_symmetric || rhs_it.inner() <= lhs_it.inner() ) ;
+							 ++rhs_it )
+						{
+							BlockComputation &bc = loc_compute[ lhs_it.inner() ][ rhs_it.inner() ] ;
+							bc.first.push_back( std::make_pair( lhs_it.inner() > i, lhs_it.ptr() ) ) ;
+							bc.second.push_back( std::make_pair( rhs_it.inner() > i, rhs_it.ptr() ) ) ;
+						}
 					}
 				}
 			}
-		}
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp critical
-		{
-		for( Index i = 0 ; i < outerSize ; ++i )
-		{
-			for( InnerIterator j = loc_compute[i].begin() ; j != loc_compute[i].end() ; ++j )
 			{
-				const BlockComputation &src_bc = j->second ;
-				BlockComputation &dest_bc = to_compute[ i ][ j->first ] ;
-				dest_bc.first.insert( dest_bc.first.end(), src_bc.first.begin(), src_bc.first.end() ) ;
-				dest_bc.second.insert( dest_bc.second.end(), src_bc.second.begin(), src_bc.second.end() ) ;
+				for( Index i = 0 ; i < outerSize ; ++i )
+				{
+					for( InnerIterator j = loc_compute[i].begin() ; j != loc_compute[i].end() ; ++j )
+					{
+						const BlockComputation &src_bc = j->second ;
+						BlockComputation &dest_bc = to_compute[ i ][ j->first ] ;
+						dest_bc.first.insert( dest_bc.first.end(), src_bc.first.begin(), src_bc.first.end() ) ;
+						dest_bc.second.insert( dest_bc.second.end(), src_bc.second.begin(), src_bc.second.end() ) ;
+					}
+				}
 			}
-		}
-		}
 		}
 #endif
 
@@ -329,7 +329,7 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(
 	}
 
 	productIndex.compressed.valid  = true ;
-	m_majorIndex = productIndex.compressed ;
+	m_majorIndex.move( productIndex.compressed );
 	assert( m_majorIndex.valid ) ;
 
 	Finalizer::finalize( *this ) ;

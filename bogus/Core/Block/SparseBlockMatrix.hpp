@@ -383,14 +383,14 @@ protected:
 						 const RhsBlock  *rhsData,
 						 const LhsGetter &lhsGetter,
 						 const RhsGetter &rhsGetter
-						  ) ;
+						 ) ;
 
 	//! Number of blocks on the matrix. Can be different of blocks().size(), for example when the transpose is cached.
 	std::size_t m_nBlocks ;
 
 	MajorIndexType m_majorIndex ;
 	// Minor index is always uncompressed, as the blocks cannot be contiguous
-	// For a symmetric matrix, do not store diagonal block in the minor and transpose index
+	// For a symmetric matrix, it does not store diagonal block in the minor and transpose index
 	UncompressedIndexType m_minorIndex ;
 	MajorIndexType m_transposeIndex ;
 } ;

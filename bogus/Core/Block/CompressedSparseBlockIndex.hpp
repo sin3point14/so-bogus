@@ -96,26 +96,6 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 		return *this ;
 	}
 
-	SparseBlockIndex &operator=( SparseBlockIndex &compressed )
-	{
-		if( &compressed != this )
-		{
-			// We would like to swap this vector as well, but there seems to be a bug in 4.6.3
-			// that prevent memormy ownership to be properly transfered
-			// Note: Swapping works perfectly with gcc 4.6.3 in non-optimized mode, gcc 4.8, gcc 4.2, clang 4.2
-			outer = compressed.outer ;
-			//			outer.swap( compressed.outer );
-			inner.swap( compressed.inner );
-
-			if( !compressed.innerOffsets.empty() )
-				innerOffsets.swap( compressed.innerOffsets ) ;
-			base  = compressed.base ;
-			valid = compressed.valid ;
-			compressed.valid = false ;
-		}
-		return *this ;
-	}
-
 	template < typename SourceDerived >
 	SparseBlockIndex &operator=( const SparseBlockIndexBase< SourceDerived > &source )
 	{
@@ -140,6 +120,31 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 		finalize() ;
 
 		return *this ;
+	}
+
+	SparseBlockIndex & move( SparseBlockIndex &compressed )
+	{
+		if( &compressed != this )
+		{
+			// Want to have fun with gcc 4.6.3 ? Just swap the following statements !
+			// Note: Swapping works perfectly with (at least) gcc 4.6.3 in non-optimized mode, gcc 4.8, gcc 4.2, clang 4.2
+			inner.swap( compressed.inner );
+			outer.swap( compressed.outer );
+
+			if( !compressed.innerOffsets.empty() )
+				innerOffsets.swap( compressed.innerOffsets ) ;
+			base  = compressed.base ;
+			valid = compressed.valid ;
+			compressed.valid = false ;
+
+		}
+		return *this ;
+	}
+
+	template < typename SourceDerived >
+	SparseBlockIndex &move( const SparseBlockIndexBase< SourceDerived > &source )
+	{
+		return ( *this = source ) ;
 	}
 
 	BlockPtr last( const Index outerIdx ) const

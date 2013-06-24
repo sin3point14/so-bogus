@@ -14,6 +14,21 @@
 namespace bogus {
 
 template < typename Derived >
+Derived& SparseBlockMatrixBase< Derived >::scale( const Scalar alpha )
+{
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
+    for( int i = 0 ; i < (int) blocks().size() ;  ++i )
+    {
+        block( i ) *= alpha ;
+    }
+
+    return derived() ;
+}
+
+template < typename Derived >
 template < bool Transpose, typename OtherDerived >
 Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< OtherDerived > &rhs, Scalar alpha )
 {
@@ -129,7 +144,7 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 	resIndex.finalize() ;
 
 	clear() ;
-	m_majorIndex = resIndex ;
+    m_majorIndex.move( resIndex );
 	resBlocks.swap( m_blocks ) ;
 	m_nBlocks = m_blocks.size() ;
 	m_minorIndex.valid = false ;
