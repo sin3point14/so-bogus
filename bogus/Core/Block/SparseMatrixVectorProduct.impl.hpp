@@ -47,7 +47,7 @@ void SparseBlockMatrixBase< Derived >::splitRowMultiply( const Index row, const 
 		 it ; ++ it )
 	{
 		if( it.inner() != row )
-			res += getter.get( block( it.ptr() ) ) * colSegment( rhs, it.inner() ) ;
+			res += getter.get( block( it.ptr() ) ) * this->colSegment( rhs, it.inner() ) ;
 	}
 	if( Traits::is_symmetric )
 	{
