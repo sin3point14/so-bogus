@@ -32,25 +32,24 @@ public:
 	typedef BlockMatrixBase< Derived > Base ;
 	typedef BlockMatrixTraits< Derived > Traits ;
 
-	typedef typename Traits::MajorIndexType MajorIndexType ;
-	typedef typename Traits::RowIndexType RowIndexType ;
-	typedef typename Traits::ColIndexType ColIndexType ;
-	typedef typename Traits::UncompressedIndexType UncompressedIndexType ;
-	typedef typename Traits::BlockPtr BlockPtr ;
+	typedef typename Traits::MajorIndexType         MajorIndexType ;
+	typedef typename Traits::RowIndexType           RowIndexType ;
+	typedef typename Traits::ColIndexType           ColIndexType ;
+	typedef typename Traits::UncompressedIndexType  UncompressedIndexType ;
+	typedef typename Traits::BlockPtr               BlockPtr ;
 
-	//! Return value of blockPtr( Index, Index ) for non-existing block
-	static const BlockPtr InvalidBlockPtr ;
-
-	using typename Base::Index ;
-	using typename Base::BlockType ;
-	using typename Base::Scalar ;
-	using typename Base::ConstTransposeReturnType  ;
+	typedef typename Base::Index                    Index ;
+	typedef typename Base::BlockType                BlockType ;
+	typedef typename Base::Scalar                   Scalar ;
+	typedef typename Base::ConstTransposeReturnType ConstTransposeReturnType ;
 
 	using Base::rows ;
 	using Base::cols ;
 	using Base::blocks ;
 	using Base::derived ;
 
+	//! Return value of blockPtr( Index, Index ) for non-existing block
+	static const BlockPtr InvalidBlockPtr ;
 
 	//! \name Setting and accessing the matrix structure
 	///@{
@@ -401,8 +400,8 @@ template < typename BlockT, int Flags >
 struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMatrixTraits< BlockObjectBase< SparseBlockMatrix< BlockT, Flags > > >
 {
 	typedef BlockMatrixTraits< BlockObjectBase< SparseBlockMatrix< BlockT, Flags > > > BaseTraits ;
-	using typename BaseTraits::Index ;
-	using typename BaseTraits::BlockPtr ;
+	typedef typename BaseTraits::Index      Index;
+	typedef typename BaseTraits::BlockPtr   BlockPtr;
 
 	typedef BlockT BlockType ;
 	typedef typename BlockTraits< BlockT >::Scalar Scalar ;

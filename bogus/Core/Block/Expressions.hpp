@@ -88,14 +88,16 @@ struct BlockOperand
 template < template < typename LhsT, typename RhsT > class BlockOp, typename LhsMatrixT, typename RhsMatrixT>
 struct BinaryBlockOp : public BlockObjectBase< BlockOp< LhsMatrixT, RhsMatrixT > >
 {
+
+	typedef BlockObjectBase< BlockOp< LhsMatrixT, RhsMatrixT > > Base ;
+	typedef typename Base::PlainObjectType  PlainObjectType ;
+	typedef typename Base::EvalType         EvalType ;
+
 	typedef BlockOperand< LhsMatrixT > Lhs ;
 	typedef BlockOperand< RhsMatrixT > Rhs ;
 
 	typedef typename Lhs::PlainObjectType PlainLhsMatrixType ;
 	typedef typename Rhs::PlainObjectType PlainRhsMatrixType ;
-	typedef BlockObjectBase< BlockOp< LhsMatrixT, RhsMatrixT > > Base ;
-	using typename Base::PlainObjectType ;
-	using typename Base::EvalType ;
 
 	const Lhs lhs ;
 	const Rhs rhs ;
@@ -210,7 +212,8 @@ struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
 	enum { transposeOperand = Operand::do_transpose };
 
 	typedef BlockObjectBase< Scaling< MatrixT > > Base ;
-	using typename Base::EvalType;
+
+	typedef typename Base::EvalType EvalType;
 
 	Scaling( const MatrixT &object, const typename MatrixT::Scalar scaling )
 		: operand( object, scaling )

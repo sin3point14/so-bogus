@@ -79,15 +79,24 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 
 
 	std::vector< BlockPtr > offsets( nonZeros.size() + 1 ) ;
-	offsets[0] = 0 ;
-	for( unsigned i = 0 ; i < nonZeros.size() ; ++i )
-	{
-		offsets[i+1] = offsets[i] + nonZeros[i].size() ;
-	}
 
 	MajorIndexType resIndex ;
 	resIndex.resizeOuter( nonZeros.size() ) ;
-	typename BlockContainerTraits< BlockType >::Type resBlocks( offsets.back() ) ;
+    offsets[0] = 0 ;
+    for( unsigned i = 0 ; i < nonZeros.size() ; ++i )
+    {
+        offsets[i+1] = offsets[i] + nonZeros[i].size() ;
+
+        for( unsigned j = 0 ; j < nonZeros[i].size() ; ++j )
+        {
+            const BlockPtr ptr = offsets[i]+j ;
+            const NonZero &nz = nonZeros[i][j] ;
+            resIndex.insertBack( i, nz.first, ptr ) ;
+        }
+    }
+
+
+    typename BlockContainerTraits< BlockType >::Type resBlocks( offsets.back() ) ;
 
 	BlockTransposeOption< OtherTraits::is_symmetric, Transpose > rhsGetter ;
 
@@ -102,7 +111,6 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 		{
 			const BlockPtr ptr = offsets[i]+j ;
 			const NonZero &nz = nonZeros[i][j] ;
-			resIndex.insertBack( i, nz.first, ptr ) ;
 
 			BlockType &res = resBlocks[ptr] ;
 			const bool afterDiag = ( (bool) Traits::is_col_major )  == ( (bool) OtherTraits::is_col_major )

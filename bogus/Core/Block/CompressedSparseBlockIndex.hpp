@@ -1,7 +1,7 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -18,219 +18,224 @@ namespace bogus
 template< typename _Index, typename _BlockPtr >
 struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase< SparseBlockIndex< true, _Index, _BlockPtr > >
 {
-    typedef _Index Index ;
-    typedef _BlockPtr BlockPtr ;
+	typedef _Index Index ;
+	typedef _BlockPtr BlockPtr ;
 
-    typedef SparseBlockIndexBase< SparseBlockIndex< true, _Index, _BlockPtr > > Base ;
-    typedef typename Base::InnerOffsetsType InnerOffsetsType ;
-    using Base::valid ;
+	typedef SparseBlockIndexBase< SparseBlockIndex< true, _Index, _BlockPtr > > Base ;
+	typedef typename Base::InnerOffsetsType InnerOffsetsType ;
+	using Base::valid ;
 
-    typedef std::vector< Index > Inner ;
-    typedef std::vector< Index > Outer ;
+	typedef std::vector< Index > Inner ;
+	typedef std::vector< Index > Outer ;
 
-    InnerOffsetsType innerOffsets ;
+	InnerOffsetsType innerOffsets ;
 
-    //! Vector of inner indices
-    Inner inner ;
-    //! Vector encoding the start and end of inner vectors
-    Outer outer ;
-    //! Constant offset to add to block pointers (i.e. pointer to first block )
-    BlockPtr base ;
+	//! Vector of inner indices
+	Inner inner ;
+	//! Vector encoding the start and end of inner vectors
+	Outer outer ;
+	//! Constant offset to add to block pointers (i.e. pointer to first block )
+	BlockPtr base ;
 
-    SparseBlockIndex( )
-        : Base(), base(0)
-    {}
+	SparseBlockIndex( )
+		: Base(), base(0)
+	{}
 
-    void resizeOuter( Index size )
-    {
-        outer.assign( size+1, 0 ) ;
-    }
-    Index outerSize( ) const { return outer.size() - 1 ; }
-    const InnerOffsetsType& innerOffsetsArray() const { return innerOffsets ; }
+	void resizeOuter( Index size )
+	{
+		outer.assign( size+1, 0 ) ;
+	}
+	Index outerSize( ) const { return outer.size() - 1 ; }
+	const InnerOffsetsType& innerOffsetsArray() const { return innerOffsets ; }
 
-    //! \warning Only works for back insertion, and a call to \ref finalize()
-    //! is always required once insertion is finished
-    void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
-    {
-        valid &= ( ptr == (BlockPtr) ( base + inner.size() ) )
-                && ( 0 == outer[ outIdx+1 ] || inIdx > inner.back() ) ;
-        ++outer[ outIdx+1 ] ;
-        inner.push_back( inIdx ) ;
-    }
+	//! \warning Only works for back insertion, and a call to \ref finalize()
+	//! is always required once insertion is finished
+	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
+	{
+		valid &= ( ptr == (BlockPtr) ( base + inner.size() ) )
+				&& ( 0 == outer[ outIdx+1 ] || inIdx > inner.back() ) ;
+		++outer[ outIdx+1 ] ;
+		inner.push_back( inIdx ) ;
+	}
 
-    //! Finalizes the outer indices vector
-    /*! Before calling this function, \c outer[i] contains the number of blocks
-         in the \c i th inner vector
+	//! Finalizes the outer indices vector
+	/*! Before calling this function, \c outer[i] contains the number of blocks
+		 in the \c i th inner vector
 
-         After calling this functions, \c outer[i] contains the index of the start
-         of the \c i th inner vector in \ref inner, and \c outer[i+1] its end
-    */
-    void finalize()
-    {
-        for( unsigned i = 1 ; i < outer.size() ; ++i )
-        {
-            outer[i] += outer[i-1] ;
-        }
-    }
+		 After calling this functions, \c outer[i] contains the index of the start
+		 of the \c i th inner vector in \ref inner, and \c outer[i+1] its end
+	*/
+	void finalize()
+	{
+		for( unsigned i = 1 ; i < outer.size() ; ++i )
+		{
+			outer[i] += outer[i-1] ;
+		}
+	}
 
-    void clear()
-    {
-        outer.assign( outer.size(), 0 ) ;
-        inner.clear() ;
+	void clear()
+	{
+		outer.assign( outer.size(), 0 ) ;
+		inner.clear() ;
 
-        valid = true ;
-        base = 0 ;
-    }
+		valid = true ;
+		base = 0 ;
+	}
 
-    SparseBlockIndex &operator=( const SparseBlockIndex &compressed )
-    {
-        if( &compressed != this )
-        {
-            outer = compressed.outer ;
-            inner = compressed.inner ;
-            if( !compressed.innerOffsets.empty() )
-                innerOffsets = compressed.innerOffsets ;
-            base  = compressed.base ;
-            valid = compressed.valid ;
-        }
-        return *this ;
-    }
+	SparseBlockIndex &operator=( const SparseBlockIndex &compressed )
+	{
+		if( &compressed != this )
+		{
+			outer = compressed.outer ;
+			inner = compressed.inner ;
+			if( !compressed.innerOffsets.empty() )
+				innerOffsets = compressed.innerOffsets ;
+			base  = compressed.base ;
+			valid = compressed.valid ;
+		}
+		return *this ;
+	}
 
-    SparseBlockIndex &operator=( SparseBlockIndex &compressed )
-    {
-        if( &compressed != this )
-        {
-            outer.swap( compressed.outer );
-            inner.swap( compressed.inner );
-            if( !compressed.innerOffsets.empty() )
-                innerOffsets.swap( compressed.innerOffsets ) ;
-            base  = compressed.base ;
-            valid = compressed.valid ;
-            compressed.valid = false ;
-        }
-        return *this ;
-    }
+	SparseBlockIndex &operator=( SparseBlockIndex &compressed )
+	{
+		if( &compressed != this )
+		{
+			// We would like to swap this vector as well, but there seems to be a bug in 4.6.3
+			// that prevent memormy ownership to be properly transfered
+			// Note: Swapping works perfectly with gcc 4.6.3 in non-optimized mode, gcc 4.8, gcc 4.2, clang 4.2
+			outer = compressed.outer ;
+			//			outer.swap( compressed.outer );
+			inner.swap( compressed.inner );
 
-    template < typename SourceDerived >
-    SparseBlockIndex &operator=( const SparseBlockIndexBase< SourceDerived > &source )
-    {
-        resizeOuter( source.outerSize() ) ;
-        inner.clear() ;
-        if( source.hasInnerOffsets() ) {
-            innerOffsets.resize( source.innerOffsetsArray().size() ) ;
-            std::copy( source.innerOffsetsArray().begin(), source.innerOffsetsArray().end(), innerOffsets.begin() ) ;
-        }
-        valid = source.valid ;
+			if( !compressed.innerOffsets.empty() )
+				innerOffsets.swap( compressed.innerOffsets ) ;
+			base  = compressed.base ;
+			valid = compressed.valid ;
+			compressed.valid = false ;
+		}
+		return *this ;
+	}
 
-        for( typename SourceDerived::Index i = 0 ; i < source.outerSize() ; ++i )
-        {
-            for( typename SourceDerived::InnerIterator it( source.derived(), i ) ;
-                 it ; ++ it )
-            {
-                if( inner.empty() ) base = it.ptr() ;
-                insertBack( i, it.inner(), it.ptr() ) ;
-            }
-        }
+	template < typename SourceDerived >
+	SparseBlockIndex &operator=( const SparseBlockIndexBase< SourceDerived > &source )
+	{
+		resizeOuter( source.outerSize() ) ;
+		inner.clear() ;
+		if( source.hasInnerOffsets() ) {
+			innerOffsets.resize( source.innerOffsetsArray().size() ) ;
+			std::copy( source.innerOffsetsArray().begin(), source.innerOffsetsArray().end(), innerOffsets.begin() ) ;
+		}
+		valid = source.valid ;
 
-        finalize() ;
+		for( typename SourceDerived::Index i = 0 ; i < source.outerSize() ; ++i )
+		{
+			for( typename SourceDerived::InnerIterator it( source.derived(), i ) ;
+				 it ; ++ it )
+			{
+				if( inner.empty() ) base = it.ptr() ;
+				insertBack( i, it.inner(), it.ptr() ) ;
+			}
+		}
 
-        return *this ;
-    }
+		finalize() ;
 
-    BlockPtr last( const Index outerIdx ) const
-    {
-        return base + outer[ outerIdx + 1 ] - 1  ;
-    }
+		return *this ;
+	}
 
-    Index size( const Index outerIdx ) const
-    {
-        return  outer[ outerIdx + 1 ] - outer[ outerIdx ] ;
-    }
+	BlockPtr last( const Index outerIdx ) const
+	{
+		return base + outer[ outerIdx + 1 ] - 1  ;
+	}
 
-    //! Forward iterator
-    struct InnerIterator
-    {
-        // Warning: This class does not implement the full RandomAccessIterator concept ;
-        // only the operations that are required by std::lower_bound are implemented
-        typedef std::random_access_iterator_tag iterator_category;
-        typedef Index                           value_type;
-        typedef ptrdiff_t                       difference_type;
-        typedef const Index*                    pointer;
-        typedef const Index&                    reference;
+	Index size( const Index outerIdx ) const
+	{
+		return  outer[ outerIdx + 1 ] - outer[ outerIdx ] ;
+	}
 
-        InnerIterator( ) : m_inner( NULL ) { }
+	//! Forward iterator
+	struct InnerIterator
+	{
+		// Warning: This class does not implement the full RandomAccessIterator concept ;
+		// only the operations that are required by std::lower_bound are implemented
+		typedef std::random_access_iterator_tag iterator_category;
+		typedef Index                           value_type;
+		typedef ptrdiff_t                       difference_type;
+		typedef const Index*                    pointer;
+		typedef const Index&                    reference;
 
-        InnerIterator( const SparseBlockIndex& index, Index outer )
-            : m_it( index.outer[ outer ] ), m_end( index.outer[ outer + 1] ),
-              m_base( index.base ), m_inner( &index.inner[0] )
-        {
-        }
+		InnerIterator( ) : m_inner( NULL ) { }
 
-        operator bool() const
-        {
-            return m_it != m_end ;
-        }
+		InnerIterator( const SparseBlockIndex& index, Index outer )
+			: m_it( index.outer[ outer ] ), m_end( index.outer[ outer + 1] ),
+			  m_base( index.base ), m_inner( &index.inner[0] )
+		{
+		}
 
-        InnerIterator& operator++()
-        {
-            ++ m_it ;
-            return *this ;
-        }
+		operator bool() const
+		{
+			return m_it != m_end ;
+		}
 
-        InnerIterator& operator+= ( const std::size_t n )
-        {
-            m_it = std::min( m_it + (Index) n, m_end ) ;
-            return *this ;
-        }
+		InnerIterator& operator++()
+		{
+			++ m_it ;
+			return *this ;
+		}
 
-        difference_type operator- ( const InnerIterator& other ) const
-        {
-            return ( (difference_type) m_it ) - ( difference_type ) other.m_it ;
-        }
+		InnerIterator& operator+= ( const std::size_t n )
+		{
+			m_it = std::min( m_it + (Index) n, m_end ) ;
+			return *this ;
+		}
 
-        Index operator* () const
-        {
-            return inner() ;
-        }
+		difference_type operator- ( const InnerIterator& other ) const
+		{
+			return ( (difference_type) m_it ) - ( difference_type ) other.m_it ;
+		}
 
-        InnerIterator end() const
-        {
-            return InnerIterator( m_end, m_end, m_base, m_inner ) ;
-        }
+		Index operator* () const
+		{
+			return inner() ;
+		}
 
-        Index inner() const { return m_inner[ m_it ] ; }
-        BlockPtr ptr() const { return m_it + m_base ; }
+		InnerIterator end() const
+		{
+			return InnerIterator( m_end, m_end, m_base, m_inner ) ;
+		}
 
-        BlockPtr rawIndex() const { return m_it ; }
-    private:
+		Index inner() const { return m_inner[ m_it ] ; }
+		BlockPtr ptr() const { return m_it + m_base ; }
 
-        InnerIterator( Index it, Index end,
-                       BlockPtr base, const Index* inner )
-            : m_it( it ), m_end( end ), m_base( base ), m_inner( inner )
-        {}
+		BlockPtr rawIndex() const { return m_it ; }
+	private:
 
-        Index m_it ;
-        Index m_end ;
-        BlockPtr m_base ;
-        const Index* m_inner ;
-    } ;
+		InnerIterator( Index it, Index end,
+					   BlockPtr base, const Index* inner )
+			: m_it( it ), m_end( end ), m_base( base ), m_inner( inner )
+		{}
 
-    void setPtr( const InnerIterator& it, BlockPtr ptr )
-    {
-        base = ptr - it.rawIndex() ;
-        valid = true ;
-    }
+		Index m_it ;
+		Index m_end ;
+		BlockPtr m_base ;
+		const Index* m_inner ;
+	} ;
 
-    template < typename VecT >
-    typename VecT::SegmentReturnType innerSegment( VecT& v, Index idx ) const
-    {
-        return v.segment( innerOffsets[ idx ], innerOffsets[ idx + 1 ] - innerOffsets[ idx ] ) ;
-    }
-    template < typename VecT >
-    typename VecT::ConstSegmentReturnType innerSegment( const VecT& v, Index idx ) const
-    {
-        return v.segment( innerOffsets[ idx ], innerOffsets[ idx + 1 ] - innerOffsets[ idx ] ) ;
-    }
+	void setPtr( const InnerIterator& it, BlockPtr ptr )
+	{
+		base = ptr - it.rawIndex() ;
+		valid = true ;
+	}
+
+	template < typename VecT >
+	typename VecT::SegmentReturnType innerSegment( VecT& v, Index idx ) const
+	{
+		return v.segment( innerOffsets[ idx ], innerOffsets[ idx + 1 ] - innerOffsets[ idx ] ) ;
+	}
+	template < typename VecT >
+	typename VecT::ConstSegmentReturnType innerSegment( const VecT& v, Index idx ) const
+	{
+		return v.segment( innerOffsets[ idx ], innerOffsets[ idx + 1 ] - innerOffsets[ idx ] ) ;
+	}
 } ;
 
 } //namespace bogus
