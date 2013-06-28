@@ -28,11 +28,6 @@ struct PrimalFrictionProblem
 	//! M^-1
 	SparseBlockMatrix< LU< Eigen::MatrixBase< Eigen::MatrixXd > >, flags::COMPRESSED > MInv ;
 
-	//! M^-1 * H'
-	typedef Eigen::Matrix< double, Eigen::Dynamic, Dimension > HtBlock ;
-	SparseBlockMatrix< HtBlock, bogus::flags::COL_MAJOR > MInvHt ;
-
-	Eigen::VectorXd MInvf ;
 } ;
 
 

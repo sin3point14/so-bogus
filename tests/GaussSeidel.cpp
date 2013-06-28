@@ -60,15 +60,9 @@ TEST( GaussSeidel, Small )
 //	std::cout << InvMassMat << std::endl ;
 //	std::cout << H << std::endl ;
 
-	typedef Eigen::Matrix< double, Eigen::Dynamic, 3 > GradBlockTransT ;
-	bogus::SparseBlockMatrix< GradBlockTransT, bogus::flags::COL_MAJOR >
-			MInvHt = InvMassMat * H.transpose() ;
-
-//	std::cout << MInvHt << std::endl ;
-
 	typedef bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC | bogus::flags::COMPRESSED > WType ;
 	WType W ;
-	W = H * MInvHt ;
+	W = H * InvMassMat * H.transpose() ;
 
 //	std::cout << W << std::endl ;
 //	W.cacheTranspose();

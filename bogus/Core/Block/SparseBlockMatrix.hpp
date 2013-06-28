@@ -355,12 +355,14 @@ protected:
 	template< typename IndexT >
 	void setInnerOffets( IndexT& index, const Index nBlocks, const unsigned* blockSizes ) const ;
 
-	template < bool ColWise, typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock, typename LhsGetter, typename RhsGetter  >
+	template < bool ColWise, typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock,
+			   typename LhsGetter, typename RhsGetter >
 	void setFromProduct( const LhsIndex &lhsIdx, const RhsIndex &rhsIdx,
 						 const LhsBlock  *lhsData,
 						 const RhsBlock  *rhsData,
 						 const LhsGetter &lhsGetter,
-						 const RhsGetter &rhsGetter
+						 const RhsGetter &rhsGetter,
+						 Scalar scaling
 						 ) ;
 
 	//! Number of blocks on the matrix. Can be different of blocks().size(), for example when the transpose is cached.

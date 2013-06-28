@@ -46,6 +46,25 @@ struct LDLT : public LinearSolverBase< LDLT< MatrixType > >
 {
 } ;
 
-}
+
+//! Block product type deductions
+
+template< typename LhsBlockT, typename RhsBlockT, bool TransposeLhs, bool TransposeRhs >
+struct BlockBlockProductTraits < LU < LhsBlockT >, RhsBlockT, TransposeLhs, TransposeRhs >
+{
+	typedef typename LinearSolverTraits< LU < LhsBlockT > >::MatrixType LhsMatrixT ;
+	typedef typename BlockBlockProductTraits < LhsMatrixT, RhsBlockT, TransposeLhs, TransposeRhs >::ReturnType
+	ReturnType ;
+} ;
+
+template< typename LhsBlockT, typename RhsBlockT, bool TransposeLhs, bool TransposeRhs >
+struct BlockBlockProductTraits < LDLT < LhsBlockT >, RhsBlockT, TransposeLhs, TransposeRhs >
+{
+	typedef typename LinearSolverTraits< LDLT < LhsBlockT > >::MatrixType LhsMatrixT ;
+	typedef typename BlockBlockProductTraits < LhsMatrixT, RhsBlockT, TransposeLhs, TransposeRhs >::ReturnType
+	ReturnType ;
+} ;
+
+}// namespace bogus
 
 #endif

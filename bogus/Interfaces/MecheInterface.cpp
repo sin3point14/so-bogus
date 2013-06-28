@@ -202,7 +202,9 @@ double MecheFrictionProblem::solve(double *r,
 	// compute v
 	if( v )
 	{
-		Eigen::VectorXd::Map( v, m ) = m_primal->MInvHt * r_loc -  m_primal->MInvf ;
+		Eigen::VectorXd::Map( v, m ) = m_primal->MInv * (
+					m_primal->H.transpose() * r_loc -
+					Eigen::VectorXd::Map( m_primal->f, m_primal->H.cols() ) ) ;
 	}
 
 	if( m_out )

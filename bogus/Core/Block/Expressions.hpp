@@ -160,8 +160,8 @@ struct BlockMatrixTraits< Product< LhsMatrixT, RhsMatrixT > >
 
 	typedef typename LhsTraits::Scalar Scalar ;
 
-	typedef Product< typename RhsMatrixT::TransposeObjectType,
-					typename LhsMatrixT::TransposeObjectType >
+	typedef Product< typename BlockOperand< RhsMatrixT >::ObjectType::TransposeObjectType,
+					typename BlockOperand< LhsMatrixT >::ObjectType::TransposeObjectType >
 	ConstTransposeReturnType ;
 	typedef ConstTransposeReturnType TransposeObjectType ;
 } ;
@@ -196,8 +196,8 @@ struct BlockMatrixTraits< Addition< LhsMatrixT, RhsMatrixT > >
 	typedef std::auto_ptr< const PlainObjectType > EvalType ;
 	typedef typename OrigTraits::Scalar Scalar ;
 
-	typedef Addition< typename LhsMatrixT::TransposeObjectType,
-					 typename RhsMatrixT::TransposeObjectType >
+	typedef Addition< typename BlockOperand< LhsMatrixT >::ObjectType::TransposeObjectType,
+					typename BlockOperand< RhsMatrixT >::ObjectType::TransposeObjectType >
 	ConstTransposeReturnType ;
 	typedef ConstTransposeReturnType TransposeObjectType ;
 } ;
@@ -248,7 +248,7 @@ struct BlockMatrixTraits< Scaling< MatrixT > >
 	typedef std::auto_ptr< const PlainObjectType > EvalType ;
 	typedef typename OrigTraits::Scalar Scalar ;
 
-	typedef Scaling< typename MatrixT::ConstTransposeReturnType >
+	typedef Scaling< typename BlockOperand< MatrixT >::ObjectType::TransposeObjectType >
 	ConstTransposeReturnType ;
 	typedef ConstTransposeReturnType TransposeObjectType ;
 } ;

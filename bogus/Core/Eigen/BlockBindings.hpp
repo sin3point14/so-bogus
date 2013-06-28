@@ -87,6 +87,7 @@ struct RowsColsComputer< true, _Rows, _Cols >
 	enum { Cols = _Rows } ;
 } ;
 
+
 template<
 	typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols,
 	typename _Scalar2, int _Rows2, int _Cols2, int _Options2, int _MaxRows2, int _MaxCols2,

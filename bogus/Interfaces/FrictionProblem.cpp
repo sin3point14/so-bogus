@@ -20,18 +20,14 @@ void DualFrictionProblem< Dimension >::computeFrom(PrimalFrictionProblem<Dimensi
 		primal.MInv.block(i).compute( primal.M.block(i) ) ;
 	}
 
-	// M^-1 * H'
-	primal.MInvHt = primal.MInv * primal.H.transpose() ;
-
 	//W
-	W = primal.H * primal.MInvHt ;
+	W = primal.H * ( primal.MInv * primal.H.transpose() ) ;
 
 	W.cacheTranspose() ;
 
 	// M^-1 f, b
-	primal.MInvf = primal.MInv * Eigen::VectorXd::Map( primal.f, primal.H.cols() ) ;
-	b = ( primal.E.transpose() * Eigen::VectorXd::Map( primal.w, primal.H.rows()) )
-			- primal.H * ( primal.MInvf );
+	b = primal.E.transpose() * Eigen::VectorXd::Map( primal.w, primal.H.rows())
+			- primal.H * ( primal.MInv * Eigen::VectorXd::Map( primal.f, primal.H.cols() ) );
 
 	mu = primal.mu ;
 }

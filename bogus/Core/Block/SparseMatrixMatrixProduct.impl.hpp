@@ -79,7 +79,7 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 
 	setFromProduct< ColWise >( lhsIndexComputer.get(), rhsIndexComputer.get(),
 							   lhs->data(), rhs->data(),
-							   lhsGetter, rhsGetter ) ;
+							   lhsGetter, rhsGetter, prod.lhs.scaling * prod.rhs.scaling ) ;
 
 }
 
@@ -267,14 +267,14 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 } ;
 
 template < typename Derived >
-template < bool ColWise, typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock, typename LhsGetter, typename RhsGetter >
-void SparseBlockMatrixBase<Derived>::setFromProduct(
-		const LhsIndex &lhsIdx,
+template < bool ColWise, typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock,
+		   typename LhsGetter, typename RhsGetter >
+void SparseBlockMatrixBase<Derived>::setFromProduct(const LhsIndex &lhsIdx,
 		const RhsIndex &rhsIdx,
 		const LhsBlock *lhsData,
 		const RhsBlock *rhsData,
-		const LhsGetter &lhsGetter, const RhsGetter &rhsGetter
-		)
+		const LhsGetter &lhsGetter, const RhsGetter &rhsGetter,
+		Scalar scaling)
 {
 	typedef SparseBlockProductIndex< ColWise, Index, BlockPtr, Traits::is_symmetric, Traits::is_col_major> ProductIndex ;
 	typedef typename ProductIndex::BlockComputation BlockComputation ;
@@ -326,6 +326,8 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(
 			b += lhsGetter.get( lhsData[ bc.first[j].second ], bc.first[j].first)
 					* rhsGetter.get( rhsData[ bc.second[j].second ], bc.second[j].first) ;
 		}
+
+		if( scaling != 1 ) b *= scaling ;
 	}
 
 	productIndex.compressed.valid  = true ;
