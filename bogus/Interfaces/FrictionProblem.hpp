@@ -11,16 +11,20 @@ template< unsigned Dimension >
 struct PrimalFrictionProblem
 {
 	// Primal Data
-	//! M^-1
+	//! M -- mass matrix
 	SparseBlockMatrix< Eigen::MatrixXd, flags::COMPRESSED  > M ;
-	//! E
+	//! E -- local rotation matrix ( world <-> contact basis )
 	bogus::SparseBlockMatrix< Eigen::Matrix< double, Dimension, Dimension >, bogus::flags::COMPRESSED > E ;
-	//! H
+
 	typedef Eigen::Matrix< double, Dimension, Eigen::Dynamic > HBlock ;
+	//! H -- deformation gradient ( generalized coordinates <-> 3D world )
 	SparseBlockMatrix< HBlock > H;
 
+	//! External forces
 	const double *f ;
+	//! Free velocity ( such that u = Hv + w )
 	const double *w ;
+	//! Coulomb friction coefficients
 	const double *mu ;
 
 	// Cached data
@@ -38,10 +42,13 @@ struct DualFrictionProblem
 							   flags::SYMMETRIC | flags::COMPRESSED > WType ;
 	typedef GaussSeidel< WType > GaussSeidelType ;
 
-	//! W
+	//! W -- Delassus operator
 	WType W ;
 
+	//! Rhs ( such that u = Wr + b )
 	Eigen::VectorXd b ;
+
+	//! Coulomb friction coefficients
 	const double *mu ;
 
 	void computeFrom( PrimalFrictionProblem< Dimension >& primal ) ;

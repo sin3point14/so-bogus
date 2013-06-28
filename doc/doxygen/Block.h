@@ -95,6 +95,10 @@ Currently, the following operations are supported:
  - \ref block_mv
  - \ref block_mm
 
+ Most of those operations can be done using the standard C++ operators, in a lazy way -- the resulting matrix will only be computed when assigned to another BlockMatrix. 
+ 
+ \warning The operations should be able to be composed in an arbitrary way, but in pratice there are a few \ref block_limitations.
+
 \subsection block_assign Assignment
 
 Any SparseBlockmatrix can be assigned to another one, as long as their block types are compatible.
@@ -169,11 +173,26 @@ bogus::SparseBlockMatrix< GradBlockT > H ;
 bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC | bogus::flags::COMPRESSED > W = H * H.transpose() ;
 \endcode
 
-\warning At the moment, this operation suffer from several limitations:
- - Aliasing is not handled yet ( A = A*B probably won't do what you expect )
- - Multiplications cannot be chained yet; temporary matrices much be manually created and assigned each time 
-  ( A = B*C*D won't compile, but T = B*C ; A = T*D will ) 
+\subsection block_limitations Limitations
 
+As a rule of thumb, these limitations can be circumvented by explicitely assigning the result of each operation to a temporary object.
+
+\subsubsection block_limit_aliasing Aliasing
+For performance reasons, operations on SparseBlockMatrix should not be assumed to be aliasing-safe.
+This is especially true for matrix-vector multiplication ( rhs and res should not alias ), and matrix-matrix addition
+( the matrix that is being assigned to should not appear anywhere but as the left-most operand ).
+
+\subsubsection block_limit_type_deduction Type deduction
+In some cases bogus will not be able to deduce the correct return type for an operation. 
+This can happen for matrix-matrix products that have to be evaluated as a part of a larger arithmetic expressions,
+and which involve "unusual" block types. If such an error occurs, just assign the offending product to a temporary SparseBlockMatrix.
+
+\subsubsection block_limit_performance Performance
+bogus will not necessarily chose the most optimized type for the evaluation of temporary expressions. For example,
+it might choose a row-major matrix when a column-major one would be more approriate, or fail to notice that
+\c H \c * \c H.transpose() should use symmetric storage.
+
+Explicit parenthesisation will also help performance. Otherwise, bogus may for instance perform a matrix-matrix product operation before a matrix-vector product, while the same result could be computed using only two matrix-vector operations. 
 
 */
 
