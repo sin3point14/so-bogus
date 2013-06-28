@@ -101,15 +101,18 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
     for( unsigned i = 0 ; i < nonZeros.size() ; ++i )
     {
         offsets[i+1] = offsets[i] + nonZeros[i].size() ;
-
-        for( unsigned j = 0 ; j < nonZeros[i].size() ; ++j )
-        {
-            const BlockPtr ptr = offsets[i]+j ;
-            const NonZero &nz = nonZeros[i][j] ;
-            resIndex.insertBack( i, nz.first, ptr ) ;
-        }
     }
 
+	resIndex.reserve( offsets.back() ) ;
+	for( unsigned i = 0 ; i < nonZeros.size() ; ++i )
+	{
+		for( unsigned j = 0 ; j < nonZeros[i].size() ; ++j )
+		{
+			const BlockPtr ptr = offsets[i]+j ;
+			const NonZero &nz = nonZeros[i][j] ;
+			resIndex.insertBack( i, nz.first, ptr ) ;
+		}
+	}
 
     typename BlockContainerTraits< BlockType >::Type resBlocks( offsets.back() ) ;
 

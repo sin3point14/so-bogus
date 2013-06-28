@@ -45,7 +45,15 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 	{
 		outer.assign( size+1, 0 ) ;
 	}
+	void reserve( Index nnz)
+	{
+		inner.reserve( nnz ) ;
+	}
+
 	Index outerSize( ) const { return outer.size() - 1 ; }
+	Index nonZeros() const { return inner.size() ; }
+
+
 	const InnerOffsetsType& innerOffsetsArray() const { return innerOffsets ; }
 
 	//! \warning Only works for back insertion, and a call to \ref finalize()
@@ -100,6 +108,8 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 	SparseBlockIndex &operator=( const SparseBlockIndexBase< SourceDerived > &source )
 	{
 		resizeOuter( source.outerSize() ) ;
+		reserve( source.nonZeros() ) ;
+
 		inner.clear() ;
 		if( source.hasInnerOffsets() ) {
 			innerOffsets.resize( source.innerOffsetsArray().size() ) ;

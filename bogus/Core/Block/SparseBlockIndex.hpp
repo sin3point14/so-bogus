@@ -44,8 +44,11 @@ struct SparseBlockIndexBase
 	Index outerSize( ) const ;
 
 	const InnerOffsetsType& innerOffsetsArray() const ;
-
 	bool hasInnerOffsets() const;
+
+	//! Returns the total number of nonZeros in this index
+	/*! Depending on the index type, may performe som computations */
+	Index nonZeros() const { return derived().nonZeros() ; }
 } ;
 
 //! Uncompressed sparse block index
@@ -75,6 +78,10 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 	{
 		outer.resize( size ) ;
 	}
+	void reserve( Index /*nnz*/)
+	{
+	}
+
 	Index outerSize( ) const { return outer.size() ; }
 	const InnerOffsetsType& innerOffsetsArray() const { return innerOffsets ; }
 
@@ -163,6 +170,15 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 	Index size( const Index outerIdx ) const
 	{
 		return outer[ outerIdx ].size() ;
+	}
+
+	Index nonZeros() const
+	{
+		Index nnz = 0 ;
+		for( unsigned i = 0 ; i < outer.size() ; ++i )
+			nnz += outer[i].size() ;
+
+		return nnz ;
 	}
 
 	//! Forward iterator

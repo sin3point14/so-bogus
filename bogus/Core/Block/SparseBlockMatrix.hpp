@@ -111,6 +111,7 @@ public:
 	void reserve( std::size_t nBlocks )
 	{
 		m_blocks.reserve( nBlocks ) ;
+		m_majorIndex.reserve( nBlocks ) ;
 	}
 
 	//! Inserts a block in the matrix, and returns a reference to it
@@ -228,6 +229,8 @@ public:
 		typename OtherDerived::EvalType rhs ( source.eval() ) ;
 		return assign< OtherDerived::is_transposed >( *rhs ) ;
 	}
+
+	Derived& operator= ( const SparseBlockMatrixBase &source ) ;
 
 	template < typename LhsT, typename RhsT >
 	Derived& operator= ( const Product< LhsT, RhsT > &prod ) ;

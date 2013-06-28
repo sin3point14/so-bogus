@@ -37,6 +37,8 @@ struct CompoundSparseBlockIndex : public SparseBlockIndexBase< CompoundSparseBlo
 	}
 
 	Index outerSize() const { return first.outerSize() ; }
+	Index nonZeros() const { return first.nonZeros() + second.nonZeros() ; }
+
 	const InnerOffsetsType& innerOffsetsArray() const { return innerOffsets ; }
 
 	struct InnerIterator

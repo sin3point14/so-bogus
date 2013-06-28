@@ -41,6 +41,21 @@ struct BlockCopier
 } ;
 
 template < typename Derived >
+Derived& SparseBlockMatrixBase<Derived>::operator= ( const SparseBlockMatrixBase &source )
+{
+	m_rows = source.rows() ;
+	m_cols = source.cols() ;
+	m_blocks = source.blocks() ;
+
+	m_nBlocks = source.nBlocks() ;
+	m_majorIndex = source.majorIndex() ;
+	m_minorIndex = source.minorIndex() ;
+	m_transposeIndex = source.transposeIndex() ;
+
+	return derived() ;
+}
+
+template < typename Derived >
 template < bool Transpose, typename OtherDerived >
 Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< OtherDerived > &source, Scalar scale )
 {
@@ -101,7 +116,7 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 	} else {
 
 		clear() ;
-		m_blocks.reserve( source.blocks().size() ) ;
+		reserve( source.blocks().size() ) ;
 
 		SparseBlockIndexComputer< OtherDerived, OtherTraits::is_symmetric, Traits::is_col_major, Transpose >
 				indexComputer( source ) ;

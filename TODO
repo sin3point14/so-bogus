@@ -1,7 +1,11 @@
 
- + Documentation
+ + BlockMatrix of BlockMatrices
+ + LU/LDLT
+ + innerMultiply overloads
  = SOQP interface
  = Mixed Problems ( Equality constraints )
+ = Mapped SparseMatrix
+ = Compiling/Install documentation
  - Coloring Gauss Seidel
  - Dense block matrices
  - Coulomb law refinements
