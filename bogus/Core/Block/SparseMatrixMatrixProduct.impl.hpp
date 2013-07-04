@@ -10,10 +10,10 @@
 #define BOGUS_SPARSE_MATRIXMATRIX_PRODUCT_IMPL_HPP
 
 #include "Expressions.hpp"
-#include "SparseBlockMatrix.hpp"
+#include "Access.hpp"
 
+#include "SparseBlockMatrix.hpp"
 #include "SparseBlockIndexComputer.hpp"
-#include "BlockTranspose.hpp"
 
 #include <map>
 

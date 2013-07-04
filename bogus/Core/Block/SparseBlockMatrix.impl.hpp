@@ -9,9 +9,9 @@
 #ifndef BOGUS_SPARSE_BLOCK_MATRIX_IMPL_HPP
 #define BOGUS_SPARSE_BLOCK_MATRIX_IMPL_HPP
 
+#include "Access.hpp"
+
 #include "SparseBlockMatrix.hpp"
-#include "Expressions.hpp"
-#include "BlockTranspose.hpp"
 #include "SparseBlockIndexComputer.hpp"
 
 #include <algorithm>

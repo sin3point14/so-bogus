@@ -1,16 +1,18 @@
-/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver          
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>                       
+/* This file is part of so-bogus, a block-sparse Gauss-Seidel solver
+ * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
  *
- * This Source Code Form is subject to the terms of the Mozilla Public 
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #ifndef BOGUS_SPARSE_SCALEADD_HPP
 #define BOGUS_SPARSE_SCALEADD_HPP
 
+#include "Access.hpp"
+
 #include "SparseBlockMatrix.hpp"
-#include "BlockTranspose.hpp"
 #include "SparseBlockIndexComputer.hpp"
+
 namespace bogus {
 
 template < typename Derived >
@@ -20,12 +22,12 @@ Derived& SparseBlockMatrixBase< Derived >::scale( const Scalar alpha )
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-    for( int i = 0 ; i < (int) blocks().size() ;  ++i )
-    {
-        block( i ) *= alpha ;
-    }
+	for( int i = 0 ; i < (int) blocks().size() ;  ++i )
+	{
+		block( i ) *= alpha ;
+	}
 
-    return derived() ;
+	return derived() ;
 }
 
 template < typename Derived >
@@ -97,11 +99,11 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 
 	MajorIndexType resIndex ;
 	resIndex.resizeOuter( nonZeros.size() ) ;
-    offsets[0] = 0 ;
-    for( unsigned i = 0 ; i < nonZeros.size() ; ++i )
-    {
-        offsets[i+1] = offsets[i] + nonZeros[i].size() ;
-    }
+	offsets[0] = 0 ;
+	for( unsigned i = 0 ; i < nonZeros.size() ; ++i )
+	{
+		offsets[i+1] = offsets[i] + nonZeros[i].size() ;
+	}
 
 	resIndex.reserve( offsets.back() ) ;
 	for( unsigned i = 0 ; i < nonZeros.size() ; ++i )
@@ -114,7 +116,7 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 		}
 	}
 
-    typename BlockContainerTraits< BlockType >::Type resBlocks( offsets.back() ) ;
+	typename BlockContainerTraits< BlockType >::Type resBlocks( offsets.back() ) ;
 
 	BlockTransposeOption< OtherTraits::is_symmetric, Transpose > rhsGetter ;
 
@@ -147,7 +149,7 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 	resIndex.finalize() ;
 
 	clear() ;
-    m_majorIndex.move( resIndex );
+	m_majorIndex.move( resIndex );
 	resBlocks.swap( m_blocks ) ;
 	m_nBlocks = m_blocks.size() ;
 	m_minorIndex.valid = false ;

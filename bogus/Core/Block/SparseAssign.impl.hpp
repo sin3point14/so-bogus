@@ -9,8 +9,9 @@
 #ifndef BOGUS_SPARSEASSIGN_IMPL_HPP
 #define BOGUS_SPARSEASSIGN_IMPL_HPP
 
+#include "Access.hpp"
+
 #include "SparseBlockMatrix.hpp"
-#include "BlockTranspose.hpp"
 #include "SparseBlockIndexComputer.hpp"
 
 namespace bogus

@@ -6,8 +6,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-#ifndef BOGUS_BLOCK_TRANSPOSE_HPP
-#define BOGUS_BLOCK_TRANSPOSE_HPP
+#ifndef BOGUS_BLOCK_ACCESS_HPP
+#define BOGUS_BLOCK_ACCESS_HPP
 
 namespace bogus {
 
@@ -54,6 +54,45 @@ struct BlockTransposeOption< true, IgnoredDoTranspose > {
 	{ return doTranspose ? BlockT( transpose_block( src ) ) : src ; }
 } ;
 
+template< typename BlockT, bool Transpose_ = false >
+struct BlockDims
+{
+	typedef BlockTraits< BlockT > Traits ;
+	enum { Rows = Traits::RowsAtCompileTime,
+		   Cols = Traits::ColsAtCompileTime } ;
+} ;
+template< typename BlockT >
+struct BlockDims< BlockT, true >
+
+{
+	typedef BlockTraits< BlockT > Traits ;
+	enum { Rows = Traits::ColsAtCompileTime,
+		   Cols = Traits::RowsAtCompileTime } ;
+} ;
+
+template < int DimensionAtCompileTime, typename VecT, typename Index >
+struct Segmenter
+{
+    typedef typename VecT::SegmentReturnType 		   ReturnType ;
+    typedef typename VecT::ConstSegmentReturnType 		   ConstReturnType ;
+
+    Segmenter( VecT &vec, const Index* offsets ) : m_vec( vec ), m_offsets( offsets ) { }
+
+    inline ReturnType get( const Index inner )
+    {
+        return m_vec.segment( m_offsets[ inner ], m_offsets[ inner + 1 ] - m_offsets[ inner ] ) ;
+    }
+
+    inline ConstReturnType get( const Index inner ) const
+    {
+        return m_vec.segment( m_offsets[ inner ], m_offsets[ inner + 1 ] - m_offsets[ inner ] ) ;
+    }
+
+
+private:
+    VecT &		 m_vec ;
+    const Index* m_offsets ;
+} ;
 
 }
 

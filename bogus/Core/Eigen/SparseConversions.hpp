@@ -12,7 +12,7 @@
 #include "SparseHeader.hpp"
 
 #include "../Block/SparseBlockMatrix.hpp"
-#include "../Block/BlockTranspose.hpp"
+#include "../Block/Access.hpp"
 #include "../Block/SparseBlockIndexComputer.hpp"
 
 #include <map>
@@ -31,8 +31,12 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 	typedef typename Traits::Index Index ;
 	typedef typename Traits::BlockPtr BlockPtr ;
 
-	const Index RowsPerBlock = destRowsPerBlock ? (Index) destRowsPerBlock : Traits::BlockType::RowsAtCompileTime ;
-	const Index ColsPerBlock = destColsPerBlock ? (Index) destColsPerBlock : Traits::BlockType::ColsAtCompileTime ;
+	const Index RowsPerBlock = destRowsPerBlock
+			? (Index) destRowsPerBlock
+			: (Index) BlockTraits< typename Traits::BlockType >::RowsAtCompileTime ;
+	const Index ColsPerBlock = destColsPerBlock
+			? (Index) destColsPerBlock
+			: (Index) BlockTraits< typename Traits::BlockType >::ColsAtCompileTime ;
 
 	assert( RowsPerBlock != (Index) -1 ) ;
 	assert( ColsPerBlock != (Index) -1 ) ;

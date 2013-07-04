@@ -30,7 +30,10 @@ struct LinearSolverBase
 	   return static_cast< const Derived& >( *this ).solve( rhs ) ;
 	}
 
-	typedef typename BlockTraits< typename LinearSolverTraits< Derived >::MatrixType >::Scalar Scalar ;
+	typedef BlockTraits< typename LinearSolverTraits< Derived >::MatrixType > UnderlyingBlockTraits ;
+	typedef typename UnderlyingBlockTraits::Scalar Scalar ;
+	enum { RowsAtCompileTime = UnderlyingBlockTraits::RowsAtCompileTime,
+		   ColsAtCompileTime = UnderlyingBlockTraits::ColsAtCompileTime }  ;
 
 } ;
 

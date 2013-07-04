@@ -54,8 +54,8 @@ struct BlockObjectBase : public Object
 template< typename Derived  >
 struct BlockMatrixTraits< BlockObjectBase< Derived > > {
 
-	typedef int Index ;
-	typedef unsigned BlockPtr ;
+	typedef BOGUS_DEFAULT_INDEX_TYPE Index ;
+	typedef BOGUS_DEFAULT_BLOCK_PTR_TYPE BlockPtr ;
 	typedef Derived PlainObjectType ;
 	typedef const PlainObjectType* EvalType ;
 

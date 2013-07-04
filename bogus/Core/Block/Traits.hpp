@@ -10,10 +10,6 @@
 
 #include <vector>
 
-#if !( defined( _OPENMP ) || defined( BOGUS_DONT_PARALLELIZE ) )
-#define BOGUS_DONT_PARALLELIZE
-#endif
-
 namespace bogus {
 
 template< typename Derived >
@@ -28,6 +24,8 @@ template< typename BlockType >
 struct BlockTraits
 {
    typedef typename BlockType::Scalar Scalar ;
+   enum { RowsAtCompileTime = BlockType::RowsAtCompileTime,
+		  ColsAtCompileTime = BlockType::ColsAtCompileTime }  ;
 } ;
 
 // Transpose and matrix/vector product return types

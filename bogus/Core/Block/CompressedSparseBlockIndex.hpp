@@ -241,16 +241,6 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 		valid = true ;
 	}
 
-	template < typename VecT >
-	typename VecT::SegmentReturnType innerSegment( VecT& v, Index idx ) const
-	{
-		return v.segment( innerOffsets[ idx ], innerOffsets[ idx + 1 ] - innerOffsets[ idx ] ) ;
-	}
-	template < typename VecT >
-	typename VecT::ConstSegmentReturnType innerSegment( const VecT& v, Index idx ) const
-	{
-		return v.segment( innerOffsets[ idx ], innerOffsets[ idx + 1 ] - innerOffsets[ idx ] ) ;
-	}
 } ;
 
 } //namespace bogus

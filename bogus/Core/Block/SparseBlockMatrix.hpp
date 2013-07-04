@@ -389,15 +389,13 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMat
 	typedef BlockT BlockType ;
 	typedef typename BlockTraits< BlockT >::Scalar Scalar ;
 
-	enum { is_transposed = 0 } ;
-	enum { is_temporary = 0 } ;
 	enum {
+		is_transposed  = 0,
+		is_temporary   = 0,
 		is_compressed  = Flags & flags::COMPRESSED,
 		is_symmetric   = Flags & flags::SYMMETRIC,
-		is_col_major   = Flags & flags::COL_MAJOR
-	} ;
-	enum {
-		flags         = Flags
+		is_col_major   = Flags & flags::COL_MAJOR,
+		flags          = Flags
 	} ;
 
 	typedef SparseBlockIndex< is_compressed, Index, BlockPtr > MajorIndexType ;

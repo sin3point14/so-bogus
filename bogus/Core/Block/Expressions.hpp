@@ -101,8 +101,8 @@ struct BinaryBlockOp : public BlockObjectBase< BlockOp< LhsMatrixT, RhsMatrixT >
 
 	const Lhs lhs ;
 	const Rhs rhs ;
-	enum { transposeLhs = Lhs::do_transpose };
-	enum { transposeRhs = Rhs::do_transpose };
+	enum { transposeLhs = Lhs::do_transpose,
+		   transposeRhs = Rhs::do_transpose };
 
 	BinaryBlockOp( const LhsMatrixT& l,const RhsMatrixT& r,
 				   typename Lhs::Scalar lscaling = 1, typename Lhs::Scalar rscaling = 1 )
@@ -138,8 +138,8 @@ struct Product : public BinaryBlockOp< Product, LhsMatrixT, RhsMatrixT >
 template <typename LhsMatrixT, typename RhsMatrixT>
 struct BlockMatrixTraits< Product< LhsMatrixT, RhsMatrixT > >
 {
-	enum { is_transposed = 0 } ;
-	enum { is_temporary = 1 } ;
+	enum { is_transposed = 0,
+		   is_temporary = 1 } ;
 
 	typedef BlockMatrixTraits< LhsMatrixT > LhsTraits;
 	typedef BlockMatrixTraits< RhsMatrixT > RhsTraits;
@@ -186,8 +186,8 @@ struct Addition : public BinaryBlockOp< Addition, LhsMatrixT, RhsMatrixT >
 template <typename LhsMatrixT, typename RhsMatrixT>
 struct BlockMatrixTraits< Addition< LhsMatrixT, RhsMatrixT > >
 {
-	enum { is_transposed = 0 } ;
-	enum { is_temporary = 1 } ;
+	enum { is_transposed = 0,
+		   is_temporary = 1 } ;
 
 	typedef BlockMatrixTraits< LhsMatrixT > OrigTraits;
 	typedef typename OrigTraits::Index Index ;
@@ -238,8 +238,8 @@ struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
 template <typename MatrixT>
 struct BlockMatrixTraits< Scaling< MatrixT > >
 {
-	enum { is_transposed = 0 } ;
-	enum { is_temporary = 1 } ;
+	enum { is_transposed = 0,
+		   is_temporary = 1 } ;
 
 	typedef BlockMatrixTraits< MatrixT > OrigTraits;
 	typedef typename OrigTraits::Index Index ;

@@ -44,11 +44,26 @@ struct SparseBlockIndexBase
 	Index outerSize( ) const ;
 
 	const InnerOffsetsType& innerOffsetsArray() const ;
+	const Index* innerOffsetsData() const { return & innerOffsetsArray()[0] ; }
 	bool hasInnerOffsets() const;
 
 	//! Returns the total number of nonZeros in this index
 	/*! Depending on the index type, may performe som computations */
 	Index nonZeros() const { return derived().nonZeros() ; }
+
+	template < typename VecT >
+	typename VecT::SegmentReturnType innerSegment( VecT& v, Index idx ) const
+	{
+		return v.segment( innerOffsetsArray()[ idx ], innerOffsetsArray()[ idx + 1 ] - innerOffsetsArray()[ idx ] ) ;
+	}
+	template < typename VecT >
+	typename VecT::ConstSegmentReturnType innerSegment( const VecT& v, Index idx ) const
+	{
+		return v.segment( innerOffsetsArray()[ idx ], innerOffsetsArray()[ idx + 1 ] - innerOffsetsArray()[ idx ] ) ;
+	}
+
+
+
 } ;
 
 //! Uncompressed sparse block index
@@ -250,18 +265,6 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 	{
 		const_cast< BlockPtr& >( it.asStdIterator()->second ) = ptr ;
 	}
-
-	template < typename VecT >
-	typename VecT::SegmentReturnType innerSegment( VecT& v, Index idx ) const
-	{
-		return v.segment( innerOffsets[ idx ], innerOffsets[ idx + 1 ] - innerOffsets[ idx ] ) ;
-	}
-	template < typename VecT >
-	typename VecT::ConstSegmentReturnType innerSegment( const VecT& v, Index idx ) const
-	{
-		return v.segment( innerOffsets[ idx ], innerOffsets[ idx + 1 ] - innerOffsets[ idx ] ) ;
-	}
-
 } ;
 
 template < bool Compressed, typename _Index, typename _BlockPtr >
