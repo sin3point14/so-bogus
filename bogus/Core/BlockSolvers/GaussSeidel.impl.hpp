@@ -139,6 +139,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 				--skip[i] ;
 				continue ;
 			}
+
 			lb = bSegmenter[ i ] ;
 			m_matrix->splitRowMultiply( i, x, lb ) ;
 			lx = xSegmenter[ i ] ;

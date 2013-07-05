@@ -43,34 +43,7 @@ static void innerColMultiply( const BlockT* blocks, const IndexT &index,
 	}
 }
 
-template < typename Derived >
-template < typename RhsT, typename ResT >
-void SparseBlockMatrixBase< Derived >::splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const
-{
-	assert( Traits::is_symmetric || !Traits::is_col_major ) ;
-
-	const Segmenter< BlockDims< BlockType, Traits::is_col_major >::Cols, const RhsT, Index >
-			segmenter( rhs, this->colMajorIndex().innerOffsetsData() ) ;
-
-	for( typename SparseBlockMatrixBase< Derived >::MajorIndexType::InnerIterator it( m_majorIndex, row ) ;
-		 it ; ++ it )
-	{
-		if( it.inner() != row )
-			res += BlockGetter< Traits::is_col_major >::get( block( it.ptr() ) ) * segmenter[ it.inner() ] ;
-	}
-	if( Traits::is_symmetric )
-	{
-		if( Traits::transpose_can_be_cached && m_transposeIndex.valid )
-		{
-			const bool is_col_major = ((bool) Traits::is_col_major) ^ ( !Traits::transpose_can_be_cached )  ;
-			innerRowMultiply< is_col_major >( this->data(), m_transposeIndex, row, rhs, res, 1 ) ;
-		} else {
-			assert( m_minorIndex.valid ) ;
-			innerRowMultiply< !Traits::is_col_major >( this->data(), m_minorIndex, row, rhs, res, 1 ) ;
-		}
-	}
-}
-
+//! Implementation for non-symmetric, in order matrix/vector products
 template < bool Symmetric, bool NativeOrder, bool Transpose >
 struct SparseBlockMatrixVectorMultiplier
 {
@@ -90,8 +63,11 @@ struct SparseBlockMatrixVectorMultiplier
 			innerRowMultiply< Transpose >( matrix.data(), matrix.majorIndex(), i, rhs, seg, alpha ) ;
 		}
 	}
+
+
 } ;
 
+//! Implementation for symmetric products
 template < bool NativeOrder, bool Transpose >
 struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 {
@@ -178,6 +154,7 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 	}
 } ;
 
+//! Implemntation for non-symmetric, out-of-order products
 template < bool Transpose >
 struct OutOfOrderSparseBlockMatrixVectorMultiplier
 {
@@ -230,11 +207,13 @@ struct OutOfOrderSparseBlockMatrixVectorMultiplier
 
 } ;
 
+//! Implemntation for non-symmetric, out-of-order products
 template < bool Transpose >
 struct SparseBlockMatrixVectorMultiplier< false, false, Transpose >
 		: public OutOfOrderSparseBlockMatrixVectorMultiplier< Transpose >
 {} ;
 
+//! Implemntation for non-symmetric, out-of-order transposed products using cached transpose
 template < >
 struct SparseBlockMatrixVectorMultiplier< false, false, true >
 		: public OutOfOrderSparseBlockMatrixVectorMultiplier< true >
@@ -280,6 +259,68 @@ void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res, typ
 			< Traits::is_symmetric, bool(Transpose) == bool(Traits::is_col_major), Transpose >
 			::multiply( *this, rhs, res, alpha )  ;
 
+}
+
+// Split-row-multiply
+
+
+//! Implementation for for non-symmetric matrices
+template < bool Symmetric, bool NativeOrder >
+struct SparseBlockSplitRowMultiplier
+{
+	template < typename Derived,  typename RhsT, typename ResT >
+	static void splitRowMultiply( const SparseBlockMatrixBase< Derived >& matrix, typename Derived::Index row, const RhsT& rhs, ResT& res )
+	{
+		const Segmenter< BlockDims< typename Derived::BlockType, !NativeOrder >::Cols, const RhsT, typename Derived::Index >
+				segmenter( rhs, matrix.colOffsets() ) ;
+
+		assert( matrix.rowMajorIndex().valid ) ;
+
+		for( typename SparseBlockMatrixBase< Derived >::RowIndexType::InnerIterator it( matrix.rowMajorIndex(), row ) ;
+			 it ; ++ it )
+		{
+			if( it.inner() != row )
+				res += BlockGetter< !NativeOrder >::get( matrix.block( it.ptr() ) ) * segmenter[ it.inner() ] ;
+		}
+	}
+} ;
+
+//! Implementation for symmetric matrices
+template < bool NativeOrder >
+struct SparseBlockSplitRowMultiplier< true, NativeOrder >
+{
+	template < typename Derived, typename RhsT, typename ResT >
+	static void splitRowMultiply( const SparseBlockMatrixBase< Derived >& matrix, typename Derived::Index row, const RhsT& rhs, ResT& res )
+	{
+		typedef BlockMatrixTraits< Derived > Traits ;
+		const Segmenter< BlockDims< typename Derived::BlockType, !NativeOrder >::Cols, const RhsT, typename Derived::Index >
+				segmenter( rhs, matrix.colOffsets() ) ;
+
+		for( typename SparseBlockMatrixBase< Derived >::MajorIndexType::InnerIterator it( matrix.majorIndex(), row ) ;
+			 it && it.inner() < row ; ++ it )
+		{
+			res += BlockGetter< !NativeOrder >::get( matrix.block( it.ptr() ) ) * segmenter[ it.inner() ] ;
+		}
+
+		if( Traits::transpose_can_be_cached && matrix.transposeIndex().valid )
+		{
+			innerRowMultiply< NativeOrder ^ ( (bool) Traits::transpose_can_be_cached ) >
+					( matrix.data(), matrix.transposeIndex(), row, rhs, res, 1 ) ;
+		} else {
+			assert( matrix.minorIndex().valid ) ;
+			innerRowMultiply< NativeOrder >( matrix.data(), matrix.minorIndex(), row, rhs, res, 1 ) ;
+		}
+
+	}
+} ;
+
+
+template < typename Derived >
+template < typename RhsT, typename ResT >
+void SparseBlockMatrixBase< Derived >::splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const
+{
+	SparseBlockSplitRowMultiplier< Traits::is_symmetric, !Traits::is_col_major >
+			::splitRowMultiply( *this, row, rhs, res )  ;
 }
 
 
