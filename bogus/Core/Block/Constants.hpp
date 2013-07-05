@@ -8,11 +8,11 @@
 #endif
 
 #ifndef BOGUS_DEFAULT_INDEX_TYPE
-#define BOGUS_DEFAULT_INDEX_TYPE std::ptrdiff_t
+#define BOGUS_DEFAULT_INDEX_TYPE int
 #endif
 
 #ifndef BOGUS_DEFAULT_BLOCK_PTR_TYPE
-#define BOGUS_DEFAULT_BLOCK_PTR_TYPE std::size_t
+#define BOGUS_DEFAULT_BLOCK_PTR_TYPE unsigned
 #endif
 
 namespace bogus
