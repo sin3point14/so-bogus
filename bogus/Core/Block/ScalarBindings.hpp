@@ -27,10 +27,16 @@ BOGUS_BLOCK_SCALAR_TYPES
 BOGUS_BLOCK_SCALAR_TYPES
 #undef BOGUS_PROCESS_SCALAR
 
+#define BOGUS_PROCESS_SCALAR( Scalar ) \
+inline const Scalar* data_pointer( const Scalar &s ) { return &s ; }
+BOGUS_BLOCK_SCALAR_TYPES
+#undef BOGUS_PROCESS_SCALAR
+
 #define BOGUS_PROCESS_SCALAR( Scalar_ ) \
 	template< > struct BlockTraits< Scalar_ > { \
 		typedef Scalar_ Scalar ;  \
-		enum { RowsAtCompileTime = 1, ColsAtCompileTime = 1 } ; \
+		enum { RowsAtCompileTime = 1, ColsAtCompileTime = 1, \
+			   is_row_major = 0, uses_plain_array_storage = 1 } ; \
 	} ;
 BOGUS_BLOCK_SCALAR_TYPES
 #undef BOGUS_PROCESS_SCALAR

@@ -223,9 +223,7 @@ struct SparseBlockMatrixVectorMultiplier< false, false, true >
 	template < typename Derived, typename RhsT, typename ResT, typename ScalarT >
 	static void multiply( const SparseBlockMatrixBase< Derived >& matrix,  const RhsT& rhs, ResT& res, ScalarT alpha )
 	{
-		typedef BlockMatrixTraits< Derived > Traits ;
-
-		if( Traits::transpose_can_be_cached && matrix.transposeIndex().valid )
+		if( Derived::has_square_or_dynamic_blocks && matrix.transposeIndex().valid )
 		{
 			const int ResSegDim = BlockDims< typename Derived::BlockType, true >::Rows ;
 			typedef Segmenter< ResSegDim, ResT, typename Derived::Index > ResSegmenter ;
@@ -237,7 +235,7 @@ struct SparseBlockMatrixVectorMultiplier< false, false, true >
 			for( int i = 0 ; i < (int) matrix.transposeIndex().outerSize() ; ++i )
 			{
 				typename ResSegmenter::ReturnType seg( resSegmenter[ i ] ) ;
-				innerRowMultiply< !Traits::transpose_can_be_cached >( matrix.data(), matrix.transposeIndex(), i, rhs, seg, alpha ) ;
+				innerRowMultiply< !Derived::has_square_or_dynamic_blocks >( matrix.data(), matrix.transposeIndex(), i, rhs, seg, alpha ) ;
 			}
 		} else {
 			Base::multiply( matrix, rhs, res, alpha ) ;
@@ -292,7 +290,6 @@ struct SparseBlockSplitRowMultiplier< true, NativeOrder >
 	template < typename Derived, typename RhsT, typename ResT >
 	static void splitRowMultiply( const SparseBlockMatrixBase< Derived >& matrix, typename Derived::Index row, const RhsT& rhs, ResT& res )
 	{
-		typedef BlockMatrixTraits< Derived > Traits ;
 		const Segmenter< BlockDims< typename Derived::BlockType, !NativeOrder >::Cols, const RhsT, typename Derived::Index >
 				segmenter( rhs, matrix.colOffsets() ) ;
 
@@ -302,9 +299,9 @@ struct SparseBlockSplitRowMultiplier< true, NativeOrder >
 			res += BlockGetter< !NativeOrder >::get( matrix.block( it.ptr() ) ) * segmenter[ it.inner() ] ;
 		}
 
-		if( Traits::transpose_can_be_cached && matrix.transposeIndex().valid )
+		if( Derived::has_square_or_dynamic_blocks && matrix.transposeIndex().valid )
 		{
-			innerRowMultiply< NativeOrder ^ ( (bool) Traits::transpose_can_be_cached ) >
+			innerRowMultiply< NativeOrder ^ ( (bool) Derived::has_square_or_dynamic_blocks ) >
 					( matrix.data(), matrix.transposeIndex(), row, rhs, res, 1 ) ;
 		} else {
 			assert( matrix.minorIndex().valid ) ;

@@ -24,8 +24,17 @@ template< typename BlockType >
 struct BlockTraits
 {
    typedef typename BlockType::Scalar Scalar ;
-   enum { RowsAtCompileTime = BlockType::RowsAtCompileTime,
-		  ColsAtCompileTime = BlockType::ColsAtCompileTime }  ;
+   enum {
+	   //! Number of rows spanned by a block at compile time ; useful for efficient segmentation
+	   RowsAtCompileTime = BlockType::RowsAtCompileTime,
+	   //! Number of cols spanned by a block at compile time ; useful for efficient segmentation
+	   ColsAtCompileTime = BlockType::ColsAtCompileTime,
+
+	   //! Can be set to true if data_pointer( const BlockType& ) exist.
+	   uses_plain_array_storage = 0,
+	   //! Ordering inside the block ; only useful is_plain_array is true
+	   is_row_major = BlockType::IsRowMajor
+	}  ;
 } ;
 
 // Transpose and matrix/vector product return types

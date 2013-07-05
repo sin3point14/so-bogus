@@ -144,6 +144,19 @@ public:
 	Index colOffset( Index col ) const { return colOffsets()[ col ] ; }
 
 
+	//! Compile-time block properties
+	enum BlockCompileTimeProperties
+	{
+		RowsPerBlock = BlockTraits< BlockType >::RowsAtCompileTime,
+		ColsPerBlock = BlockTraits< BlockType >::ColsAtCompileTime,
+
+		has_square_or_dynamic_blocks =
+				ColsPerBlock == RowsPerBlock,
+		has_fixed_size_blocks =
+				((int) ColsPerBlock != internal::DYNAMIC ) &&
+				((int) RowsPerBlock != internal::DYNAMIC )
+	} ;
+
 protected:
 	Index m_rows ;
 	Index m_cols ;

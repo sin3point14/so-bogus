@@ -49,6 +49,12 @@ inline bool is_zero ( const Eigen::MatrixBase< EigenDerived >& block,
 	return block.isZero( precision ) ;
 }
 
+template< typename EigenDerived >
+inline const typename EigenDerived::Scalar* data_pointer ( const Eigen::MatrixBase< EigenDerived >& block )
+{
+	return block.data() ;
+}
+
 #ifndef BOGUS_BLOCK_WITHOUT_EIGEN_SPARSE
 template < typename BlockT >
 struct BlockTransposeTraits< Eigen::SparseMatrixBase < BlockT > > {
@@ -71,6 +77,21 @@ inline bool is_zero ( const Eigen::SparseMatrixBase< EigenDerived >& block,
 
 #endif
 
+// Block traits for Eigen::Matrix
+
+template< typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols >
+struct BlockTraits < Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> >
+{
+	typedef _Scalar Scalar ;
+	enum {
+		RowsAtCompileTime = _Rows,
+		ColsAtCompileTime = _Cols,
+		uses_plain_array_storage = 1,
+		is_row_major = _Options & Eigen::RowMajorBit
+	} ;
+
+} ;
+
 // Block/block product return type
 
 template<bool Transpose, int _Rows, int _Cols >
@@ -86,7 +107,6 @@ struct RowsColsComputer< true, _Rows, _Cols >
 	enum { Rows = _Cols } ;
 	enum { Cols = _Rows } ;
 } ;
-
 
 template<
 	typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols,

@@ -335,6 +335,13 @@ public:
 
 protected:
 
+	enum {
+		is_bsr_compatible =
+				Base::has_fixed_size_blocks && Base::has_square_or_dynamic_blocks &&
+				Traits::is_compressed && !Traits::is_col_major &&
+				BlockTraits< BlockType >::uses_plain_array_storage
+	} ;
+
 	using Base::m_cols ;
 	using Base::m_rows ;
 	using Base::m_blocks ;
@@ -392,11 +399,11 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMat
 	enum {
 		is_transposed  = 0,
 		is_temporary   = 0,
+
 		is_compressed  = Flags & flags::COMPRESSED,
 		is_symmetric   = Flags & flags::SYMMETRIC,
 		is_col_major   = Flags & flags::COL_MAJOR,
-		flags          = Flags,
-		transpose_can_be_cached = BlockTraits< BlockT >::RowsAtCompileTime == BlockTraits< BlockT >::ColsAtCompileTime
+		flags          = Flags
 	} ;
 
 	typedef SparseBlockIndex< is_compressed, Index, BlockPtr > MajorIndexType ;
