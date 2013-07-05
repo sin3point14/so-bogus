@@ -9,6 +9,8 @@
 #ifndef BOGUS_BLOCK_ACCESS_HPP
 #define BOGUS_BLOCK_ACCESS_HPP
 
+#include "Constants.hpp"
+
 namespace bogus {
 
 //! Specialization of transpose_block() for self-adjoint types
@@ -70,13 +72,40 @@ struct BlockDims< BlockT, true >
 		   Cols = Traits::RowsAtCompileTime } ;
 } ;
 
-template < int DimensionAtCompileTime, typename VecT, typename Index >
+
+template < int DimensionAtCompileTime, typename VectorType, typename Index >
 struct Segmenter
 {
-    typedef typename VecT::SegmentReturnType 		   ReturnType ;
-    typedef typename VecT::ConstSegmentReturnType 		   ConstReturnType ;
+    enum { dimension = DimensionAtCompileTime } ;
 
-    Segmenter( VecT &vec, const Index* offsets ) : m_vec( vec ), m_offsets( offsets ) { }
+    typedef typename VectorType::template FixedSegmentReturnType< dimension >::Type
+    ReturnType ;
+    typedef typename VectorType::template ConstFixedSegmentReturnType< dimension >::Type
+    ConstReturnType ;
+
+    Segmenter( VectorType &vec, const Index* ) : m_vec( vec ) {}
+
+    inline ReturnType get( const Index inner )
+    {
+        return m_vec.template segment< dimension >( dimension*inner ) ;
+    }
+
+    inline ConstReturnType get( const Index inner ) const
+    {
+        return m_vec.template segment< dimension >( dimension*inner ) ;
+    }
+
+private:
+    VectorType &		 m_vec ;
+} ;
+
+template < typename VectorType, typename Index >
+struct Segmenter< internal::DYNAMIC, VectorType, Index >
+{
+    typedef typename VectorType::SegmentReturnType 		   ReturnType ;
+    typedef typename VectorType::ConstSegmentReturnType 		   ConstReturnType ;
+
+    Segmenter( VectorType &vec, const Index* offsets ) : m_vec( vec ), m_offsets( offsets ) { }
 
     inline ReturnType get( const Index inner )
     {
@@ -90,7 +119,7 @@ struct Segmenter
 
 
 private:
-    VecT &		 m_vec ;
+    VectorType &		 m_vec ;
     const Index* m_offsets ;
 } ;
 

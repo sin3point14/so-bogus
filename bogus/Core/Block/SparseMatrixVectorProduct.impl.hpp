@@ -49,7 +49,7 @@ void SparseBlockMatrixBase< Derived >::splitRowMultiply( const Index row, const 
 {
 	assert( Traits::is_symmetric || !Traits::is_col_major ) ;
 
-	const Segmenter< BlockDims< BlockType, false >::Cols, const RhsT, Index >
+	const Segmenter< BlockDims< BlockType, Traits::is_col_major >::Cols, const RhsT, Index >
 			segmenter( rhs, this->colMajorIndex().innerOffsetsData() ) ;
 
 	for( typename SparseBlockMatrixBase< Derived >::MajorIndexType::InnerIterator it( m_majorIndex, row ) ;
@@ -60,9 +60,10 @@ void SparseBlockMatrixBase< Derived >::splitRowMultiply( const Index row, const 
 	}
 	if( Traits::is_symmetric )
 	{
-		if( m_transposeIndex.valid )
+		if( Traits::transpose_can_be_cached && m_transposeIndex.valid )
 		{
-			innerRowMultiply< Traits::is_col_major >( this->data(), m_transposeIndex, row, rhs, res, 1 ) ;
+			const bool is_col_major = ((bool) Traits::is_col_major) ^ ( !Traits::transpose_can_be_cached )  ;
+			innerRowMultiply< is_col_major >( this->data(), m_transposeIndex, row, rhs, res, 1 ) ;
 		} else {
 			assert( m_minorIndex.valid ) ;
 			innerRowMultiply< !Traits::is_col_major >( this->data(), m_minorIndex, row, rhs, res, 1 ) ;
@@ -243,7 +244,9 @@ struct SparseBlockMatrixVectorMultiplier< false, false, true >
 	template < typename Derived, typename RhsT, typename ResT, typename ScalarT >
 	static void multiply( const SparseBlockMatrixBase< Derived >& matrix,  const RhsT& rhs, ResT& res, ScalarT alpha )
 	{
-		if( matrix.transposeIndex().valid )
+		typedef BlockMatrixTraits< Derived > Traits ;
+
+		if( Traits::transpose_can_be_cached && matrix.transposeIndex().valid )
 		{
 			const int ResSegDim = BlockDims< typename Derived::BlockType, true >::Rows ;
 			typedef Segmenter< ResSegDim, ResT, typename Derived::Index > ResSegmenter ;
@@ -255,7 +258,7 @@ struct SparseBlockMatrixVectorMultiplier< false, false, true >
 			for( int i = 0 ; i < (int) matrix.transposeIndex().outerSize() ; ++i )
 			{
 				typename ResSegmenter::ReturnType seg( resSegmenter.get( i ) ) ;
-				innerRowMultiply< false >( matrix.data(), matrix.transposeIndex(), i, rhs, seg, alpha ) ;
+				innerRowMultiply< !Traits::transpose_can_be_cached >( matrix.data(), matrix.transposeIndex(), i, rhs, seg, alpha ) ;
 			}
 		} else {
 			Base::multiply( matrix, rhs, res, alpha ) ;

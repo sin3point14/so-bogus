@@ -395,7 +395,8 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMat
 		is_compressed  = Flags & flags::COMPRESSED,
 		is_symmetric   = Flags & flags::SYMMETRIC,
 		is_col_major   = Flags & flags::COL_MAJOR,
-		flags          = Flags
+		flags          = Flags,
+		transpose_can_be_cached = BlockTraits< BlockT >::RowsAtCompileTime == BlockTraits< BlockT >::ColsAtCompileTime
 	} ;
 
 	typedef SparseBlockIndex< is_compressed, Index, BlockPtr > MajorIndexType ;
