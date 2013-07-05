@@ -15,13 +15,13 @@ namespace bogus {
 
 //! Specialization of transpose_block() for self-adjoint types
 template < typename SelfTransposeT >
-const typename SelfTransposeTraits< SelfTransposeT >::ReturnType& transpose_block( const SelfTransposeT &block  ) { return  block ; }
+inline const typename SelfTransposeTraits< SelfTransposeT >::ReturnType& transpose_block( const SelfTransposeT &block  ) { return  block ; }
 
 //! Utility struct for expressing a compile-time conditional transpose of a block
 template < bool DoTranspose >
 struct BlockGetter {
 	template < typename BlockT >
-	static const BlockT& get( const BlockT& src, bool = false )
+    inline static const BlockT& get( const BlockT& src, bool = false )
 	{ return src ; }
 } ;
 template < >
@@ -29,19 +29,19 @@ struct BlockGetter< true > {
 	//SFINAE, as we can't use decltype()
 
 	template < typename BlockT >
-	static typename BlockT::ConstTransposeReturnType get( const BlockT& src, bool = false )
+    inline static typename BlockT::ConstTransposeReturnType get( const BlockT& src, bool = false )
 	{ return src.transpose() ; }
 
 	template < typename BlockT >
-	static typename BlockTransposeTraits< typename BlockT::Base >::ReturnType get( const BlockT& src, bool = false )
+    inline static typename BlockTransposeTraits< typename BlockT::Base >::ReturnType get( const BlockT& src, bool = false )
 	{ return transpose_block( src ) ; }
 
 	template < typename BlockT >
-	static typename BlockTransposeTraits< BlockT >::ReturnType get( const BlockT& src, bool = false )
+    inline static typename BlockTransposeTraits< BlockT >::ReturnType get( const BlockT& src, bool = false )
 	{ return transpose_block( src ) ; }
 
 	template < typename BlockT >
-	static typename SelfTransposeTraits< BlockT >::ReturnType get( const BlockT& src, bool = false )
+    inline static typename SelfTransposeTraits< BlockT >::ReturnType get( const BlockT& src, bool = false )
 	{ return src ; }
 } ;
 
@@ -52,7 +52,7 @@ struct BlockTransposeOption : public BlockGetter< DoTranspose >{
 template < bool IgnoredDoTranspose >
 struct BlockTransposeOption< true, IgnoredDoTranspose > {
 	template < typename BlockT >
-	static BlockT get( const BlockT& src, bool doTranspose = false )
+    inline static BlockT get( const BlockT& src, bool doTranspose = false )
 	{ return doTranspose ? BlockT( transpose_block( src ) ) : src ; }
 } ;
 
@@ -73,6 +73,7 @@ struct BlockDims< BlockT, true >
 } ;
 
 
+//! Access to segment of a vector corresponding to a given block-row
 template < int DimensionAtCompileTime, typename VectorType, typename Index >
 struct Segmenter
 {
@@ -85,12 +86,12 @@ struct Segmenter
 
     Segmenter( VectorType &vec, const Index* ) : m_vec( vec ) {}
 
-    inline ReturnType get( const Index inner )
+    inline ReturnType operator[]( const Index inner )
     {
         return m_vec.template segment< dimension >( dimension*inner ) ;
     }
 
-    inline ConstReturnType get( const Index inner ) const
+    inline ConstReturnType operator[]( const Index inner ) const
     {
         return m_vec.template segment< dimension >( dimension*inner ) ;
     }
@@ -107,12 +108,12 @@ struct Segmenter< internal::DYNAMIC, VectorType, Index >
 
     Segmenter( VectorType &vec, const Index* offsets ) : m_vec( vec ), m_offsets( offsets ) { }
 
-    inline ReturnType get( const Index inner )
+    inline ReturnType operator[]( const Index inner )
     {
         return m_vec.segment( m_offsets[ inner ], m_offsets[ inner + 1 ] - m_offsets[ inner ] ) ;
     }
 
-    inline ConstReturnType get( const Index inner ) const
+    inline ConstReturnType operator[]( const Index inner ) const
     {
         return m_vec.segment( m_offsets[ inner ], m_offsets[ inner + 1 ] - m_offsets[ inner ] ) ;
     }

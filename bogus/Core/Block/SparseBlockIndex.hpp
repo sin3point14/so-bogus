@@ -40,29 +40,28 @@ struct SparseBlockIndexBase
 	Derived& derived() ;
 	const Derived& derived() const ;
 
-	Index innerSize( ) const ;
+	//! Number of elemnts of the major indexing direction
+	/*! i.e. number of rows for a row-major index */
 	Index outerSize( ) const ;
+	//! Number of elements of the minor indexing direction
+	/*! i.e. number of cols for a row-major index */
+	Index innerSize( ) const ;
 
-	const InnerOffsetsType& innerOffsetsArray() const ;
-	const Index* innerOffsetsData() const { return & innerOffsetsArray()[0] ; }
+	//! Returns whether the innerOffsetsArray() has been filled
 	bool hasInnerOffsets() const;
+	//! \sa InnerOFfsetsType
+	const InnerOffsetsType& innerOffsetsArray() const ;
 
 	//! Returns the total number of nonZeros in this index
 	/*! Depending on the index type, may performe som computations */
 	Index nonZeros() const { return derived().nonZeros() ; }
 
-	template < typename VecT >
-	typename VecT::SegmentReturnType innerSegment( VecT& v, Index idx ) const
+	//! Same as innerOffsetsArray, but returns a pointer instead. Assumes hasInnerOffsets()
+	const Index* innerOffsetsData() const
 	{
-		return v.segment( innerOffsetsArray()[ idx ], innerOffsetsArray()[ idx + 1 ] - innerOffsetsArray()[ idx ] ) ;
+		assert( hasInnerOffsets() ) ;
+		return & innerOffsetsArray()[0] ;
 	}
-	template < typename VecT >
-	typename VecT::ConstSegmentReturnType innerSegment( const VecT& v, Index idx ) const
-	{
-		return v.segment( innerOffsetsArray()[ idx ], innerOffsetsArray()[ idx + 1 ] - innerOffsetsArray()[ idx ] ) ;
-	}
-
-
 
 } ;
 

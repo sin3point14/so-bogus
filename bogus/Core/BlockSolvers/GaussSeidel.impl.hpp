@@ -63,6 +63,11 @@ template < typename NSLaw, typename RhsT, typename ResT >
 typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::eval( const NSLaw &law,
 							const RhsT &x, const ResT &y ) const
 {
+	const Segmenter< GlobalProblemTraits::dimension, const RhsT, typename BlockMatrixType::Index >
+			xSegmenter( x, m_matrix->rowOffsets() ) ;
+	const Segmenter< GlobalProblemTraits::dimension, const ResT, typename BlockMatrixType::Index >
+			ySegmenter( y, m_matrix->rowOffsets() ) ;
+
 	const int n = (int) m_localMatrices.size() ;
 	Scalar sum = 0., res ;
 
@@ -73,8 +78,8 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 #endif
 	for( int i = 0 ; i < n ; ++ i )
 	{
-		lx = m_matrix->rowSegment( x, i ) * m_scaling[i] ;
-		ly = m_matrix->rowSegment( y, i ) ;
+		lx = xSegmenter[ i ] * m_scaling[i] ;
+		ly = ySegmenter[ i ] ;
 		res = law.eval( i, lx, ly ) ;
 		sum += res ;
 	}
@@ -89,6 +94,11 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 							const RhsT &b, ResT &x ) const
 {
 	assert( m_matrix ) ;
+
+	const Segmenter< GlobalProblemTraits::dimension, const RhsT, typename BlockMatrixType::Index >
+			bSegmenter( b, m_matrix->rowOffsets() ) ;
+	Segmenter< GlobalProblemTraits::dimension, ResT, typename BlockMatrixType::Index >
+			xSegmenter( x, m_matrix->rowOffsets() ) ;
 
 	typedef LocalProblemTraits< GlobalProblemTraits::dimension, typename GlobalProblemTraits::Scalar > LocalProblemTraits ;
 
@@ -129,9 +139,9 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 				--skip[i] ;
 				continue ;
 			}
-			lb = m_matrix->rowSegment( b, i ) ;
+			lb = bSegmenter[ i ] ;
 			m_matrix->splitRowMultiply( i, x, lb ) ;
-			lx = m_matrix->rowSegment( x, i ) ;
+			lx = xSegmenter[ i ] ;
 			ldx = -lx ;
 			lb -= m_regularization(i) * lx ;
 
@@ -139,7 +149,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 			ldx += lx ;
 
 			if( !ok ) ldx *= .7 ;
-			m_matrix->rowSegment( x, i ) += ldx ;
+			xSegmenter[ i ] += ldx ;
 
 			const Scalar scaledSkipTol = m_scaling[ i ] * m_scaling[ i ] * m_skipTol ;
 			if( ldx.squaredNorm() < scaledSkipTol || lx.squaredNorm() < scaledSkipTol )

@@ -133,37 +133,16 @@ public:
 
 	const Derived* eval() const { return &derived() ; }
 
+	//! Returns an array containing the first index of each row
+	const Index *rowOffsets( ) const { return derived().rowOffsets( ) ; }
+	//! Returns an array containing the first index of each column
+	const Index *colOffsets( ) const { return derived().colOffsets( ) ; }
 
-	Index rowOffset( Index row ) const { return derived().rowOffset( row ) ; }
+	//! Returns an array containing the first index of a given row
+	Index rowOffset( Index row ) const { return rowOffsets()[ row ] ; }
+	//! Returns an array containing the first index of a given columns
+	Index colOffset( Index col ) const { return colOffsets()[ col ] ; }
 
-	Index colOffset( Index col ) const { return derived().colOffset( col ) ; }
-
-	//! \name Access to segment of a vector corresponding to a given block-row
-	//@{
-	template < typename VecT >
-	typename VecT::SegmentReturnType rowSegment( VecT& v, Index rowBlockIdx ) const
-	{
-		return v.segment( rowOffset( rowBlockIdx ), blockRows( rowBlockIdx ) ) ;
-	}
-
-	template < typename VecT >
-	typename VecT::ConstSegmentReturnType rowSegment( const VecT& v, Index rowBlockIdx ) const
-	{
-		return v.segment( rowOffset( rowBlockIdx ), blockRows( rowBlockIdx ) ) ;
-	}
-
-	template < typename VecT >
-	typename VecT::SegmentReturnType colSegment( VecT& v, Index colBlockIdx ) const
-	{
-		return v.segment( colOffset( colBlockIdx ), blockCols( colBlockIdx ) ) ;
-	}
-
-	template < typename VecT >
-	typename VecT::ConstSegmentReturnType colSegment( const VecT& v, Index colBlockIdx ) const
-	{
-		return v.segment( colOffset( colBlockIdx ), blockCols( colBlockIdx ) ) ;
-	}
-	//@}
 
 protected:
 	Index m_rows ;

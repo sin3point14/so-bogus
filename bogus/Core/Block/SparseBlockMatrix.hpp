@@ -96,8 +96,8 @@ public:
 		setCols( nBlocks, BlockType::ColsAtCompileTime ) ;
 	}
 
-	Index rowsOfBlocks() const { return rowOffsets().size() - 1 ; }
-	Index colsOfBlocks() const { return colOffsets().size() - 1 ; }
+	Index rowsOfBlocks() const { return rowMajorIndex().outerSize() ; }
+	Index colsOfBlocks() const { return colMajorIndex().outerSize() ; }
 
 	Index blockRows( Index row ) const { return rowOffsets()[ row + 1 ] - rowOffsets()[ row ] ; }
 	Index blockCols( Index col ) const { return colOffsets()[ col + 1 ] - colOffsets()[ col ] ; }
@@ -327,8 +327,11 @@ public:
 
 	//@}
 
-	Index rowOffset( Index row ) const { return rowOffsets()[row] ; }
-	Index colOffset( Index col ) const { return colOffsets()[col] ; }
+	//! Returns an array containing the first index of each row
+	const Index* rowOffsets() const { return colMajorIndex().innerOffsetsData() ; }
+
+	//! Returns an array containing the first index of each column
+	const Index* colOffsets() const { return rowMajorIndex().innerOffsetsData() ; }
 
 protected:
 
@@ -348,9 +351,6 @@ protected:
 	void computeMinorIndex( UncompressedIndexType &cmIndex) const ;
 
 	const UncompressedIndexType& getOrComputeMinorIndex( UncompressedIndexType &tempIndex) const ;
-
-	const std::vector< Index >& rowOffsets() const { return colMajorIndex().innerOffsets ; }
-	const std::vector< Index >& colOffsets() const { return rowMajorIndex().innerOffsets ; }
 
 	ColIndexType& colMajorIndex() ;
 	RowIndexType& rowMajorIndex() ;

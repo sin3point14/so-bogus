@@ -37,13 +37,13 @@ namespace bogus
 
 template< typename EigenDerived >
 typename EigenDerived::ConstTransposeReturnType
-transpose_block ( const Eigen::MatrixBase< EigenDerived >& block )
+inline transpose_block ( const Eigen::MatrixBase< EigenDerived >& block )
 {
 	return block.transpose() ;
 }
 
 template< typename EigenDerived >
-bool is_zero ( const Eigen::MatrixBase< EigenDerived >& block,
+inline bool is_zero ( const Eigen::MatrixBase< EigenDerived >& block,
 			   typename EigenDerived::Scalar precision )
 {
 	return block.isZero( precision ) ;
@@ -56,14 +56,14 @@ struct BlockTransposeTraits< Eigen::SparseMatrixBase < BlockT > > {
 } ;
 
 template< typename EigenDerived >
-const Eigen::Transpose< const EigenDerived >
+inline const Eigen::Transpose< const EigenDerived >
 transpose_block( const Eigen::SparseMatrixBase< EigenDerived >& block )
 {
 	return block.transpose() ;
 }
 
 template< typename EigenDerived >
-bool is_zero ( const Eigen::SparseMatrixBase< EigenDerived >& block,
+inline bool is_zero ( const Eigen::SparseMatrixBase< EigenDerived >& block,
 			   typename EigenDerived::Scalar precision )
 {
 	return block.isZero( precision ) ;
