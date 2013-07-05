@@ -31,8 +31,16 @@ if( BOOST_SERIALIZATION )
 		if( Boost_FOUND )
 				add_definitions( -DBOGUS_WITH_BOOST_SERIALIZATION )
 				SET( EXTERNAL_INCLUDES ${EXTERNAL_INCLUDES} ${Boost_INCLUDE_DIR} )
-				SET( EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} ${EXTERNAL_LIBRARIES} boost_serialization )
+				SET( EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} boost_serialization )
 		endif()
+endif()
+
+# MKL
+find_package( MKL )
+if( MKL_FOUND )
+				add_definitions( -DBOGUS_WITH_MKL )
+				SET( EXTERNAL_INCLUDES ${EXTERNAL_INCLUDES} ${MKL_INCLUDE_DIRS} )
+				SET( EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} ${MKL_LIBRARIES} mkl_intel_lp64 mkl_intel_thread mkl_core iomp5 )
 endif()
 
 # Build types and processor flags

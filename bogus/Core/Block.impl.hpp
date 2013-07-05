@@ -19,4 +19,8 @@
 #include "Block/SparseMatrixVectorProduct.impl.hpp"
 #include "Block/SparseBlockMatrix.impl.hpp"
 
+#ifdef BOGUS_WITH_MKL
+#include "Block/MklBindings.hpp"
+#endif
+
 #endif
