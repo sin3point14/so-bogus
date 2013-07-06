@@ -46,7 +46,7 @@ struct BlockObjectBase : public Object
 	ConstTransposeReturnType transpose() const { return derived().transpose() ; }
 
 	//! Eval this object in a temporary. For internal use, not part of the public API
-	const PlainObjectType* eval() const { return derived().eval() ; }
+	EvalType eval() const { return derived().eval() ; }
 };
 
 //! Default specialization of traits for BlockMatrices

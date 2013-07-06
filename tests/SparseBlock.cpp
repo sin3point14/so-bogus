@@ -608,3 +608,43 @@ TEST( SparseBlock, Add )
 	}
 
 }
+
+TEST( SparseBlock, YoDawg )
+{
+	typedef bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::COMPRESSED > BlockType ;
+
+	bogus::SparseBlockMatrix< BlockType > sbm ;
+
+	sbm.setRows( 2, 6 ) ;
+	sbm.setCols( 2, 6 ) ;
+	sbm.reserve( 3 ) ;
+
+	BlockType &b00 = sbm.insertBack( 0, 0 ) ;
+	BlockType &b10 = sbm.insertBack( 1, 0 ) ;
+	BlockType &b11 = sbm.insertBack( 1, 1 ) ;
+
+	sbm.finalize() ;
+
+	b10.setRows( 2, 3 );
+	b10.setCols( 2, 3 );
+	b10.insertBack( 0, 0 ).setIdentity() ;
+	b10.insertBackAndResize( 1, 0 ) << 1, 2, 3, 4, 5, 6, 7, 8, 9 ;
+	b10.insertBack( 1, 1 ).setOnes() ;
+	b10.finalize() ;
+
+	b00 = b10 * b10.transpose() ;
+	b11 = .5 * ( b10 + b10.transpose() ) ;
+
+	Eigen::VectorXd rhs(12) ;
+	rhs << 1, 2, 3, 4, 5, 0, 6, 5, 4, 3, 2, 1 ;
+
+	std::cout << ( sbm * rhs ).transpose() << std::endl ;
+	std::cout << ( sbm.transpose() * rhs ).transpose() << std::endl ;
+	std::cout << ( ( sbm + sbm.transpose() ) * rhs ).transpose() << std::endl ;
+	std::cout << ( ( sbm * sbm.transpose() ) * rhs ).transpose() << std::endl ;
+
+	bogus::SparseBlockMatrix< BlockType, bogus::SYMMETRIC > sbm2 = sbm + sbm.transpose() ;
+	bogus::SparseBlockMatrix< BlockType, bogus::SYMMETRIC > sbm3 = sbm * sbm.transpose() ;
+	std::cout << ( sbm2 * rhs ).transpose() << std::endl ;
+	std::cout << ( sbm3.transpose() * rhs ).transpose() << std::endl ;
+}

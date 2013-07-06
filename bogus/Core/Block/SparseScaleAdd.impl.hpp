@@ -13,18 +13,67 @@
 #include "SparseBlockMatrix.hpp"
 #include "SparseBlockIndexComputer.hpp"
 
+// operators +, -, *, /
+
+template < typename LhsT, typename RhsT >
+bogus::Addition< LhsT, RhsT > operator+ ( const bogus::BlockObjectBase< LhsT >& lhs,
+			 const bogus::BlockObjectBase< RhsT > &rhs )
+{
+	return bogus::Addition< LhsT, RhsT >( lhs.derived(), rhs.derived() ) ;
+}
+
+template < typename LhsT, typename RhsT >
+bogus::Addition< LhsT, RhsT > operator- ( const bogus::BlockObjectBase< LhsT >& lhs,
+			 const bogus::BlockObjectBase< RhsT > &rhs )
+{
+	return bogus::Addition<  LhsT, RhsT >( lhs.derived(), rhs.derived(), 1, -1 ) ;
+}
+
+template < typename Derived >
+bogus::Scaling< Derived > operator* ( const bogus::BlockObjectBase< Derived >& lhs,
+			 typename Derived::Scalar rhs )
+{
+	return bogus::Scaling< Derived >( lhs.derived(), rhs ) ;
+}
+
+template < typename Derived >
+bogus::Scaling< Derived > operator* ( typename Derived::Scalar lhs ,
+			 const bogus::BlockObjectBase< Derived >& rhs)
+{
+	return bogus::Scaling< Derived >( rhs.derived(), lhs ) ;
+}
+
+template < typename Derived >
+bogus::Scaling< Derived > operator/ ( const bogus::BlockObjectBase< Derived >& lhs,
+			 typename Derived::Scalar rhs )
+{
+	return bogus::Scaling< Derived >( lhs.derived(), 1/rhs ) ;
+}
+
+template < typename Derived >
+bogus::Scaling< Derived > operator/ ( typename Derived::Scalar lhs ,
+			 const bogus::BlockObjectBase< Derived >& rhs)
+{
+	return bogus::Scaling< Derived >( rhs.derived(), 1/lhs ) ;
+}
+
+
 namespace bogus {
 
 template < typename Derived >
 Derived& SparseBlockMatrixBase< Derived >::scale( const Scalar alpha )
 {
 
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp parallel for
-#endif
-	for( int i = 0 ; i < (int) blocks().size() ;  ++i )
+	if( alpha != 1 )
 	{
-		block( i ) *= alpha ;
+
+	#ifndef BOGUS_DONT_PARALLELIZE
+	#pragma omp parallel for
+	#endif
+		for( int i = 0 ; i < (int) blocks().size() ;  ++i )
+		{
+			block( i ) *= alpha ;
+		}
 	}
 
 	return derived() ;
@@ -175,50 +224,6 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Addition< LhsT, RhsT >
 }
 
 } //namespace bogus
-
-// operators +, -, *, /
-
-template < typename LhsT, typename RhsT >
-bogus::Addition< LhsT, RhsT > operator+ ( const bogus::BlockObjectBase< LhsT >& lhs,
-			 const bogus::BlockObjectBase< RhsT > &rhs )
-{
-	return bogus::Addition< LhsT, RhsT >( lhs.derived(), rhs.derived() ) ;
-}
-
-template < typename LhsT, typename RhsT >
-bogus::Addition< LhsT, RhsT > operator- ( const bogus::BlockObjectBase< LhsT >& lhs,
-			 const bogus::BlockObjectBase< RhsT > &rhs )
-{
-	return bogus::Addition<  LhsT, RhsT >( lhs.derived(), rhs.derived(), 1, -1 ) ;
-}
-
-template < typename Derived >
-bogus::Scaling< Derived > operator* ( const bogus::BlockObjectBase< Derived >& lhs,
-			 typename Derived::Scalar rhs )
-{
-	return bogus::Scaling< Derived >( lhs.derived(), rhs ) ;
-}
-
-template < typename Derived >
-bogus::Scaling< Derived > operator* ( typename Derived::Scalar lhs ,
-			 const bogus::BlockObjectBase< Derived >& rhs)
-{
-	return bogus::Scaling< Derived >( rhs.derived(), lhs ) ;
-}
-
-template < typename Derived >
-bogus::Scaling< Derived > operator/ ( const bogus::BlockObjectBase< Derived >& lhs,
-			 typename Derived::Scalar rhs )
-{
-	return bogus::Scaling< Derived >( lhs.derived(), 1/rhs ) ;
-}
-
-template < typename Derived >
-bogus::Scaling< Derived > operator/ ( typename Derived::Scalar lhs ,
-			 const bogus::BlockObjectBase< Derived >& rhs)
-{
-	return bogus::Scaling< Derived >( rhs.derived(), 1/lhs ) ;
-}
 
 
 #endif

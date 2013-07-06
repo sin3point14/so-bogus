@@ -429,8 +429,9 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > > : public BlockMat
 template < typename BlockT, int Flags >
 class SparseBlockMatrix : public  SparseBlockMatrixBase< SparseBlockMatrix< BlockT, Flags > >
 {
-	typedef SparseBlockMatrixBase< SparseBlockMatrix< BlockT, Flags > > Base ;
 public:
+	typedef SparseBlockMatrixBase< SparseBlockMatrix< BlockT, Flags > > Base ;
+
 	SparseBlockMatrix() : Base() {}
 
 	template < typename RhsT >
@@ -445,6 +446,20 @@ public:
 		return ( Base::operator= ( rhs.derived() ) ).derived() ;
 	}
 
+} ;
+
+template < typename BlockT, int Flags >
+struct BlockTraits< SparseBlockMatrix< BlockT, Flags > >
+{
+	typedef SparseBlockMatrix< BlockT, Flags > BlockType ;
+	typedef typename BlockType::Scalar Scalar ;
+
+   enum {
+	   RowsAtCompileTime = internal::DYNAMIC,
+	   ColsAtCompileTime = internal::DYNAMIC,
+	   uses_plain_array_storage = 0,
+	   is_row_major = !BlockMatrixTraits< BlockType >::is_col_major
+	}  ;
 } ;
 
 }
