@@ -635,16 +635,22 @@ TEST( SparseBlock, YoDawg )
 	b00 = b10 * b10.transpose() ;
 	b11 = .5 * ( b10 + b10.transpose() ) ;
 
-	Eigen::VectorXd rhs(12) ;
+	Eigen::VectorXd rhs(12), expected_1(12), expected_2(12) ;
 	rhs << 1, 2, 3, 4, 5, 0, 6, 5, 4, 3, 2, 1 ;
+	expected_1 << 25 , 35 , 45 , 257 , 572 , 887 , 16 , 19 , 22 , 43 , 83.5 , 124 ;
+	expected_2 << 49 ,  64 ,  79 , 263 , 578 , 893 ,  15 ,  17 ,  19 ,  20 , 42.5 ,  65 ;
 
-	std::cout << ( sbm * rhs ).transpose() << std::endl ;
-	std::cout << ( sbm.transpose() * rhs ).transpose() << std::endl ;
-	std::cout << ( ( sbm + sbm.transpose() ) * rhs ).transpose() << std::endl ;
-	std::cout << ( ( sbm * sbm.transpose() ) * rhs ).transpose() << std::endl ;
+	const Eigen::VectorXd res1 = sbm * rhs  ;
+	EXPECT_EQ( res1, expected_1 ) ;
+	const Eigen::VectorXd res2 = sbm.transpose() * rhs ;
+	EXPECT_EQ( res2, expected_2 ) ;
+
+	EXPECT_EQ( res1 + res2, ( sbm + sbm.transpose() ) * rhs ) ;
+	EXPECT_EQ( sbm*res2, ( sbm * sbm.transpose() ) * rhs ) ;
+	EXPECT_EQ( 2*res2, ( 2* sbm ).transpose() * rhs ) ;
 
 	bogus::SparseBlockMatrix< BlockType, bogus::SYMMETRIC > sbm2 = sbm + sbm.transpose() ;
 	bogus::SparseBlockMatrix< BlockType, bogus::SYMMETRIC > sbm3 = sbm * sbm.transpose() ;
-	std::cout << ( sbm2 * rhs ).transpose() << std::endl ;
-	std::cout << ( sbm3.transpose() * rhs ).transpose() << std::endl ;
+	EXPECT_EQ( res1 + res2, sbm2 * rhs ) ;
+	EXPECT_EQ( sbm*res2, sbm3 * rhs ) ;
 }

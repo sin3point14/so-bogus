@@ -219,7 +219,7 @@ SparseBlockMatrixBase< Derived >::getOrComputeMinorIndex( UncompressedIndexType 
 template < typename Derived >
 void SparseBlockMatrixBase< Derived >::cacheTranspose()
 {
-	assert( has_square_or_dynamic_blocks ) ;
+	assert( Base::has_square_or_dynamic_blocks ) ;
 
 	if ( m_transposeIndex.valid ) return ;
 

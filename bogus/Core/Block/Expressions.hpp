@@ -133,6 +133,9 @@ struct Product : public BinaryBlockOp< Product, LhsMatrixT, RhsMatrixT >
 					Base::rhs.object.transpose(), Base::lhs.object.transpose(),
 					Base::rhs.scaling, Base::lhs.scaling ) ;
 	}
+
+	typename Base::Index rows() const { return Base::lhs.object.rows() ; }
+	typename Base::Index cols() const { return Base::rhs.object.cols() ; }
 } ;
 
 template <typename LhsMatrixT, typename RhsMatrixT>
@@ -181,6 +184,9 @@ struct Addition : public BinaryBlockOp< Addition, LhsMatrixT, RhsMatrixT >
 					Base::lhs.object.transpose(), Base::rhs.object.transpose(),
 					Base::lhs.scaling, Base::rhs.scaling ) ;
 	}
+
+	typename Base::Index rows() const { return Base::lhs.object.rows() ; }
+	typename Base::Index cols() const { return Base::lhs.object.cols() ; }
 } ;
 
 template <typename LhsMatrixT, typename RhsMatrixT>
