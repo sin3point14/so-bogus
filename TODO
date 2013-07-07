@@ -1,7 +1,6 @@
 
- + BlockMatrix of BlockMatrices
- + LU/LDLT
- + innerMultiply overloads
+ + Factorizations
+ + BSR bindings
  = SOQP interface
  = Mixed Problems ( Equality constraints )
  = Mapped SparseMatrix
