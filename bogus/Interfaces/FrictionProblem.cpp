@@ -37,8 +37,8 @@ template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::solveWith( GaussSeidelType &gs, double *r,
 									   const bool staticProblem ) const
 {
-	typedef bogus::SOCLaw< GaussSeidelType::dimension, typename GaussSeidelType::Scalar, true  > CoulombLawType	;
-	typedef bogus::SOCLaw< GaussSeidelType::dimension, typename GaussSeidelType::Scalar, false > SOCLawType	;
+	typedef bogus::SOCLaw< Dimension, typename GaussSeidelType::Scalar, true  > CoulombLawType	;
+	typedef bogus::SOCLaw< Dimension, typename GaussSeidelType::Scalar, false > SOCLawType	;
 
 	gs.setMatrix( W );
 	Eigen::Map< Eigen::VectorXd > r_map ( r, W.rows() ) ;

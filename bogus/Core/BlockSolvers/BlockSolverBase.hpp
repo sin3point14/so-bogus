@@ -27,8 +27,6 @@ public:
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 	typedef Signal< unsigned, Scalar > CallBackType ;
 
-	enum { dimension = GlobalProblemTraits::dimension } ;
-
 	virtual ~BlockSolverBase() { }
 
 	//! For iterative solvers: sets the maximum number of iterations

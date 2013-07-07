@@ -32,6 +32,7 @@ class SOCLaw
 {
 public:
 	typedef LocalProblemTraits< Dimension, Scalar > Traits ;
+	enum{ dimension = Dimension } ;
 
 	//! Constructor
 	/*!

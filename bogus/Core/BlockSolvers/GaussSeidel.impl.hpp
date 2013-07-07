@@ -63,9 +63,9 @@ template < typename NSLaw, typename RhsT, typename ResT >
 typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::eval( const NSLaw &law,
 							const RhsT &x, const ResT &y ) const
 {
-	const Segmenter< GlobalProblemTraits::dimension, const RhsT, typename BlockMatrixType::Index >
+	const Segmenter< NSLaw::dimension, const RhsT, typename BlockMatrixType::Index >
 			xSegmenter( x, m_matrix->rowOffsets() ) ;
-	const Segmenter< GlobalProblemTraits::dimension, const ResT, typename BlockMatrixType::Index >
+	const Segmenter< NSLaw::dimension, const ResT, typename BlockMatrixType::Index >
 			ySegmenter( y, m_matrix->rowOffsets() ) ;
 
 	const int n = (int) m_localMatrices.size() ;
@@ -95,12 +95,12 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 {
 	assert( m_matrix ) ;
 
-	const Segmenter< GlobalProblemTraits::dimension, const RhsT, typename BlockMatrixType::Index >
+	const Segmenter< NSLaw::dimension, const RhsT, typename BlockMatrixType::Index >
 			bSegmenter( b, m_matrix->rowOffsets() ) ;
-	Segmenter< GlobalProblemTraits::dimension, ResT, typename BlockMatrixType::Index >
+	Segmenter< NSLaw::dimension, ResT, typename BlockMatrixType::Index >
 			xSegmenter( x, m_matrix->rowOffsets() ) ;
 
-	typedef LocalProblemTraits< GlobalProblemTraits::dimension, typename GlobalProblemTraits::Scalar > LocalProblemTraits ;
+	typedef typename NSLaw::Traits LocalProblemTraits ;
 
 	const unsigned n = m_localMatrices.size() ;
 
