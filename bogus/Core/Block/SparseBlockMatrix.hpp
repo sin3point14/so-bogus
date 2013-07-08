@@ -261,7 +261,7 @@ public:
 	ConstTransposeReturnType transpose() const { return Transpose< Derived >( derived() ) ; }
 
 	template < bool Transpose, typename RhsT, typename ResT >
-	void multiply( const RhsT& rhs, ResT& res, typename RhsT::Scalar alpha = 1, typename ResT::Scalar beta = 0 ) const ;
+	void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const ;
 
 	template < typename RhsT, typename ResT >
 	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;

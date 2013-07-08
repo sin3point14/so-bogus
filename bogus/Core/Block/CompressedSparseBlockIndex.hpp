@@ -222,6 +222,7 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 		BlockPtr ptr() const { return m_it + m_base ; }
 
 		BlockPtr rawIndex() const { return m_it ; }
+
 	private:
 
 		InnerIterator( Index it, Index end,
@@ -240,6 +241,11 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 		base = ptr - it.rawIndex() ;
 		valid = true ;
 	}
+
+	// BSR
+
+	const Index* rowIndex() const { return &outer[0] ; }
+	const Index* columns() const { return &inner[0] ; }
 
 } ;
 

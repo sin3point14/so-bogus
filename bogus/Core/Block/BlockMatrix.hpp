@@ -70,6 +70,7 @@ class BlockMatrixBase : public BlockObjectBase< Derived >
 public:
 	typedef typename BlockMatrixTraits< Derived >::BlockType BlockType ;
 	typedef typename BlockMatrixTraits< Derived >::Index Index ;
+	typedef typename BlockMatrixTraits< Derived >::Scalar Scalar ;
 
 	typedef BlockObjectBase< Derived > Base;
 	using Base::derived ;
@@ -85,7 +86,7 @@ public:
 						  otherwise \c res = alpha * M * \c rhs + beta * res
 	  */
 	template < bool DoTranspose, typename RhsT, typename ResT >
-	void multiply( const RhsT& rhs, ResT& res, typename RhsT::Scalar alpha = 1, typename ResT::Scalar beta = 0 ) const
+	void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const
 	{
 		derived().template multiply< DoTranspose >( rhs, res, alpha, beta ) ;
 	}
@@ -150,8 +151,8 @@ public:
 		RowsPerBlock = BlockTraits< BlockType >::RowsAtCompileTime,
 		ColsPerBlock = BlockTraits< BlockType >::ColsAtCompileTime,
 
-		has_square_or_dynamic_blocks =
-				ColsPerBlock == RowsPerBlock,
+		has_row_major_blocks = BlockTraits< BlockType >::is_row_major,
+		has_square_or_dynamic_blocks = ColsPerBlock == RowsPerBlock,
 		has_fixed_size_blocks =
 				((int) ColsPerBlock != internal::DYNAMIC ) &&
 				((int) RowsPerBlock != internal::DYNAMIC )

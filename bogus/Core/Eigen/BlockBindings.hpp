@@ -52,7 +52,7 @@ inline bool is_zero ( const Eigen::MatrixBase< EigenDerived >& block,
 template< typename EigenDerived >
 inline const typename EigenDerived::Scalar* data_pointer ( const Eigen::MatrixBase< EigenDerived >& block )
 {
-	return block.data() ;
+	return block.derived().data() ;
 }
 
 #ifndef BOGUS_BLOCK_WITHOUT_EIGEN_SPARSE
@@ -154,7 +154,7 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 	typedef typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
 	ResVec res ( lhs.rows() ) ;
 
-	lhs.eval()->template multiply< Derived::is_transposed >( rhs, res, 1, 0 ) ;
+	lhs.eval()->template multiply< Derived::is_transposed >( rhs.derived(), res, 1, 0 ) ;
 	return res ;
 }
 
@@ -168,7 +168,7 @@ typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::R
 	typedef typename bogus::BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
 	ResVec res ( lhs.rows() ) ;
 
-	lhs.operand.object.eval()->template multiply< Derived::is_transposed >( rhs, res, lhs.operand.scaling, 0 ) ;
+	lhs.operand.object.eval()->template multiply< Derived::is_transposed >( rhs.derived(), res, lhs.operand.scaling, 0 ) ;
 	return res ;
 }
 
