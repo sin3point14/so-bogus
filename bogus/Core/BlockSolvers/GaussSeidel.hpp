@@ -41,7 +41,6 @@ class GaussSeidel : public BlockSolverBase< BlockMatrixType >
 public:
 	typedef BlockSolverBase< BlockMatrixType > Base ;
 
-	typedef typename Base::LocalMatrixType LocalMatrixType ;
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 
@@ -123,7 +122,8 @@ protected:
 	using Base::m_maxIters ;
 	using Base::m_tol ;
 
-	typename BlockContainerTraits< LocalMatrixType >::Type m_localMatrices ;
+	typedef typename LocalProblemTraits< GlobalProblemTraits::dimension, Scalar >::Matrix DiagonalMatrixType ;
+	typename BlockContainerTraits< DiagonalMatrixType >::Type m_localMatrices ;
 	typename GlobalProblemTraits::DynVector m_scaling ;
 	typename GlobalProblemTraits::DynVector m_regularization ;
 

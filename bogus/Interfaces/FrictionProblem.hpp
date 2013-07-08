@@ -38,7 +38,7 @@ struct PrimalFrictionProblem
 template< unsigned Dimension >
 struct DualFrictionProblem
 {
-	typedef SparseBlockMatrix< Eigen::Matrix< double, Dimension, Dimension >,
+	typedef SparseBlockMatrix< Eigen::Matrix< double, Dimension, Dimension, Eigen::RowMajor >,
 							   SYMMETRIC | COMPRESSED > WType ;
 	typedef GaussSeidel< WType > GaussSeidelType ;
 
