@@ -23,6 +23,10 @@ public:
 	MecheFrictionProblem() ;
 	~MecheFrictionProblem() ;
 
+	//! Allocates and sets up the primal friction problem \ref m_primal
+	/*! \warning copies the contents of the matrices M, E and H !
+		Manually construnction a PrimalFrictionProblem would be more efficient
+	*/
 	void fromPrimal (
 			unsigned int NObj, //!< number of subsystems
 			const unsigned int * ndof, //!< array of size \a NObj, the number of degree of freedom of each subsystem
@@ -38,16 +42,22 @@ public:
 			const double *const HB[] //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjB[i] </c> (\c NULL for an external object)
 			);
 
+	//! Solves the friction problem \ref m_primal ; see GaussSeidel
 	double solve(double * r, //!< length \a nd : initialization for \a r (in world space coordinates) + used to return computed r
 			double * v, //!< length \a m: to return computed v ( or NULL if not needed )
 			bool deterministic = false,       //!< Whether the Gauss-Seidel should be eterministic
 			double tol = 0.,                  //!< Gauss-Seidel tolerance. 0. means GS's default
 			unsigned maxIters = 0,            //!< Max number of iterations. 0 means GS's default
 			bool staticProblem = false,       //!< If true, do not use DeSaxce change of variable
-			double regularization = 0.  //!< Coefficient to add on the diagonal of static problems
+			double regularization = 0.,  //!< Coefficient to add on the diagonal of static problems
+			bool useInfinityNorm = false //!< Whether to use the infinity norm to evaluate the residual of the friction problem
 			);
 
+	//! Computes \ref m_dual from \ref m_primal
 	void computeDual( double regularization ) ;
+
+	//! Cleams up the problem, then allocates a new PrimalFrictionProblem and make m_primal point to it
+	void reset() ;
 
 	unsigned nDegreesOfFreedom() const ;
 	unsigned nContacts() const ;

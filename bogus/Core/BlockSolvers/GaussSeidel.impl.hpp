@@ -18,7 +18,7 @@ namespace bogus
 
 template < typename BlockMatrixType >
 GaussSeidel< BlockMatrixType >::GaussSeidel( )
-	: Base( NULL, 250, 1.e-6 ), m_deterministic( true ),
+	: Base( NULL, 250, 1.e-6 ), m_deterministic( true ), m_useInfinityNorm( false ),
 	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 ),
 	  m_autoRegularization( 0. )
 {
@@ -26,7 +26,7 @@ GaussSeidel< BlockMatrixType >::GaussSeidel( )
 
 template < typename BlockMatrixType >
 GaussSeidel< BlockMatrixType >::GaussSeidel( const BlockMatrixBase< BlockMatrixType > & M )
-	: Base( &M, 250, 1.e-6 ), m_deterministic( true ),
+	: Base( &M, 250, 1.e-6 ), m_deterministic( true ), m_useInfinityNorm( false ),
 	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 ),
 	  m_autoRegularization( 0. )
 {
@@ -43,6 +43,9 @@ void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatr
 	m_scaling.resize( n ) ;
 	m_regularization.resize( n ) ;
 
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
 	for( unsigned i = 0 ; i < n ; ++i )
 	{
 		m_localMatrices[i] = M.diagonal( i ) ;
@@ -69,23 +72,53 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 			ySegmenter( y, m_matrix->rowOffsets() ) ;
 
 	const int n = (int) m_localMatrices.size() ;
-	Scalar sum = 0., res ;
 
+	Scalar err = 0., lres ;
 	typename NSLaw::Traits::Vector lx, ly ;
 
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp parallel for private( lx, ly, res ) reduction ( + : sum )
-#endif
-	for( int i = 0 ; i < n ; ++ i )
+	if( m_useInfinityNorm )
 	{
-		lx = xSegmenter[ i ] * m_scaling[i] ;
-		ly = ySegmenter[ i ] ;
-		res = law.eval( i, lx, ly ) ;
-		sum += res ;
+
+	#ifndef BOGUS_DONT_PARALLELIZE
+	#pragma omp parallel private( lx, ly, lres )
+	#endif
+		{
+			lres = 0. ;
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp for
+#endif
+			for( int i = 0 ; i < n ; ++ i )
+			{
+				lx = xSegmenter[ i ] * m_scaling[i] ;
+				ly = ySegmenter[ i ] ;
+				lres = std::max( law.eval( i, lx, ly ), lres ) ;
+			}
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp critical
+#endif
+			err = std::max( err, lres ) ;
+		}
+
+		return err ;
+
+	} else {
+
+	#ifndef BOGUS_DONT_PARALLELIZE
+	#pragma omp parallel for private( lx, ly, lres ) reduction ( + : err )
+	#endif
+		for( int i = 0 ; i < n ; ++ i )
+		{
+			lx = xSegmenter[ i ] * m_scaling[i] ;
+			ly = ySegmenter[ i ] ;
+			lres = law.eval( i, lx, ly ) ;
+			err += lres ;
+		}
+
+		return err / ( 1 + n );
+
 	}
-
-	return sum / ( 1 + n );
-
 }
 
 template < typename BlockMatrixType >
@@ -140,11 +173,10 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 				continue ;
 			}
 
-			lb = bSegmenter[ i ] ;
+			lb = bSegmenter[ i ] - m_regularization(i) * lx ;
 			m_matrix->splitRowMultiply( i, x, lb ) ;
 			lx = xSegmenter[ i ] ;
 			ldx = -lx ;
-			lb -= m_regularization(i) * lx ;
 
 			const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ i ] ) ;
 			ldx += lx ;

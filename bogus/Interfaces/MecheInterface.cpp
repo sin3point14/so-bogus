@@ -62,6 +62,13 @@ void MecheFrictionProblem::ackCurrentResidual( unsigned GSIter, double err )
 	}
 }
 
+void MecheFrictionProblem::reset ()
+{
+	destroy() ;
+
+	m_primal = new PrimalFrictionProblem<3u>() ;
+}
+
 void MecheFrictionProblem::fromPrimal (
 		unsigned int NObj, //!< number of subsystems
 		const unsigned int * ndof, //!< array of size \a NObj, the number of degree of freedom of each subsystem
@@ -77,11 +84,11 @@ void MecheFrictionProblem::fromPrimal (
 		const double *const HB[] //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjB[i] </c> (\c NULL for an external object)
 		)
 {
-	destroy() ;
+	reset() ;
 
-	m_primal = new PrimalFrictionProblem<3u>() ;
-
-	// Build M^-1
+	// Copy M
+	// We don't actually need it after having computed a factorization of M, but we keep it around
+	// in case we want to use dumpToFile()
 
 	m_primal->M.reserve( NObj ) ;
 	m_primal->M.setRows( NObj, ndof ) ;
@@ -172,7 +179,8 @@ double MecheFrictionProblem::solve(double *r,
 		double tol,                  //!< Gauss-Seidel tolerance. 0. means GS's default
 		unsigned maxIters, //!< Max number of iterations. 0 means GS's default
 		bool staticProblem,
-		double regularization
+		double regularization,
+		bool useInfinityNorm
 								   )
 {
 	assert( m_primal ) ;
@@ -196,6 +204,7 @@ double MecheFrictionProblem::solve(double *r,
 
 	gs.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual );
 	gs.setAutoRegularization( regularization ) ;
+	gs.useInfinityNorm( useInfinityNorm ) ;
 
 	const double res = m_dual->solveWith( gs, r_loc.data(), staticProblem ) ;
 
@@ -250,8 +259,7 @@ bool MecheFrictionProblem::fromFile( const char* fileName, double *& r0 )
 	std::ifstream ifs( fileName );
 	if( !ifs.is_open() ) return false ;
 
-	destroy() ;
-	m_primal = new PrimalFrictionProblem<3u>() ;
+	reset() ;
 
 	boost::archive::binary_iarchive ia(ifs);
 	ia >> m_primal->M >> m_primal->H >> m_primal->E ;

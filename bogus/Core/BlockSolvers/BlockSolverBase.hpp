@@ -46,9 +46,12 @@ protected:
 	BlockSolverBase( const BlockMatrixBase< BlockMatrixType > * matrix,
 					 unsigned maxIters, Scalar tol ) ;
 
+	//! Pointer to the matrix of the system
 	const BlockMatrixBase< BlockMatrixType > * m_matrix ;
 
-	unsigned m_maxIters ;
+	//! See setMaxIters()
+	unsigned m_maxIters;
+	//! See setTol()
 	Scalar m_tol ;
 
 	CallBackType m_callback ;

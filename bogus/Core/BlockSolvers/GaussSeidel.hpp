@@ -52,8 +52,11 @@ public:
 	//! Sets the system matrix and initializes internal structures
 	void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
 
-	//! Solves a constrained linear system
+	//! Finds an approximate solution for a constrained linear problem
 	/*!
+	  Stops when the residual computed in eval() is below \ref m_tol, of the number
+	  of iterations exceed \ref m_maxIters
+
 	  Implements Algorithm 1. from \cite DBB11 to solve
 	   \f[
 		\left\{
@@ -64,7 +67,7 @@ public:
 		\right.
 	  \f]
 	  \param law The (non-smooth) law that should define:
-		- An error function for the global problem
+		- An error function for the local problem
 		- A local solver for each row of the system ( e.g. 1 contact solver )
 		\sa SOCLaw
 	  \param b the const part of the right hand side
@@ -75,6 +78,9 @@ public:
 
 	//! Sets whether the solver is allowed to trade off determiniticity for speed
 	void setDeterministic( bool deterministic ) { m_deterministic = deterministic ; }
+
+	//! Sets whether the solver will use the infinity norm instead of the l1 one to compute the global residual from the local ones
+	void useInfinityNorm( bool useInfNorm ) { m_useInfinityNorm = useInfNorm ; }
 
 	//! Sets the auto-regularization coefficient
 	/*!
@@ -113,8 +119,13 @@ public:
 
 protected:
 
-	//! Eval the current global reisual
-	/*! \p y should be such that \p y = m_matrix * \p x */
+	//! Eval the current global residual as a function of the local ones
+	/*! \p y should be such that \p y = \ref m_matrix * \p x
+		\return the current residual \c err defined as follow :
+		- if \ref m_useInfinityNorm is true, then \c err \f$ := \max\limits_{1 \leq i \leq n } law.eval(i,x_i,y_i) \f$
+		- else \c err := \f$  \frac 1 {n+1} \sum\limits_{1 \leq i \leq n } law.eval(i,x_i,y_i) \f$
+
+	*/
 	template < typename NSLaw, typename RhsT, typename ResT >
 	Scalar eval ( const NSLaw &law, const RhsT &x, const ResT &y ) const ;
 
@@ -127,11 +138,19 @@ protected:
 	typename GlobalProblemTraits::DynVector m_scaling ;
 	typename GlobalProblemTraits::DynVector m_regularization ;
 
+	//! See setDeterministic(). Defaults to true.
 	bool m_deterministic ;
+	//! See useInfinityNorm(). Defaults to false.
+	bool m_useInfinityNorm ;
 
+	//! See setEvalEvery(). Defaults to 25
 	unsigned m_evalEvery ;
+	//! See setSkipTol(). Defaults to (\ref m_tol)²
 	Scalar m_skipTol ;
+	//! See setSkipIters() Defaults to 10
 	unsigned m_skipIters ;
+
+	//! \sa setAutoRegularization(). Defaults to 0.
 	Scalar m_autoRegularization ;
 } ;
 
