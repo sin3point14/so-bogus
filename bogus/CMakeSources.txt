@@ -9,6 +9,7 @@ Core/Block/CompoundSparseBlockIndex.hpp
 Core/Block/CompressedSparseBlockIndex.hpp
 Core/Block/Constants.hpp
 Core/Block/Expressions.hpp
+Core/Block/MklBindings.hpp
 Core/Block/ScalarBindings.hpp
 Core/Block/Serialization.hpp
 Core/Block/SparseAssign.impl.hpp

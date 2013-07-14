@@ -1,10 +1,10 @@
 
- + Factorizations
- + BSR bindings
+ + Multiple Rhs for matrix/vector [roduct
+ + Compiling/Install documentation
+ = Factorizations
  = SOQP interface
  = Mixed Problems ( Equality constraints )
  = Mapped SparseMatrix
- = Compiling/Install documentation
  - Coloring Gauss Seidel
  - Dense block matrices
  - Coulomb law refinements
