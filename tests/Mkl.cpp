@@ -39,6 +39,15 @@ TEST( Mkl, bsr_mv )
 
     EXPECT_EQ( expected_1, ssbm * rhs ) ;
     EXPECT_EQ( expected_1, ssbm.transpose() * rhs ) ;
+
+    {
+        Eigen::MatrixXd mrhs( rhs.rows(), 2 ) ;
+        mrhs.col(0) = rhs ;
+        mrhs.col(1) = 2 * rhs ;
+        Eigen::MatrixXd mres = ssbm * mrhs ;
+        EXPECT_EQ( expected_1, mres.col(0) ) ;
+        EXPECT_EQ( 2*expected_1, mres.col(1) ) ;
+    }
 }
 
 #endif

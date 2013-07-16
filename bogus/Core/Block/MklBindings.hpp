@@ -53,7 +53,7 @@ template< typename Scalar, typename BlockPtr >
 void bsrmv(
         bool Symmetric, bool Transpose, MKL_INT Dimension,
         const SparseBlockIndex< true, MKL_INT, BlockPtr >& index, const Scalar *data,
-        const Scalar *rhs, Scalar *res, Scalar alpha, Scalar beta )
+        const Scalar *rhs, int rhsCols, Scalar *res, Scalar alpha, Scalar beta )
 {
 
     char matdescra[4] = { Symmetric ? 'S' : 'G', 'L', 'N', 'C'} ;
@@ -74,9 +74,12 @@ void bsrmv(
     MKL_INT* pntre = rowIndex+1 ;
     MKL_INT* indx = columns  ;
 
-    bindings< Scalar >::bsrmv( &transa, &m, &k, &lb, &alpha,
-                               matdescra, a, indx, pntrb, pntre,
-                               x, &beta, y ) ;
+    for( int i = 0 ; i < rhsCols ; ++i )
+    {
+        bindings< Scalar >::bsrmv( &transa, &m, &k, &lb, &alpha,
+                                   matdescra, a, indx, pntrb, pntre,
+                                   x + i*Dimension*k, &beta, y + i*Dimension*k ) ;
+    }
 }
 
 }
@@ -95,7 +98,7 @@ struct SparseBlockMatrixOpProxy< true, true, double, MKL_INT >
         mkl::bsrmv< Scalar >
                 ( Traits::is_symmetric, Transpose, Derived::RowsPerBlock,
                   matrix.majorIndex(), data_pointer( matrix.data()[0] ),
-                  rhs.data(), res.data(), alpha, beta ) ;
+                  rhs.data(), rhs.cols(), res.data(), alpha, beta ) ;
     }
 
     template < typename Derived, typename RhsT, typename ResT >

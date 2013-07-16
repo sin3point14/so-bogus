@@ -84,7 +84,7 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 		typedef typename SparseBlockMatrixBase< Derived >::MajorIndexType MajorIndexType ;
 #pragma omp parallel
 		{
-			LocalResT locRes( res.rows() ) ;
+			LocalResT locRes( res.rows(), res.cols() ) ;
 			locRes.setZero() ;
 
 			ResSegmenter resSegmenter( locRes, matrix.minorIndex().innerOffsetsData() ) ;
@@ -171,7 +171,7 @@ struct OutOfOrderSparseBlockMatrixVectorMultiplier
 
 #pragma omp parallel
 		{
-			LocalResT locRes( res.rows() ) ;
+			LocalResT locRes( res.rows(), res.cols() ) ;
 			locRes.setZero() ;
 
 #pragma omp for

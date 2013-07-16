@@ -21,7 +21,7 @@ inline const typename SelfTransposeTraits< SelfTransposeT >::ReturnType& transpo
 template < bool DoTranspose >
 struct BlockGetter {
 	template < typename BlockT >
-    inline static const BlockT& get( const BlockT& src, bool = false )
+	inline static const BlockT& get( const BlockT& src, bool = false )
 	{ return src ; }
 } ;
 template < >
@@ -29,19 +29,19 @@ struct BlockGetter< true > {
 	//SFINAE, as we can't use decltype()
 
 	template < typename BlockT >
-    inline static typename BlockT::ConstTransposeReturnType get( const BlockT& src, bool = false )
+	inline static typename BlockT::ConstTransposeReturnType get( const BlockT& src, bool = false )
 	{ return src.transpose() ; }
 
 	template < typename BlockT >
-    inline static typename BlockTransposeTraits< typename BlockT::Base >::ReturnType get( const BlockT& src, bool = false )
+	inline static typename BlockTransposeTraits< typename BlockT::Base >::ReturnType get( const BlockT& src, bool = false )
 	{ return transpose_block( src ) ; }
 
 	template < typename BlockT >
-    inline static typename BlockTransposeTraits< BlockT >::ReturnType get( const BlockT& src, bool = false )
+	inline static typename BlockTransposeTraits< BlockT >::ReturnType get( const BlockT& src, bool = false )
 	{ return transpose_block( src ) ; }
 
 	template < typename BlockT >
-    inline static typename SelfTransposeTraits< BlockT >::ReturnType get( const BlockT& src, bool = false )
+	inline static typename SelfTransposeTraits< BlockT >::ReturnType get( const BlockT& src, bool = false )
 	{ return src ; }
 } ;
 
@@ -52,7 +52,7 @@ struct BlockTransposeOption : public BlockGetter< DoTranspose >{
 template < bool IgnoredDoTranspose >
 struct BlockTransposeOption< true, IgnoredDoTranspose > {
 	template < typename BlockT >
-    inline static BlockT get( const BlockT& src, bool doTranspose = false )
+	inline static BlockT get( const BlockT& src, bool doTranspose = false )
 	{ return doTranspose ? BlockT( transpose_block( src ) ) : src ; }
 } ;
 
@@ -77,51 +77,51 @@ struct BlockDims< BlockT, true >
 template < int DimensionAtCompileTime, typename VectorType, typename Index >
 struct Segmenter
 {
-    enum { dimension = DimensionAtCompileTime } ;
+	enum { dimension = DimensionAtCompileTime } ;
 
-    typedef typename VectorType::template FixedSegmentReturnType< dimension >::Type
-    ReturnType ;
-    typedef typename VectorType::template ConstFixedSegmentReturnType< dimension >::Type
-    ConstReturnType ;
+	typedef typename VectorType::template NRowsBlockXpr< dimension >::Type
+	ReturnType ;
+	typedef typename VectorType::template ConstNRowsBlockXpr< dimension >::Type
+	ConstReturnType ;
 
-    Segmenter( VectorType &vec, const Index* ) : m_vec( vec ) {}
+	Segmenter( VectorType &vec, const Index* ) : m_vec( vec ) {}
 
-    inline ReturnType operator[]( const Index inner )
-    {
-        return m_vec.template segment< dimension >( dimension*inner ) ;
-    }
+	inline ReturnType operator[]( const Index inner )
+	{
+		return m_vec.template middleRows< dimension >( dimension*inner ) ;
+	}
 
-    inline ConstReturnType operator[]( const Index inner ) const
-    {
-        return m_vec.template segment< dimension >( dimension*inner ) ;
-    }
+	inline ConstReturnType operator[]( const Index inner ) const
+	{
+		return m_vec.template middleRows< dimension >( dimension*inner ) ;
+	}
 
 private:
-    VectorType &		 m_vec ;
+	VectorType &		 m_vec ;
 } ;
 
 template < typename VectorType, typename Index >
 struct Segmenter< internal::DYNAMIC, VectorType, Index >
 {
-    typedef typename VectorType::SegmentReturnType 		   ReturnType ;
-    typedef typename VectorType::ConstSegmentReturnType 		   ConstReturnType ;
+	typedef typename VectorType::RowsBlockXpr			ReturnType ;
+	typedef typename VectorType::ConstRowsBlockXpr		ConstReturnType ;
 
-    Segmenter( VectorType &vec, const Index* offsets ) : m_vec( vec ), m_offsets( offsets ) { }
+	Segmenter( VectorType &vec, const Index* offsets ) : m_vec( vec ), m_offsets( offsets ) { }
 
-    inline ReturnType operator[]( const Index inner )
-    {
-        return m_vec.segment( m_offsets[ inner ], m_offsets[ inner + 1 ] - m_offsets[ inner ] ) ;
-    }
+	inline ReturnType operator[]( const Index inner )
+	{
+		return m_vec.middleRows( m_offsets[ inner ], m_offsets[ inner + 1 ] - m_offsets[ inner ] ) ;
+	}
 
-    inline ConstReturnType operator[]( const Index inner ) const
-    {
-        return m_vec.segment( m_offsets[ inner ], m_offsets[ inner + 1 ] - m_offsets[ inner ] ) ;
-    }
+	inline ConstReturnType operator[]( const Index inner ) const
+	{
+		return m_vec.middleRows( m_offsets[ inner ], m_offsets[ inner + 1 ] - m_offsets[ inner ] ) ;
+	}
 
 
 private:
-    VectorType &		 m_vec ;
-    const Index* m_offsets ;
+	VectorType &		 m_vec ;
+	const Index* m_offsets ;
 } ;
 
 }
