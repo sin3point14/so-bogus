@@ -167,12 +167,17 @@ public:
 		return m_blocks[ ptr ] ;
 	}
 
+	//! Return a BlockPtr to the block a (row, col) or InvalidBlockPtr if it does not exist
 	BlockPtr blockPtr( Index row, Index col ) const ;
+	//! Return a BlockPtr to the block a (row, row) or InvalidBlockPtr if it does not exist
+	BlockPtr diagonalBlockPtr( Index row  ) const ;
 
 	//! \warning block has to exist
-	BlockType& diagonal( const Index row ) ;
+	BlockType& diagonal( const Index row )
+	{ return block( diagonalBlockPtr( row ) ) ; }
 	//! \warning block has to exist
-	const BlockType& diagonal( const Index row ) const ;
+	const BlockType& diagonal( const Index row ) const
+	{ return block( diagonalBlockPtr( row ) ) ; }
 
 	//! \warning block has to exist
 	BlockType& block( Index row, Index col )

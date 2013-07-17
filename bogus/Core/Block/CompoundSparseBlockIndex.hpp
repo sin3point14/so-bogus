@@ -24,6 +24,7 @@ struct CompoundSparseBlockIndex : public SparseBlockIndexBase< CompoundSparseBlo
 
 	typedef SparseBlockIndexBase< CompoundSparseBlockIndex< FirstIndexType, SecondIndexType > > Base ;
 	typedef typename Base::InnerOffsetsType InnerOffsetsType ;
+	typedef typename Base::InnerIterator    InnerIterator ;
 	using Base::valid ;
 
 	CompoundSparseBlockIndex( const SparseBlockIndexBase<FirstIndexType >& index1,
@@ -41,10 +42,28 @@ struct CompoundSparseBlockIndex : public SparseBlockIndexBase< CompoundSparseBlo
 
 	const InnerOffsetsType& innerOffsetsArray() const { return innerOffsets ; }
 
+	Index size( Index outerIdx ) const
+	{
+		return first.size( outerIdx ) + second.size( outerIdx ) ;
+	}
+
+	const FirstIndexType& first ;
+	const SecondIndexType& second ;
+	const InnerOffsetsType &innerOffsets ;
+} ;
+
+template < typename FirstIndexType, typename SecondIndexType >
+struct SparseBlockIndexTraits< CompoundSparseBlockIndex< FirstIndexType, SecondIndexType > >
+{
+	typedef typename FirstIndexType::Index Index ;
+	typedef typename FirstIndexType::BlockPtr BlockPtr ;
+
+	typedef CompoundSparseBlockIndex< FirstIndexType, SecondIndexType > SparseBlockIndexType ;
+
 	struct InnerIterator
 	{
-		InnerIterator( const CompoundSparseBlockIndex& index, Index outer )
-			: m_it1( index.first, outer ), m_it2( index.second, outer )
+		InnerIterator( const SparseBlockIndexType& index, Index outer )
+			: m_it1( index.first, outer ), m_it2( index.second, outer ), m_it2_begin( m_it2 )
 		{
 		}
 
@@ -59,6 +78,13 @@ struct CompoundSparseBlockIndex : public SparseBlockIndexBase< CompoundSparseBlo
 			else        ++ m_it2 ;
 			return *this ;
 		}
+		InnerIterator& operator--()
+		{
+			if( m_it2 == m_it2_begin ) --m_it1 ;
+			else                       --m_it2 ;
+
+			return *this ;
+		}
 
 		Index inner() const {
 			return m_it1 ? m_it1.inner() : m_it2.inner() ;
@@ -67,20 +93,24 @@ struct CompoundSparseBlockIndex : public SparseBlockIndexBase< CompoundSparseBlo
 			return m_it1 ? m_it1.ptr()   : m_it2.ptr() ;
 		}
 
+		InnerIterator end() const
+		{
+			return InnerIterator( *this ).toEnd() ;
+		}
+
+		InnerIterator& toEnd() const
+		{
+			m_it1.toEnd() ;
+			m_it2.toEnd() ;
+			return *this ;
+		}
+
 	private:
 		typename FirstIndexType::InnerIterator m_it1 ;
 		typename SecondIndexType::InnerIterator m_it2 ;
+		typename SecondIndexType::InnerIterator m_it2_begin ;
 	} ;
 
-	const FirstIndexType& first ;
-	const SecondIndexType& second ;
-	const InnerOffsetsType &innerOffsets ;
-} ;
-
-template < typename FirstIndexType, typename SecondIndexType >
-struct SparseBlockIndexTraits< CompoundSparseBlockIndex< FirstIndexType, SecondIndexType > >
-		: public SparseBlockIndexTraits< FirstIndexType >
-{
 } ;
 
 

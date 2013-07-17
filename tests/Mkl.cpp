@@ -1,5 +1,6 @@
 
 #include <Core/Block.impl.hpp>
+#include <Core/Block.io.hpp>
 #include <gtest/gtest.h>
 
 #ifdef BOGUS_WITH_MKL
@@ -48,6 +49,32 @@ TEST( Mkl, bsr_mv )
         EXPECT_EQ( expected_1, mres.col(0) ) ;
         EXPECT_EQ( 2*expected_1, mres.col(1) ) ;
     }
+
+    Eigen::Vector3d b ;
+
+    b.setOnes() ;
+    sbm.splitRowMultiply( 0, rhs, b ) ;
+    EXPECT_EQ( Eigen::Vector3d::Ones(), b ) ;
+    sbm.splitRowMultiply( 2, rhs, b ) ;
+    EXPECT_EQ( Eigen::Vector3d::Ones(), b ) ;
+
+    b.setOnes() ;
+    sbm.splitRowMultiply( 1, rhs, b ) ;
+    EXPECT_EQ( Eigen::Vector3d( 3, 5, 7 ), b ) ;
+
+    ssbm.cacheTranspose();
+
+    b.setOnes() ;
+    ssbm.splitRowMultiply( 2, rhs, b ) ;
+    EXPECT_EQ( Eigen::Vector3d::Ones(), b ) ;
+    ssbm.splitRowMultiply( 0, rhs, b ) ;
+    EXPECT_EQ( Eigen::Vector3d( 7, 5, 3 ), b ) ;
+
+    b.setOnes() ;
+    ssbm.splitRowMultiply( 1, rhs, b ) ;
+    EXPECT_EQ( Eigen::Vector3d( 3, 5, 7 ), b ) ;
+
+
 }
 
 #endif
