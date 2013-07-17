@@ -23,6 +23,7 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 
 	typedef SparseBlockIndexBase< SparseBlockIndex< true, _Index, _BlockPtr > > Base ;
 	typedef typename Base::InnerOffsetsType InnerOffsetsType ;
+	typedef typename Base::InnerIterator    InnerIterator ;
 	using Base::valid ;
 
 	typedef std::vector< Index > Inner ;
@@ -157,15 +158,32 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 		return ( *this = source ) ;
 	}
 
-	BlockPtr last( const Index outerIdx ) const
-	{
-		return base + outer[ outerIdx + 1 ] - 1  ;
-	}
-
 	Index size( const Index outerIdx ) const
 	{
 		return  outer[ outerIdx + 1 ] - outer[ outerIdx ] ;
 	}
+
+
+	void setPtr( const InnerIterator& it, BlockPtr ptr )
+	{
+		base = ptr - it.rawIndex() ;
+		valid = true ;
+	}
+
+	// BSR
+
+	const Index* rowIndex() const { return &outer[0] ; }
+	const Index* columns() const { return &inner[0] ; }
+
+} ;
+
+template < typename _Index, typename _BlockPtr >
+struct SparseBlockIndexTraits<  SparseBlockIndex< true, _Index, _BlockPtr > >
+{
+	typedef _Index Index;
+	typedef _BlockPtr BlockPtr;
+
+	typedef SparseBlockIndex< true, _Index, _BlockPtr > SparseBlockIndexType ;
 
 	//! Forward iterator
 	struct InnerIterator
@@ -180,7 +198,7 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 
 		InnerIterator( ) : m_inner( NULL ) { }
 
-		InnerIterator( const SparseBlockIndex& index, Index outer )
+		InnerIterator( const SparseBlockIndexType& index, Index outer )
 			: m_it( index.outer[ outer ] ), m_end( index.outer[ outer + 1] ),
 			  m_base( index.base ), m_inner( &index.inner[0] )
 		{
@@ -194,6 +212,11 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 		InnerIterator& operator++()
 		{
 			++ m_it ;
+			return *this ;
+		}
+		InnerIterator& operator--()
+		{
+			-- m_it ;
 			return *this ;
 		}
 
@@ -215,7 +238,13 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 
 		InnerIterator end() const
 		{
-			return InnerIterator( m_end, m_end, m_base, m_inner ) ;
+			return InnerIterator( *this ).toEnd() ;
+		}
+
+		InnerIterator& toEnd()
+		{
+			m_it = m_end ;
+			return *this ;
 		}
 
 		Index inner() const { return m_inner[ m_it ] ; }
@@ -225,28 +254,11 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 
 	private:
 
-		InnerIterator( Index it, Index end,
-					   BlockPtr base, const Index* inner )
-			: m_it( it ), m_end( end ), m_base( base ), m_inner( inner )
-		{}
-
 		Index m_it ;
 		Index m_end ;
 		BlockPtr m_base ;
 		const Index* m_inner ;
 	} ;
-
-	void setPtr( const InnerIterator& it, BlockPtr ptr )
-	{
-		base = ptr - it.rawIndex() ;
-		valid = true ;
-	}
-
-	// BSR
-
-	const Index* rowIndex() const { return &outer[0] ; }
-	const Index* columns() const { return &inner[0] ; }
-
 } ;
 
 } //namespace bogus

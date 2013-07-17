@@ -99,6 +99,19 @@ TEST( SparseBlock, MatrixVector )
 	EXPECT_TRUE( sbm.majorIndex().valid ) ;
 	EXPECT_EQ( expected_1, sbm.transpose() * rhs ) ;
 	EXPECT_EQ( expected_2, ( sbm * res )  ) ;
+
+
+	Eigen::MatrixXd mrhs( res.rows(), 2 ) ;
+	mrhs.col(0) = res ;
+	mrhs.col(1) = 2 * res ;
+	Eigen::MatrixXd mres = sbm * mrhs ;
+	EXPECT_EQ( expected_2, mres.col(0) ) ;
+	EXPECT_EQ( 2*expected_2, mres.col(1) ) ;
+
+	mres = ( mrhs.transpose() * sbm.transpose() ).transpose() ;
+	EXPECT_EQ( expected_2, mres.col(0) ) ;
+	EXPECT_EQ( 2*expected_2, mres.col(1) ) ;
+
 }
 
 TEST( SparseBlock, Symmetric )
@@ -127,7 +140,21 @@ TEST( SparseBlock, Symmetric )
 	EXPECT_EQ( expected_1, ssbm * rhs ) ;
 	EXPECT_EQ( expected_1, ssbm.transpose() * rhs ) ;
 
-	ssbm.cacheTranspose() ;
+	{
+		Eigen::MatrixXd mrhs( rhs.rows(), 2 ) ;
+		mrhs.col(0) = rhs ;
+		mrhs.col(1) = 2 * rhs ;
+		Eigen::MatrixXd mres = ssbm * mrhs ;
+		EXPECT_EQ( expected_1, mres.col(0) ) ;
+		EXPECT_EQ( 2*expected_1, mres.col(1) ) ;
+
+		ssbm.cacheTranspose() ;
+
+		mres = ( mrhs.transpose() * ssbm.transpose() ).transpose() ;
+		EXPECT_EQ( expected_1, mres.col(0) ) ;
+		EXPECT_EQ( 2*expected_1, mres.col(1) ) ;
+	}
+
 
 	EXPECT_EQ( expected_1, ssbm * rhs ) ;
 	EXPECT_EQ( expected_1, ssbm.transpose() * rhs ) ;

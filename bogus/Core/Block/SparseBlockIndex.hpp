@@ -25,7 +25,9 @@ struct SparseBlockIndexTraits
 template< typename Derived >
 struct SparseBlockIndexBase
 {
-	typedef typename SparseBlockIndexTraits< Derived >::Index Index ;
+	typedef SparseBlockIndexTraits< Derived > Traits ;
+	typedef typename Traits::Index Index ;
+	typedef typename Traits::InnerIterator InnerIterator ;
 
 	//! Type of the array encoding the size of each block of the inner dimension.
 	/*! which can be retrieved as \code innerOffsets[inner+1] - innerOffsets[inner] \endcode */
@@ -63,6 +65,15 @@ struct SparseBlockIndexBase
 		return & innerOffsetsArray()[0] ;
 	}
 
+	//! Returns the number of blocks at the outer index \p outerIdx
+	Index size( const Index outerIdx ) const ;
+	//! Returns an iterator to the first non-empty block of \p outerIdx
+	InnerIterator begin( const Index outerIdx ) const ;
+	//! Returns an iterator to the last non-empty block of \p outerIdx
+	InnerIterator  last( const Index outerIdx ) const ;
+	//! Returns an iterator to the end of \p outerIdx
+	InnerIterator   end( const Index outerIdx ) const ;
+
 } ;
 
 //! Uncompressed sparse block index
@@ -75,6 +86,7 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 
 	typedef SparseBlockIndexBase<  SparseBlockIndex< Compressed, _Index, _BlockPtr > > Base ;
 	typedef typename Base::InnerOffsetsType InnerOffsetsType ;
+	typedef typename Base::InnerIterator    InnerIterator ;
 	using Base::valid ;
 
 	//! Vector of ( inner index ; block pointer ) tuples encoding an inner vector
@@ -176,11 +188,6 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 		return *this ;
 	}
 
-	BlockPtr last( const Index outerIdx ) const
-	{
-		return outer[ outerIdx ].back().second ;
-	}
-
 	Index size( const Index outerIdx ) const
 	{
 		return outer[ outerIdx ].size() ;
@@ -195,6 +202,20 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 		return nnz ;
 	}
 
+	void setPtr( const InnerIterator& it, BlockPtr ptr )
+	{
+		const_cast< BlockPtr& >( it.toStdIterator()->second ) = ptr ;
+	}
+} ;
+
+template < bool Compressed, typename _Index, typename _BlockPtr >
+struct SparseBlockIndexTraits<  SparseBlockIndex< Compressed, _Index, _BlockPtr > >
+{
+	typedef _Index Index;
+	typedef _BlockPtr BlockPtr;
+
+	typedef SparseBlockIndex< Compressed, _Index, _BlockPtr > SparseBlockIndexType ;
+
 	//! Forward iterator
 	struct InnerIterator
 	{
@@ -208,7 +229,7 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 
 		InnerIterator() {}
 
-		InnerIterator( const SparseBlockIndex& index, Index outer )
+		InnerIterator( const SparseBlockIndexType& index, Index outer )
 			: m_it( index.outer[ outer ].begin() ), m_end( index.outer[ outer ].end() )
 		{
 		}
@@ -221,6 +242,11 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 		InnerIterator& operator++()
 		{
 			++ m_it ;
+			return *this ;
+		}
+		InnerIterator& operator--()
+		{
+			-- m_it ;
 			return *this ;
 		}
 
@@ -242,34 +268,24 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 
 		InnerIterator end() const
 		{
-			return InnerIterator( m_end, m_end ) ;
+			return InnerIterator( *this ).toEnd() ;
+		}
+
+		InnerIterator& toEnd()
+		{
+			m_it = m_end ;
+			return *this ;
 		}
 
 		Index inner() const { return m_it->first ; }
 		BlockPtr ptr() const { return m_it->second ; }
 
-		typename Inner::const_iterator asStdIterator() const { return m_it ; }
+		typename SparseBlockIndexType::Inner::const_iterator toStdIterator() const { return m_it ; }
 	private:
 
-		InnerIterator( const typename Inner::const_iterator &it,
-					   const typename Inner::const_iterator &end )
-			: m_it( it ), m_end( end )
-		{}
-
-		typename Inner::const_iterator m_it ;
-		typename Inner::const_iterator m_end ;
+		typename SparseBlockIndexType::Inner::const_iterator m_it ;
+		typename SparseBlockIndexType::Inner::const_iterator m_end ;
 	} ;
-
-	void setPtr( const InnerIterator& it, BlockPtr ptr )
-	{
-		const_cast< BlockPtr& >( it.asStdIterator()->second ) = ptr ;
-	}
-} ;
-
-template < bool Compressed, typename _Index, typename _BlockPtr >
-struct SparseBlockIndexTraits<  SparseBlockIndex< Compressed, _Index, _BlockPtr > >
-{
-	typedef _Index Index;
 } ;
 
 
