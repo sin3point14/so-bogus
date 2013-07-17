@@ -1,10 +1,9 @@
 
- + Multiple Rhs for matrix/vector [roduct
  + Compiling/Install documentation
  = Factorizations
  = SOQP interface
  = Mixed Problems ( Equality constraints )
- = Mapped SparseMatrix
+ = Mapped SparseMatrix ( SBM from BSR / Siconos / … )
  - Coloring Gauss Seidel
  - Dense block matrices
  - Coulomb law refinements
