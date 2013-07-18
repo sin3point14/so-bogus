@@ -485,17 +485,34 @@ TEST( SparseBlock, Sparse )
 
 	bogus::SparseBlockMatrix< BlockT > sbm2 = sbm * sbm.transpose() ;
 
-#ifdef BOGUS_WITH_EIGEN_SPARSE_LINEAR_SOLVERS
-	typedef bogus::SparseLDLT< double > InvBlockT ;
-	bogus::SparseBlockMatrix< InvBlockT > isbm ;
-	isbm.cloneStructure( sbm ) ;
-
-	for( unsigned i = 0 ; i < isbm.nBlocks() ; ++i )
+#ifdef BOGUS_WITH_EIGEN_SPARSE_LDLT
 	{
-		isbm.block(i).compute( sbm.block(i) );
-	}
+		typedef bogus::SparseLDLT< double > InvBlockT ;
+		bogus::SparseBlockMatrix< InvBlockT > isbm ;
+		isbm.cloneStructure( sbm ) ;
 
-	EXPECT_EQ( expected_2, ( isbm * rhs ) ) ;
+		for( unsigned i = 0 ; i < isbm.nBlocks() ; ++i )
+		{
+			isbm.block(i).compute( sbm.block(i) );
+		}
+
+		EXPECT_EQ( expected_2, ( isbm * rhs ) ) ;
+	}
+#endif
+
+#ifdef BOGUS_WITH_EIGEN_SPARSE_LU
+	{
+		typedef bogus::SparseLU< double > InvBlockT ;
+		bogus::SparseBlockMatrix< InvBlockT > isbm ;
+		isbm.cloneStructure( sbm ) ;
+
+		for( unsigned i = 0 ; i < isbm.nBlocks() ; ++i )
+		{
+			isbm.block(i).compute( sbm.block(i) );
+		}
+
+		EXPECT_EQ( expected_2, ( isbm * rhs ) ) ;
+	}
 #endif
 }
 

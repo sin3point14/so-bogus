@@ -104,7 +104,7 @@ TEST( ConjugateGradient, Preconditioner )
 	err = ldltcg.solve( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 
-#ifdef BOGUS_WITH_EIGEN_SPARSE_LINEAR_SOLVERS
+#ifndef BOGUS_BLOCK_WITHOUT_EIGEN_SPARSE
 	typedef Eigen::SparseMatrix< double > SparseBlock ;
 	typedef bogus::SparseBlockMatrix< SparseBlock > SparseMat ;
 	SparseMat ssbm ;
@@ -116,19 +116,39 @@ TEST( ConjugateGradient, Preconditioner )
 	err = scg.solve( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 
+#ifdef BOGUS_WITH_EIGEN_STABLE_SPARSE_API
+
 	res.setZero() ;
 	bogus::ConjugateGradient< SparseMat, bogus::DiagonalPreconditioner > spcg( ssbm ) ;
 	err = spcg.solve( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 
+#ifdef BOGUS_WITH_EIGEN_SPARSE_LDLT
 	res.setZero() ;
 	bogus::ConjugateGradient< SparseMat, bogus::DiagonalLDLTPreconditioner > sldltcg( ssbm ) ;
 	sldltcg.setMaxIters( 1 );
+	sldltcg.callback().connect( &ackCurrentResidual );
 	err = sldltcg.solve( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	res.setZero() ;
 	err = sldltcg.solve_BiCGSTAB( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
+#endif
+
+#ifdef BOGUS_WITH_EIGEN_SPARSE_LU
+	res.setZero() ;
+	bogus::ConjugateGradient< SparseMat, bogus::DiagonalLUPreconditioner > slucg( ssbm ) ;
+	slucg.setMaxIters( 1 );
+	slucg.callback().connect( &ackCurrentResidual );
+	err = slucg.solve( rhs, res ) ;
+	EXPECT_GT( 1.e-16, err ) ;
+	res.setZero() ;
+	err = slucg.solve_BiCGSTAB( rhs, res ) ;
+	EXPECT_GT( 1.e-16, err ) ;
+#endif
+
+#endif
+
 #endif
 }
 
