@@ -44,7 +44,8 @@ TEST( Serialization, Eigen )
 	ASSERT_EQ( rv, rv_ ) ;
 }
 
-#ifndef BOGUS_BLOCK_WITHOUT_EIGEN_SPARSE
+#ifdef BOGUS_WITH_EIGEN_STABLE_SPARSE_API
+
 TEST( Serialization, EigenSparse )
 {
 	Eigen::SparseMatrix< double > sm ( 3, 3 ) ;

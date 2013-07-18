@@ -485,7 +485,7 @@ TEST( SparseBlock, Sparse )
 
 	bogus::SparseBlockMatrix< BlockT > sbm2 = sbm * sbm.transpose() ;
 
-#if EIGEN_VERSION_AT_LEAST(3,1,0)
+#ifdef BOGUS_WITH_EIGEN_SPARSE_LINEAR_SOLVERS
 	typedef bogus::SparseLDLT< double > InvBlockT ;
 	bogus::SparseBlockMatrix< InvBlockT > isbm ;
 	isbm.cloneStructure( sbm ) ;

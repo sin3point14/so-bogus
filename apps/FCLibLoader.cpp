@@ -4,8 +4,6 @@ extern "C"
 #include <fclib.h>
 }
 
-#include <Eigen/Sparse>
-
 #include <Core/Block.impl.hpp>
 #include <Core/Block.io.hpp>
 #include <Core/BlockSolvers.impl.hpp>
@@ -47,6 +45,7 @@ static double solve( const fclib_local* problem, const Eigen::SparseMatrixBase< 
 
 int main( int argc, const char* argv[] )
 {
+#ifdef BOGUS_WITH_EIGEN_STABLE_SPARSE_API
 
   if( argc < 2 )
   {
@@ -192,6 +191,14 @@ int main( int argc, const char* argv[] )
   if( guesses ) fclib_delete_solutions (guesses, n_guesses);
 
 
-  return 1 ;
+  return 0 ;
+
+#else
+	(void) argc, (void) argv ;
+
+	std::cerr<< "FCLibLoader requires Eigen's stable sparse API ( >= 3.1 )" << std::endl ;
+	return -1 ;
+#endif
+
 
 }

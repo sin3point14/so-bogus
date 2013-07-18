@@ -104,7 +104,7 @@ TEST( ConjugateGradient, Preconditioner )
 	err = ldltcg.solve( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 
-#if EIGEN_VERSION_AT_LEAST(3,1,0)
+#ifdef BOGUS_WITH_EIGEN_SPARSE_LINEAR_SOLVERS
 	typedef Eigen::SparseMatrix< double > SparseBlock ;
 	typedef bogus::SparseBlockMatrix< SparseBlock > SparseMat ;
 	SparseMat ssbm ;
