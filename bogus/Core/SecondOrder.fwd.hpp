@@ -12,7 +12,7 @@
 namespace bogus
 {
 
-//! Namespace for configuration properties of local Second Order Cone solver
+//! Configuration properties of local Second Order Cone solver
 namespace local_soc_solver
 {
 //! Strategy to be used by the local SOC solver.

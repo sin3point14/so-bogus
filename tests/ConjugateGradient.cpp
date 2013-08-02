@@ -1,3 +1,6 @@
+
+#include <iostream>
+
 #include "Core/Block.impl.hpp"
 #include "Core/BlockSolvers.impl.hpp"
 
@@ -10,7 +13,7 @@ static void ackCurrentResidual( unsigned GSIter, double err )
 	std::cout << "CG: " << GSIter << " ==> " << err << std::endl ;
 }
 
-TEST( ConjugateGradient, CG )
+TEST( IterativeLinearSolver, CG )
 {
 	const Eigen::Vector3d expected_1( .5, .5, .5 ) ;
 	const Eigen::Vector3d expected_2( 2, 1, 3 ) ;
@@ -22,7 +25,7 @@ TEST( ConjugateGradient, CG )
 	sbm.insertBack(0,0) = Eigen::Vector3d::Constant( 2 ).asDiagonal() ;
 	sbm.finalize() ;
 
-	bogus::ConjugateGradient< Mat > cg( sbm ) ;
+	bogus::IterativeLinearSolver< Mat > cg( sbm ) ;
 	cg.callback().connect( &ackCurrentResidual );
 
 	Eigen::Vector3d rhs, res ;
@@ -47,13 +50,18 @@ TEST( ConjugateGradient, CG )
 	cg.solve_BiCG( rhs, res ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 
+
+	res.setOnes() ;
+	cg.solve_GMRES( rhs, res ) ;
+	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
+
 	res.setZero() ;
 	cg.setMaxIters( 12 );
 	cg.solve_BiCGSTAB( rhs, res ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 }
 
-TEST( ConjugateGradient, Preconditioner )
+TEST( IterativeLinearSolver, Preconditioner )
 {
 
 	typedef Eigen::Matrix< double, 5, 5 > Block ;
@@ -76,13 +84,13 @@ TEST( ConjugateGradient, Preconditioner )
 	double err ;
 
 	res.setZero() ;
-	bogus::ConjugateGradient< Mat > cg( sbm ) ;
-	err = cg.solve( rhs, res ) ;
+	bogus::IterativeLinearSolver< Mat > cg( sbm ) ;
+	err = cg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 
 	res.setZero() ;
-	bogus::ConjugateGradient< Mat, bogus::DiagonalPreconditioner > pcg( sbm ) ;
-	err = pcg.solve( rhs, res ) ;
+	bogus::IterativeLinearSolver< Mat, bogus::DiagonalPreconditioner > pcg( sbm ) ;
+	err = pcg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 
 	res.setZero() ;
@@ -90,18 +98,32 @@ TEST( ConjugateGradient, Preconditioner )
 	EXPECT_GT( 1.e-16, err ) ;
 
 	res.setZero() ;
-	bogus::ConjugateGradient< Mat, bogus::DiagonalLUPreconditioner > lucg( sbm ) ;
+	err = pcg.solve_GMRES( rhs, res ) ;
+	EXPECT_GT( 1.e-16, err ) ;
+	res.setZero() ;
+
+	pcg.setMaxIters( 30 ) ;
+	err = pcg.solve_GMRES( rhs, res, 3 ) ;
+	EXPECT_GT( 1.e-16, err ) ;
+
+	res.setZero() ;
+	bogus::IterativeLinearSolver< Mat, bogus::DiagonalLUPreconditioner > lucg( sbm ) ;
 	lucg.setMaxIters( 1 );
-	err = lucg.solve( rhs, res ) ;
+	err = lucg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 
 	// Making the block positive definite
 	sbm.block(0) *= sbm.block(0) ;
 
 	res.setZero() ;
-	bogus::ConjugateGradient< Mat, bogus::DiagonalLDLTPreconditioner > ldltcg( sbm ) ;
+	bogus::IterativeLinearSolver< Mat, bogus::DiagonalLDLTPreconditioner > ldltcg( sbm ) ;
 	ldltcg.setMaxIters( 1 );
-	err = ldltcg.solve( rhs, res ) ;
+	err = ldltcg.solve_CG( rhs, res ) ;
+	EXPECT_GT( 1.e-16, err ) ;
+
+	res.setZero() ;
+	ldltcg.setMaxIters( 10 );
+	err = ldltcg.solve_GMRES( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 
 #ifndef BOGUS_BLOCK_WITHOUT_EIGEN_SPARSE
@@ -112,23 +134,23 @@ TEST( ConjugateGradient, Preconditioner )
 	ssbm.block(0) =  sbm.block(0).sparseView() ;
 
 	res.setZero() ;
-	bogus::ConjugateGradient< SparseMat > scg( ssbm ) ;
-	err = scg.solve( rhs, res ) ;
+	bogus::IterativeLinearSolver< SparseMat > scg( ssbm ) ;
+	err = scg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 
 #ifdef BOGUS_WITH_EIGEN_STABLE_SPARSE_API
 
 	res.setZero() ;
-	bogus::ConjugateGradient< SparseMat, bogus::DiagonalPreconditioner > spcg( ssbm ) ;
-	err = spcg.solve( rhs, res ) ;
+	bogus::IterativeLinearSolver< SparseMat, bogus::DiagonalPreconditioner > spcg( ssbm ) ;
+	err = spcg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 
 #ifdef BOGUS_WITH_EIGEN_SPARSE_LDLT
 	res.setZero() ;
-	bogus::ConjugateGradient< SparseMat, bogus::DiagonalLDLTPreconditioner > sldltcg( ssbm ) ;
+	bogus::IterativeLinearSolver< SparseMat, bogus::DiagonalLDLTPreconditioner > sldltcg( ssbm ) ;
 	sldltcg.setMaxIters( 1 );
 	sldltcg.callback().connect( &ackCurrentResidual );
-	err = sldltcg.solve( rhs, res ) ;
+	err = sldltcg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	res.setZero() ;
 	err = sldltcg.solve_BiCGSTAB( rhs, res ) ;
@@ -137,10 +159,10 @@ TEST( ConjugateGradient, Preconditioner )
 
 #ifdef BOGUS_WITH_EIGEN_SPARSE_LU
 	res.setZero() ;
-	bogus::ConjugateGradient< SparseMat, bogus::DiagonalLUPreconditioner > slucg( ssbm ) ;
+	bogus::IterativeLinearSolver< SparseMat, bogus::DiagonalLUPreconditioner > slucg( ssbm ) ;
 	slucg.setMaxIters( 1 );
 	slucg.callback().connect( &ackCurrentResidual );
-	err = slucg.solve( rhs, res ) ;
+	err = slucg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	res.setZero() ;
 	err = slucg.solve_BiCGSTAB( rhs, res ) ;

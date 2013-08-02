@@ -22,6 +22,7 @@ struct ProblemTraits : public MatrixTraits< LocalMatrixType >
 	enum{ dimension = Base::dimension } ;
 
 	typedef Eigen::Matrix< Scalar, Eigen::Dynamic, 1 > DynVector ;
+	typedef Eigen::Matrix< Scalar, Eigen::Dynamic, Eigen::Dynamic > DynMatrix ;
 
 	template< typename VectorType >
 	static typename VectorType::template FixedSegmentReturnType< dimension >::Type segment( const unsigned i, VectorType& v )
@@ -67,13 +68,13 @@ struct LocalProblemTraits : public ProblemTraits< Eigen::Matrix< Scalar, Dimensi
 } ;
 
 template< typename Scalar >
-struct LocalProblemTraits< Eigen::Dynamic, Scalar > : public ProblemTraits< Eigen::MatrixXd >
+struct LocalProblemTraits< Eigen::Dynamic, Scalar > : public ProblemTraits< Eigen::Matrix< Scalar, Eigen::Dynamic, Eigen::Dynamic > >
 {
+	typedef Eigen::Matrix< Scalar, Eigen::Dynamic, Eigen::Dynamic > Matrix ;
+	typedef ProblemTraits< Matrix > Base ;
 
-	typedef Eigen::VectorXd Vector ;
-	typedef Eigen::MatrixXd Matrix ;
-
-	typedef Eigen::MatrixXd TgMatrix ;
+	typedef typename Base::DynVector Vector ;
+	typedef typename Base::DynMatrix TgMatrix ;
 
 	static Scalar np( const Vector & v )
 	{ return v[0] ; }

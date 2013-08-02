@@ -10,11 +10,8 @@
 #define BOGUS_GAUSS_SEIDEL_HPP
 
 #include "BlockSolvers.fwd.hpp"
-#ifndef BOGUS_WITHOUT_EIGEN
-#include "Eigen/EigenBlockContainers.hpp"
-#include "Eigen/EigenProblemTraits.hpp"
-#endif
+
 #include "BlockSolvers/GaussSeidel.hpp"
-#include "BlockSolvers/ConjugateGradient.hpp"
+#include "BlockSolvers/IterativeLinearSolvers.hpp"
 
 #endif

@@ -5,8 +5,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef BOGUS_CONJUGATE_GRADIENT_HPP
-#define BOGUS_CONJUGATE_GRADIENT_HPP
+#ifndef BOGUS_ITERATIVE_LINEAR_SOLVERS_HPP
+#define BOGUS_ITERATIVE_LINEAR_SOLVERS_HPP
 
 #include "BlockSolverBase.hpp"
 #include "Preconditioners.hpp"
@@ -16,7 +16,8 @@
 namespace bogus
 {
 
-//! Preconditionned Conjugate Gradient and variations
+
+//! Preconditionned Iterative Linear Solvers
 /*!
   \tparam BlockMatrixT The type of system matrix, which should be a subclass of BlockMatrixBase
   \tparam PreconditionerType The preconditioner type. It should accept BlockMatrixT as a template parameter.
@@ -25,8 +26,8 @@ namespace bogus
   */
 
 template < typename BlockMatrixType,
-		   template< typename BlockMatrixT > class PreconditionerType = TrivialPreconditioner >
-class ConjugateGradient : public BlockSolverBase< BlockMatrixType >
+           template< typename BlockMatrixT > class PreconditionerType >
+class IterativeLinearSolver : public BlockSolverBase< BlockMatrixType >
 {
 public:
 	typedef BlockSolverBase< BlockMatrixType > Base ;
@@ -36,17 +37,17 @@ public:
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 
 	//! Default constructor -- you will have to call setMatrix() before using any of the solve() functions
-	ConjugateGradient( ) ;
+    IterativeLinearSolver( ) ;
 	//! Constructor with the system matrix -- initializes preconditioner
-	explicit ConjugateGradient( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
+    explicit IterativeLinearSolver( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
 
 	//! Sets the system matrix and initializes the preconditioner
-	void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
+    void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
 
 	//! Solves ( m_matrix * \p x = \p b ) using the Conjugate Gradient algorithm
 	/*! Works for symmetric positive definite linear systems.*/
 	template < typename RhsT, typename ResT >
-	Scalar solve( const RhsT &b, ResT &x ) const ;
+    Scalar solve_CG( const RhsT &b, ResT &x ) const ;
 
 	//! Solves ( m_matrix * \p x = \p b ) using the BiConjugate Gradient algorithm
 	/*! Works for non-symmetric linear systems. Convergence not guaranteed */
@@ -58,13 +59,27 @@ public:
 	template < typename RhsT, typename ResT >
 	Scalar solve_BiCGSTAB( const RhsT &b, ResT &x ) const ;
 
+    //! Solves ( m_matrix * \p x = \p b ) using the Generalized Minimum Residual
+    /*! Works for non-symmetric linear systems. Convergence not guaranteed */
+    template < typename RhsT, typename ResT >
+    Scalar solve_GMRES( const RhsT &b, ResT &x, unsigned restart = 0 ) const ;
+
+    //! Solve function that takes the method to use as an argument
+    template < typename RhsT, typename ResT >
+    Scalar solve(  const RhsT &b, ResT &x,
+                   iterative_linear_solvers::Method method = iterative_linear_solvers::CG ) const ;
 
 protected:
 	using Base::m_matrix ;
 	using Base::m_maxIters ;
 	using Base::m_tol ;
 
-	PreconditionerType< BlockMatrixBase< BlockMatrixType > > m_preconditioner ;
+    //! Check init guess, reset it to zero if that would give a lower residual
+    template < typename RhsT, typename ResT >
+    Scalar init( const RhsT &b, ResT &x, typename GlobalProblemTraits::DynVector &r0 ) const ;
+
+    PreconditionerType< BlockMatrixBase< BlockMatrixType > > m_preconditioner ;
+    Scalar m_scale ;
 } ;
 
 } //namesoace bogus

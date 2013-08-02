@@ -1,7 +1,7 @@
 #include "FrictionProblem.hpp"
 
 #include "../Core/Block.impl.hpp"
-#include "../Core/BlockSolvers.impl.hpp"
+#include "../Core/BlockSolvers/GaussSeidel.impl.hpp"
 #include "../Core/SecondOrder.impl.hpp"
 
 namespace bogus {

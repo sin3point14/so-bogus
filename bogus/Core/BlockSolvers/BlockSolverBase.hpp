@@ -11,6 +11,11 @@
 #include "../Block.fwd.hpp"
 #include "../BlockSolvers.fwd.hpp"
 
+#ifndef BOGUS_WITHOUT_EIGEN
+#include "../Eigen/EigenProblemTraits.hpp"
+#include "../Eigen/EigenBlockContainers.hpp"
+#endif
+
 #include "../Utils/Signal.hpp"
 
 namespace bogus
