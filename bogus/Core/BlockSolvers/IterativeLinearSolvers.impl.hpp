@@ -23,7 +23,7 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::IterativeLinearSol
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 IterativeLinearSolver< BlockMatrixType, PreconditionerType >::IterativeLinearSolver()
-    : Base( NULL, 100, NumTraits< Scalar >::epsilon() ), m_scale(0)
+	: Base( NULL, 100, NumTraits< Scalar >::epsilon() ), m_scale(0)
 {
 }
 
@@ -33,26 +33,26 @@ void IterativeLinearSolver< BlockMatrixType, PreconditionerType >::setMatrix(
 {
 	m_matrix = &matrix ;
 	m_preconditioner.setMatrix( matrix ) ;
-    m_scale = 1. / ( 1 + m_matrix->rows() ) ;
+	m_scale = 1. / ( 1 + m_matrix->rows() ) ;
 }
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 template < typename RhsT, typename ResT >
 typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
 IterativeLinearSolver< BlockMatrixType, PreconditionerType >::init( const RhsT &b, ResT &x,
-                                                                    typename GlobalProblemTraits::DynVector &r0  ) const
+																	typename GlobalProblemTraits::DynVector &r0  ) const
 {
-    r0 = b - (*m_matrix)*x ;
+	r0 = b - (*m_matrix)*x ;
 
-    Scalar res = r0.squaredNorm() ;
-    const Scalar resAt0 = b.squaredNorm()  ;
+	Scalar res = r0.squaredNorm() ;
+	const Scalar resAt0 = b.squaredNorm()  ;
 
-    if( res > resAt0 ) {
-        x.setZero() ;
-        r0 = b;
-        res = resAt0 ;
-    }
-    return res * m_scale ;
+	if( res > resAt0 ) {
+		x.setZero() ;
+		r0 = b;
+		res = resAt0 ;
+	}
+	return res * m_scale ;
 }
 
 // Conjugate Gradient
@@ -63,9 +63,9 @@ typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
 IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_CG( const RhsT &b, ResT &x ) const
 {
 	typedef typename GlobalProblemTraits::DynVector Vector ;
-    Vector r ;
+	Vector r ;
 
-    Scalar res = init( b, x, r ) ;
+	Scalar res = init( b, x, r ) ;
 	if( res < m_tol ) return res ;
 
 	Vector z( r.rows() ) ;
@@ -84,7 +84,7 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_CG( const Rh
 		x += alpha * p ;
 		r -= alpha * Mp ;
 
-        res = r.squaredNorm() * m_scale ;
+		res = r.squaredNorm() * m_scale ;
 		this->m_callback.trigger( k, res ) ;
 		if( res < m_tol ) break ;
 
@@ -96,7 +96,7 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_CG( const Rh
 		zr0 = zr1 ;
 	}
 
-    return res ;
+	return res ;
 }
 
 // BiConjugate Gradient
@@ -107,10 +107,10 @@ typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
 IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_BiCG( const RhsT &b, ResT &x ) const
 {
 	typedef typename GlobalProblemTraits::DynVector Vector ;
-    Vector r ;
+	Vector r ;
 
-    Scalar res = init( b, x, r ) ;
-    if( res < m_tol ) return res ;
+	Scalar res = init( b, x, r ) ;
+	if( res < m_tol ) return res ;
 
 	Vector b_ = b ;
 	Vector x_ = x ;
@@ -138,7 +138,7 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_BiCG( const 
 		r  -= alpha * Mp ;
 		m_matrix->template multiply< true >( p_, r_, -alpha, 1 ) ;
 
-        res = r.squaredNorm() * m_scale ;
+		res = r.squaredNorm() * m_scale ;
 		this->m_callback.trigger( k, res ) ;
 		if( res < m_tol ) break ;
 
@@ -166,10 +166,10 @@ typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
 IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_BiCGSTAB( const RhsT &b, ResT &x ) const
 {
 	typedef typename GlobalProblemTraits::DynVector Vector ;
-    Vector r ;
+	Vector r ;
 
-    Scalar res = init( b, x, r ) ;
-    if( res < m_tol ) return res ;
+	Scalar res = init( b, x, r ) ;
+	if( res < m_tol ) return res ;
 
 	Vector r0h = r ;
 
@@ -193,7 +193,7 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_BiCGSTAB( co
 		alpha = rho1 / r0h.dot( nu ) ;
 		s = r - alpha * nu ;
 		m_preconditioner.template apply< false >( s, z ) ;
-        m_matrix->template multiply< false >( z, t ) ;
+		m_matrix->template multiply< false >( z, t ) ;
 
 		const Scalar nt2 = t.squaredNorm() ;
 		if ( nt2 < NumTraits< Scalar >::epsilon( ) )
@@ -206,8 +206,8 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_BiCGSTAB( co
 		x += alpha*y + w*z ;
 		r = s - w*t ;
 
-        res = r.squaredNorm() * m_scale;
-        this->m_callback.trigger( k, res ) ;
+		res = r.squaredNorm() * m_scale;
+		this->m_callback.trigger( k, res ) ;
 		if( res < m_tol ) break ;
 
 	}
@@ -222,96 +222,96 @@ template < typename RhsT, typename ResT >
 typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
 IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_GMRES( const RhsT &b, ResT &x, unsigned restart ) const
 {
-    typedef typename GlobalProblemTraits::DynVector Vector ;
-    typedef typename GlobalProblemTraits::DynMatrix Matrix ;
-    typedef typename LocalProblemTraits< 2, Scalar >::Matrix Matrix22 ;
+	typedef typename GlobalProblemTraits::DynVector Vector ;
+	typedef typename GlobalProblemTraits::DynMatrix Matrix ;
+	typedef typename LocalProblemTraits< 2, Scalar >::Matrix Matrix22 ;
 
 
-    Vector r ;
+	Vector r ;
 
-    Scalar res = init( b, x, r ) ;
-    if( res < m_tol ) return res ;
+	Scalar res = init( b, x, r ) ;
+	if( res < m_tol ) return res ;
 
-    const unsigned n = b.rows() ;
+	const unsigned n = b.rows() ;
 
-    if( restart == 0 ) restart = n ;
-    const unsigned m = std::min( restart, m_maxIters ) ;
+	if( restart == 0 ) restart = n ;
+	const unsigned m = std::min( restart, m_maxIters ) ;
 
-    // Allocate working memory
+	// Allocate working memory
 
-    Matrix H ( std::max( n, m+1 ), m + 1 ) ;		// Hessenberg
-    Matrix V ( n, m + 1 ) ; // Krylov subspace basis
+	Matrix H ( std::max( n, m+1 ), m + 1 ) ;		// Hessenberg
+	Matrix V ( n, m + 1 ) ; // Krylov subspace basis
 
-    Matrix U ( m+1, m ) ;   // Upper triangular matrix
-    Matrix O ( m+1, m+1 ) ; // Orthogonal matrix such that U = O*H
-    Matrix22 G ;			// Givens rotation
+	Matrix U ( m+1, m ) ;   // Upper triangular matrix
+	Matrix O ( m+1, m+1 ) ; // Orthogonal matrix such that U = O*H
+	Matrix22 G ;			// Givens rotation
 
-    Vector g(m+1),     // O * beta * e1
-           y(m+1) ;    // Res of least-square
+	Vector g(m+1),     // O * beta * e1
+		   y(m+1) ;    // Res of least-square
 
-    // Restart loop
-    unsigned globalIter = 0 ;
-    do
-    {
-        typename Matrix::ColXpr v0 ( V.col(0) ) ;
-        m_preconditioner.template apply< false >( r, v0 ) ;
-        Scalar beta = v0.norm() ;
-        v0 /= beta ; // ~ r.normalized()
+	// Restart loop
+	unsigned globalIter = 0 ;
+	do
+	{
+		typename Matrix::ColXpr v0 ( V.col(0) ) ;
+		m_preconditioner.template apply< false >( r, v0 ) ;
+		Scalar beta = v0.norm() ;
+		v0 /= beta ; // ~ r.normalized()
 
-        O(0,0) = 1 ; // Initialize O to identity
-        g(0,0) = beta ;
+		O(0,0) = 1 ; // Initialize O to identity
+		g(0,0) = beta ;
 
-        unsigned k ;
-        for( k = 0 ; k < m; ++k )
-        {
+		unsigned k ;
+		for( k = 0 ; k < m && res >= m_tol ; ++k )
+		{
 
-            // 1 - Arnoldi iteration
-            typename Matrix::ColXpr v ( V.col(k+1) ) ;
-            m_matrix->template multiply< false >( V.col(k), r ) ;
-            m_preconditioner.template apply< false >( r, v ) ;
+			// 1 - Arnoldi iteration
+			typename Matrix::ColXpr v ( V.col(k+1) ) ;
+			m_matrix->template multiply< false >( V.col(k), r ) ;
+			m_preconditioner.template apply< false >( r, v ) ;
 
-            H.col(k  ).head( k+1 ) = V.leftCols(k+1).transpose() * v ;
-            H.row(k+1).head( k   ).setZero() ;
+			H.col(k  ).head( k+1 ) = V.leftCols(k+1).transpose() * v ;
+			H.row(k+1).head( k   ).setZero() ;
 
-            v -= V.leftCols( k+1 ) * H.col( k ).head( k+1 );
+			v -= V.leftCols( k+1 ) * H.col( k ).head( k+1 );
 
-            const Scalar vhn = v.norm() ;
-            H(k+1, k) = vhn ;
-            V.col(k+1) /= vhn ;
+			const Scalar vhn = v.norm() ;
+			H(k+1, k) = vhn ;
+			V.col(k+1) /= vhn ;
 
-            // 2 - Least squares
-            // a. Grow orthogonal matrix O and vector g = O * res0 * (1,0,0, ... )'
+			// 2 - Least squares
+			// a. Grow orthogonal matrix O and vector g = O * res0 * (1,0,0, ... )'
 
-            O.row( k+1 ).head( k+1 ).setZero() ;     // Set last row to zero
-            O.col( k+1 ).head( k+1 ).setZero() ;     // Set last col to zero
-            O ( k+1, k+1 ) = 1 ;
-            g ( k+1 )      = 0 ;
+			O.row( k+1 ).head( k+1 ).setZero() ;     // Set last row to zero
+			O.col( k+1 ).head( k+1 ).setZero() ;     // Set last col to zero
+			O ( k+1, k+1 ) = 1 ;
+			g ( k+1 )      = 0 ;
 
-            // a' Store temporary, before-rotation, not yet upper-triangular new U
-            U.col(k).head( k+1 ) = O.topLeftCorner( k+1, k+1 ) * H.col(k).head( k+1 ) ;
-            U( k+1, k ) = vhn ;
+			// a' Store temporary, before-rotation, not yet upper-triangular new U
+			U.col(k).head( k+1 ) = O.topLeftCorner( k+1, k+1 ) * H.col(k).head( k+1 ) ;
+			U( k+1, k ) = vhn ;
 
-            // b. Apply givens rotation
-            G.row(0) = U.col(k).template segment< 2 >( k ).transpose() ;
+			// b. Apply givens rotation
+			G.row(0) = U.col(k).template segment< 2 >( k ).transpose() ;
 
-            const Scalar l = G.row(0).norm() ;
-            G.row(0) /= l ;
+			const Scalar l = G.row(0).norm() ;
+			G.row(0) /= l ;
 
-            G(1, 0) = -G( 0, 1 ) ;
-            G(1, 1) =  G( 0, 0 ) ;
+			G(1, 0) = -G( 0, 1 ) ;
+			G(1, 1) =  G( 0, 0 ) ;
 
-            O.block( k, 0, 2, k+2 ).applyOnTheLeft( G );
-            g.template segment< 2 >( k ).applyOnTheLeft( G ) ;
+			O.block( k, 0, 2, k+2 ).applyOnTheLeft( G );
+			g.template segment< 2 >( k ).applyOnTheLeft( G ) ;
 
-            // c. Update upper-triagular matrix U = O * H
-            U.row( k+1 ).head( k+1 ).setZero() ; // Last U line to zero
-            U(k,k) = l ;
+			// c. Update upper-triagular matrix U = O * H
+			U.row( k+1 ).head( k+1 ).setZero() ; // Last U line to zero
+			U(k,k) = l ;
 
-            // d. Solve triangular system
-            y = U.topLeftCorner( k+1, k+1 ).template triangularView< Eigen::Upper >().solve( g.head( k+1 ) ) ;
+			// d. Solve triangular system
+			y = U.topLeftCorner( k+1, k+1 ).template triangularView< Eigen::Upper >().solve( g.head( k+1 ) ) ;
 
-            // 3 - Update residual
-            res = g( k+1 ) * g( k+1 ) * m_scale ;
+			// 3 - Update residual
+			res = g( k+1 ) * g( k+1 ) * m_scale ;
 
 //			std::cout << " ==== Iteration " << globalIter << " + " << k <<std::endl
 //			          << "H" << std::endl
@@ -334,24 +334,23 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_GMRES( const
 //			          << std::endl ;
 
 
-            this->m_callback.trigger( k + globalIter, res ) ;
-            if( res < m_tol ) break ;
-        }
+			this->m_callback.trigger( k + globalIter, res ) ;
+		}
 
-        x += V.leftCols( k+1 ) * y ;
-        globalIter += restart ;
+		x += V.leftCols( k ) * y.head( k ) ;
+		globalIter += restart ;
 
-        if( res < m_tol || globalIter >= m_maxIters  )
-            break ;
+		if( res < m_tol || globalIter >= m_maxIters  )
+			break ;
 
-        // Restart
+		// Restart
 
-        r = b - (*m_matrix)*x ;
-        res = r.squaredNorm() * m_scale ;
+		r = b - (*m_matrix)*x ;
+		res = r.squaredNorm() * m_scale ;
 
-    } while( res >= m_tol ) ;
+	} while( res >= m_tol ) ;
 
-    return res ;
+	return res ;
 }
 
 
@@ -359,21 +358,21 @@ template < typename BlockMatrixType, template< typename BlockMatrixT > class Pre
 template < typename RhsT, typename ResT >
 typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
 IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve( const RhsT &b, ResT &x,
-                                                                     iterative_linear_solvers::Method method ) const
+																	 iterative_linear_solvers::Method method ) const
 {
-    switch(method)
-    {
-        case iterative_linear_solvers::CG:
-            return solve_CG( b, x ) ;
-        case iterative_linear_solvers::BiCG:
-            return solve_CG( b, x ) ;
-        case iterative_linear_solvers::BiCG_STAB:
-            return solve_CG( b, x ) ;
-        case iterative_linear_solvers::GMRES:
-            return solve_GMRES( b, x ) ;
-        default:
-            return -1 ;
-    }
+	switch(method)
+	{
+		case iterative_linear_solvers::CG:
+			return solve_CG( b, x ) ;
+		case iterative_linear_solvers::BiCG:
+			return solve_CG( b, x ) ;
+		case iterative_linear_solvers::BiCG_STAB:
+			return solve_CG( b, x ) ;
+		case iterative_linear_solvers::GMRES:
+			return solve_GMRES( b, x ) ;
+		default:
+			return -1 ;
+	}
 }
 
 } // namespace bogus

@@ -28,10 +28,10 @@ Core/BlockSolvers.hpp
 Core/BlockSolvers.impl.hpp
 Core/BlockSolvers/BlockSolverBase.hpp
 Core/BlockSolvers/BlockSolverBase.impl.hpp
-Core/BlockSolvers/IterativeLinearSolvers.hpp
-Core/BlockSolvers/IterativeLinearSolvers.impl.hpp
 Core/BlockSolvers/GaussSeidel.hpp
 Core/BlockSolvers/GaussSeidel.impl.hpp
+Core/BlockSolvers/IterativeLinearSolvers.hpp
+Core/BlockSolvers/IterativeLinearSolvers.impl.hpp
 Core/BlockSolvers/Preconditioners.hpp
 Core/BlockSolvers/Preconditioners.impl.hpp
 Core/Eigen/BlockBindings.hpp
