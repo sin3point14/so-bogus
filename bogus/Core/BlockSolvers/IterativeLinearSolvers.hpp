@@ -26,7 +26,7 @@ namespace bogus
   */
 
 template < typename BlockMatrixType,
-           template< typename BlockMatrixT > class PreconditionerType >
+		   template< typename BlockMatrixT > class PreconditionerType >
 class IterativeLinearSolver : public BlockSolverBase< BlockMatrixType >
 {
 public:
@@ -37,17 +37,17 @@ public:
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 
 	//! Default constructor -- you will have to call setMatrix() before using any of the solve() functions
-    IterativeLinearSolver( ) ;
+	IterativeLinearSolver( ) ;
 	//! Constructor with the system matrix -- initializes preconditioner
-    explicit IterativeLinearSolver( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
+	explicit IterativeLinearSolver( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
 
 	//! Sets the system matrix and initializes the preconditioner
-    void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
+	void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
 
 	//! Solves ( m_matrix * \p x = \p b ) using the Conjugate Gradient algorithm
 	/*! Works for symmetric positive definite linear systems.*/
 	template < typename RhsT, typename ResT >
-    Scalar solve_CG( const RhsT &b, ResT &x ) const ;
+	Scalar solve_CG( const RhsT &b, ResT &x ) const ;
 
 	//! Solves ( m_matrix * \p x = \p b ) using the BiConjugate Gradient algorithm
 	/*! Works for non-symmetric linear systems. Convergence not guaranteed */
@@ -59,27 +59,32 @@ public:
 	template < typename RhsT, typename ResT >
 	Scalar solve_BiCGSTAB( const RhsT &b, ResT &x ) const ;
 
-    //! Solves ( m_matrix * \p x = \p b ) using the Generalized Minimum Residual
-    /*! Works for non-symmetric linear systems. Convergence not guaranteed */
-    template < typename RhsT, typename ResT >
-    Scalar solve_GMRES( const RhsT &b, ResT &x, unsigned restart = 0 ) const ;
+	//! Solves ( m_matrix * \p x = \p b ) using the Conjugate Gradient Squared algorithm
+	/*! Works for non-symmetric linear systems. Convergence not guaranteed */
+	template < typename RhsT, typename ResT >
+	Scalar solve_CGS( const RhsT &b, ResT &x ) const ;
 
-    //! Solve function that takes the method to use as an argument
-    template < typename RhsT, typename ResT >
-    Scalar solve(  const RhsT &b, ResT &x,
-                   iterative_linear_solvers::Method method = iterative_linear_solvers::CG ) const ;
+	//! Solves ( m_matrix * \p x = \p b ) using the Generalized Minimum Residual
+	/*! Works for non-symmetric linear systems. Convergence not guaranteed */
+	template < typename RhsT, typename ResT >
+	Scalar solve_GMRES( const RhsT &b, ResT &x, unsigned restart = 0 ) const ;
+
+	//! Solve function that takes the method to use as an argument
+	template < typename RhsT, typename ResT >
+	Scalar solve(  const RhsT &b, ResT &x,
+				   iterative_linear_solvers::Method method = iterative_linear_solvers::CG ) const ;
 
 protected:
 	using Base::m_matrix ;
 	using Base::m_maxIters ;
 	using Base::m_tol ;
 
-    //! Check init guess, reset it to zero if that would give a lower residual
-    template < typename RhsT, typename ResT >
-    Scalar init( const RhsT &b, ResT &x, typename GlobalProblemTraits::DynVector &r0 ) const ;
+	//! Check init guess, reset it to zero if that would give a lower residual
+	template < typename RhsT, typename ResT >
+	Scalar init( const RhsT &b, ResT &x, typename GlobalProblemTraits::DynVector &r0 ) const ;
 
-    PreconditionerType< BlockMatrixBase< BlockMatrixType > > m_preconditioner ;
-    Scalar m_scale ;
+	PreconditionerType< BlockMatrixBase< BlockMatrixType > > m_preconditioner ;
+	Scalar m_scale ;
 } ;
 
 } //namesoace bogus

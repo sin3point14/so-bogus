@@ -19,6 +19,7 @@ enum Method
 	CG,				//!< Conjugate Gradient
 	BiCG,			//!< BiConjugate Gradient
 	BiCG_STAB, 		//!< BiConjugate Gradient Stabilized
+	CGS, 			//!< Conjugate Gradient Squared
 	GMRES,			//!< Generalized Minimal Residual
 	TFQMR			//!< Tranpose-free Quasi Minimum Residual
 } ;

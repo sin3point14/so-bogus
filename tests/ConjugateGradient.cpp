@@ -8,9 +8,11 @@
 
 #include <gtest/gtest.h>
 
+const char* g_meth  ;
+
 static void ackCurrentResidual( unsigned GSIter, double err )
 {
-	std::cout << "CG: " << GSIter << " ==> " << err << std::endl ;
+	std::cout << g_meth << " " << GSIter << " ==> " << err << std::endl ;
 }
 
 TEST( IterativeLinearSolver, CG )
@@ -32,14 +34,22 @@ TEST( IterativeLinearSolver, CG )
 	rhs.setOnes( ) ;
 
 	res.setZero() ;
+	g_meth = "CG" ;
 	cg.solve( rhs, res ) ;
 	EXPECT_EQ( expected_1, res ) ;
 
 	res.setZero() ;
+	g_meth = "BiCG" ;
 	cg.solve_BiCG( rhs, res ) ;
 	EXPECT_EQ( expected_1, res ) ;
 
 	res.setZero() ;
+	g_meth = "CGS" ;
+	cg.solve_CGS( rhs, res ) ;
+	EXPECT_EQ( expected_1, res ) ;
+
+	res.setZero() ;
+	g_meth = "BiCGSTAB" ;
 	cg.solve_BiCGSTAB( rhs, res ) ;
 	EXPECT_EQ( expected_1, res ) ;
 
@@ -47,16 +57,23 @@ TEST( IterativeLinearSolver, CG )
 	rhs << 1, 2, 3 ;
 
 	res.setZero() ;
+	g_meth = "BiCG" ;
 	cg.solve_BiCG( rhs, res ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 
+	res.setZero() ;
+	g_meth = "CGS" ;
+	cg.solve_CGS( rhs, res ) ;
+	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 
 	res.setOnes() ;
+	g_meth = "GMRES" ;
 	cg.solve_GMRES( rhs, res ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 
 	res.setZero() ;
 	cg.setMaxIters( 12 );
+	g_meth = "BiCGSTAB" ;
 	cg.solve_BiCGSTAB( rhs, res ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 }
@@ -85,32 +102,51 @@ TEST( IterativeLinearSolver, Preconditioner )
 
 	res.setZero() ;
 	bogus::IterativeLinearSolver< Mat > cg( sbm ) ;
+	g_meth = "CG" ;
 	err = cg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 
 	res.setZero() ;
 	bogus::IterativeLinearSolver< Mat, bogus::DiagonalPreconditioner > pcg( sbm ) ;
+	pcg.callback().connect( &ackCurrentResidual );
+
+	g_meth = "CG" ;
 	err = pcg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
+	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
+	g_meth = "BiCG" ;
 	err = pcg.solve_BiCG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
+	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
+	g_meth = "CGS" ;
+	err = pcg.solve_CGS( rhs, res ) ;
+	EXPECT_GT( 1.e-16, err ) ;
+	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
+
+	res.setZero() ;
+	g_meth = "GMRES" ;
 	err = pcg.solve_GMRES( rhs, res ) ;
+	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	res.setZero() ;
 
 	pcg.setMaxIters( 30 ) ;
+	g_meth = "GMRES(3)" ;
 	err = pcg.solve_GMRES( rhs, res, 3 ) ;
 	EXPECT_GT( 1.e-16, err ) ;
+	EXPECT_GT( 1.e-12, ( sbm*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
 	bogus::IterativeLinearSolver< Mat, bogus::DiagonalLUPreconditioner > lucg( sbm ) ;
 	lucg.setMaxIters( 1 );
+	g_meth = "CG" ;
 	err = lucg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
+	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 
 	// Making the block positive definite
 	sbm.block(0) *= sbm.block(0) ;
@@ -118,13 +154,17 @@ TEST( IterativeLinearSolver, Preconditioner )
 	res.setZero() ;
 	bogus::IterativeLinearSolver< Mat, bogus::DiagonalLDLTPreconditioner > ldltcg( sbm ) ;
 	ldltcg.setMaxIters( 1 );
+	g_meth = "CG" ;
 	err = ldltcg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
+	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
 	ldltcg.setMaxIters( 10 );
+	g_meth = "GMRES" ;
 	err = ldltcg.solve_GMRES( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
+	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 
 #ifndef BOGUS_BLOCK_WITHOUT_EIGEN_SPARSE
 	typedef Eigen::SparseMatrix< double > SparseBlock ;
@@ -135,26 +175,34 @@ TEST( IterativeLinearSolver, Preconditioner )
 
 	res.setZero() ;
 	bogus::IterativeLinearSolver< SparseMat > scg( ssbm ) ;
+	g_meth = "CG" ;
 	err = scg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
+	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 
 #ifdef BOGUS_WITH_EIGEN_STABLE_SPARSE_API
 
 	res.setZero() ;
 	bogus::IterativeLinearSolver< SparseMat, bogus::DiagonalPreconditioner > spcg( ssbm ) ;
+	g_meth = "CG" ;
 	err = spcg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
+	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 
 #ifdef BOGUS_WITH_EIGEN_SPARSE_LDLT
 	res.setZero() ;
 	bogus::IterativeLinearSolver< SparseMat, bogus::DiagonalLDLTPreconditioner > sldltcg( ssbm ) ;
 	sldltcg.setMaxIters( 1 );
 	sldltcg.callback().connect( &ackCurrentResidual );
+	g_meth = "CG" ;
 	err = sldltcg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
+	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 	res.setZero() ;
+	g_meth = "BiCGSTAB" ;
 	err = sldltcg.solve_BiCGSTAB( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
+	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 #endif
 
 #ifdef BOGUS_WITH_EIGEN_SPARSE_LU
@@ -162,11 +210,15 @@ TEST( IterativeLinearSolver, Preconditioner )
 	bogus::IterativeLinearSolver< SparseMat, bogus::DiagonalLUPreconditioner > slucg( ssbm ) ;
 	slucg.setMaxIters( 1 );
 	slucg.callback().connect( &ackCurrentResidual );
+	g_meth = "CG" ;
 	err = slucg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
+	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 	res.setZero() ;
+	g_meth = "BiCGSTAB" ;
 	err = slucg.solve_BiCGSTAB( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
+	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 #endif
 
 #endif

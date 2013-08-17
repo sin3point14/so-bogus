@@ -171,7 +171,7 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_BiCGSTAB( co
 	Scalar res = init( b, x, r ) ;
 	if( res < m_tol ) return res ;
 
-	Vector r0h = r ;
+	const Vector r0h = r ;
 
 	Scalar rho0 = 1, rho1 ;
 	Scalar alpha = 1, w = 1 ;
@@ -210,6 +210,62 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_BiCGSTAB( co
 		this->m_callback.trigger( k, res ) ;
 		if( res < m_tol ) break ;
 
+	}
+
+	return res ;
+}
+
+// CGS
+
+template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
+template < typename RhsT, typename ResT >
+typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
+IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_CGS( const RhsT &b, ResT &x ) const
+{
+	typedef typename GlobalProblemTraits::DynVector Vector ;
+	Vector r ;
+
+	Scalar res = init( b, x, r ) ;
+	if( res < m_tol ) return res ;
+
+	const Vector r0h = r ;
+
+	Vector u = r, p = r, q ;
+	Scalar rho1, rho0, alpha, beta ;
+
+		Vector y( m_matrix->cols() ), nu ( m_matrix->rows() ) ;
+
+	for( unsigned k = 0 ; k < m_maxIters ; ++k )
+	{
+		rho1 = r0h.dot( r ) ;
+
+		if( NumTraits< Scalar >::isZero( rho1 ) )
+			break ;
+
+		if( k > 0 )
+		{
+			beta = rho1 / rho0 ;
+			u = r + beta *  q ;
+			p = u + beta * (q + beta*p) ;
+		}
+
+
+		m_preconditioner.template apply< false >( p, y ) ;
+		m_matrix->template multiply< false >( y, nu ) ;
+		alpha = rho1 / r0h.dot( nu ) ;
+		q = u - alpha*nu ;
+
+		m_preconditioner.template apply< false >( u+q, y ) ;
+		m_matrix->template multiply< false >( y, nu ) ;
+
+		x += alpha * y ;
+		r -= alpha * nu ;
+
+		res = r.squaredNorm() * m_scale;
+		this->m_callback.trigger( k, res ) ;
+		if( res < m_tol ) break ;
+
+		rho0 = rho1 ;
 	}
 
 	return res ;
@@ -277,7 +333,9 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_GMRES( const
 
 			const Scalar vhn = v.norm() ;
 			H(k+1, k) = vhn ;
-			V.col(k+1) /= vhn ;
+
+			if( vhn > NumTraits< Scalar >::epsilon( ) ) //If vhn is zero, the algorithm shall stop at this step
+				V.col(k+1) /= vhn ;
 
 			// 2 - Least squares
 			// a. Grow orthogonal matrix O and vector g = O * res0 * (1,0,0, ... )'
@@ -365,9 +423,11 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve( const RhsT 
 		case iterative_linear_solvers::CG:
 			return solve_CG( b, x ) ;
 		case iterative_linear_solvers::BiCG:
-			return solve_CG( b, x ) ;
+			return solve_BiCG( b, x ) ;
 		case iterative_linear_solvers::BiCG_STAB:
-			return solve_CG( b, x ) ;
+			return solve_BiCGSTAB( b, x ) ;
+		case iterative_linear_solvers::CGS:
+			return solve_CGS( b, x ) ;
 		case iterative_linear_solvers::GMRES:
 			return solve_GMRES( b, x ) ;
 		default:
