@@ -32,26 +32,27 @@ struct BlockTraits
 
 	   //! Can be set to true if data_pointer( const BlockType& ) exist.
 	   uses_plain_array_storage = 0,
-	   //! Ordering inside the block ; only useful is_plain_array is true
+	   //! Ordering inside the block ; only useful uses_plain_array_storage is true
 	   is_row_major = BlockType::IsRowMajor
 	}  ;
 } ;
 
-// Transpose and matrix/vector product return types
+// Transpose, blobk-matrix/vector and block/block product return types
 // Specialization of these structures should define a ReturnType if the operation is allowed
 
-template< typename BlockT >
+//! Defines the return type of an associated transpose_block( const BlockType& ) function
+template< typename BlockType >
 struct BlockTransposeTraits {} ;
 
-template< typename BlockT >
-struct SelfTransposeTraits {} ;
-
-template< typename BlockT >
+//! Defines the type of the vectors resulting from the multiplication of a BlockMatrix and an instance of VectorTypea
+/*! Should be the return type of an associated get_mutable_vector( const VectorType & ) function */
+template< typename VectorType >
 struct BlockVectorProductTraits {} ;
 
-template< typename LhsBlockT, typename RhsBlockT, bool TransposeLhs, bool TransposeRhs >
+//! Defines the return type of the product of two blocks potentially transposed
+template< typename LhsBlockType, typename RhsBlockType, bool TransposeLhs, bool TransposeRhs >
 struct BlockBlockProductTraits {
-	typedef LhsBlockT ReturnType ;
+	typedef LhsBlockType ReturnType ;
 } ;
 
 } // namespace bogus

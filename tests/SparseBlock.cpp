@@ -19,6 +19,7 @@ TEST( SparseBlock, MatrixVector )
 	expected_3 << 768, 768, 768, 0, 0, 0, 0, 0, 0, 3264, 3264, 3264, 0, 0, 0 ;
 
 	typedef Eigen::MatrixXd BlockT ;
+	EXPECT_TRUE( bogus::IsTransposable< BlockT >::Value ) ;
 	bogus::SparseBlockMatrix< BlockT > sbm ;
 	sbm.setRows( 5, 3 ) ;
 	sbm.setCols( 2, 4 ) ;
@@ -439,6 +440,7 @@ TEST( SparseBlock, Inv )
 	EXPECT_EQ( expected_1, matRes.diagonal() )  ;
 
 	typedef bogus::LU< Eigen::MatrixBase< Eigen::MatrixXd > > BlockT ;
+	EXPECT_FALSE( bogus::IsTransposable< BlockT >::Value ) ;
 	bogus::SparseBlockMatrix< BlockT > isbm ;
 	isbm.setRows( 2, 3 ) ;
 	isbm.setCols( 2, 3 ) ;
@@ -449,6 +451,7 @@ TEST( SparseBlock, Inv )
 	Eigen::VectorXd rhs( 6 ) ;
 	rhs.setOnes() ;
 
+	EXPECT_EQ( expected_2, ( isbm * rhs ) ) ;
 	EXPECT_EQ( expected_2, ( isbm * rhs ) ) ;
 
 }
@@ -461,6 +464,7 @@ TEST( SparseBlock, Sparse )
 	expected_2 << 0.5, 1, 1.5, 1, 0.625, 6 ;
 
 	typedef Eigen::SparseMatrix< double > BlockT ;
+	EXPECT_TRUE( bogus::IsTransposable< BlockT >::Value ) ;
 	bogus::SparseBlockMatrix< BlockT > sbm ;
 	sbm.reserve( 10 ) ;
 	sbm.setRows( 2, 3 ) ;
@@ -487,9 +491,12 @@ TEST( SparseBlock, Sparse )
 
 #ifdef BOGUS_WITH_EIGEN_SPARSE_LDLT
 	{
+
 		typedef bogus::SparseLDLT< double > InvBlockT ;
+		EXPECT_FALSE( bogus::IsTransposable< InvBlockT >::Value ) ;
 		bogus::SparseBlockMatrix< InvBlockT > isbm ;
 		isbm.cloneStructure( sbm ) ;
+
 
 		for( unsigned i = 0 ; i < isbm.nBlocks() ; ++i )
 		{
@@ -503,6 +510,7 @@ TEST( SparseBlock, Sparse )
 #ifdef BOGUS_WITH_EIGEN_SPARSE_LU
 	{
 		typedef bogus::SparseLU< double > InvBlockT ;
+		EXPECT_FALSE( bogus::IsTransposable< InvBlockT >::Value ) ;
 		bogus::SparseBlockMatrix< InvBlockT > isbm ;
 		isbm.cloneStructure( sbm ) ;
 
@@ -518,6 +526,9 @@ TEST( SparseBlock, Sparse )
 
 TEST( SparseBlock, Scalar )
 {
+	EXPECT_TRUE( bogus::IsTransposable< double >::Value ) ;
+	EXPECT_TRUE( bogus::IsTransposable< int >::Value ) ;
+	EXPECT_TRUE( bogus::IsTransposable< char >::Value ) ;
 
 	bogus::SparseBlockMatrix< Eigen::VectorXd > sbm ;
 	sbm.setRows( 2, 5 ) ;
@@ -656,6 +667,7 @@ TEST( SparseBlock, Add )
 TEST( SparseBlock, YoDawg )
 {
 	typedef bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::COMPRESSED > BlockType ;
+	EXPECT_TRUE( bogus::IsTransposable< BlockType >::Value ) ;
 
 	bogus::SparseBlockMatrix< BlockType > sbm ;
 

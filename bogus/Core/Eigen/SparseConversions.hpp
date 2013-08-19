@@ -41,8 +41,10 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 	assert( RowsPerBlock != (Index) -1 ) ;
 	assert( ColsPerBlock != (Index) -1 ) ;
 
-	assert( ( (bool) Eigen::SparseMatrixBase< EigenDerived >::IsRowMajor ) ^
-			( (bool) Traits::is_col_major ) ) ;
+	BOGUS_STATIC_ASSERT(
+				( ( (bool) Eigen::SparseMatrixBase< EigenDerived >::IsRowMajor )
+				  ^ ( (bool) Traits::is_col_major ) ),
+				MATRICES_ORDERING_IS_INCONSISTENT ) ;
 
 	assert( 0 == ( source.rows() % RowsPerBlock ) ) ;
 	assert( 0 == ( source.cols() % ColsPerBlock ) ) ;

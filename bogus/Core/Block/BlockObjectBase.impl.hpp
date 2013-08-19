@@ -6,10 +6,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-#ifndef BOGUS_BLOCKMATRIX_IMPL_HPP
-#define BOGUS_BLOCKMATRIX_IMPL_HPP
+#ifndef BOGUS_BLOCKOBJECTBASE_IMPL_HPP
+#define BOGUS_BLOCKOBJECTBASE_IMPL_HPP
 
-#include "BlockMatrix.hpp"
+#include "BlockObjectBase.hpp"
 
 namespace bogus
 {

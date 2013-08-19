@@ -20,7 +20,7 @@
 #include "SparseHeader.hpp"
 #endif
 
-#include "../Block/BlockMatrix.hpp"
+#include "../Block/BlockMatrixBase.hpp"
 #include "../Block/Expressions.hpp"
 
 #ifndef BOGUS_BLOCK_WITHOUT_LINEAR_SOLVERS
@@ -30,17 +30,12 @@
 #endif
 #endif
 
+#include "../Utils/CppTools.hpp"
+
 namespace bogus
 {
 
 // transpose_block, is_zero
-
-template< typename EigenDerived >
-typename EigenDerived::ConstTransposeReturnType
-inline transpose_block ( const Eigen::MatrixBase< EigenDerived >& block )
-{
-	return block.transpose() ;
-}
 
 template< typename EigenDerived >
 inline bool is_zero ( const Eigen::MatrixBase< EigenDerived >& block,
@@ -94,20 +89,6 @@ struct BlockTraits < Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _M
 
 // Block/block product return type
 
-template<bool Transpose, int _Rows, int _Cols >
-struct RowsColsComputer
-{
-	enum { Rows = _Rows } ;
-	enum { Cols = _Cols } ;
-} ;
-
-template< int _Rows, int _Cols >
-struct RowsColsComputer< true, _Rows, _Cols >
-{
-	enum { Rows = _Cols } ;
-	enum { Cols = _Rows } ;
-} ;
-
 template<
 	typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols,
 	typename _Scalar2, int _Rows2, int _Cols2, int _Options2, int _MaxRows2, int _MaxCols2,
@@ -118,11 +99,11 @@ struct BlockBlockProductTraits <
 		TransposeLhs, TransposeRhs >
 {
 	typedef Eigen::Matrix< _Scalar,
-		RowsColsComputer< TransposeLhs, _Rows, _Cols >::Rows,
-		RowsColsComputer< TransposeRhs, _Rows2, _Cols2 >::Cols,
+		SwapIf< TransposeLhs, _Rows, _Cols >::First,
+		SwapIf< TransposeRhs, _Rows2, _Cols2 >::Second,
 		_Options,
-		RowsColsComputer< TransposeLhs, _MaxRows, _MaxCols >::Rows,
-		RowsColsComputer< TransposeRhs, _MaxRows2, _MaxCols2 >::Cols >
+		SwapIf< TransposeLhs, _MaxRows, _MaxCols >::First,
+		SwapIf< TransposeRhs, _MaxRows2, _MaxCols2 >::Second >
 	ReturnType ;
 } ;
 
@@ -135,7 +116,8 @@ struct BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >
 } ;
 
 template< typename Derived >
-inline typename BlockVectorProductTraits< Eigen::MatrixBase< Derived > >::ResVec getBlockProductResVec( const Eigen::MatrixBase< Derived > & )
+inline typename BlockVectorProductTraits< Eigen::MatrixBase< Derived > >::ResVec
+get_mutable_vector( const Eigen::MatrixBase< Derived > & )
 {
 	return typename BlockVectorProductTraits< Eigen::MatrixBase< Derived > >::ResVec() ;
 }

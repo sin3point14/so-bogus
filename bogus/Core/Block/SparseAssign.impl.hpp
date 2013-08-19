@@ -60,6 +60,10 @@ template < typename Derived >
 template < bool Transpose, typename OtherDerived >
 Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< OtherDerived > &source, Scalar scale )
 {
+	BOGUS_STATIC_ASSERT( !Transpose || IsTransposable< typename OtherDerived::BlockType >::Value,
+						 TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
+	) ;
+
 	if( static_cast< const void* >( this ) == static_cast< const void* >( &source ) ) return derived() ;
 
 	typedef typename SparseBlockMatrixBase< OtherDerived >::Traits OtherTraits ;

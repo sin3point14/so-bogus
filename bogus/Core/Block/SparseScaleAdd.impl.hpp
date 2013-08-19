@@ -10,7 +10,7 @@
 
 #include "Access.hpp"
 
-#include "SparseBlockMatrix.hpp"
+#include "SparseBlockMatrixBase.hpp"
 #include "SparseBlockIndexComputer.hpp"
 
 // operators +, -, *, /
@@ -83,6 +83,10 @@ template < typename Derived >
 template < bool Transpose, typename OtherDerived >
 Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< OtherDerived > &rhs, Scalar alpha )
 {
+	BOGUS_STATIC_ASSERT( !Transpose || IsTransposable< typename OtherDerived::BlockType >::Value,
+						 TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
+	) ;
+
 	typedef typename SparseBlockMatrixBase< OtherDerived >::Traits OtherTraits ;
 	typedef std::pair< BlockPtr, typename OtherTraits::BlockPtr > PtrPair ;
 	typedef std::pair< Index, PtrPair > NonZero ;

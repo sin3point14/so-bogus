@@ -11,13 +11,13 @@
 
 #include "Block.hpp"
 
-#include "Block/BlockMatrix.impl.hpp"
+#include "Block/BlockObjectBase.impl.hpp"
 #include "Block/SparseBlockIndex.impl.hpp"
 #include "Block/SparseScaleAdd.impl.hpp"
 #include "Block/SparseMatrixMatrixProduct.impl.hpp"
 #include "Block/SparseAssign.impl.hpp"
 #include "Block/SparseMatrixVectorProduct.impl.hpp"
-#include "Block/SparseBlockMatrix.impl.hpp"
+#include "Block/SparseBlockMatrixBase.impl.hpp"
 
 #ifdef BOGUS_WITH_MKL
 #include "Block/MklBindings.hpp"

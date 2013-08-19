@@ -29,6 +29,9 @@ class SparseBlockMatrixBase ;
 template < typename BlockT, int Flags = flags::NONE >
 class SparseBlockMatrix  ;
 
+template < typename BlockT, int Flags = flags::NONE >
+class MappedSparseBlockMatrix  ;
+
 
 }
 

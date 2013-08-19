@@ -9,18 +9,15 @@
 #define BOGUS_BLOCK_SCALAR_BINDGINS
 
 #include "Expressions.hpp"
+#include <cmath>
 
 #define BOGUS_BLOCK_SCALAR_TYPES \
 	BOGUS_PROCESS_SCALAR( double   ) \
 	BOGUS_PROCESS_SCALAR( float    ) \
 	BOGUS_PROCESS_SCALAR( int      ) \
+	BOGUS_PROCESS_SCALAR( char     ) \
 
 namespace bogus {
-
-#define BOGUS_PROCESS_SCALAR( Scalar ) \
-	template< > struct SelfTransposeTraits< Scalar > { typedef Scalar ReturnType ; } ;
-BOGUS_BLOCK_SCALAR_TYPES
-#undef BOGUS_PROCESS_SCALAR
 
 #define BOGUS_PROCESS_SCALAR( Scalar ) \
 	inline bool is_zero( Scalar s, Scalar precision ) { return std::abs( s ) <= precision ; }
@@ -36,7 +33,8 @@ BOGUS_BLOCK_SCALAR_TYPES
 	template< > struct BlockTraits< Scalar_ > { \
 		typedef Scalar_ Scalar ;  \
 		enum { RowsAtCompileTime = 1, ColsAtCompileTime = 1, \
-			   is_row_major = 0, uses_plain_array_storage = 1 } ; \
+			   is_row_major = 0, uses_plain_array_storage = 1, \
+			   is_self_transpose = 1 } ; \
 	} ;
 BOGUS_BLOCK_SCALAR_TYPES
 #undef BOGUS_PROCESS_SCALAR

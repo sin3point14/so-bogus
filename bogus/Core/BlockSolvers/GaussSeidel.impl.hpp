@@ -11,7 +11,8 @@
 
 #include "GaussSeidel.hpp"
 #include "BlockSolverBase.impl.hpp"
-#include "../Block/BlockMatrix.hpp"
+
+#include "../Block/BlockMatrixBase.hpp"
 
 namespace bogus
 {

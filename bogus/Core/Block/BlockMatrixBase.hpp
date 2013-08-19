@@ -9,68 +9,20 @@
 #ifndef BOGUS_BLOCKMATRIX_HPP
 #define BOGUS_BLOCKMATRIX_HPP
 
-#include "../Block.fwd.hpp"
+#include "BlockObjectBase.hpp"
 
 namespace bogus
 {
-
-//! Base empty class, for technical reasons only
-struct Object {} ;
-
-//! Base class for anything block
-template < typename Derived >
-struct BlockObjectBase : public Object
-{
-	//! Returns a const reference to the implementation
-	const Derived& derived() const ;
-	//! Returns a reference to the implementation
-	Derived& derived() ;
-
-	typedef BlockMatrixTraits< Derived > Traits ;
-
-	typedef typename Traits::Index Index ;
-	typedef typename Traits::Scalar Scalar ;
-	typedef typename Traits::ConstTransposeReturnType ConstTransposeReturnType ;
-	typedef typename Traits::TransposeObjectType TransposeObjectType ;
-
-	typedef typename Traits::PlainObjectType PlainObjectType ;
-	typedef typename Traits::EvalType EvalType ;
-	enum { is_transposed = Traits::is_transposed } ;
-
-	//! Returns the total number of rows of the matrix ( expanding blocks )
-	Index rows() const { return derived().rows() ; }
-	//! Returns the total number of columns of the matrix ( expanding blocks )
-	Index cols() const { return derived().cols() ; }
-
-	//! Return a const transposed view of this object
-	ConstTransposeReturnType transpose() const { return derived().transpose() ; }
-
-	//! Eval this object in a temporary. For internal use, not part of the public API
-	EvalType eval() const { return derived().eval() ; }
-};
-
-//! Default specialization of traits for BlockMatrices
-/*! Re-specialiazed for derived classes, see e.g. BlockMatrixTraits< SparseBlockMatrix > */
-template< typename Derived  >
-struct BlockMatrixTraits< BlockObjectBase< Derived > > {
-
-	typedef BOGUS_DEFAULT_INDEX_TYPE Index ;
-	typedef BOGUS_DEFAULT_BLOCK_PTR_TYPE BlockPtr ;
-	typedef Derived PlainObjectType ;
-	typedef const PlainObjectType* EvalType ;
-
-	typedef Transpose< Derived > ConstTransposeReturnType ;
-	typedef ConstTransposeReturnType TransposeObjectType ;
-} ;
 
 //! Base class for dense and sparse block matrices, thought dense don't exist yet
 template < typename Derived >
 class BlockMatrixBase : public BlockObjectBase< Derived >
 {
 public:
-	typedef typename BlockMatrixTraits< Derived >::BlockType BlockType ;
-	typedef typename BlockMatrixTraits< Derived >::Index Index ;
-	typedef typename BlockMatrixTraits< Derived >::Scalar Scalar ;
+    typedef BlockMatrixTraits< Derived > Traits ;
+    typedef typename Traits::BlockType BlockType ;
+    typedef typename Traits::Index Index ;
+    typedef typename Traits::Scalar Scalar ;
 
 	typedef BlockObjectBase< Derived > Base;
 	using Base::derived ;
@@ -162,7 +114,7 @@ protected:
 	Index m_rows ;
 	Index m_cols ;
 
-	typename BlockContainerTraits< BlockType >::Type m_blocks ;
+    typename Traits::BlocksArrayType m_blocks ;
 } ;
 
 
