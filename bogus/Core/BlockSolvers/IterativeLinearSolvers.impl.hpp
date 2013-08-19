@@ -48,8 +48,8 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::init( const RhsT &
 	const Scalar resAt0 = b.squaredNorm()  ;
 
 	if( res > resAt0 ) {
-		x.setZero() ;
 		r0 = b;
+		x.setZero() ;
 		res = resAt0 ;
 	}
 	return res * m_scale ;
@@ -112,10 +112,9 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_BiCG( const 
 	Scalar res = init( b, x, r ) ;
 	if( res < m_tol ) return res ;
 
-	Vector b_ = b ;
 	Vector x_ = x ;
 
-	Vector r_ = b_ ;
+	Vector r_ = b ;
 	m_matrix->template multiply< true >( x_, r_, 1, 1 );
 
 	Vector p( r.rows() ), p_ ( r_.rows() ) ;
@@ -233,7 +232,7 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_CGS( const R
 	Vector u = r, p = r, q ;
 	Scalar rho1, rho0, alpha, beta ;
 
-		Vector y( m_matrix->cols() ), nu ( m_matrix->rows() ) ;
+	Vector y( m_matrix->cols() ), nu ( m_matrix->rows() ) ;
 
 	for( unsigned k = 0 ; k < m_maxIters ; ++k )
 	{
@@ -411,6 +410,39 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_GMRES( const
 	return res ;
 }
 
+// TFQMR
+
+template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
+template < typename RhsT, typename ResT >
+typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
+IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_TFQMR( const RhsT &b, ResT &x ) const
+{
+	typedef typename GlobalProblemTraits::DynVector Vector ;
+	Vector r ;
+
+	Scalar res = init( b, x, r ) ;
+	if( res < m_tol ) return res ;
+
+	const Vector r0h = r ;
+
+	for( unsigned k = 0 ; k < m_maxIters ; ++k )
+	{
+//		rho1 = r0h.dot( r ) ;
+
+//		if( NumTraits< Scalar >::isZero( rho1 ) )
+//			break ;
+
+
+		res = r.squaredNorm() * m_scale;
+		this->m_callback.trigger( k, res ) ;
+		if( res < m_tol ) break ;
+
+//		rho0 = rho1 ;
+	}
+
+	return res ;
+}
+
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 template < typename RhsT, typename ResT >
@@ -424,14 +456,14 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve( const RhsT 
 			return solve_CG( b, x ) ;
 		case iterative_linear_solvers::BiCG:
 			return solve_BiCG( b, x ) ;
-		case iterative_linear_solvers::BiCG_STAB:
+		case iterative_linear_solvers::BiCGSTAB:
 			return solve_BiCGSTAB( b, x ) ;
 		case iterative_linear_solvers::CGS:
 			return solve_CGS( b, x ) ;
 		case iterative_linear_solvers::GMRES:
 			return solve_GMRES( b, x ) ;
-		default:
-			return -1 ;
+		case iterative_linear_solvers::TFQMR:
+			return solve_TFQMR( b, x ) ;
 	}
 }
 

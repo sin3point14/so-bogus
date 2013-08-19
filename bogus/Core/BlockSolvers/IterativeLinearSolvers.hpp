@@ -50,7 +50,9 @@ public:
 	Scalar solve_CG( const RhsT &b, ResT &x ) const ;
 
 	//! Solves ( m_matrix * \p x = \p b ) using the BiConjugate Gradient algorithm
-	/*! Works for non-symmetric linear systems. Convergence not guaranteed */
+	/*! Works for non-symmetric linear systems. Convergence not guaranteed.
+		Requires ability to perform transpose multiplication / presconidtioning
+	*/
 	template < typename RhsT, typename ResT >
 	Scalar solve_BiCG( const RhsT &b, ResT &x ) const ;
 
@@ -68,6 +70,11 @@ public:
 	/*! Works for non-symmetric linear systems. Convergence not guaranteed */
 	template < typename RhsT, typename ResT >
 	Scalar solve_GMRES( const RhsT &b, ResT &x, unsigned restart = 0 ) const ;
+
+	//! Solves ( m_matrix * \p x = \p b ) using the transpose-free Quasi Minimal Reisual method
+	/*! Works for non-symmetric linear systems. Convergence not guaranteed */
+	template < typename RhsT, typename ResT >
+	Scalar solve_TFQMR( const RhsT &b, ResT &x ) const ;
 
 	//! Solve function that takes the method to use as an argument
 	template < typename RhsT, typename ResT >
