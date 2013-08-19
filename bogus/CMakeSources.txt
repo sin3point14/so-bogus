@@ -3,12 +3,13 @@ Core/Block.hpp
 Core/Block.impl.hpp
 Core/Block.io.hpp
 Core/Block/Access.hpp
-Core/Block/BlockMatrix.hpp
-Core/Block/BlockMatrix.impl.hpp
+Core/Block/BlockMatrixBase.hpp
+Core/Block/BlockObjectBase.impl.hpp
 Core/Block/CompoundSparseBlockIndex.hpp
 Core/Block/CompressedSparseBlockIndex.hpp
 Core/Block/Constants.hpp
 Core/Block/Expressions.hpp
+Core/Block/MappedSparseBlockMatrix.hpp
 Core/Block/MklBindings.hpp
 Core/Block/ScalarBindings.hpp
 Core/Block/Serialization.hpp
@@ -17,7 +18,8 @@ Core/Block/SparseBlockIndex.hpp
 Core/Block/SparseBlockIndex.impl.hpp
 Core/Block/SparseBlockIndexComputer.hpp
 Core/Block/SparseBlockMatrix.hpp
-Core/Block/SparseBlockMatrix.impl.hpp
+Core/Block/SparseBlockMatrixBase.hpp
+Core/Block/SparseBlockMatrixBase.impl.hpp
 Core/Block/SparseMatrixMatrixProduct.impl.hpp
 Core/Block/SparseMatrixVectorProduct.impl.hpp
 Core/Block/SparseScaleAdd.impl.hpp
@@ -52,6 +54,7 @@ Core/SOC/SOCLaw.impl.hpp
 Core/SecondOrder.fwd.hpp
 Core/SecondOrder.hpp
 Core/SecondOrder.impl.hpp
+Core/Utils/CppTools.hpp
 Core/Utils/LinearSolverBase.hpp
 Core/Utils/NonSmoothNewton.hpp
 Core/Utils/NonSmoothNewton.impl.hpp

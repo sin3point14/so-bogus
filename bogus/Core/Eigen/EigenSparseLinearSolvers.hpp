@@ -18,7 +18,7 @@
 #ifdef BOGUS_WITH_EIGEN_STABLE_SPARSE_API
 
 #include "../Utils/LinearSolverBase.hpp"
-#include "../Utils/CppTools.hpp"
+#include "../Utils/NaiveSharedPtr.hpp"
 
 #include <Eigen/OrderingMethods>
 
