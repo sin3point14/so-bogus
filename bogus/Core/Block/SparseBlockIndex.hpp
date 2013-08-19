@@ -202,10 +202,6 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 		return nnz ;
 	}
 
-	void setPtr( const InnerIterator& it, BlockPtr ptr )
-	{
-		const_cast< BlockPtr& >( it.toStdIterator()->second ) = ptr ;
-	}
 } ;
 
 template < bool Compressed, typename _Index, typename _BlockPtr >

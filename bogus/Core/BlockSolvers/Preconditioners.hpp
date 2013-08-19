@@ -8,8 +8,6 @@
 #ifndef BOGUS_PRECONDITIONERS_HPP
 #define BOGUS_PRECONDITIONERS_HPP
 
-#include "../Block/BlockMatrix.hpp"
-
 namespace bogus {
 
 //! Trivial ( identity ) preconditioner. Does nothing.

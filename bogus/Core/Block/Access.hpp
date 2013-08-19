@@ -11,15 +11,30 @@
 
 #include "Constants.hpp"
 
+#include "../Utils/CppTools.hpp"
+
 namespace bogus {
 
 //! Specialization of transpose_block() for self-adjoint types
 template < typename SelfTransposeT >
-inline const typename SelfTransposeTraits< SelfTransposeT >::ReturnType& transpose_block( const SelfTransposeT &block  ) { return  block ; }
+inline typename EnableIf< BlockTraits< SelfTransposeT >::is_self_transpose, const SelfTransposeT& >::ReturnType
+transpose_block( const SelfTransposeT &block  ) { return  block ; }
+
+//! Specialization of transpose_block() for types that define a ConstTransposeReturnType
+template< typename BlockType >
+typename BlockType::ConstTransposeReturnType
+inline transpose_block ( const BlockType& block )
+{
+	return block.transpose() ;
+}
 
 //! Utility struct for expressing a compile-time conditional transpose of a block
+// In all of the following get functions, the dummy "bool = false" argument is there so
+// that the specialization of BlockTransposeOption that does not perform a runtime check
+// can just inherit from BlockGetter, and does not have to know the type returned by the get() function
 template < bool DoTranspose >
 struct BlockGetter {
+
 	template < typename BlockT >
 	inline static const BlockT& get( const BlockT& src, bool = false )
 	{ return src ; }
@@ -33,16 +48,41 @@ struct BlockGetter< true > {
 	{ return src.transpose() ; }
 
 	template < typename BlockT >
-	inline static typename BlockTransposeTraits< typename BlockT::Base >::ReturnType get( const BlockT& src, bool = false )
-	{ return transpose_block( src ) ; }
-
-	template < typename BlockT >
 	inline static typename BlockTransposeTraits< BlockT >::ReturnType get( const BlockT& src, bool = false )
 	{ return transpose_block( src ) ; }
 
+	// Retry with BlockT::Base, but only if the previous one was not successful ( to avoid ambiguities )
 	template < typename BlockT >
-	inline static typename SelfTransposeTraits< BlockT >::ReturnType get( const BlockT& src, bool = false )
+	inline static typename DisableIf< HasReturnType< BlockTransposeTraits< BlockT > >::Value,
+	typename BlockTransposeTraits< typename BlockT::Base >::ReturnType >::ReturnType get( const BlockT& src, bool = false )
+	{ return transpose_block( src ) ; }
+
+	template < typename BlockT >
+	inline static typename EnableIf< BlockTraits< BlockT >::is_self_transpose, const BlockT& >::ReturnType
+	get( const BlockT& src, bool = false )
 	{ return src ; }
+
+	typedef char NonTransposableReturnType ;
+
+	template < typename >
+	static NonTransposableReturnType get( ... ) ;
+
+} ;
+
+//! Check if there is a non-trivial specialization of BlockGetter<true>::get.
+/*! Only useful to display better compilation error messages.
+	False positive if sizeof( BlockType ) = sizeof( char ) and BlockType is not char.
+*/
+template < typename BlockType >
+struct IsTransposable
+{
+public:
+	enum {
+		Value = ( sizeof(BlockGetter< true >::NonTransposableReturnType ) == sizeof( BlockType ) )
+			|| 	( sizeof(BlockGetter< true >::NonTransposableReturnType ) !=
+				  sizeof(BlockGetter< true >::template get< BlockType >( * (BlockType*) 0 ) ) )
+	} ;
+
 } ;
 
 template < bool RuntimeCheck, bool DoTranspose >
@@ -60,18 +100,11 @@ template< typename BlockT, bool Transpose_ = false >
 struct BlockDims
 {
 	typedef BlockTraits< BlockT > Traits ;
-	enum { Rows = Traits::RowsAtCompileTime,
-		   Cols = Traits::ColsAtCompileTime } ;
-} ;
-template< typename BlockT >
-struct BlockDims< BlockT, true >
+	typedef SwapIf< Transpose_, Traits::RowsAtCompileTime, Traits::ColsAtCompileTime > Dims ;
 
-{
-	typedef BlockTraits< BlockT > Traits ;
-	enum { Rows = Traits::ColsAtCompileTime,
-		   Cols = Traits::RowsAtCompileTime } ;
+		enum { Rows = Dims::First,
+			   Cols = Dims::Second } ;
 } ;
-
 
 //! Access to segment of a vector corresponding to a given block-row
 template < int DimensionAtCompileTime, typename VectorType, typename Index >

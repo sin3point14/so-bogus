@@ -12,7 +12,7 @@
 #include "Expressions.hpp"
 #include "Access.hpp"
 
-#include "SparseBlockMatrix.hpp"
+#include "SparseBlockMatrixBase.hpp"
 #include "SparseBlockIndexComputer.hpp"
 
 #include <map>
@@ -46,6 +46,13 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 	typename Prod::Rhs::EvalType rhs = prod.rhs.object.eval() ;
 	typedef BlockMatrixTraits< typename Prod::PlainLhsMatrixType > LhsTraits ;
 	typedef BlockMatrixTraits< typename Prod::PlainRhsMatrixType > RhsTraits ;
+
+	BOGUS_STATIC_ASSERT( !Prod::transposeLhs || IsTransposable< typename LhsTraits::BlockType >::Value,
+						 TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
+	) ;
+	BOGUS_STATIC_ASSERT( !Prod::transposeRhs || IsTransposable< typename RhsTraits::BlockType >::Value,
+						 TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
+	) ;
 
 	typedef BlockTransposeOption< LhsTraits::is_symmetric, Prod::transposeLhs > LhsGetter ;
 	LhsGetter lhsGetter ;

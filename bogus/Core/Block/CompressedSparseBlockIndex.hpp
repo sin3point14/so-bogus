@@ -164,9 +164,9 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 	}
 
 
-	void setPtr( const InnerIterator& it, BlockPtr ptr )
+	void setBase( const Index b )
 	{
-		base = ptr - it.rawIndex() ;
+		base = b ;
 		valid = true ;
 	}
 

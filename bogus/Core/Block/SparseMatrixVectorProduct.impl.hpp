@@ -9,7 +9,7 @@
 #ifndef BOGUS_SPARSE_MATRIXVECTOR_PRODUCT_HPP
 #define BOGUS_SPARSE_MATRIXVECTOR_PRODUCT_HPP
 
-#include "SparseBlockMatrix.hpp"
+#include "SparseBlockMatrixBase.hpp"
 #include "Expressions.hpp"
 #include "Access.hpp"
 
@@ -148,7 +148,7 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 				}
 			}
 #else
-			multiplyAndReduct( matrix, rhs, res, getBlockProductResVec( res ), alpha ) ;
+			multiplyAndReduct( matrix, rhs, res, get_mutable_vector( res ), alpha ) ;
 #endif
 		}
 	}
@@ -201,7 +201,7 @@ struct OutOfOrderSparseBlockMatrixVectorMultiplier
 			innerColMultiply< Transpose >( matrix.data(), matrix.majorIndex(), i, rhsSegmenter[i], res, alpha ) ;
 		}
 #else
-		multiplyAndReduct( matrix, rhs, res, getBlockProductResVec( res ), alpha ) ;
+		multiplyAndReduct( matrix, rhs, res, get_mutable_vector( res ), alpha ) ;
 #endif
 	}
 
@@ -332,6 +332,9 @@ void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res,
 												 typename SparseBlockMatrixBase< Derived >::Scalar alpha,
 												 typename SparseBlockMatrixBase< Derived >::Scalar beta  ) const
 {
+	BOGUS_STATIC_ASSERT( !Transpose || IsTransposable< typename Derived::BlockType >::Value,
+						 TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
+	) ;
 
 	SparseBlockMatrixOpProxy< is_bsr_compatible, Base::has_row_major_blocks, Scalar, Index >
 			::template multiply< Transpose >( *this, rhs, res, alpha, beta ) ;

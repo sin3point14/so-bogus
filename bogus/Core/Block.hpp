@@ -10,14 +10,17 @@
 #define BOGUS_BLOCK_HPP
 
 #include "Block.fwd.hpp"
-#ifndef BOGUS_WITHOUT_EIGEN
-#include "Eigen/EigenBlockContainers.hpp"
-#endif
-#include "Block/SparseBlockMatrix.hpp"
+
+#include "Block/BlockObjectBase.hpp"
 #include "Block/ScalarBindings.hpp"
+#include "Block/BlockMatrixBase.hpp"
 
 #ifndef BOGUS_WITHOUT_EIGEN
+#include "Eigen/EigenBlockContainers.hpp"
 #include "Eigen/BlockBindings.hpp"
 #endif
+
+#include "Block/SparseBlockMatrix.hpp"
+#include "Block/MappedSparseBlockMatrix.hpp"
 
 #endif

@@ -6,12 +6,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-#ifndef BOGUS_SPARSE_BLOCK_MATRIX_IMPL_HPP
-#define BOGUS_SPARSE_BLOCK_MATRIX_IMPL_HPP
+#ifndef BOGUS_SPARSE_BLOCK_MATRIX_BASE_IMPL_HPP
+#define BOGUS_SPARSE_BLOCK_MATRIX_BASE_IMPL_HPP
 
 #include "Access.hpp"
 
-#include "SparseBlockMatrix.hpp"
+#include "SparseBlockMatrixBase.hpp"
 #include "SparseBlockIndexComputer.hpp"
 
 #include <algorithm>
@@ -217,9 +217,12 @@ SparseBlockMatrixBase< Derived >::getOrComputeMinorIndex( UncompressedIndexType 
 }
 
 template < typename Derived >
-void SparseBlockMatrixBase< Derived >::cacheTranspose()
+void SparseBlockMatrixBase<Derived>::cacheTranspose()
 {
-	assert( Base::has_square_or_dynamic_blocks ) ;
+    BOGUS_STATIC_ASSERT( Base::has_square_or_dynamic_blocks, BLOCKS_MUST_BE_SQUARE_OR_HAVE_DYNAMIC_DIMENSIONS ) ;
+    BOGUS_STATIC_ASSERT( IsTransposable< typename Derived::BlockType >::Value,
+                         TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
+    ) ;
 
 	if ( m_transposeIndex.valid ) return ;
 
@@ -228,14 +231,16 @@ void SparseBlockMatrixBase< Derived >::cacheTranspose()
 	m_blocks.resize( 2*m_nBlocks ) ;
 
 	BlockPtr base = m_nBlocks ;
-	std::vector< BlockPtr > ptrOffsets( m_minorIndex.outerSize() ) ;
+
+    std::vector< BlockPtr > ptrOffsets( m_minorIndex.outerSize() ) ;
 	for( Index i = 0 ; i < m_minorIndex.outerSize() ; ++i )
 	{
 		ptrOffsets[i] = base ;
 		base += m_minorIndex.size( i ) ;
 	}
 
-	m_transposeIndex = m_minorIndex ;
+    m_transposeIndex = m_minorIndex ;
+    m_transposeIndex.setBase( m_nBlocks ) ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
@@ -243,16 +248,16 @@ void SparseBlockMatrixBase< Derived >::cacheTranspose()
 	for ( int i = 0 ; i < (int) m_minorIndex.outerSize() ; ++ i )
 	{
 
-		typename UncompressedIndexType::InnerIterator uncompressed_it
+        typename MinorIndexType::InnerIterator uncompressed_it
 			 ( m_minorIndex , i ) ;
-		for( typename MajorIndexType::InnerIterator it( m_transposeIndex, i ) ;
+        for( typename TransposeIndexType::InnerIterator it( m_transposeIndex, i ) ;
 			 it ; ++ it, ++uncompressed_it )
 		{
 			const BlockPtr ptr = ptrOffsets[i]++ ;
 			block( ptr ) = transpose_block( block( uncompressed_it.ptr() ) ) ;
-			m_transposeIndex.setPtr( it, ptr ) ;
 		}
 	}
+
 
 	assert( m_minorIndex.valid ) ;
 	assert( m_transposeIndex.valid ) ;

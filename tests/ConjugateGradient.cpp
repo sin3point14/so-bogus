@@ -15,6 +15,7 @@ static void ackCurrentResidual( unsigned GSIter, double err )
 
 TEST( IterativeLinearSolver, CG )
 {
+
 	const Eigen::Vector3d expected_1( .5, .5, .5 ) ;
 	const Eigen::Vector3d expected_2( 2, 1, 3 ) ;
 

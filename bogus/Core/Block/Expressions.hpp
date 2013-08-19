@@ -9,7 +9,7 @@
 #ifndef BOGUS_BLOCK_EXPRESSIONS_HPP
 #define BOGUS_BLOCK_EXPRESSIONS_HPP
 
-#include "BlockMatrix.hpp"
+#include "BlockObjectBase.hpp"
 
 #include <memory>
 
@@ -157,8 +157,8 @@ struct BlockMatrixTraits< Product< LhsMatrixT, RhsMatrixT > >
 	typedef typename BlockBlockProductTraits< LhsBlockType, RhsBlockType,
 		LhsTraits::is_transposed, RhsTraits::is_transposed >::ReturnType ResBlockType ;
 
-	typedef typename BlockMatrixTraits< typename LhsTraits::PlainObjectType >
-		::template WithBlock< ResBlockType >::Type PlainObjectType ;
+	typedef typename LhsTraits::PlainObjectType
+		::template MutableImpl< ResBlockType >::Type PlainObjectType ;
 	typedef std::auto_ptr< const PlainObjectType > EvalType ;
 
 	typedef typename LhsTraits::Scalar Scalar ;
@@ -198,8 +198,13 @@ struct BlockMatrixTraits< Addition< LhsMatrixT, RhsMatrixT > >
 	typedef BlockMatrixTraits< LhsMatrixT > OrigTraits;
 	typedef typename OrigTraits::Index Index ;
 	typedef typename OrigTraits::BlockPtr BlockPtr ;
-	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
+
+	typedef typename OrigTraits::PlainObjectType::BlockType ResBlockType ;
+
+	typedef typename OrigTraits::PlainObjectType
+		::template MutableImpl< ResBlockType >::Type PlainObjectType ;
 	typedef std::auto_ptr< const PlainObjectType > EvalType ;
+
 	typedef typename OrigTraits::Scalar Scalar ;
 
 	typedef Addition< typename BlockOperand< LhsMatrixT >::ObjectType::TransposeObjectType,

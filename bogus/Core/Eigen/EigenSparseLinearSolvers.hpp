@@ -18,10 +18,9 @@
 #ifdef BOGUS_WITH_EIGEN_STABLE_SPARSE_API
 
 #include "../Utils/LinearSolverBase.hpp"
+#include "../Utils/CppTools.hpp"
 
 #include <Eigen/OrderingMethods>
-
-#include <tr1/memory>
 
 
 #ifndef EIGEN_MPL2_ONLY
@@ -76,7 +75,7 @@ struct LDLT< Eigen::SparseMatrixBase< Derived > >
 	}
 
   private:
-	std::tr1::shared_ptr< typename Traits::FactType > m_fact ;
+	BOGUS_SHARED_PTR( typename Traits::FactType, m_fact ) ;
 } ;
 
 template < typename Scalar, int _Options = 0, typename _Index = int >
@@ -147,7 +146,7 @@ struct LU< Eigen::SparseMatrixBase< Derived > >
 	}
 
   private:
-	std::tr1::shared_ptr< typename Traits::FactType > m_fact ;
+	BOGUS_SHARED_PTR( typename Traits::FactType, m_fact ) ;
 } ;
 
 template < typename Scalar, int _Options = 0, typename _Index = int >
