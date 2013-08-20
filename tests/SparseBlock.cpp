@@ -497,8 +497,10 @@ TEST( SparseBlock, Sparse )
 		bogus::SparseBlockMatrix< InvBlockT > isbm ;
 		isbm.cloneStructure( sbm ) ;
 
-
-		for( unsigned i = 0 ; i < isbm.nBlocks() ; ++i )
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
+		for( int i = 0 ; i < (int) isbm.nBlocks() ; ++i )
 		{
 			isbm.block(i).compute( sbm.block(i) );
 		}
@@ -514,7 +516,10 @@ TEST( SparseBlock, Sparse )
 		bogus::SparseBlockMatrix< InvBlockT > isbm ;
 		isbm.cloneStructure( sbm ) ;
 
-		for( unsigned i = 0 ; i < isbm.nBlocks() ; ++i )
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
+		for( int i = 0 ; i < (int) isbm.nBlocks() ; ++i )
 		{
 			isbm.block(i).compute( sbm.block(i) );
 		}

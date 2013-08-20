@@ -20,7 +20,7 @@
 #endif
 
 #ifndef BOGUS_DEFAULT_BLOCK_PTR_TYPE
-#define BOGUS_DEFAULT_BLOCK_PTR_TYPE unsigned
+#define BOGUS_DEFAULT_BLOCK_PTR_TYPE std::size_t
 #endif
 
 namespace bogus
