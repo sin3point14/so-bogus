@@ -465,6 +465,7 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve( const RhsT 
 		case iterative_linear_solvers::TFQMR:
 			return solve_TFQMR( b, x ) ;
 	}
+	return -1 ;
 }
 
 } // namespace bogus

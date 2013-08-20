@@ -25,24 +25,27 @@ namespace bogus {
 //! Naive reference-counting Shared Pointer
 /*! There's no reason to use this implementation over any other one from boost, tr1, or c++11,
   except for c++98 compability. Fortunately it is only used for an edge case ( see EigenSparseLinearSolvers.hpp )
+
+  \warning This class is *NOT* thread-safe. However, multiple NaiveSmartPointers pointing
+  to the same shared instance should be able to be safely reset in parallel.
+
 */
 template < typename T >
 class NaiveSharedPtr
 {
 private:
 
-	T* m_instance ;
-	unsigned* m_refCount ;
+    T* m_instance ;
+    int* m_refCount ;
 
 public:
 
-	NaiveSharedPtr( T * instance = 0 )
+    explicit NaiveSharedPtr( T * instance = 0 )
 	{
 		acquire( instance ) ;
 	}
 
 	NaiveSharedPtr( const NaiveSharedPtr< T >& rhs )
-		: m_refCount( NULL )
 	{
 		add_ref( rhs ) ;
 	}
@@ -70,17 +73,15 @@ public:
 
 	void release()
 	{
-		if( m_instance )
-		{
-			if( 0 == --*m_refCount )
-			{
-				delete m_instance ;
-				delete m_refCount ;
-			}
+        T* instance = NULL ;
+        std::swap( m_instance, instance ) ;
 
-			m_instance = NULL ;
-			m_refCount = NULL ;
-		}
+
+        if( instance && 0 == sync_add< -1 > () )
+        {
+            delete instance ;
+            delete m_refCount ;
+        }
 	}
 
 	T& operator * ( ) {
@@ -108,26 +109,58 @@ public:
 
 private:
 
+    T* add_ref() const
+    {
+        T* instance = m_instance ;
+
+        if( instance && sync_add< 1 >() <= 1 )
+        {
+            // Here m_refCount may already been deleted if another thread is simultaneously releasing
+            // this object. We hope that the memory location is still accessible and check for destruction
+            // But as I said previously, this class is *NOT* thread-safe
+            instance = NULL ;
+        }
+
+        return instance ;
+    }
+
 	void add_ref( const NaiveSharedPtr< T >& rhs )
 	{
-		m_instance = rhs.m_instance ;
-		if( m_instance )
-		{
-			m_refCount = rhs.m_refCount ;
-			++*m_refCount ;
-		}
-	}
+        m_refCount = rhs.m_refCount ;
+        m_instance = rhs.add_ref() ;
+    }
 
 	void acquire( T* instance )
 	{
-		m_instance = instance ;
-		if( m_instance ) {
-			m_refCount = new unsigned ;
-			*m_refCount = 1 ;
-		} else {
-			m_refCount = NULL ;
-		}
-	}
+        if( instance ) {
+            m_refCount = new int ;
+            *m_refCount = 1 ;
+        }
+        m_instance = instance ;
+    }
+
+
+    template< int val >
+    inline int sync_add() const
+    {
+
+#ifndef BOGUS_DONT_USE_BUILTIN_ATOMICS
+        return __sync_add_and_fetch( m_refCount, val );
+#else
+        int t;
+
+#ifdef OPENMP_3_1
+#pragma omp atomic capture
+#else
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp critical
+#endif
+#endif
+        { t = ( *m_refCount += val ) ; }
+        return t;
+#endif
+    }
+
 } ;
 
 } //naemspace bogus

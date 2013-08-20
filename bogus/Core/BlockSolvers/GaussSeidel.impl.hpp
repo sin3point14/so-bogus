@@ -174,9 +174,9 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 				continue ;
 			}
 
+			lx = xSegmenter[ i ] ;
 			lb = bSegmenter[ i ] - m_regularization(i) * lx ;
 			m_matrix->splitRowMultiply( i, x, lb ) ;
-			lx = xSegmenter[ i ] ;
 			ldx = -lx ;
 
 			const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ i ] ) ;
