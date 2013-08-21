@@ -195,7 +195,7 @@ double MecheFrictionProblem::solve(double *r,
 
 
 	// r to local coords
-	Eigen::VectorXd r_loc = m_primal->E.transpose() * Eigen::VectorXd::Map( r, 3*n ) ; ;
+	Eigen::VectorXd r_loc = m_primal->E.transpose() * Eigen::VectorXd::Map( r, 3*n ) ;
 
 	bogus::DualFrictionProblem<3u>::GaussSeidelType gs ;
 	if( tol != 0. ) gs.setTol( tol );
@@ -216,7 +216,7 @@ double MecheFrictionProblem::solve(double *r,
 					Eigen::VectorXd::Map( m_primal->f, m_primal->H.cols() ) ) ;
 	}
 
-	if( m_out )
+	if( m_out && n != 0 )
 	{
 		*m_out << "Max coeff : " << r_loc.lpNorm< Eigen::Infinity >() << std::endl ;
 	}
