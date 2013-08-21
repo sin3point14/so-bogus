@@ -29,7 +29,7 @@ class SparseBlockMatrixBase ;
 template < typename BlockT, int Flags = flags::NONE >
 class SparseBlockMatrix  ;
 
-template < typename BlockT, int Flags = flags::NONE >
+template < typename BlockT, int Flags = flags::NONE, typename Index = BOGUS_DEFAULT_INDEX_TYPE >
 class MappedSparseBlockMatrix  ;
 
 

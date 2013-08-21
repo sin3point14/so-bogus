@@ -77,14 +77,15 @@ struct SparseBlockIndexBase
 } ;
 
 //! Uncompressed sparse block index
-template < bool Compressed, typename _Index, typename _BlockPtr = _Index  >
-struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compressed, _Index, _BlockPtr > >
+template < bool Compressed, typename Index_, typename BlockPtr_ = Index_,
+		   template <typename> class ArrayType = ResizableSequenceContainer >
+struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compressed, Index_, BlockPtr_, ArrayType > >
 {
 
-	typedef _Index Index ;
-	typedef _BlockPtr BlockPtr ;
+	typedef Index_ Index ;
+	typedef BlockPtr_ BlockPtr ;
 
-	typedef SparseBlockIndexBase<  SparseBlockIndex< Compressed, _Index, _BlockPtr > > Base ;
+	typedef SparseBlockIndexBase<  SparseBlockIndex< Compressed, Index_, BlockPtr_, ArrayType > > Base ;
 	typedef typename Base::InnerOffsetsType InnerOffsetsType ;
 	typedef typename Base::InnerIterator    InnerIterator ;
 	using Base::valid ;
@@ -92,7 +93,7 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 	//! Vector of ( inner index ; block pointer ) tuples encoding an inner vector
 	typedef std::vector < std::pair< Index, BlockPtr > > Inner ;
 	//! Vector of inner vectors
-	typedef std::vector < Inner > Outer ;
+	typedef typename ArrayType< Inner >::Type Outer ;
 
 	InnerOffsetsType innerOffsets ;
 	Outer outer ;
@@ -204,13 +205,13 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 
 } ;
 
-template < bool Compressed, typename _Index, typename _BlockPtr >
-struct SparseBlockIndexTraits<  SparseBlockIndex< Compressed, _Index, _BlockPtr > >
+template < bool Compressed, typename Index_, typename BlockPtr_,  template <typename> class ArrayType >
+struct SparseBlockIndexTraits<  SparseBlockIndex< Compressed, Index_, BlockPtr_, ArrayType > >
 {
-	typedef _Index Index;
-	typedef _BlockPtr BlockPtr;
+	typedef Index_ Index;
+	typedef BlockPtr_ BlockPtr;
 
-	typedef SparseBlockIndex< Compressed, _Index, _BlockPtr > SparseBlockIndexType ;
+	typedef SparseBlockIndex< Compressed, Index_, BlockPtr_, ArrayType > SparseBlockIndexType ;
 
 	//! Forward iterator
 	struct InnerIterator

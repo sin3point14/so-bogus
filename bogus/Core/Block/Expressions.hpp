@@ -237,7 +237,7 @@ struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
 	}
 
 	typename Base::Index rows() const { return operand.object.rows() ; }
-	typename Base::Index cols() const { return operand.object.rows() ; }
+	typename Base::Index cols() const { return operand.object.cols() ; }
 
 	EvalType eval() const {
 		PlainOperandMatrixType *res = new PlainOperandMatrixType() ;

@@ -78,9 +78,9 @@ typename SparseBlockIndexBase< Derived >::InnerIterator SparseBlockIndexBase< De
 
 
 
-template < bool Compressed, typename Index, typename BlockPtr  >
+template < bool Compressed, typename Index, typename BlockPtr, template <typename> class ArrayType  >
 template < typename SourceDerived >
-SparseBlockIndex< Compressed, Index, BlockPtr > & SparseBlockIndex< Compressed, Index, BlockPtr >::operator=(
+SparseBlockIndex< Compressed, Index, BlockPtr, ArrayType > & SparseBlockIndex< Compressed, Index, BlockPtr, ArrayType >::operator=(
 		const SparseBlockIndexBase< SourceDerived > &source )
 {
 	clear() ;

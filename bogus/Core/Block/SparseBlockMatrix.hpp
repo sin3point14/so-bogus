@@ -25,7 +25,7 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
 
 	typedef BlockT BlockType ;
 	typedef typename BlockTraits< BlockT >::Scalar Scalar ;
-	typedef typename BlockContainerTraits< BlockType >::Type BlocksArrayType ;
+	typedef typename ResizableSequenceContainer< BlockType >::Type BlocksArrayType ;
 
 	enum {
 		is_transposed  = 0,
@@ -53,7 +53,9 @@ class SparseBlockMatrix : public  SparseBlockMatrixBase< SparseBlockMatrix< Bloc
 public:
 	typedef SparseBlockMatrixBase< SparseBlockMatrix< BlockT, Flags > > Base ;
 
-	SparseBlockMatrix() : Base() {}
+	SparseBlockMatrix() : Base()
+	{
+	}
 
 	template < typename RhsT >
 	SparseBlockMatrix( const BlockObjectBase< RhsT >& rhs ) : Base()

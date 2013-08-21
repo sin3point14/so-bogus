@@ -15,19 +15,19 @@ namespace bogus
 {
 
 //! Compressed index, compatible with usual BSR/BSC formats
-template< typename _Index, typename _BlockPtr >
-struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase< SparseBlockIndex< true, _Index, _BlockPtr > >
+template< typename Index_, typename BlockPtr_, template <typename> class ArrayType  >
+struct SparseBlockIndex< true, Index_, BlockPtr_, ArrayType > : public SparseBlockIndexBase< SparseBlockIndex< true, Index_, BlockPtr_, ArrayType > >
 {
-	typedef _Index Index ;
-	typedef _BlockPtr BlockPtr ;
+	typedef Index_ Index ;
+	typedef BlockPtr_ BlockPtr ;
 
-	typedef SparseBlockIndexBase< SparseBlockIndex< true, _Index, _BlockPtr > > Base ;
+	typedef SparseBlockIndexBase< SparseBlockIndex< true, Index_, BlockPtr_, ArrayType > > Base ;
 	typedef typename Base::InnerOffsetsType InnerOffsetsType ;
 	typedef typename Base::InnerIterator    InnerIterator ;
 	using Base::valid ;
 
-	typedef std::vector< Index > Inner ;
-	typedef std::vector< Index > Outer ;
+	typedef typename ArrayType< Index >::Type Inner ;
+	typedef typename ArrayType< Index >::Type Outer ;
 
 	InnerOffsetsType innerOffsets ;
 
@@ -177,13 +177,13 @@ struct SparseBlockIndex< true, _Index, _BlockPtr > : public SparseBlockIndexBase
 
 } ;
 
-template < typename _Index, typename _BlockPtr >
-struct SparseBlockIndexTraits<  SparseBlockIndex< true, _Index, _BlockPtr > >
+template < typename Index_, typename BlockPtr_, template <typename> class ArrayType  >
+struct SparseBlockIndexTraits<  SparseBlockIndex< true, Index_, BlockPtr_, ArrayType > >
 {
-	typedef _Index Index;
-	typedef _BlockPtr BlockPtr;
+	typedef Index_ Index;
+	typedef BlockPtr_ BlockPtr;
 
-	typedef SparseBlockIndex< true, _Index, _BlockPtr > SparseBlockIndexType ;
+	typedef SparseBlockIndex< true, Index_, BlockPtr_, ArrayType > SparseBlockIndexType ;
 
 	//! Forward iterator
 	struct InnerIterator

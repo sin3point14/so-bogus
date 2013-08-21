@@ -169,7 +169,7 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 		}
 	}
 
-	typename BlockContainerTraits< BlockType >::Type resBlocks( offsets.back() ) ;
+	typename Traits::BlocksArrayType resBlocks( offsets.back() ) ;
 
 	BlockTransposeOption< OtherTraits::is_symmetric, Transpose > rhsGetter ;
 

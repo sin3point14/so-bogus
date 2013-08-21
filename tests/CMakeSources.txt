@@ -1,5 +1,6 @@
 ConjugateGradient.cpp
 GaussSeidel.cpp
+Map.cpp
 Mkl.cpp
 Polynomial.cpp
 Serialization.cpp

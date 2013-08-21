@@ -78,7 +78,7 @@ public:
 	Index colsOfBlocks() const { return derived().colsOfBlocks() ; }
 
 	//! Access to blocks data
-	const typename BlockContainerTraits< BlockType >::Type& blocks() const { return  m_blocks ; }
+    const typename Traits::BlocksArrayType& blocks() const { return  m_blocks ; }
 	//! Access to blocks data as a raw pointer
 	const BlockType* data() const { return  &m_blocks[0] ; }
 	//! Access to blocks data as a raw pointer

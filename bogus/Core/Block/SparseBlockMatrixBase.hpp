@@ -183,6 +183,9 @@ public:
     /*! \warning This may differ from blocks().size() */
     std::size_t nBlocks() const { return m_nBlocks ; }
 
+    //! Returns whether the matrix is empty
+    bool empty() const { return 0 == nBlocks() ; }
+
     const BlockType& block( BlockPtr ptr ) const
     {
         return m_blocks[ ptr ] ;

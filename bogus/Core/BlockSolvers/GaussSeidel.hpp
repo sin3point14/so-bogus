@@ -134,7 +134,7 @@ protected:
 	using Base::m_tol ;
 
 	typedef typename LocalProblemTraits< GlobalProblemTraits::dimension, Scalar >::Matrix DiagonalMatrixType ;
-	typename BlockContainerTraits< DiagonalMatrixType >::Type m_localMatrices ;
+	typename ResizableSequenceContainer< DiagonalMatrixType >::Type m_localMatrices ;
 	typename GlobalProblemTraits::DynVector m_scaling ;
 	typename GlobalProblemTraits::DynVector m_regularization ;
 

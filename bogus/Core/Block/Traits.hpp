@@ -15,9 +15,11 @@ namespace bogus {
 template< typename Derived >
 struct BlockMatrixTraits { } ;
 
-template< typename BlockType >
-struct BlockContainerTraits {
-	typedef std::vector< BlockType > Type ;
+//! Default container type, that should resizable and use contiguous storage
+template< typename ElementType >
+struct ResizableSequenceContainer {
+	typedef std::vector< ElementType > Type ;
+	enum { is_mutable = 1 } ;
 } ;
 
 template< typename BlockType >

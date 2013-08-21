@@ -13,6 +13,7 @@
 
 TEST( SparseBlock, MatrixVector )
 {
+
 	Eigen::VectorXd expected_1(15), expected_2(8), expected_3(15) ;
 	expected_1 << 4, 4, 4, 0, 0, 0, 0, 0, 0, 20, 20, 20, 0, 0, 0 ;
 	expected_2 << 120, 120, 120, 120, 192, 192, 192, 192 ;

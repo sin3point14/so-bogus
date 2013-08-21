@@ -62,10 +62,11 @@ template < typename Derived >
 SparseBlockMatrixBase< Derived >::SparseBlockMatrixBase()
 	: Base(), m_nBlocks(0)
 {
-	setRows( 0, (const unsigned*) 0 ) ;
-	setCols( 0, (const unsigned*) 0 ) ;
-	m_transposeIndex.resizeOuter(0) ;
-	m_transposeIndex.valid = false ;
+    //Resize to zero
+    setRows( 0, (const unsigned*) 0 ) ;
+    setCols( 0, (const unsigned*) 0 ) ;
+    m_transposeIndex.resizeOuter(0) ;
+    m_transposeIndex.valid = false ;
 }
 
 template < typename Derived >
@@ -164,7 +165,7 @@ Derived& SparseBlockMatrixBase< Derived >::prune( const Scalar precision )
 {
 	MajorIndexType oldIndex = m_majorIndex ;
 
-	typename BlockContainerTraits< BlockType >::Type old_blocks ;
+    typename Traits::BlocksArrayType old_blocks ;
 	old_blocks.swap( m_blocks ) ;
 
 	reserve( m_nBlocks ) ;

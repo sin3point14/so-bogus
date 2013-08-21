@@ -76,7 +76,7 @@ struct SparseBlockIndexComputer
 	typedef typename Getter::ReturnType ReturnType ;
 
 	SparseBlockIndexComputer( const SparseBlockMatrixBase< MatrixType > &matrix )
-		: m_matrix( matrix )
+		: m_matrix( matrix.derived() )
 	{}
 
 	const ReturnType& get( )
@@ -85,7 +85,7 @@ struct SparseBlockIndexComputer
 	}
 
 private:
-	const MatrixType m_matrix ;
+	const MatrixType& m_matrix ;
 	typename MatrixType::UncompressedIndexType m_aux ;
 } ;
 
@@ -99,7 +99,9 @@ struct SparseBlockIndexComputer< MatrixType, true, ColWise, Transpose >
 
 	SparseBlockIndexComputer( const SparseBlockMatrixBase< MatrixType > &matrix )
 		: m_index( matrix.majorIndex(), matrix.minorIndex() )
-	{}
+	{
+		assert( matrix.minorIndex().valid ) ;
+	}
 
 	const ReturnType& get( )
 	{
