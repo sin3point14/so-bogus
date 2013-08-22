@@ -82,7 +82,7 @@ TEST( Map, SparseBlock )
 
   // Col-major
   bogus::MappedSparseBlockMatrix< Eigen::MatrixXd, bogus::COL_MAJOR > msum( sum ) ;
-  EXPECT_EQ( 2 * expected_2, sum * res ) ;
+  EXPECT_EQ( 2 * expected_2, msum * res ) ;
 
 }
 

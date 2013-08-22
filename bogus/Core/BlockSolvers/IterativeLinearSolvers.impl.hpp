@@ -423,19 +423,65 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_TFQMR( const
 	Scalar res = init( b, x, r ) ;
 	if( res < m_tol ) return res ;
 
-	const Vector r0h = r ;
+	Vector u = r, w = r ;
+	const Vector& r0h = r ;
+
+	Vector d ( m_matrix->rows() ), v ( m_matrix->rows() ),
+		   nu ( m_matrix->rows() ), y ( m_matrix->rows() ) ;
+
+	d.setZero() ;
+
+	m_preconditioner.template apply< false >( u, y ) ;
+	m_matrix->template multiply< false >( y, v ) ;
+
+	Scalar tau2 = res/m_scale ;
+	Scalar rho = tau2, rho1 ; // rho = r.dot( r0h )
+	Scalar theta2 = 0, eta = 0, alpha = 0,  beta, c2 ;
 
 	for( unsigned k = 0 ; k < m_maxIters ; ++k )
 	{
-//		rho1 = r0h.dot( r ) ;
-
-//		if( NumTraits< Scalar >::isZero( rho1 ) )
-//			break ;
 
 
-		res = r.squaredNorm() * m_scale;
+		const bool odd = k&1u;
+		if( !odd )
+		{
+			alpha = rho / r0h.dot( v ) ;
+		}
+
+		m_preconditioner.template apply< false >( u, y ) ;
+		m_matrix->template multiply< false >( y, nu ) ;
+		w -= alpha * nu ;
+		d = y + ( theta2 / alpha ) * eta * d ;
+
+		theta2 = w.squaredNorm() ;
+		theta2 /= tau2 ;
+
+		c2 = 1. / ( 1 + theta2 ) ;
+		tau2 *= theta2 * c2 ;
+		eta = c2 * alpha ;
+
+		x += eta * d ;
+		// m_matrix->template multiply< false >( d, r, -eta, 1 ) ;
+		res = tau2 * m_scale ; // Approx
+
 		this->m_callback.trigger( k, res ) ;
 		if( res < m_tol ) break ;
+
+		if( odd )
+		{
+			rho1 = w.dot( r0h ) ;
+			beta = rho1 / rho ;
+
+			u = w + beta * u ;
+
+			v = nu + beta * v ;
+			m_preconditioner.template apply< false >( u, y ) ;
+			m_matrix->template multiply< false >( y, v, 1, beta ) ;
+
+			rho = rho1 ;
+		} else {
+			u -= alpha * v ;
+		}
 
 //		rho0 = rho1 ;
 	}

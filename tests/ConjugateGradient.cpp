@@ -72,6 +72,11 @@ TEST( IterativeLinearSolver, CG )
 	cg.solve_GMRES( rhs, res ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 
+	res.setOnes() ;
+	g_meth = "TFQMR" ;
+	cg.solve_TFQMR( rhs, res ) ;
+	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
+
 	res.setZero() ;
 	cg.setMaxIters( 12 );
 	g_meth = "BiCGSTAB" ;
@@ -133,13 +138,20 @@ TEST( IterativeLinearSolver, Preconditioner )
 	err = pcg.solve_GMRES( rhs, res ) ;
 	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 	EXPECT_GT( 1.e-16, err ) ;
-	res.setZero() ;
 
+	res.setZero() ;
 	pcg.setMaxIters( 30 ) ;
 	g_meth = "GMRES(3)" ;
 	err = pcg.solve_GMRES( rhs, res, 3 ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	EXPECT_GT( 1.e-12, ( sbm*res - rhs ).squaredNorm() ) ;
+
+	res.setZero() ;
+	g_meth = "TFQMR" ;
+	err = pcg.solve_TFQMR( rhs, res ) ;
+	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
+	EXPECT_GT( 1.e-16, err ) ;
+	res.setZero() ;
 
 	res.setZero() ;
 	bogus::IterativeLinearSolver< Mat, bogus::DiagonalLUPreconditioner > lucg( sbm ) ;
