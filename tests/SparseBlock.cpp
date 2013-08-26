@@ -1,7 +1,5 @@
 #include <iostream>
 
-//#define BOGUS_DONT_PARALLELIZE
-
 #include "Core/Block.impl.hpp"
 #include "Core/Block.io.hpp"
 
@@ -352,10 +350,10 @@ TEST( SparseBlock, MMult )
 
 		bogus::SparseBlockMatrix< Eigen::Matrix4d, bogus::flags::UNCOMPRESSED | bogus::flags::SYMMETRIC > mm_t = sbm.transpose()*sbm ;
 		ASSERT_EQ( 3u, mm_t.nBlocks() ) ;
-		EXPECT_EQ( mm_t.diagonal(1), Eigen::Matrix4d::Constant( 78 ) ) ;
+		EXPECT_TRUE( mm_t.diagonal(1).isApprox( Eigen::Matrix4d::Constant( 78 ) ) ) ;
 		mm_t.setFromProduct< false > ( sbm.transpose()*sbm ) ;
 		ASSERT_EQ( 3u, mm_t.nBlocks() ) ;
-		EXPECT_EQ( mm_t.diagonal(1), Eigen::Matrix4d::Constant( 78 ) ) ;
+		EXPECT_TRUE( mm_t.diagonal(1).isApprox( Eigen::Matrix4d::Constant( 78 ) ) ) ;
 
 		EXPECT_TRUE( mm_t.minorIndex().valid ) ;
 
@@ -402,11 +400,11 @@ TEST( SparseBlock, MMult )
 
 		bogus::SparseBlockMatrix< Eigen::Matrix4d, bogus::flags::COL_MAJOR | bogus::flags::UNCOMPRESSED | bogus::flags::SYMMETRIC > mm_t = sbm.transpose()*sbm ;
 		ASSERT_EQ( mm_t.nBlocks(), 3u ) ;
-		EXPECT_EQ( mm_t.diagonal(1), Eigen::Matrix4d::Constant( 78 ) ) ;
+		EXPECT_TRUE( mm_t.diagonal(1).isApprox( Eigen::Matrix4d::Constant( 78 ) ) );
 
 		mm_t.setFromProduct< false > ( sbm.transpose()*sbm ) ;
 		ASSERT_EQ( mm_t.nBlocks(), 3u ) ;
-		EXPECT_EQ( mm_t.diagonal(1), Eigen::Matrix4d::Constant( 78 ) ) ;
+		EXPECT_TRUE( mm_t.diagonal(1).isApprox( Eigen::Matrix4d::Constant( 78 ) ) );
 
 		EXPECT_TRUE( mm_t.minorIndex().valid ) ;
 
@@ -436,10 +434,10 @@ TEST( SparseBlock, Inv )
 	expected_2 << .25, .25, .25, .125, .125, .125 ;
 
 	bogus::DenseLDLT< double, 2 > ldlt(  2 * Eigen::Matrix2d::Identity() ) ;
-	EXPECT_EQ( expected_1, ldlt * Eigen::Vector2d::Ones() )  ;
+	EXPECT_TRUE( expected_1.isApprox( ldlt * Eigen::Vector2d::Ones() ) ) ;
 
 	Eigen::Matrix2d matRes = ldlt * Eigen::Matrix2d::Ones() ;
-	EXPECT_EQ( expected_1, matRes.diagonal() )  ;
+	EXPECT_TRUE( expected_1.isApprox( matRes.diagonal() ) ) ;
 
 	typedef bogus::LU< Eigen::MatrixBase< Eigen::MatrixXd > > BlockT ;
 	EXPECT_FALSE( bogus::IsTransposable< BlockT >::Value ) ;
@@ -551,25 +549,23 @@ TEST( SparseBlock, Scalar )
 	EXPECT_EQ( sbm.block(0,0).squaredNorm(), sm.block(0,0) ) ;
 	EXPECT_EQ( sbm.block(1,1).squaredNorm(), sm.block(1,1) ) ;
 
-	Eigen::Vector2d rhs( 1, 1 ), res( 0, 0 ), expected_1 (55, 330 ) ;
+	Eigen::Vector2d rhs( 1, 1 ), expected_1 (55, 330 ) ;
 	Eigen::Matrix< double, 1, 1 > res1d ; res1d.setZero() ;
 
-	EXPECT_EQ( expected_1, sm * rhs );
-	EXPECT_EQ( expected_1, sm.transpose() * rhs );
+	EXPECT_TRUE( expected_1.isApprox( sm * rhs ) );
+	EXPECT_TRUE( expected_1.isApprox( sm.transpose() * rhs ) );
 
 
 	sm.splitRowMultiply( 1, rhs, res1d ) ;
-	EXPECT_EQ( Eigen::Vector2d::Zero(), res ) ;
+	EXPECT_TRUE( res1d.isZero() ) ;
 
 	bogus::SparseBlockMatrix< float, bogus::flags::SYMMETRIC > ssm ;
 	ssm = sbm.transpose() * sbm ;
-	EXPECT_EQ( expected_1, ssm * rhs );
-	EXPECT_EQ( expected_1, ssm.transpose() * rhs );
-
-	EXPECT_EQ( Eigen::Vector2d::Zero(), res ) ;
+	EXPECT_TRUE( expected_1.isApprox( ssm * rhs ) );
+	EXPECT_TRUE( expected_1.isApprox( ssm.transpose() * rhs ) );
 
 	ssm.scale( .5 ) ;
-	EXPECT_EQ( expected_1, 2 * ( ssm * rhs ) );
+	EXPECT_TRUE( expected_1.isApprox( 2 * ( ssm * rhs ) ) );
 
 }
 

@@ -17,13 +17,25 @@
 
 namespace bogus {
 
+namespace internal {
+	typedef Eigen::Matrix<double, 2, 2, Eigen::RowMajor> RowMatrix2d ;
+	typedef Eigen::Matrix<float , 2, 2, Eigen::RowMajor> RowMatrix2f ;
+	typedef Eigen::Matrix<double, 4, 4, Eigen::RowMajor> RowMatrix4d ;
+	typedef Eigen::Matrix<float , 4, 4, Eigen::RowMajor> RowMatrix4f ;
+} 
+
 BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Vector2d );
+BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Vector2f );
 BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Vector4d );
 BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Vector4f );
 BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Matrix2d );
 BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Matrix2f );
 BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Matrix4d );
 BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Matrix4f );
+BOGUS_USE_ALLIGNED_ALLOCATOR( internal::RowMatrix2d );
+BOGUS_USE_ALLIGNED_ALLOCATOR( internal::RowMatrix2f );
+BOGUS_USE_ALLIGNED_ALLOCATOR( internal::RowMatrix4d );
+BOGUS_USE_ALLIGNED_ALLOCATOR( internal::RowMatrix4f );
 
 } //namespace bogus
 

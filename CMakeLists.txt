@@ -87,7 +87,8 @@ if ( GCC OR CLANG )
 endif()
 
 if( MSVC )
-        add_definitions( -DBOGUS_DONT_USE_BUILTIN_ATOMICS )
+        add_definitions( /DBOGUS_DONT_USE_BUILTIN_ATOMICS )
+        add_definitions( /wd4305 )
 endif()
 
 include_directories( ${EXTERNAL_INCLUDES} )

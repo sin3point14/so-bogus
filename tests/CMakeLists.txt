@@ -11,13 +11,27 @@ endif()
 
 include( ExternalProject )
 
+if( MSVC AND MSVC_VERSION EQUAL 1700 )
+  add_definitions( /D_VARIADIC_MAX=10 )
+  set( GTEST_PATH_COMMAND patch < ${CMAKE_CURRENT_SOURCE_DIR}/gtest-msvc11.patch )
+else()
+  set( GTEST_PATH_COMMAND "" )
+endif()
+
 # Add gtest
 ExternalProject_Add(
         googletest
         URL https://googletest.googlecode.com/files/gtest-1.6.0.zip
+        CMAKE_ARGS -Dgtest_force_shared_crt=ON
         UPDATE_COMMAND ""
+        PATCH_COMMAND ${GTEST_PATCH_COMMAND}
         INSTALL_COMMAND ""
         )
+
+SET( GTEST_LINK_LIBRARIES gtest gtest_main )
+if(UNIX)
+  SET( GTEST_LINK_LIBRARIES ${GTEST_LINK_LIBRARIES} pthread )
+endif()
 
 ExternalProject_Get_Property(googletest source_dir)
 include_directories( ../src ${source_dir}/include)
@@ -29,4 +43,5 @@ add_executable(test${CMAKE_PROJECT_NAME} ${SRC_LIST})
 add_test( ${CMAKE_PROJECT_NAME} test${CMAKE_PROJECT_NAME} )
 
 add_dependencies(test${CMAKE_PROJECT_NAME} googletest)
-target_link_libraries(test${CMAKE_PROJECT_NAME} ${EXTERNAL_LIBRARIES} gtest gtest_main pthread )
+
+target_link_libraries(test${CMAKE_PROJECT_NAME} ${EXTERNAL_LIBRARIES} ${GTEST_LINK_LIBRARIES} )

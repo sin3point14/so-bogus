@@ -64,8 +64,8 @@ struct BlockGetter< true > {
 
 	typedef char NonTransposableReturnType ;
 
-	template < typename >
-	static NonTransposableReturnType get( ... ) ;
+	template < typename T >
+	static NonTransposableReturnType get( const T &, ... ) ;
 
 } ;
 
@@ -80,7 +80,7 @@ public:
 	enum {
 		Value = ( sizeof(BlockGetter< true >::NonTransposableReturnType ) == sizeof( BlockType ) )
 			|| 	( sizeof(BlockGetter< true >::NonTransposableReturnType ) !=
-				  sizeof(BlockGetter< true >::template get< BlockType >( * (BlockType*) 0 ) ) )
+				  sizeof(BlockGetter< true >::template get< BlockType >( * static_cast< BlockType* >( 0 ) ) ) )
 	} ;
 
 } ;

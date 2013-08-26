@@ -71,7 +71,7 @@ template < typename MatrixType, bool Symmetric, bool ColWise, bool Transpose >
 struct SparseBlockIndexComputer
 {
 	typedef BlockMatrixTraits< MatrixType > Traits ;
-	enum { is_major = bool(ColWise ^ Transpose) == bool( Traits::is_col_major ) } ;
+	enum { is_major = (ColWise != Transpose) == bool( Traits::is_col_major ) } ;
 	typedef SparseBlockIndexGetter< MatrixType, is_major > Getter ;
 	typedef typename Getter::ReturnType ReturnType ;
 

@@ -47,7 +47,7 @@ void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatr
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( unsigned i = 0 ; i < n ; ++i )
+	for( int i = 0 ; i < (int) n ; ++i )
 	{
 		m_localMatrices[i] = M.diagonal( i ) ;
 

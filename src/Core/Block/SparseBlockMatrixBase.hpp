@@ -291,8 +291,8 @@ public:
     void cloneDimensions( const BlockMatrixBase< OtherDerived > &source ) ;
 
     //! Clones the dimensions and the indexes of \p source
-    template < typename BlockT2 >
-    void cloneStructure( const SparseBlockMatrix< BlockT2, Traits::flags > &source ) ;
+    template< typename OtherDerived >	
+	void cloneStructure( const SparseBlockMatrixBase< OtherDerived > &source ) ;
 
     //@}
 

@@ -312,9 +312,12 @@ void SparseBlockMatrixBase<Derived>::cloneDimensions( const BlockMatrixBase< Oth
 }
 
 template < typename Derived >
-template < typename BlockT2 >
-void SparseBlockMatrixBase<Derived>::cloneStructure( const SparseBlockMatrix< BlockT2, SparseBlockMatrixBase<Derived>::Traits::flags > &source )
+template < typename OtherDerived >
+void SparseBlockMatrixBase<Derived>::cloneStructure( const SparseBlockMatrixBase< OtherDerived > &source )
 {
+	BOGUS_STATIC_ASSERT( BlockMatrixTraits< Derived >::flags == BlockMatrixTraits< OtherDerived >::flags,
+		OPERANDS_HAVE_INCONSISTENT_FLAGS ) ;
+
 	m_nBlocks = source.nBlocks() ;
 	rowMajorIndex() = source.rowMajorIndex() ;
 	colMajorIndex() = source.colMajorIndex() ;

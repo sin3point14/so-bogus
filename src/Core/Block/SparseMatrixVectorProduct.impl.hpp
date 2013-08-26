@@ -313,7 +313,7 @@ struct SparseBlockMatrixOpProxy
 
 		typedef BlockMatrixTraits< Derived > Traits ;
 		SparseBlockMatrixVectorMultiplier
-				< Traits::is_symmetric, bool(Transpose) == bool(Traits::is_col_major), Transpose >
+				< Traits::is_symmetric, Transpose == bool(Traits::is_col_major), Transpose >
 				::multiply( matrix, rhs, res, alpha )  ;
 	}
 

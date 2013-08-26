@@ -171,7 +171,7 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 
 	typename Traits::BlocksArrayType resBlocks( offsets.back() ) ;
 
-	BlockTransposeOption< OtherTraits::is_symmetric, Transpose > rhsGetter ;
+	typedef BlockTransposeOption< OtherTraits::is_symmetric, Transpose > RhsGetter ;
 
 	// II - Proper addition
 
@@ -190,12 +190,12 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 									? (nz.first > i) : (nz.first < i) ;
 			if( nz.second.first == InvalidBlockPtr )
 			{
-				res = alpha * rhsGetter.get( rhs.block( nz.second.second ), afterDiag ) ;
+				res = alpha * RhsGetter::get( rhs.block( nz.second.second ), afterDiag ) ;
 			} else if( nz.second.second == OtherDerived::InvalidBlockPtr )
 			{
 				res = block( nz.second.first ) ;
 			} else {
-				res = block( nz.second.first) + alpha * rhsGetter.get( rhs.block( nz.second.second ), afterDiag ) ;
+				res = block( nz.second.first) + alpha * RhsGetter::get( rhs.block( nz.second.second ), afterDiag ) ;
 			}
 		}
 	}
