@@ -1,4 +1,4 @@
-ConjugateGradient.cpp
+Krylov.cpp
 GaussSeidel.cpp
 Map.cpp
 Mkl.cpp

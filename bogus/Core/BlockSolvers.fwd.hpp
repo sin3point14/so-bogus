@@ -11,17 +11,17 @@
 
 namespace bogus {
 
-//! Configuration properties Iterative Linear Solvers
-namespace iterative_linear_solvers
+//! Configuration properties for Krylov solvers
+namespace krylov
 {
 enum Method
 {
-	CG,				//!< Conjugate Gradient
-	BiCG,			//!< BiConjugate Gradient
-	BiCGSTAB, 		//!< BiConjugate Gradient Stabilized
-	CGS, 			//!< Conjugate Gradient Squared
-	GMRES,			//!< Generalized Minimal Residual
-	TFQMR			//!< Tranpose-free Quasi Minimal Residual
+	CG,				//!< Conjugate Gradient. \sa Krylov::solve_CG()
+	BiCG,			//!< BiConjugate Gradient \sa Krylov::solve_BiCG()
+	BiCGSTAB, 		//!< BiConjugate Gradient Stabilized \sa Krylov::solve_BiCGSTAB()
+	CGS, 			//!< Conjugate Gradient Squared \sa Krylov::solve_CGS()
+	GMRES,			//!< Generalized Minimal Residual \sa Krylov::solve_GMRES()
+	TFQMR			//!< Tranpose-free Quasi Minimal Residual \sa Krylov::solve_TFQMR()
 } ;
 
 } // namespace iterative_linear_solvers
@@ -37,7 +37,7 @@ class TrivialPreconditioner ;
 
 template < typename BlockMatrixType,
 		   template< typename BlockMatrixT > class PreconditionerType = TrivialPreconditioner >
-class IterativeLinearSolver ;
+class Krylov ;
 
 }
 

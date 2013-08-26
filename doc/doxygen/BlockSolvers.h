@@ -20,12 +20,12 @@ To use the library,
 The \ref block_solvers module is a collection of solvers operating on \ref block matrices.
 
 At the moment, those solvers are:
- - \ref block_solvers_cg
+ - \ref block_solvers_is
  - \ref block_solvers_gs
 
-\section block_solvers_cg Conjugate Gradient
+\section block_solvers_is Iterative Linear Solvers
 
-A few conjugate gradient variants are available through the ConjugateGradient class, as well as a few naive preconditioners.
+A few Krylov methods are available through the Krylov class, as well as some naive preconditioners.
 	
 Here is some code solving a very simple system without preconditioning:
 \code
@@ -42,21 +42,21 @@ Here is some code solving a very simple system without preconditioning:
   rhs.setOnes( ) ;
 
   // Solving 
-  bogus::ConjugateGradient< Mat > cg( sbm ) ;
-  cg.solve( rhs, res ) ;
+  bogus::Krylov< Mat > cg( sbm ) ;
+  cg.solve_CG( rhs, res ) ;
   //or 
-  cg.solve_BiCG( rhs, res ) ;
+  cg.solve_GMRES( rhs, res ) ;
   //or
-  cg.solve_BiCGSTAB( rhs, res ) ;
+  cg.solve( rhs, res, bogus::krylov::CGS ) ;
 \endcode 
 
 If we wanted to use a preconditioner
 \code
-  bogus::ConjugateGradient< Mat, bogus::DiagonalPreconditioner > pcg( sbm ) ;
+  bogus::Krylov< Mat, bogus::DiagonalPreconditioner > pcg( sbm ) ;
   //or
-  bogus::ConjugateGradient< Mat, bogus::DiagonalLDLTPreconditioner > ldltcg( sbm ) ;
+  bogus::Krylov< Mat, bogus::DiagonalLDLTPreconditioner > ldltcg( sbm ) ;
 
-  pcg.solve( rhs, res ) ;
+  pcg.solve_CG( rhs, res ) ;
 \endcode 
 
 ... or sparse matrices
@@ -69,8 +69,8 @@ If we wanted to use a preconditioner
   ssbm.block(0) =  sbm.block(0).sparseView() ;
 
   // DiagonalLDLTPreconditioner on SparseMatrix blocks requires Eigen 3.1+
-  bogus::ConjugateGradient< SparseMat, bogus::DiagonalLDLTPreconditioner > sldltcg( ssbm ) ;
-  err = sldltcg.solve( rhs, res ) ;
+  bogus::Krylov< SparseMat, bogus::DiagonalLDLTPreconditioner > sldltcg( ssbm ) ;
+  err = sldltcg.solve_CG( rhs, res ) ;
   
 \endcode 
 

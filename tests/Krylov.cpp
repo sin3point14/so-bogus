@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include "Core/Block.impl.hpp"
-#include "Core/BlockSolvers.impl.hpp"
+#include "Core/BlockSolvers/Krylov.impl.hpp"
 
 #include <Eigen/Eigenvalues>
 
@@ -15,7 +15,7 @@ static void ackCurrentResidual( unsigned GSIter, double err )
 	std::cout << g_meth << " " << GSIter << " ==> " << err << std::endl ;
 }
 
-TEST( IterativeLinearSolver, CG )
+TEST( Krylov, CG )
 {
 
 	const Eigen::Vector3d expected_1( .5, .5, .5 ) ;
@@ -28,7 +28,7 @@ TEST( IterativeLinearSolver, CG )
 	sbm.insertBack(0,0) = Eigen::Vector3d::Constant( 2 ).asDiagonal() ;
 	sbm.finalize() ;
 
-	bogus::IterativeLinearSolver< Mat > cg( sbm ) ;
+	bogus::Krylov< Mat > cg( sbm ) ;
 	cg.callback().connect( &ackCurrentResidual );
 
 	Eigen::Vector3d rhs, res ;
@@ -59,7 +59,7 @@ TEST( IterativeLinearSolver, CG )
 
 	res.setZero() ;
 	g_meth = "BiCG" ;
-	cg.solve_BiCG( rhs, res ) ;
+	cg.solve( rhs, res, bogus::krylov::BiCG ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 
 	res.setZero() ;
@@ -84,7 +84,7 @@ TEST( IterativeLinearSolver, CG )
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 }
 
-TEST( IterativeLinearSolver, Preconditioner )
+TEST( Krylov, Preconditioner )
 {
 
 	typedef Eigen::Matrix< double, 5, 5 > Block ;
@@ -107,13 +107,13 @@ TEST( IterativeLinearSolver, Preconditioner )
 	double err ;
 
 	res.setZero() ;
-	bogus::IterativeLinearSolver< Mat > cg( sbm ) ;
+	bogus::Krylov< Mat > cg( sbm ) ;
 	g_meth = "CG" ;
 	err = cg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 
 	res.setZero() ;
-	bogus::IterativeLinearSolver< Mat, bogus::DiagonalPreconditioner > pcg( sbm ) ;
+	bogus::Krylov< Mat, bogus::DiagonalPreconditioner > pcg( sbm ) ;
 	pcg.callback().connect( &ackCurrentResidual );
 
 	g_meth = "CG" ;
@@ -154,7 +154,7 @@ TEST( IterativeLinearSolver, Preconditioner )
 	res.setZero() ;
 
 	res.setZero() ;
-	bogus::IterativeLinearSolver< Mat, bogus::DiagonalLUPreconditioner > lucg( sbm ) ;
+	bogus::Krylov< Mat, bogus::DiagonalLUPreconditioner > lucg( sbm ) ;
 	lucg.setMaxIters( 1 );
 	g_meth = "CG" ;
 	err = lucg.solve_CG( rhs, res ) ;
@@ -165,7 +165,7 @@ TEST( IterativeLinearSolver, Preconditioner )
 	sbm.block(0) *= sbm.block(0) ;
 
 	res.setZero() ;
-	bogus::IterativeLinearSolver< Mat, bogus::DiagonalLDLTPreconditioner > ldltcg( sbm ) ;
+	bogus::Krylov< Mat, bogus::DiagonalLDLTPreconditioner > ldltcg( sbm ) ;
 	ldltcg.setMaxIters( 1 );
 	g_meth = "CG" ;
 	err = ldltcg.solve_CG( rhs, res ) ;
@@ -187,7 +187,7 @@ TEST( IterativeLinearSolver, Preconditioner )
 	ssbm.block(0) =  sbm.block(0).sparseView() ;
 
 	res.setZero() ;
-	bogus::IterativeLinearSolver< SparseMat > scg( ssbm ) ;
+	bogus::Krylov< SparseMat > scg( ssbm ) ;
 	g_meth = "CG" ;
 	err = scg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
@@ -196,7 +196,7 @@ TEST( IterativeLinearSolver, Preconditioner )
 #ifdef BOGUS_WITH_EIGEN_STABLE_SPARSE_API
 
 	res.setZero() ;
-	bogus::IterativeLinearSolver< SparseMat, bogus::DiagonalPreconditioner > spcg( ssbm ) ;
+	bogus::Krylov< SparseMat, bogus::DiagonalPreconditioner > spcg( ssbm ) ;
 	g_meth = "CG" ;
 	err = spcg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
@@ -204,7 +204,7 @@ TEST( IterativeLinearSolver, Preconditioner )
 
 #ifdef BOGUS_WITH_EIGEN_SPARSE_LDLT
 	res.setZero() ;
-	bogus::IterativeLinearSolver< SparseMat, bogus::DiagonalLDLTPreconditioner > sldltcg( ssbm ) ;
+	bogus::Krylov< SparseMat, bogus::DiagonalLDLTPreconditioner > sldltcg( ssbm ) ;
 	sldltcg.setMaxIters( 1 );
 	sldltcg.callback().connect( &ackCurrentResidual );
 	g_meth = "CG" ;
@@ -220,7 +220,7 @@ TEST( IterativeLinearSolver, Preconditioner )
 
 #ifdef BOGUS_WITH_EIGEN_SPARSE_LU
 	res.setZero() ;
-	bogus::IterativeLinearSolver< SparseMat, bogus::DiagonalLUPreconditioner > slucg( ssbm ) ;
+	bogus::Krylov< SparseMat, bogus::DiagonalLUPreconditioner > slucg( ssbm ) ;
 	slucg.setMaxIters( 1 );
 	slucg.callback().connect( &ackCurrentResidual );
 	g_meth = "CG" ;

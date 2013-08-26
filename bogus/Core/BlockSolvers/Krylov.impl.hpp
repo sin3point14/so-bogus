@@ -5,16 +5,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef BOGUS_ITERATIVE_LINEAR_SOLVERS_IMPL_HPP
-#define BOGUS_ITERATIVE_LINEAR_SOLVERS_IMPL_HPP
+#ifndef BOGUS_KRYLOV_IMPL_HPP
+#define BOGUS_KRYLOV_IMPL_HPP
 
-#include "IterativeLinearSolvers.hpp"
+#include "Krylov.hpp"
+#include "Preconditioners.impl.hpp"
+#include "BlockSolverBase.impl.hpp"
+
 #include "../Utils/NumTraits.hpp"
 
 namespace bogus {
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
-IterativeLinearSolver< BlockMatrixType, PreconditionerType >::IterativeLinearSolver(
+Krylov< BlockMatrixType, PreconditionerType >::Krylov(
 		const BlockMatrixBase< BlockMatrixType > & matrix )
 	: Base( &matrix, matrix.rows(), NumTraits< Scalar >::epsilon() )
 {
@@ -22,13 +25,13 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::IterativeLinearSol
 }
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
-IterativeLinearSolver< BlockMatrixType, PreconditionerType >::IterativeLinearSolver()
+Krylov< BlockMatrixType, PreconditionerType >::Krylov()
 	: Base( NULL, 100, NumTraits< Scalar >::epsilon() ), m_scale(0)
 {
 }
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
-void IterativeLinearSolver< BlockMatrixType, PreconditionerType >::setMatrix(
+void Krylov< BlockMatrixType, PreconditionerType >::setMatrix(
 		const BlockMatrixBase< BlockMatrixType > & matrix )
 {
 	m_matrix = &matrix ;
@@ -38,8 +41,8 @@ void IterativeLinearSolver< BlockMatrixType, PreconditionerType >::setMatrix(
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 template < typename RhsT, typename ResT >
-typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
-IterativeLinearSolver< BlockMatrixType, PreconditionerType >::init( const RhsT &b, ResT &x,
+typename Krylov< BlockMatrixType, PreconditionerType >::Scalar
+Krylov< BlockMatrixType, PreconditionerType >::init( const RhsT &b, ResT &x,
 																	typename GlobalProblemTraits::DynVector &r0  ) const
 {
 	r0 = b - (*m_matrix)*x ;
@@ -59,8 +62,8 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::init( const RhsT &
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 template < typename RhsT, typename ResT >
-typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
-IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_CG( const RhsT &b, ResT &x ) const
+typename Krylov< BlockMatrixType, PreconditionerType >::Scalar
+Krylov< BlockMatrixType, PreconditionerType >::solve_CG( const RhsT &b, ResT &x ) const
 {
 	typedef typename GlobalProblemTraits::DynVector Vector ;
 	Vector r ;
@@ -103,8 +106,8 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_CG( const Rh
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 template < typename RhsT, typename ResT >
-typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
-IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_BiCG( const RhsT &b, ResT &x ) const
+typename Krylov< BlockMatrixType, PreconditionerType >::Scalar
+Krylov< BlockMatrixType, PreconditionerType >::solve_BiCG( const RhsT &b, ResT &x ) const
 {
 	typedef typename GlobalProblemTraits::DynVector Vector ;
 	Vector r ;
@@ -161,8 +164,8 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_BiCG( const 
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 template < typename RhsT, typename ResT >
-typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
-IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_BiCGSTAB( const RhsT &b, ResT &x ) const
+typename Krylov< BlockMatrixType, PreconditionerType >::Scalar
+Krylov< BlockMatrixType, PreconditionerType >::solve_BiCGSTAB( const RhsT &b, ResT &x ) const
 {
 	typedef typename GlobalProblemTraits::DynVector Vector ;
 	Vector r ;
@@ -218,8 +221,8 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_BiCGSTAB( co
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 template < typename RhsT, typename ResT >
-typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
-IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_CGS( const RhsT &b, ResT &x ) const
+typename Krylov< BlockMatrixType, PreconditionerType >::Scalar
+Krylov< BlockMatrixType, PreconditionerType >::solve_CGS( const RhsT &b, ResT &x ) const
 {
 	typedef typename GlobalProblemTraits::DynVector Vector ;
 	Vector r ;
@@ -274,8 +277,8 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_CGS( const R
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 template < typename RhsT, typename ResT >
-typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
-IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_GMRES( const RhsT &b, ResT &x, unsigned restart ) const
+typename Krylov< BlockMatrixType, PreconditionerType >::Scalar
+Krylov< BlockMatrixType, PreconditionerType >::solve_GMRES( const RhsT &b, ResT &x, unsigned restart ) const
 {
 	typedef typename GlobalProblemTraits::DynVector Vector ;
 	typedef typename GlobalProblemTraits::DynMatrix Matrix ;
@@ -414,8 +417,8 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_GMRES( const
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 template < typename RhsT, typename ResT >
-typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
-IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_TFQMR( const RhsT &b, ResT &x ) const
+typename Krylov< BlockMatrixType, PreconditionerType >::Scalar
+Krylov< BlockMatrixType, PreconditionerType >::solve_TFQMR( const RhsT &b, ResT &x ) const
 {
 	typedef typename GlobalProblemTraits::DynVector Vector ;
 	Vector r ;
@@ -492,23 +495,23 @@ IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve_TFQMR( const
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 template < typename RhsT, typename ResT >
-typename IterativeLinearSolver< BlockMatrixType, PreconditionerType >::Scalar
-IterativeLinearSolver< BlockMatrixType, PreconditionerType >::solve( const RhsT &b, ResT &x,
-																	 iterative_linear_solvers::Method method ) const
+typename Krylov< BlockMatrixType, PreconditionerType >::Scalar
+Krylov< BlockMatrixType, PreconditionerType >::solve( const RhsT &b, ResT &x,
+																	 krylov::Method method ) const
 {
 	switch(method)
 	{
-		case iterative_linear_solvers::CG:
+		case krylov::CG:
 			return solve_CG( b, x ) ;
-		case iterative_linear_solvers::BiCG:
+		case krylov::BiCG:
 			return solve_BiCG( b, x ) ;
-		case iterative_linear_solvers::BiCGSTAB:
+		case krylov::BiCGSTAB:
 			return solve_BiCGSTAB( b, x ) ;
-		case iterative_linear_solvers::CGS:
+		case krylov::CGS:
 			return solve_CGS( b, x ) ;
-		case iterative_linear_solvers::GMRES:
+		case krylov::GMRES:
 			return solve_GMRES( b, x ) ;
-		case iterative_linear_solvers::TFQMR:
+		case krylov::TFQMR:
 			return solve_TFQMR( b, x ) ;
 	}
 	return -1 ;

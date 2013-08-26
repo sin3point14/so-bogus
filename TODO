@@ -1,10 +1,12 @@
 
- + Compiling/Install documentation
- = Factorizations
+ + Maj Iterative Solvers documentation
+ + Compiling/Install/FAQ documentation
  = SOQP interface
  = Mixed Problems ( Equality constraints )
- = Mapped SparseMatrix ( SBM from BSR / Siconos / … )
  - Coloring Gauss Seidel
+ - Import from matrix-market
+ - Preconditionners
  - Dense block matrices
+ - Factorizations
  - Coulomb law refinements
 

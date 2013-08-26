@@ -15,7 +15,7 @@ So-Bogus regroups a set of loosely connected components, architectured as follow
 
 - \ref core Header-only library, 
   - \ref block A block-sparse matrix library
-  - \ref block_solvers Solvers ( GaussSeidel, ConjugateGradient ) using those matrices
+  - \ref block_solvers Solvers ( Projected GaussSeidel, Krylov linear solvers ) using those matrices
   - \ref soc Tools for solving Second Order Cone complementarity problems with the above solvers
 - \ref interfaces Convenient, compiled wrappers for the most popular uses of the Core libraries, such as solving Coulomb friction problems. 
 

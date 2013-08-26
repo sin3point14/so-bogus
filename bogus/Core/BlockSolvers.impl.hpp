@@ -12,6 +12,6 @@
 #include "BlockSolvers.hpp"
 #include "BlockSolvers/Preconditioners.impl.hpp"
 #include "BlockSolvers/GaussSeidel.impl.hpp"
-#include "BlockSolvers/IterativeLinearSolvers.impl.hpp"
+#include "BlockSolvers/Krylov.impl.hpp"
 
 #endif
