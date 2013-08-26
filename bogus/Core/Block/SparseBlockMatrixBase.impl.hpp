@@ -23,7 +23,8 @@ namespace bogus {
 template < bool Symmetric >
 struct SparseBlockMatrixFinalizer
 {
-	static void finalize( Object& ) { }
+    template <typename T>
+    static void finalize( const T& ) { }
 } ;
 template < >
 struct SparseBlockMatrixFinalizer<  true >

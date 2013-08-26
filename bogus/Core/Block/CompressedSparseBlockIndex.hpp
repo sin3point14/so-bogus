@@ -170,10 +170,13 @@ struct SparseBlockIndex< true, Index_, BlockPtr_, ArrayType > : public SparseBlo
 		valid = true ;
 	}
 
-	// BSR
-
+	// MKL BSR
 	const Index* rowIndex() const { return &outer[0] ; }
 	const Index* columns() const { return &inner[0] ; }
+
+	// Same with nicer names
+	const Index* outerIndexPtr() const { return &outer[0] ; }
+	const Index* innerIndexPtr() const { return &inner[0] ; }
 
 } ;
 

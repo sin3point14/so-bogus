@@ -86,7 +86,7 @@ TEST( Serialization, SparseBlockMatrix )
 	sbm.insertBackAndResize( 1, 0 ).setConstant(2) ;
 	sbm.finalize() ;
 
-	bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::COMPRESSED > sbmc( sbm ) ;
+	bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::UNCOMPRESSED > sbmc( sbm ) ;
 
 	{
 		std::ofstream ofs("/tmp/bogus_serialization_test");
@@ -95,7 +95,7 @@ TEST( Serialization, SparseBlockMatrix )
 	}
 
 	bogus::SparseBlockMatrix< Eigen::MatrixXd > sbm_ ;
-	bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::COMPRESSED > sbmc_ ;
+	bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::UNCOMPRESSED > sbmc_ ;
 
 	Eigen::SparseMatrix< double > sm_;
 	{

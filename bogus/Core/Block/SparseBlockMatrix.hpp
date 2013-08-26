@@ -28,13 +28,13 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
 	typedef typename ResizableSequenceContainer< BlockType >::Type BlocksArrayType ;
 
 	enum {
-		is_transposed  = 0,
-		is_temporary   = 0,
+		is_transposed = 0,
+		is_temporary  = 0,
 
-		is_compressed  = Flags & flags::COMPRESSED,
-		is_symmetric   = Flags & flags::SYMMETRIC,
-		is_col_major   = Flags & flags::COL_MAJOR,
-		flags          = Flags
+		is_compressed = ~Flags & flags::UNCOMPRESSED,
+		is_symmetric  =  Flags & flags::SYMMETRIC,
+		is_col_major  =  Flags & flags::COL_MAJOR,
+		flags         =  Flags
 	} ;
 
 	typedef SparseBlockIndex< is_compressed, Index, BlockPtr > MajorIndexType ;

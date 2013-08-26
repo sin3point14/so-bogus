@@ -61,7 +61,7 @@ public:
     template < typename OtherBlockType >
     struct MutableImpl
     {
-        typedef SparseBlockMatrix< OtherBlockType, Traits::flags | flags::COMPRESSED > Type ;
+        typedef SparseBlockMatrix< OtherBlockType, Traits::flags & ~flags::UNCOMPRESSED > Type ;
     } ;
 
     typedef typename Base::ConstTransposeReturnType ConstTransposeReturnType ;
@@ -146,8 +146,10 @@ public:
       That is, if the matrix is row-major, the insertion should be done one row at a time,
       and for each row from the left-most column to the right most.
 
-      For non-compressed matrices, no such limitation apply, though out of order insertion might lead
-      to bad cache performance.
+      For non-compressed matrices, this limitation does not apply, though out of order insertion might lead
+      to bad cache performance, and a std::sort will be performed on each inner vector so we
+      can keep efficient block( row, col ) look-up functions. The name \a insertBack  is kept
+      to make the caller think twice about out-of-order insertion
       */
     BlockType& insertBack( Index row, Index col )
     {
@@ -156,14 +158,16 @@ public:
         else
             return insertBackOuterInner( row, col ) ;
     }
-    //! Inserts a block and immediately resize it according to the dimensions given to setRows() and setCols()
+
+    //! Convenience method that insertBack() a block and immediately resize it according to the dimensions given to setRows() and setCols()
     BlockType& insertBackAndResize( Index row, Index col )
     {
         BlockType& block = insertBack( row, col ) ;
         block.resize( blockRows( row ), blockCols( col ) ) ;
         return block ;
     }
-    //! Inert a block, specifying directily the outer and inner indices instead of row and column
+
+    //! Insert a block, specifying directily the outer and inner indices instead of row and column
     BlockType& insertBackOuterInner( Index outer, Index inner ) ;
 
     //! Finalizes the matrix.

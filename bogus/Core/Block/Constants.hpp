@@ -34,18 +34,22 @@ namespace flags
 	enum {
 		//! Default value: the matrix will use an uncompressed index, will be row-major, and not symmetric
 		NONE = 0,
-		//! Use a compressed index
-		//! This adds some restrictions on the order in which elements can be inserted,
-		//! but can be more efficient and allow interoperability with other formats
-		//! such as MKL's BSR
-		COMPRESSED = 0x1,
+		//! Use an uncompressed index
+		/*! This removes some restrictions on the order in which elements can be inserted,
+			but can be less efficient and will dsallow interoperability with other formats
+			such as MKL's BSR.
+			<b>If the matrix can be created in a compressed way, that is with all its elements inserted
+			in order, you probably should not set the UNCOMPRESSED flag. </b>
+			\sa SparseBlockMatrixBase::insertBack()
+		*/
+		UNCOMPRESSED = 0x1,
 		//! Store and index blocks in a column major way
 		COL_MAJOR = 0x2,
-		//! Store only half the matrix, or rather the triangular part which verifies \c inner \c <= \c outer ,
-		/*! ( \c outer being the row and \c inner the column for row-major matrices )
-		  * Linear algebra operations, such as matrix vector and matrix matrix multiplication, will work
-		  * as if the matrix was fully populated, but at a lower memory access cost
-		  */
+		//! Store only half the matrix, or rather the triangular part for which \c inner \c <= \c outer,
+		/*! \c outer being the row and \c inner the column for row-major matrices.
+			Linear algebra operations such as matrix-vector and matrix-matrix multiplication will work
+			just like if the matrix was fully populated, but at a lower memory access cost
+		*/
 		SYMMETRIC = 0x4
 	} ;
 }

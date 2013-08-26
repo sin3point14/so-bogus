@@ -37,8 +37,8 @@ template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::solveWith( GaussSeidelType &gs, double *r,
 									   const bool staticProblem ) const
 {
-	typedef bogus::SOCLaw< Dimension, typename GaussSeidelType::Scalar, true  > CoulombLawType	;
-	typedef bogus::SOCLaw< Dimension, typename GaussSeidelType::Scalar, false > SOCLawType	;
+	typedef bogus::SOCLaw< Dimension, double, true  > CoulombLawType	;
+	typedef bogus::SOCLaw< Dimension, double, false > SOCLawType	;
 
 	gs.setMatrix( W );
 	Eigen::Map< Eigen::VectorXd > r_map ( r, W.rows() ) ;
@@ -50,12 +50,19 @@ double DualFrictionProblem< Dimension >::solveWith( GaussSeidelType &gs, double 
 	return res ;
 }
 
+#ifdef BOGUS_INSTANTIATE_2D_SOC
 template struct DualFrictionProblem< 2u > ;
-template struct DualFrictionProblem< 3u > ;
-template struct DualFrictionProblem< Eigen::Dynamic > ;
-
 template struct PrimalFrictionProblem< 2u > ;
+#endif
+
+#ifdef BOGUS_INSTANTIATE_3D_SOC
+template struct DualFrictionProblem< 3u > ;
 template struct PrimalFrictionProblem< 3u > ;
+#endif
+
+#ifdef BOGUS_INSTANTIATE_DYNAMIC_SOC
+template struct DualFrictionProblem< Eigen::Dynamic > ;
 template struct PrimalFrictionProblem< Eigen::Dynamic > ;
+#endif
 
 } //namespace bogus

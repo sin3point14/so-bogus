@@ -17,7 +17,7 @@ TEST( Map, SparseBlock )
   expected_3 << 768, 768, 768, 0, 0, 0, 0, 0, 0, 3264, 3264, 3264, 0, 0, 0 ;
 
   EXPECT_TRUE( bogus::IsTransposable< BlockT >::Value ) ;
-  bogus::SparseBlockMatrix< BlockT, bogus::COMPRESSED > origsbm ;
+  bogus::SparseBlockMatrix< BlockT > origsbm ;
   origsbm.setRows( 5, 3 ) ;
   origsbm.setCols( 2, 4 ) ;
 
@@ -66,10 +66,10 @@ TEST( Map, SparseBlock )
   EXPECT_TRUE( sbm.minorIndex().valid );
   EXPECT_EQ( expected_3, ( rhs.transpose() * sbm.transpose() ).transpose()  ) ;
 
-  bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::SYMMETRIC | bogus::COMPRESSED > prod( sbm * sbm.transpose() );
+  bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::SYMMETRIC > prod( sbm * sbm.transpose() );
   EXPECT_EQ( sbm * expected_2, prod * res ) ;
   EXPECT_EQ( sbm.transpose() * expected_3, ( sbm.transpose() * sbm ) * rhs ) ;
-  bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::COL_MAJOR | bogus::COMPRESSED > sum( sbm.transpose() + sbm.transpose() );
+  bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::COL_MAJOR > sum( sbm.transpose() + sbm.transpose() );
   EXPECT_EQ( 2 * expected_2, sum * res ) ;
   EXPECT_EQ( 2 * expected_3, 2 * sbm * rhs ) ;
 

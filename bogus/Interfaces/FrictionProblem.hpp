@@ -12,13 +12,13 @@ struct PrimalFrictionProblem
 {
 	// Primal Data
 	//! M -- mass matrix
-	SparseBlockMatrix< Eigen::MatrixXd, COMPRESSED  > M ;
+	SparseBlockMatrix< Eigen::MatrixXd > M ;
 	//! E -- local rotation matrix ( world <-> contact basis )
-	bogus::SparseBlockMatrix< Eigen::Matrix< double, Dimension, Dimension >, COMPRESSED > E ;
+	bogus::SparseBlockMatrix< Eigen::Matrix< double, Dimension, Dimension > > E ;
 
 	typedef Eigen::Matrix< double, Dimension, Eigen::Dynamic > HBlock ;
 	//! H -- deformation gradient ( generalized coordinates <-> 3D world )
-	SparseBlockMatrix< HBlock > H;
+	SparseBlockMatrix< HBlock, UNCOMPRESSED > H;
 
 	//! External forces
 	const double *f ;
@@ -30,7 +30,7 @@ struct PrimalFrictionProblem
 	// Cached data
 
 	//! M^-1
-	SparseBlockMatrix< LU< Eigen::MatrixBase< Eigen::MatrixXd > >, COMPRESSED > MInv ;
+	SparseBlockMatrix< LU< Eigen::MatrixBase< Eigen::MatrixXd > > > MInv ;
 
 } ;
 
@@ -39,7 +39,7 @@ template< unsigned Dimension >
 struct DualFrictionProblem
 {
 	typedef SparseBlockMatrix< Eigen::Matrix< double, Dimension, Dimension, Eigen::RowMajor >,
-							   SYMMETRIC | COMPRESSED > WType ;
+							   SYMMETRIC > WType ;
 	typedef GaussSeidel< WType > GaussSeidelType ;
 
 	//! W -- Delassus operator

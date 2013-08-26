@@ -60,7 +60,7 @@ TEST( GaussSeidel, Small )
 //	std::cout << InvMassMat << std::endl ;
 //	std::cout << H << std::endl ;
 
-	typedef bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC | bogus::flags::COMPRESSED > WType ;
+	typedef bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC > WType ;
 	WType W ;
 	W = H * InvMassMat * H.transpose() ;
 

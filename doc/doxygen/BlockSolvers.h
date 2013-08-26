@@ -12,10 +12,14 @@ namespace bogus {
 
 \section block_basics Basics
 
-To use the library, 
+To use this library, 
 \code
 #include <bogus/Core/BlockSolvers.impl.hpp>
+// or if you only plan to use a specific part
+#include <bogus/Core/BlockSolvers/Krylov.impl.hpp>
+#include <bogus/Core/BlockSolvers/GaussSeidel.impl.hpp>
 \endcode
+
 
 The \ref block_solvers module is a collection of solvers operating on \ref block matrices.
 
@@ -83,8 +87,8 @@ Example code for 3D Coulomb friction (requires the \ref soc module):
 \code
 
 //Construct the dual matrix
-typedef bogus::SparseBlockMatrix< Eigen::Matrix3d, bougs::flags::SYMMETRIC | bogus::flags::COMPRESSED > WType ;
-WType W = primal.H * primal.MInvHt ;
+typedef bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::SYMMETRIC > WType ;
+WType W = primal.H * ( primal.MInv * primal.H.transpose() ) ;
 
 //Friction coefficients
 const double * mu = { .... } ;

@@ -14,12 +14,9 @@
 namespace bogus
 {
 
-//! Base empty class, for technical reasons only
-struct Object {} ;
-
 //! Base class for anything block
 template < typename Derived >
-struct BlockObjectBase : public Object
+struct BlockObjectBase
 {
     //! Returns a const reference to the implementation
     const Derived& derived() const ;

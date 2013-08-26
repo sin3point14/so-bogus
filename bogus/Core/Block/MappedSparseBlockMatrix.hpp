@@ -36,9 +36,8 @@ struct BlockMatrixTraits< MappedSparseBlockMatrix< BlockT, Flags, Index_ > >
         is_compressed  = 1,
         is_symmetric   = Flags & flags::SYMMETRIC,
         is_col_major   = Flags & flags::COL_MAJOR,
-        flags          = Flags | flags::COMPRESSED
+        flags          = Flags & ~flags::UNCOMPRESSED
     } ;
-
 
     typedef SparseBlockIndex< is_compressed, Index, BlockPtr, ConstMappedArray > MajorIndexType ;
 
@@ -79,10 +78,10 @@ public:
     }
 
     void mapTo(
-            std::size_t numberOfNonZeros,    //! Total number of blocks
-            const BlockT* dataPtr,           //! Pointer to an array containing the blocks data
-            const Index*  outerIndexPtr,     //! A.k.a rowsIndex, pntrb, pntre-1 from BSR format
-            const Index*  innerIndexPtr      //! A.k.a columns from BSR format
+            std::size_t numberOfNonZeros,    //!< Total number of blocks
+            const BlockT* dataPtr,           //!< Pointer to an array containing the blocks data
+            const Index*  outerIndexPtr,     //!< A.k.a rowsIndex, pntrb, pntre-1 from BSR format
+            const Index*  innerIndexPtr      //!< A.k.a columns from BSR format
             )
     {
         Base::clear() ;
@@ -105,8 +104,8 @@ public:
         Base::cloneDimensions( source ) ;
         mapTo( source.nBlocks(),
                source.data(),
-               source.majorIndex().rowIndex(),
-               source.majorIndex().columns()
+               source.majorIndex().outerIndexPtr(),
+               source.majorIndex().innerIndexPtr()
                );
 
     }
