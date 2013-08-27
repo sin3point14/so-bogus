@@ -13,9 +13,10 @@ include( ExternalProject )
 
 if( MSVC AND MSVC_VERSION EQUAL 1700 )
   add_definitions( /D_VARIADIC_MAX=10 )
-  set( GTEST_PATH_COMMAND patch < ${CMAKE_CURRENT_SOURCE_DIR}/gtest-msvc11.patch )
+  set( GTEST_PATCH_COMMAND patch < ${CMAKE_CURRENT_SOURCE_DIR}/gtest-msvc11.patch )
+  MESSAGE( STATUS "MSVC 2012 detected -- using gtest-msvc11.patch")
 else()
-  set( GTEST_PATH_COMMAND "" )
+  set( GTEST_PATCH_COMMAND "" )
 endif()
 
 # Add gtest
