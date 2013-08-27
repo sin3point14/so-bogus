@@ -8,34 +8,22 @@
 #ifndef BOGUS_EIGEN_BLOCK_CONTAINERS_HPP
 #define BOGUS_EIGEN_BLOCK_CONTAINERS_HPP
 
-#define BOGUS_USE_ALLIGNED_ALLOCATOR( MatrixType ) \
-	template<> struct ResizableSequenceContainer < MatrixType > { \
-		typedef std::vector<MatrixType,Eigen::aligned_allocator<MatrixType> > Type ;\
-	}
-
 #include <Eigen/StdVector>
+#include "../Utils/CppTools.hpp"
 
 namespace bogus {
 
-namespace internal {
-	typedef Eigen::Matrix<double, 2, 2, Eigen::RowMajor> RowMatrix2d ;
-	typedef Eigen::Matrix<float , 2, 2, Eigen::RowMajor> RowMatrix2f ;
-	typedef Eigen::Matrix<double, 4, 4, Eigen::RowMajor> RowMatrix4d ;
-	typedef Eigen::Matrix<float , 4, 4, Eigen::RowMajor> RowMatrix4f ;
-} 
+// We do not have to use the specialized allocator if the size is dynamic or not a multiple of 16 bytes
+template< typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols >
+struct ResizableSequenceContainer< Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols> >
+{
+	typedef Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols> BlockType ;
+	typedef typename TypeSwapIf< 
+		Rows == Eigen::Dynamic || Cols == Eigen::Dynamic || 0 != ( static_cast< std::size_t >( Rows * Cols * sizeof( Scalar ) ) & 0xf ),
+		std::vector< BlockType, Eigen::aligned_allocator<BlockType> >,
+		std::vector< BlockType > >::First Type ;
+} ;
 
-BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Vector2d );
-BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Vector2f );
-BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Vector4d );
-BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Vector4f );
-BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Matrix2d );
-BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Matrix2f );
-BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Matrix4d );
-BOGUS_USE_ALLIGNED_ALLOCATOR( Eigen::Matrix4f );
-BOGUS_USE_ALLIGNED_ALLOCATOR( internal::RowMatrix2d );
-BOGUS_USE_ALLIGNED_ALLOCATOR( internal::RowMatrix2f );
-BOGUS_USE_ALLIGNED_ALLOCATOR( internal::RowMatrix4d );
-BOGUS_USE_ALLIGNED_ALLOCATOR( internal::RowMatrix4f );
 
 } //namespace bogus
 

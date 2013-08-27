@@ -73,7 +73,7 @@ public:
 
 	void release()
 	{
-        T* instance = NULL ;
+        T* instance = 0 ;
         std::swap( m_instance, instance ) ;
 
 
@@ -104,7 +104,7 @@ public:
 	}
 
 	operator bool() const {
-		return m_instance ;
+		return 0 != m_instance ;
 	}
 
 private:
@@ -118,7 +118,7 @@ private:
             // Here m_refCount may already been deleted if another thread is simultaneously releasing
             // this object. We hope that the memory location is still accessible and check for destruction
             // But as I said previously, this class is *NOT* thread-safe
-            instance = NULL ;
+            instance = 0 ;
         }
 
         return instance ;

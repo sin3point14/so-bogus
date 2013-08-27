@@ -54,7 +54,7 @@ TEST( Polynomial, SOQPQuartic )
 	 ASSERT_GT( 1.e-24, res ) ;
 	 ASSERT_TRUE( r[0] > 0 ) ;
 	 ASSERT_TRUE( u[0] > 0 ) ;
-	 ASSERT_DOUBLE_EQ( u[0], u.segment<2>(1) .norm() * mu ) ;
+	 ASSERT_FLOAT_EQ( float(u[0]), float(u.segment<2>(1) .norm() * mu) ) ;
 	 ASSERT_TRUE( u.dot(r) < 1.e-12 ) ;
 
 
