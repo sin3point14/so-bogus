@@ -10,6 +10,7 @@
 #define BOGUS_BLOCK_ACCESS_HPP
 
 #include "Constants.hpp"
+#include "Traits.hpp"
 
 #include "../Utils/CppTools.hpp"
 
@@ -28,66 +29,75 @@ inline transpose_block ( const BlockType& block )
 	return block.transpose() ;
 }
 
+//! Defines the transpose type of a \p BlockType using self-introspection
+/*! Process af follow:
+        - If the BlockType is self transpose, the transpose type is the BlockType itself
+        - If the BlockType defines a ConstTransposeReturnType, use it
+        - If BlockTransposeTraits< BlockType > defines a ReturnType, use it
+        - If the BlockType defines a Base, retry with this Base
+  */
+template< typename BlockType,
+          bool IsSelfTranspose = BlockTraits< BlockType >::is_self_transpose,
+          bool DefinesConstTranspose = HasConstTransposeReturnType< BlockType >::Value,
+          bool DefinesTransposeTraits = HasReturnType< BlockTransposeTraits< BlockType > >::Value,
+          bool DefinesBase = HasBase< BlockType >::Value >
+struct BlockTranspose {
+    enum { is_defined= 0 } ;
+} ;
+
+// Self-transpose
+template< typename BlockType, bool DCT, bool DTT, bool DB >
+struct BlockTranspose< BlockType, true, DCT, DTT, DB > {
+    typedef const BlockType& ReturnType ;
+    enum { is_defined = 1 } ;
+} ;
+// ConstTransposeReturnType
+template< typename BlockType, bool DTT, bool DB >
+struct BlockTranspose< BlockType, false, true, DTT, DB > {
+    typedef typename BlockType::ConstTransposeReturnType ReturnType ;
+    enum { is_defined = 1 } ;
+} ;
+// BlockTransposeTraits
+template< typename BlockType, bool DB >
+struct BlockTranspose< BlockType, false, false, true, DB > {
+    typedef typename BlockTransposeTraits< BlockType >::ReturnType ReturnType ;
+    enum { is_defined = 1 } ;
+} ;
+// Base
+template< typename BlockType >
+struct BlockTranspose< BlockType, false, false, false, true >
+        : public BlockTranspose< typename BlockType::Base >
+{} ;
+
+template < typename BlockType >
+struct IsTransposable
+{
+    enum {
+        Value = BlockTranspose< BlockType >::is_defined
+    } ;
+} ;
+
+
 //! Utility struct for expressing a compile-time conditional transpose of a block
 // In all of the following get functions, the dummy "bool = false" argument is there so
 // that the specialization of BlockTransposeOption that does not perform a runtime check
 // can just inherit from BlockGetter, and does not have to know the type returned by the get() function
 template < bool DoTranspose >
 struct BlockGetter {
-
 	template < typename BlockT >
 	inline static const BlockT& get( const BlockT& src, bool = false )
 	{ return src ; }
 } ;
 template < >
 struct BlockGetter< true > {
-	//SFINAE, as we can't use decltype()
-
 	template < typename BlockT >
-	inline static typename BlockT::ConstTransposeReturnType get( const BlockT& src, bool = false )
-	{ return src.transpose() ; }
-
-	template < typename BlockT >
-	inline static typename BlockTransposeTraits< BlockT >::ReturnType get( const BlockT& src, bool = false )
-	{ return transpose_block( src ) ; }
-
-	// Retry with BlockT::Base, but only if the previous one was not successful ( to avoid ambiguities )
-	template < typename BlockT >
-	inline static typename DisableIf< HasReturnType< BlockTransposeTraits< BlockT > >::Value,
-	typename BlockTransposeTraits< typename BlockT::Base >::ReturnType >::ReturnType get( const BlockT& src, bool = false )
-	{ return transpose_block( src ) ; }
-
-	template < typename BlockT >
-	inline static typename EnableIf< BlockTraits< BlockT >::is_self_transpose, const BlockT& >::ReturnType
-	get( const BlockT& src, bool = false )
-	{ return src ; }
-
-	typedef char NonTransposableReturnType ;
-
-	template < typename T >
-	static NonTransposableReturnType get( const T &, ... ) ;
-
-} ;
-
-//! Check if there is a non-trivial specialization of BlockGetter<true>::get.
-/*! Only useful to display better compilation error messages.
-	False positive if sizeof( BlockType ) = sizeof( char ) and BlockType is not char.
-*/
-template < typename BlockType >
-struct IsTransposable
-{
-public:
-	enum {
-		Value = ( sizeof(BlockGetter< true >::NonTransposableReturnType ) == sizeof( BlockType ) )
-			|| 	( sizeof(BlockGetter< true >::NonTransposableReturnType ) !=
-				  sizeof(BlockGetter< true >::template get< BlockType >( * static_cast< BlockType* >( 0 ) ) ) )
-	} ;
-
+    inline static typename BlockTranspose< BlockT >::ReturnType get( const BlockT& src, bool = false )
+    { return transpose_block( src ) ; }
 } ;
 
 template < bool RuntimeCheck, bool DoTranspose >
-struct BlockTransposeOption : public BlockGetter< DoTranspose >{
-} ;
+struct BlockTransposeOption : public BlockGetter< DoTranspose >
+{} ;
 
 template < bool IgnoredDoTranspose >
 struct BlockTransposeOption< true, IgnoredDoTranspose > {
@@ -96,6 +106,7 @@ struct BlockTransposeOption< true, IgnoredDoTranspose > {
 	{ return doTranspose ? BlockT( transpose_block( src ) ) : src ; }
 } ;
 
+//! Access to the dimensions of a block
 template< typename BlockT, bool Transpose_ = false >
 struct BlockDims
 {

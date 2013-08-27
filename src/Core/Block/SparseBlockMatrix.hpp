@@ -82,7 +82,8 @@ struct BlockTraits< SparseBlockMatrix< BlockT, Flags > >
 		RowsAtCompileTime = internal::DYNAMIC,
 		ColsAtCompileTime = internal::DYNAMIC,
 		uses_plain_array_storage = 0,
-		is_row_major = !BlockMatrixTraits< BlockType >::is_col_major
+		is_row_major = !BlockMatrixTraits< BlockType >::is_col_major,
+		is_self_transpose = BlockMatrixTraits< BlockType >::is_symmetric
 	}  ;
 } ;
 

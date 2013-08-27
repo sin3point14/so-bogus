@@ -66,22 +66,27 @@ struct DisableIf< false, ReturnType_ >
 	typedef ReturnType_ ReturnType ;
 } ;
 
-template < typename BaseType >
-struct HasReturnType
-{
-private:
-	enum { True = 1, False = 2 } ;
-	typedef char  TrueType[  True ] ;
-	typedef char FalseType[ False ] ;
+// Warning : HasXXX< T > does NOT work for reference typedefs !
+#define BOGUS_DEFINE_HAS_TYPE( TypeName ) \
+	template < typename BaseType > 	      \
+	struct Has##TypeName	              \
+	{	                                  \
+	private:                              \
+		enum { True = 1, False = 2 } ;    \
+		typedef char  TrueType[  True ] ; \
+		typedef char FalseType[ False ] ; \
+										  \
+		template< typename T >			  \
+		static const  TrueType& check( const typename T::TypeName* ) ; \
+		template< typename >			  \
+		static const FalseType& check( ... ) ; \
+	public:								  \
+		enum { Value = ( True == sizeof( check< BaseType >( 0 ) ) ) } ;\
+	}
 
-	template< typename T >
-	static const  TrueType& check( const typename T::ReturnType* ) ;
-	template< typename >
-	static const FalseType& check( ... ) ;
-public:
-	enum { Value = ( True == sizeof( check< BaseType >( 0 ) ) ) } ;
-} ;
-
+BOGUS_DEFINE_HAS_TYPE( ReturnType ) ;
+BOGUS_DEFINE_HAS_TYPE( ConstTransposeReturnType ) ;
+BOGUS_DEFINE_HAS_TYPE( Base ) ;
 
 // Static assertions
 
@@ -93,8 +98,8 @@ struct StaticAssert
 		BLOCKS_MUST_HAVE_FIXED_DIMENSIONS,
 		MATRICES_ORDERING_IS_INCONSISTENT,
 		TRANSPOSE_OF_FACTORIZATION_MAKES_NO_SENSE_IN_THIS_CONTEXT,
-        TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE,
-        OPERANDS_HAVE_INCONSISTENT_FLAGS
+		TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE,
+		OPERANDS_HAVE_INCONSISTENT_FLAGS
 	} ;
 } ;
 
@@ -103,7 +108,7 @@ struct StaticAssert< false >
 {
 } ;
 
-#define BOGUS_STATIC_ASSERT( test, message ) (void) StaticAssert< test >::message
+#define BOGUS_STATIC_ASSERT( test, message ) (void) ::bogus::StaticAssert< test >::message
 
 //! Const mapped array, used for Mapped Block Matrices
 template< typename Element >
@@ -111,46 +116,46 @@ class ConstMappedArray
 {
 public:
 
-    typedef ConstMappedArray< Element > Type ;
-    enum { is_mutable = 0 } ;
+	typedef ConstMappedArray< Element > Type ;
+	enum { is_mutable = 0 } ;
 
-    ConstMappedArray ( )
-        : m_data( 0 ), m_size( 0 )
-    {}
+	ConstMappedArray ( )
+		: m_data( 0 ), m_size( 0 )
+	{}
 
-    ConstMappedArray ( const Element* data, std::size_t size )
-        : m_data( data ), m_size( size )
-    {}
+	ConstMappedArray ( const Element* data, std::size_t size )
+		: m_data( data ), m_size( size )
+	{}
 
-    void setData( const Element* data, std::size_t size )
-    {
-        m_data = data ;
-        m_size = size ;
-    }
+	void setData( const Element* data, std::size_t size )
+	{
+		m_data = data ;
+		m_size = size ;
+	}
 
-    const Element* data() const { return m_data ; }
+	const Element* data() const { return m_data ; }
 
-    inline std::size_t size() const { return m_size ; }
-    inline bool empty() const { return 0 == m_size ; }
+	inline std::size_t size() const { return m_size ; }
+	inline bool empty() const { return 0 == m_size ; }
 
-    const Element* begin() const { return data() ; }
-    const Element* end() const { return data() + size() ; }
+	const Element* begin() const { return data() ; }
+	const Element* end() const { return data() + size() ; }
 
-    const Element& operator[]( std::size_t idx ) const
-    { return m_data[idx] ; }
+	const Element& operator[]( std::size_t idx ) const
+	{ return m_data[idx] ; }
 
-    inline void resize( std::size_t s)
-    { assert( !m_data || m_size == s ) ; (void) s ; }
-    inline void reserve( std::size_t )
-    { }
-    inline void clear( )
-    { }
-    inline void assign( std::size_t s, const Element&)
-    { assert( !m_data || m_size == s ) ; (void) s ; }
+	inline void resize( std::size_t s)
+	{ assert( !m_data || m_size == s ) ; (void) s ; }
+	inline void reserve( std::size_t )
+	{ }
+	inline void clear( )
+	{ }
+	inline void assign( std::size_t s, const Element&)
+	{ assert( !m_data || m_size == s ) ; (void) s ; }
 
 private:
-    const Element* m_data ;
-    std::size_t    m_size ;
+	const Element* m_data ;
+	std::size_t    m_size ;
 } ;
 
 } //namespace bogus

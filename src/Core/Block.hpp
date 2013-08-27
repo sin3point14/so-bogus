@@ -11,8 +11,8 @@
 
 #include "Block.fwd.hpp"
 
-#include "Block/BlockObjectBase.hpp"
 #include "Block/ScalarBindings.hpp"
+#include "Block/BlockObjectBase.hpp"
 #include "Block/BlockMatrixBase.hpp"
 
 #ifndef BOGUS_WITHOUT_EIGEN

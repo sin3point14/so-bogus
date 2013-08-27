@@ -531,9 +531,10 @@ TEST( SparseBlock, Sparse )
 
 TEST( SparseBlock, Scalar )
 {
-	EXPECT_TRUE( bogus::IsTransposable< double >::Value ) ;
-	EXPECT_TRUE( bogus::IsTransposable< int >::Value ) ;
-	EXPECT_TRUE( bogus::IsTransposable< char >::Value ) ;
+	ASSERT_TRUE( bogus::IsTransposable< double >::Value ) ;
+	ASSERT_TRUE( bogus::IsTransposable< float >::Value ) ;
+	ASSERT_TRUE( bogus::IsTransposable< int >::Value ) ;
+	ASSERT_TRUE( bogus::IsTransposable< char >::Value ) ;
 
 	bogus::SparseBlockMatrix< Eigen::VectorXd > sbm ;
 	sbm.setRows( 2, 5 ) ;

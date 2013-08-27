@@ -315,8 +315,9 @@ template < typename Derived >
 template < typename OtherDerived >
 void SparseBlockMatrixBase<Derived>::cloneStructure( const SparseBlockMatrixBase< OtherDerived > &source )
 {
-	BOGUS_STATIC_ASSERT( BlockMatrixTraits< Derived >::flags == BlockMatrixTraits< OtherDerived >::flags,
-		OPERANDS_HAVE_INCONSISTENT_FLAGS ) ;
+    BOGUS_STATIC_ASSERT( static_cast<unsigned>(BlockMatrixTraits< Derived >::flags)
+                         == static_cast< unsigned >(BlockMatrixTraits< OtherDerived >::flags),
+                         OPERANDS_HAVE_INCONSISTENT_FLAGS ) ;
 
 	m_nBlocks = source.nBlocks() ;
 	rowMajorIndex() = source.rowMajorIndex() ;

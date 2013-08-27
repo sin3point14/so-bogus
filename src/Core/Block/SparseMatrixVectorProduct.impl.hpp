@@ -332,7 +332,7 @@ void SparseBlockMatrixBase< Derived >::multiply( const RhsT& rhs, ResT& res,
 												 typename SparseBlockMatrixBase< Derived >::Scalar alpha,
 												 typename SparseBlockMatrixBase< Derived >::Scalar beta  ) const
 {
-	BOGUS_STATIC_ASSERT( !Transpose || IsTransposable< typename Derived::BlockType >::Value,
+	BOGUS_STATIC_ASSERT( !Transpose || IsTransposable< BlockType >::Value,
 						 TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
 	) ;
 
