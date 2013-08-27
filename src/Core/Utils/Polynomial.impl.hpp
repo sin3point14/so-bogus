@@ -28,7 +28,10 @@ namespace polynomial {
 #ifdef _MSC_VER
 #define BOGUS_TLS_SPEC __declspec( thread )
 #else
+// gcc on MacOS X does not support thread local storage
+#if !defined( __GNUC__ ) or !defined( __APPLE__ )
 #define BOGUS_TLS_SPEC __thread
+#endif
 #endif
 
 template< unsigned Dimension, typename Scalar >

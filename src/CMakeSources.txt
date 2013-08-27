@@ -4,6 +4,7 @@ Core/Block.impl.hpp
 Core/Block.io.hpp
 Core/Block/Access.hpp
 Core/Block/BlockMatrixBase.hpp
+Core/Block/BlockObjectBase.hpp
 Core/Block/BlockObjectBase.impl.hpp
 Core/Block/CompoundSparseBlockIndex.hpp
 Core/Block/CompressedSparseBlockIndex.hpp
@@ -56,6 +57,7 @@ Core/SecondOrder.hpp
 Core/SecondOrder.impl.hpp
 Core/Utils/CppTools.hpp
 Core/Utils/LinearSolverBase.hpp
+Core/Utils/NaiveSharedPtr.hpp
 Core/Utils/NonSmoothNewton.hpp
 Core/Utils/NonSmoothNewton.impl.hpp
 Core/Utils/NumTraits.hpp
