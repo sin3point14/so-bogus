@@ -23,6 +23,14 @@ struct ProblemTraits : public MatrixTraits< LocalMatrixType >
 
 	typedef Eigen::Matrix< Scalar, Eigen::Dynamic, 1 > DynVector ;
 	typedef Eigen::Matrix< Scalar, Eigen::Dynamic, Eigen::Dynamic > DynMatrix ;
+	template < typename OtherMatrix >
+	struct MutableClone
+	{
+		typedef Eigen::Matrix< Scalar,
+			OtherMatrix::RowsAtCompileTime,
+			OtherMatrix::ColsAtCompileTime,
+			OtherMatrix::Options > Type ;
+	} ;
 
 	template< typename VectorType >
 	static typename VectorType::template FixedSegmentReturnType< dimension >::Type segment( const unsigned i, VectorType& v )

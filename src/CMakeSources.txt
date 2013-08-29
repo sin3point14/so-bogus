@@ -35,6 +35,7 @@ Core/BlockSolvers/GaussSeidel.hpp
 Core/BlockSolvers/GaussSeidel.impl.hpp
 Core/BlockSolvers/Krylov.hpp
 Core/BlockSolvers/Krylov.impl.hpp
+Core/BlockSolvers/KrylovMethods.hpp
 Core/BlockSolvers/Preconditioners.hpp
 Core/BlockSolvers/Preconditioners.impl.hpp
 Core/Eigen/BlockBindings.hpp

@@ -160,6 +160,15 @@ ResT & mv_add( const bogus::LinearSolverBase< Derived >& solver,
 	return res ;
 }
 
+
 } //namespace bogus
+
+
+template < typename Derived, typename RhsT >
+typename bogus::LinearSolverTraits< Derived >::template Result< Eigen::MatrixBase< RhsT > >::Type operator*
+	( const bogus::LinearSolverBase< Derived >& solver, const Eigen::MatrixBase< RhsT >& rhs )
+{
+  return solver.solve( rhs ) ;
+}
 
 #endif

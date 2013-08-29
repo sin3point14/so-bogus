@@ -52,7 +52,7 @@ void MecheFrictionProblem::destroy()
 	m_dual = 0 ;
 }
 
-int MecheFrictionProblem::ackCurrentResidual( unsigned GSIter, double err )
+void MecheFrictionProblem::ackCurrentResidual( unsigned GSIter, double err )
 {
 	if( m_out )
 	{
@@ -60,7 +60,6 @@ int MecheFrictionProblem::ackCurrentResidual( unsigned GSIter, double err )
 			   << " with residual " << err
 			   << std::endl ;
 	}
-	return 0 ;
 }
 
 void MecheFrictionProblem::reset ()

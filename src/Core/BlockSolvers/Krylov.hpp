@@ -46,20 +46,22 @@ public:
 	//! Sets the system matrix and initializes the preconditioner
 	Krylov& setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
 
-	// Create MethodName() -> krylov::MethodName and solve_MethodName -> Scalar methods
+	// For each value of the krylov::Method enum, create a MethodName typedef
+	// and the asMethodName() -> MethodName and solve_MethodName -> Scalar methods
 #define BOGUS_PROCESS_KRYLOV_METHOD( MethodName )\
 	typedef krylov::MethodName<  \
-		LocalMatrixType, PreconditionerType< BlockMatrixBase< BlockMatrixType > >, \
-		typename GlobalProblemTraits::DynVector, Scalar > MethodName ; \
+		BlockMatrixType, PreconditionerType< BlockMatrixBase< BlockMatrixType > >, \
+		GlobalProblemTraits > MethodName ; \
 	\
-	MethodName MethodName() const { \
+	MethodName as##MethodName() const { \
 		return MethodName(  \
-			*Base::m_matrix, m_precond, Base::m_callback, \
+			Base::m_matrix->derived(), m_preconditioner, \
+			Base::m_callback, \
 			Base::m_tol, Base::m_maxIters ) ; } \
 	\
 	template < typename RhsT, typename ResT > \
 	Scalar solve_##MethodName( const RhsT &b, ResT &x ) const  \
-	{ return MethodName().solve( b, x ) ; }
+	{ return as##MethodName().solve( b, x ) ; }
 
 BOGUS_KRYLOV_METHODS
 #undef BOGUS_PROCESS_KRYLOV_METHOD
@@ -67,19 +69,11 @@ BOGUS_KRYLOV_METHODS
 	//! Solve function that takes the method to use as an argument
 	template < typename RhsT, typename ResT >
 	Scalar solve(  const RhsT &b, ResT &x,
-				   krylov::Method method = krylov::CG ) const ;
+				   krylov::Method method = krylov::kCG ) const ;
 
 protected:
-	using Base::m_matrix ;
-	using Base::m_maxIters ;
-	using Base::m_tol ;
-
-	//! Check init guess, reset it to zero if that would give a lower residual
-	template < typename RhsT, typename ResT >
-	Scalar init( const RhsT &b, ResT &x, typename GlobalProblemTraits::DynVector &r0 ) const ;
 
 	PreconditionerType< BlockMatrixBase< BlockMatrixType > > m_preconditioner ;
-	Scalar m_scale ;
 } ;
 
 } //namesoace bogus

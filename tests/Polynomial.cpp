@@ -1,4 +1,5 @@
 
+#include "Core/Utils/CppTools.hpp"
 #include "Core/Utils/Polynomial.hpp"
 #include "Core/Utils/Polynomial.impl.hpp"
 

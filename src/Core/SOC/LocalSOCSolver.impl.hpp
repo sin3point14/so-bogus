@@ -109,7 +109,7 @@ struct AnalyticLocalSOCSolver< 3u, Scalar, true >
 
 		const Mat2 M = Wbar + alpha * Mat2::Identity() ;
 		const typename MatrixTraits< Mat2 >::LUType lu (M) ;
-		lu.solve( -bN * bbar, Traits::tp( r ) ) ;
+		Traits::tp( r ) = lu.solve( -bN * bbar ) ;
 		Traits::np( r ) = Traits::tp( r ).norm() / mu ;
 
 		return true ;

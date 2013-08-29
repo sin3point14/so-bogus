@@ -59,7 +59,7 @@ TEST( Krylov, CG )
 
 	res.setZero() ;
 	g_meth = "BiCG" ;
-	cg.solve( rhs, res, bogus::krylov::BiCG ) ;
+	cg.solve( rhs, res, bogus::krylov::kBiCG ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 
 	res.setZero() ;
@@ -140,11 +140,11 @@ TEST( Krylov, Preconditioner )
 	EXPECT_GT( 1.e-16, err ) ;
 
 	res.setZero() ;
-	pcg.setMaxIters( 30 ) ;
+	pcg.setMaxIters( 40 ) ;
 	g_meth = "GMRES(3)" ;
-	err = pcg.solve_GMRES( rhs, res, 3 ) ;
-	EXPECT_GT( 1.e-16, err ) ;
-	EXPECT_GT( 1.e-12, ( sbm*res - rhs ).squaredNorm() ) ;
+	err = pcg.asGMRES().setRestart(3).solve( rhs, res ) ;
+	EXPECT_GT( 1.e-15, err ) ;
+	EXPECT_GT( 1.e-14, ( sbm*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
 	g_meth = "TFQMR" ;

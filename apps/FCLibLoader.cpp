@@ -15,10 +15,9 @@ extern "C"
 #include <fstream>
 #include <sys/stat.h>
 
-int ackCurrentResidual( unsigned GSIter, double err )
+void ackCurrentResidual( unsigned GSIter, double err )
 {
 	std::cout << " .. GS: " << GSIter << " ==> " << err << std::endl ;
-	return 0 ;
 }
 
 template< unsigned Dimension, typename EigenDerived >

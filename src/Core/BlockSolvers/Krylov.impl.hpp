@@ -28,39 +28,21 @@ Krylov< BlockMatrixType, PreconditionerType >::Krylov(
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 Krylov< BlockMatrixType, PreconditionerType >::Krylov()
-	: Base( NULL, 100, NumTraits< Scalar >::epsilon() ), m_scale(0)
+	: Base( NULL, 100, NumTraits< Scalar >::epsilon() )
 {
 }
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
-void Krylov< BlockMatrixType, PreconditionerType >::setMatrix(
+Krylov< BlockMatrixType, PreconditionerType >&
+Krylov< BlockMatrixType, PreconditionerType >::setMatrix(
 		const BlockMatrixBase< BlockMatrixType > & matrix )
 {
-	m_matrix = &matrix ;
+	Base::m_matrix = &matrix ;
 	m_preconditioner.setMatrix( matrix ) ;
-	m_scale = 1. / ( 1 + m_matrix->size() ) ;
 
 	return *this ;
 }
 
-template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
-template < typename RhsT, typename ResT >
-typename Krylov< BlockMatrixType, PreconditionerType >::Scalar
-Krylov< BlockMatrixType, PreconditionerType >::init( const RhsT &b, ResT &x,
-																	typename GlobalProblemTraits::DynVector &r0  ) const
-{
-	r0 = b - (*m_matrix)*x ;
-
-	Scalar res = r0.squaredNorm() ;
-	const Scalar resAt0 = b.squaredNorm()  ;
-
-	if( res > resAt0 ) {
-		r0 = b;
-		x.setZero() ;
-		res = resAt0 ;
-	}
-	return res * m_scale ;
-}
 
 
 
@@ -72,18 +54,10 @@ Krylov< BlockMatrixType, PreconditionerType >::solve( const RhsT &b, ResT &x,
 {
 	switch(method)
 	{
-		case krylov::CG:
-			return solve_CG( b, x ) ;
-		case krylov::BiCG:
-			return solve_BiCG( b, x ) ;
-		case krylov::BiCGSTAB:
-			return solve_BiCGSTAB( b, x ) ;
-		case krylov::CGS:
-			return solve_CGS( b, x ) ;
-		case krylov::GMRES:
-			return solve_GMRES( b, x ) ;
-		case krylov::TFQMR:
-			return solve_TFQMR( b, x ) ;
+#define BOGUS_PROCESS_KRYLOV_METHOD( MethodName ) \
+	case krylov::k##MethodName : return solve_##MethodName( b, x ) ;
+BOGUS_KRYLOV_METHODS
+#undef BOGUS_PROCESS_KRYLOV_METHOD
 	}
 	return -1 ;
 }
