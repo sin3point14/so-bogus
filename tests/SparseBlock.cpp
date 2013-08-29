@@ -434,10 +434,6 @@ TEST( SparseBlock, Inv )
 	expected_2 << .25, .25, .25, .125, .125, .125 ;
 
 	bogus::DenseLDLT< double, 2 > ldlt(  2 * Eigen::Matrix2d::Identity() ) ;
-	EXPECT_TRUE( expected_1.isApprox( ldlt * Eigen::Vector2d::Ones() ) ) ;
-
-	Eigen::Matrix2d matRes = ldlt * Eigen::Matrix2d::Ones() ;
-	EXPECT_TRUE( expected_1.isApprox( matRes.diagonal() ) ) ;
 
 	typedef bogus::LU< Eigen::MatrixBase< Eigen::MatrixXd > > BlockT ;
 	EXPECT_FALSE( bogus::IsTransposable< BlockT >::Value ) ;

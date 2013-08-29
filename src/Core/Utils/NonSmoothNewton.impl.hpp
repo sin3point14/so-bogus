@@ -67,7 +67,7 @@ typename NonSmoothNewton< NSFunction >::Scalar NonSmoothNewton<NSFunction>::solv
 
 	dPhi_dx = dF_dx.transpose() * x ;
 
-	dx = - lu.compute( dF_dx ).solve( F ) ;
+	lu.compute( dF_dx ).solve( -F, dx ) ;
 	const Scalar proj = dx.dot( dPhi_dx ) ;
 
 	if( proj > 0 || proj * proj < sigma2 * dx.squaredNorm() * dPhi_dx.squaredNorm() )

@@ -109,7 +109,7 @@ struct AnalyticLocalSOCSolver< 3u, Scalar, true >
 
 		const Mat2 M = Wbar + alpha * Mat2::Identity() ;
 		const typename MatrixTraits< Mat2 >::LUType lu (M) ;
-		Traits::tp( r ) = - bN * lu.solve( bbar ) ;
+		lu.solve( -bN * bbar, Traits::tp( r ) ) ;
 		Traits::np( r ) = Traits::tp( r ).norm() / mu ;
 
 		return true ;
@@ -301,7 +301,7 @@ Scalar LocalSOCSolver< Dimension, Scalar, DeSaxceCOV, Strat >::solve(
 	// Continuing enumerative fallback
 
 	Vector x0 = x ;
-	x = DenseLU< Scalar, Dimension >( A ).solve( -b ) ;
+	DenseLU< Scalar, Dimension >( A ).solve( -b, x ) ;
 	if( mu * Traits::np( x ) >= Traits::tp( x ).norm() )
 	{
 		// Sticking case

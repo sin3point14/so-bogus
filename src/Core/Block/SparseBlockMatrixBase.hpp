@@ -186,6 +186,7 @@ public:
     //! Returns the number of blocks of the matrices
     /*! \warning This may differ from blocks().size() */
     std::size_t nBlocks() const { return m_nBlocks ; }
+    std::size_t size() const { return nBlocks() ; }
 
     //! Returns whether the matrix is empty
     bool empty() const { return 0 == nBlocks() ; }

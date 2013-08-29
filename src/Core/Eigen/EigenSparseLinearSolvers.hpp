@@ -66,6 +66,13 @@ struct LDLT< Eigen::SparseMatrixBase< Derived > >
 		return *this ;
 	}
 
+	template < typename RhsT, typename ResT >
+	void solve( const Eigen::MatrixBase< RhsT >& rhs, ResT& res ) const
+	{
+		assert( m_fact ) ;
+		res = m_fact->solve( rhs ) ;
+	}
+
 	template < typename RhsT >
 	typename Traits::template Result< Eigen::MatrixBase< RhsT > >::Type
 	solve( const Eigen::MatrixBase< RhsT >& rhs ) const
@@ -135,6 +142,13 @@ struct LU< Eigen::SparseMatrixBase< Derived > >
 	{
 		m_fact.reset( new typename Traits::FactType( mat ) ) ;
 		return *this ;
+	}
+
+	template < typename RhsT, typename ResT >
+	void solve( const Eigen::MatrixBase< RhsT >& rhs, ResT& res ) const
+	{
+		assert( m_fact ) ;
+		res = m_fact->solve( rhs ) ;
 	}
 
 	template < typename RhsT >

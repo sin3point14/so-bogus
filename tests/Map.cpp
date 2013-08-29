@@ -3,8 +3,20 @@
 #include <Core/Block.io.hpp>
 #include <gtest/gtest.h>
 
+namespace bogus {
+
+template < typename Matrix, typename RhsT, typename ResT >
+void multiply( const Matrix& matrix, const RhsT& rhs, ResT& res )
+{
+    mv_set< false >( matrix, rhs, res ) ;
+}
+
+}
+
+
 TEST( Map, SparseBlock )
 {
+
   typedef Eigen::MatrixXd BlockT ;
 
   bogus::MappedSparseBlockMatrix< BlockT > sbm ;
@@ -47,6 +59,12 @@ TEST( Map, SparseBlock )
   rhs.setOnes() ;
   res.setZero() ;
   sbm.multiply< false >( rhs, res ) ;
+
+
+  Eigen::MatrixXd nah ;
+  nah.setZero( sbm.rows(), sbm.cols() ) ;
+  bogus::multiply( nah, rhs, res ) ;
+  bogus::multiply( sbm, rhs, res ) ;
 
   EXPECT_EQ( expected_1, res ) ;
   EXPECT_EQ( expected_1, sbm*rhs ) ;

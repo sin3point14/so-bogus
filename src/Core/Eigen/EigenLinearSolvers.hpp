@@ -52,8 +52,14 @@ struct LU< Eigen::MatrixBase< Derived > >
 		return *this ;
 	}
 
+	template < typename RhsT, typename ResT >
+	void solve( const Eigen::MatrixBase< RhsT >& rhs, ResT& res ) const
+	{
+		res = m_fact.solve( rhs ) ;
+	}
+
 	template < typename RhsT >
-	typename Traits::template Result<  Eigen::MatrixBase< RhsT > >::Type
+	typename Traits::template Result< Eigen::MatrixBase< RhsT > >::Type
 	solve( const Eigen::MatrixBase< RhsT >& rhs ) const
 	{
 		return m_fact.solve( rhs ) ;
@@ -109,6 +115,12 @@ struct LDLT< Eigen::MatrixBase< Derived > >
 		return *this ;
 	}
 
+	template < typename RhsT, typename ResT >
+	void solve( const Eigen::MatrixBase< RhsT >& rhs, ResT& res ) const
+	{
+		res = m_fact.solve( rhs ) ;
+	}
+
 	template < typename RhsT >
 	typename Traits::template Result< Eigen::MatrixBase< RhsT > >::Type
 	solve( const Eigen::MatrixBase< RhsT >& rhs ) const
@@ -130,14 +142,24 @@ struct DenseLDLT : public LDLT< Eigen::MatrixBase< Eigen::Matrix< Scalar, Rows, 
 	{}
 } ;
 
-} //namespace bogus
-
-template < typename Derived, typename RhsT >
-typename bogus::LinearSolverTraits< Derived >::template Result< Eigen::MatrixBase< RhsT > >::Type operator*
-	( const bogus::LinearSolverBase< Derived >& solver, const Eigen::MatrixBase< RhsT >& rhs )
+template < bool DoTranspose, typename Derived, typename RhsT, typename ResT >
+ResT & mv_set( const bogus::LinearSolverBase< Derived >& solver,
+			   const Eigen::MatrixBase< RhsT >& rhs, ResT &res )
 {
-	return solver.solve( rhs ) ;
+	BOGUS_STATIC_ASSERT( !DoTranspose, TRANSPOSE_MAKES_NO_SENSE_IN_THIS_CONTEXT ) ;
+	solver.solve( rhs, res ) ;
+	return res ;
 }
 
+template < bool DoTranspose, typename Derived, typename RhsT, typename ResT, typename Scalar >
+ResT & mv_add( const bogus::LinearSolverBase< Derived >& solver,
+			   const Eigen::MatrixBase< RhsT >& rhs, ResT &res, Scalar alpha )
+{
+	BOGUS_STATIC_ASSERT( !DoTranspose, TRANSPOSE_MAKES_NO_SENSE_IN_THIS_CONTEXT ) ;
+	res += alpha * solver.solve( rhs ) ;
+	return res ;
+}
+
+} //namespace bogus
 
 #endif
