@@ -63,7 +63,7 @@ public:
 	template < bool transpose, typename ResT, typename RhsT >
 	void apply( const RhsT& rhs, ResT &res ) const
 	{
-		BOGUS_STATIC_ASSERT( !transpose, TRANSPOSE_OF_FACTORIZATION_MAKES_NO_SENSE_IN_THIS_CONTEXT ) ;
+		BOGUS_STATIC_ASSERT( !transpose, TRANSPOSE_MAKES_NO_SENSE_IN_THIS_CONTEXT ) ;
 
 		res.setZero() ;
 		m_fact.template multiply< transpose >( rhs, res )  ;

@@ -17,8 +17,8 @@ static void ackCurrentResidual( unsigned GSIter, double err )
 TEST( GaussSeidel, Small )
 {
 
-	bogus::SparseBlockMatrix< Eigen::MatrixXd > MassMat ;
-	bogus::SparseBlockMatrix< Eigen::MatrixXd > InvMassMat ;
+	bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::UNCOMPRESSED > MassMat ;
+	bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::UNCOMPRESSED > InvMassMat ;
 
 	const unsigned dofs[2] = { 4, 2 } ;
 

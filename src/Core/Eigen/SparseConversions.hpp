@@ -100,7 +100,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 			if( diagPtr != nzBlocks.end() )
 			{
 				const typename Traits::BlockType diagBlock = dest.block( diagPtr->second ) ;
-				dest.block( diagPtr->second ) = .5 * ( diagBlock + BlockGetter< Traits::is_symmetric >::get( diagBlock ) ) ;
+				dest.block( diagPtr->second ) = .5 * ( diagBlock + TransposeIf< Traits::is_symmetric >::get( diagBlock ) ) ;
 			}
 		}
 

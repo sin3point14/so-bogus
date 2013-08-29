@@ -85,7 +85,7 @@ struct BlockOperand
 	{}
 } ;
 
-template < template < typename LhsT, typename RhsT > class BlockOp, typename LhsMatrixT, typename RhsMatrixT>
+template < template < typename, typename > class BlockOp, typename LhsMatrixT, typename RhsMatrixT>
 struct BinaryBlockOp : public BlockObjectBase< BlockOp< LhsMatrixT, RhsMatrixT > >
 {
 
@@ -276,7 +276,6 @@ struct BlockOperand< Scaling< ObjectT > > : public BlockOperand< ObjectT >
 		: Base(o, s)
 	{}
 } ;
-
 
 }
 

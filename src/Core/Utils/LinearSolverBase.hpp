@@ -22,6 +22,7 @@ struct LinearSolverTraits {} ;
 template < typename Derived >
 struct LinearSolverBase
 {
+
 	//! Returns the solution \b x of the linear system \b M \c * \b x \c = \c rhs
 	template < typename RhsT >
 	typename LinearSolverTraits< Derived >::template Result< RhsT >::Type
@@ -29,6 +30,14 @@ struct LinearSolverBase
 	{
 	   return static_cast< const Derived& >( *this ).solve( rhs ) ;
 	}
+
+	//! Finds the solution \b x of the linear system \b M \c * \b x \c = \c b
+	template < typename ResT, typename RhsT >
+	void solve( const RhsT& rhs, ResT& x ) const
+	{
+	   return static_cast< const Derived& >( *this ).solve( rhs, x ) ;
+	}
+
 
 	typedef BlockTraits< typename LinearSolverTraits< Derived >::MatrixType > UnderlyingBlockTraits ;
 	typedef typename UnderlyingBlockTraits::Scalar Scalar ;
@@ -38,6 +47,10 @@ struct LinearSolverBase
 		IsRowMajor = UnderlyingBlockTraits::is_row_major
 	} ;
 
+	//! Tag: mv_add() and mv_set() are redefined for LinearSolverBase< Derived >
+	typedef char MVOverload ;
+	//! Tag: mm_add() and mm_set() are redefined for LinearSolverBase< Derived >
+	typedef char MMOverload ;
 } ;
 
 //! Base class for LU factorizations

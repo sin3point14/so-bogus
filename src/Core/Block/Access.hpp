@@ -31,72 +31,72 @@ inline transpose_block ( const BlockType& block )
 
 //! Defines the transpose type of a \p BlockType using self-introspection
 /*! Process af follow:
-        - If the BlockType is self transpose, the transpose type is the BlockType itself
-        - If the BlockType defines a ConstTransposeReturnType, use it
-        - If BlockTransposeTraits< BlockType > defines a ReturnType, use it
-        - If the BlockType defines a Base, retry with this Base
+		- If the BlockType is self transpose, the transpose type is the BlockType itself
+		- If the BlockType defines a ConstTransposeReturnType, use it
+		- If BlockTransposeTraits< BlockType > defines a ReturnType, use it
+		- If the BlockType defines a Base, retry with this Base
   */
 template< typename BlockType,
-          bool IsSelfTranspose = BlockTraits< BlockType >::is_self_transpose,
-          bool DefinesConstTranspose = HasConstTransposeReturnType< BlockType >::Value,
-          bool DefinesTransposeTraits = HasReturnType< BlockTransposeTraits< BlockType > >::Value,
-          bool DefinesBase = HasBase< BlockType >::Value >
+		  bool IsSelfTranspose = BlockTraits< BlockType >::is_self_transpose,
+		  bool DefinesConstTranspose = HasConstTransposeReturnType< BlockType >::Value,
+		  bool DefinesTransposeTraits = HasReturnType< BlockTransposeTraits< BlockType > >::Value,
+		  bool DefinesBase = HasBase< BlockType >::Value >
 struct BlockTranspose {
-    enum { is_defined= 0 } ;
+	enum { is_defined= 0 } ;
 } ;
 
 // Self-transpose
 template< typename BlockType, bool DCT, bool DTT, bool DB >
 struct BlockTranspose< BlockType, true, DCT, DTT, DB > {
-    typedef const BlockType& ReturnType ;
-    enum { is_defined = 1 } ;
+	typedef const BlockType& ReturnType ;
+	enum { is_defined = 1 } ;
 } ;
 // ConstTransposeReturnType
 template< typename BlockType, bool DTT, bool DB >
 struct BlockTranspose< BlockType, false, true, DTT, DB > {
-    typedef typename BlockType::ConstTransposeReturnType ReturnType ;
-    enum { is_defined = 1 } ;
+	typedef typename BlockType::ConstTransposeReturnType ReturnType ;
+	enum { is_defined = 1 } ;
 } ;
 // BlockTransposeTraits
 template< typename BlockType, bool DB >
 struct BlockTranspose< BlockType, false, false, true, DB > {
-    typedef typename BlockTransposeTraits< BlockType >::ReturnType ReturnType ;
-    enum { is_defined = 1 } ;
+	typedef typename BlockTransposeTraits< BlockType >::ReturnType ReturnType ;
+	enum { is_defined = 1 } ;
 } ;
 // Base
 template< typename BlockType >
 struct BlockTranspose< BlockType, false, false, false, true >
-        : public BlockTranspose< typename BlockType::Base >
+		: public BlockTranspose< typename BlockType::Base >
 {} ;
 
 template < typename BlockType >
 struct IsTransposable
 {
-    enum {
-        Value = BlockTranspose< BlockType >::is_defined
-    } ;
+	enum {
+		Value = BlockTranspose< BlockType >::is_defined
+	} ;
 } ;
 
 
 //! Utility struct for expressing a compile-time conditional transpose of a block
 // In all of the following get functions, the dummy "bool = false" argument is there so
 // that the specialization of BlockTransposeOption that does not perform a runtime check
-// can just inherit from BlockGetter, and does not have to know the type returned by the get() function
+// can just inherit from TransposeIf, and does not have to know the type returned by the get() function
 template < bool DoTranspose >
-struct BlockGetter {
+struct TransposeIf {
 	template < typename BlockT >
 	inline static const BlockT& get( const BlockT& src, bool = false )
 	{ return src ; }
 } ;
 template < >
-struct BlockGetter< true > {
+struct TransposeIf< true > {
 	template < typename BlockT >
-    inline static typename BlockTranspose< BlockT >::ReturnType get( const BlockT& src, bool = false )
-    { return transpose_block( src ) ; }
+	inline static typename BlockTranspose< BlockT >::ReturnType get( const BlockT& src, bool = false )
+	{ return transpose_block( src ) ; }
 } ;
 
 template < bool RuntimeCheck, bool DoTranspose >
-struct BlockTransposeOption : public BlockGetter< DoTranspose >
+struct BlockTransposeOption : public TransposeIf< DoTranspose >
 {} ;
 
 template < bool IgnoredDoTranspose >
@@ -167,6 +167,22 @@ private:
 	VectorType &		 m_vec ;
 	const Index* m_offsets ;
 } ;
+
+template < bool DoTranspose, typename Matrix, typename RhsT, typename ResT >
+inline typename DisableIf< HasMVOverload< Matrix >::Value, ResT& >::ReturnType
+mv_set( const Matrix& matrix, const RhsT& rhs, ResT& res )
+{
+    res = TransposeIf< DoTranspose >::get( matrix ) * rhs ;
+    return res ;
+}
+
+template < bool DoTranspose, typename Matrix, typename RhsT, typename ResT, typename Scalar >
+inline typename DisableIf< HasMVOverload< Matrix >::Value, ResT& >::ReturnType
+mv_add( const Matrix& matrix, const RhsT& rhs, ResT& res, Scalar alpha )
+{
+    res += alpha * ( TransposeIf< DoTranspose >::get( matrix ) * rhs ) ;
+    return res ;
+}
 
 }
 

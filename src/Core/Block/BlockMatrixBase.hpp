@@ -34,13 +34,13 @@ public:
 	{}
 
 	//! Performs a matrix vector multiplication
-	/*! \tparam Transpose If true, performs \c res = alpha * \c M' * \c rhs + beta * res,
-						  otherwise \c res = alpha * M * \c rhs + beta * res
+    /*! \tparam Transpose If true, performs \c res = \c M' * \c rhs + beta * res,
+                          otherwise \c res = M * \c rhs + beta * res
 	  */
 	template < bool DoTranspose, typename RhsT, typename ResT >
-	void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const
+    void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const
 	{
-		derived().template multiply< DoTranspose >( rhs, res, alpha, beta ) ;
+        derived().template multiply< DoTranspose >( rhs, res, alpha, beta ) ;
 	}
 
 	//! Multiplies a given block-row of the matrix with \p rhs, omitting the diagonal block
@@ -65,7 +65,10 @@ public:
 	//! Returns the total number of rows of the matrix ( expanding blocks )
 	Index rows() const { return m_rows ; }
 	//! Returns the total number of columns of the matrix ( expanding blocks )
-	Index cols() const { return m_cols ; }
+    Index cols() const { return m_cols ; }
+
+    //! Returns the total number of blocks of the matrix
+    Index size() const ;
 
 	//! Returns the number of rows of a given block row
 	Index blockRows( Index row ) const { return derived().blockRows( row ) ; }
@@ -98,17 +101,20 @@ public:
 
 
 	//! Compile-time block properties
-	enum BlockCompileTimeProperties
+    enum CompileTimeProperties
 	{
 		RowsPerBlock = BlockTraits< BlockType >::RowsAtCompileTime,
-		ColsPerBlock = BlockTraits< BlockType >::ColsAtCompileTime,
+        ColsPerBlock = BlockTraits< BlockType >::ColsAtCompileTime,
 
 		has_row_major_blocks = BlockTraits< BlockType >::is_row_major,
 		has_square_or_dynamic_blocks = ColsPerBlock == RowsPerBlock,
 		has_fixed_size_blocks =
 				((int) ColsPerBlock != internal::DYNAMIC ) &&
-				((int) RowsPerBlock != internal::DYNAMIC )
+                ((int) RowsPerBlock != internal::DYNAMIC )
 	} ;
+
+    //! Tag: mv_add() and mv_set() are redefined for BlockMatrixBase< Derived&>
+    typedef char MVOverload ;
 
 protected:
 	Index m_rows ;
@@ -117,6 +123,22 @@ protected:
     typename Traits::BlocksArrayType m_blocks ;
 } ;
 
+template < bool DoTranspose, typename Derived, typename RhsT, typename ResT >
+inline ResT& mv_set ( const BlockMatrixBase< Derived >& matrix,
+               const RhsT& rhs, ResT& res )
+{
+    matrix.template multiply< DoTranspose >( rhs, res, 1, 0 ) ;
+    return res ;
+}
+
+template < bool DoTranspose, typename Derived, typename RhsT, typename ResT >
+inline ResT& mv_add ( const BlockMatrixBase< Derived >& matrix,
+               const RhsT& rhs, ResT& res,
+               typename Derived::Scalar alpha )
+{
+    matrix.template multiply< DoTranspose >( rhs, res, alpha, 1 ) ;
+    return res ;
+}
 
 }
 

@@ -23,7 +23,7 @@ struct BlockCopier
 	template < typename BlockT1, typename BlockT2, typename ScalarT >
 	static void copy( BlockT1* dest, const BlockT2* source, int n, ScalarT scale )
 	{
-		typedef BlockGetter< Transpose > Getter ;
+		typedef TransposeIf< Transpose > Getter ;
 		if( scale == 1 )
 		{
 #ifndef BOGUS_DONT_PARALLELIZE
@@ -129,7 +129,7 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 				SourceIndexType ;
 		const SourceIndexType &sourceIndex = indexComputer.get() ;
 
-		typedef BlockTransposeOption< OtherTraits::is_symmetric, Transpose > BlockGetter ;
+		typedef BlockTransposeOption< OtherTraits::is_symmetric, Transpose > TransposeIf ;
 
 		assert( sourceIndex.valid ) ;
 
@@ -141,7 +141,7 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 				const bool afterDiag = ( (bool) Traits::is_col_major )  == ( (bool) OtherTraits::is_col_major )
 						 ? (src_it.inner() > i) : (src_it.inner() < i ) ;
 				insertBackOuterInner( i, src_it.inner() ) = scale *
-						BlockGetter::get( source.block( src_it.ptr() ), afterDiag ) ;
+						TransposeIf::get( source.block( src_it.ptr() ), afterDiag ) ;
 			}
 		}
 		finalize() ;
