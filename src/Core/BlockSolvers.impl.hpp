@@ -10,7 +10,6 @@
 #define BOGUS_GAUSS_SEIDEL_IMPL_HPP
 
 #include "BlockSolvers.hpp"
-#include "BlockSolvers/Preconditioners.impl.hpp"
 #include "BlockSolvers/GaussSeidel.impl.hpp"
 #include "BlockSolvers/Krylov.impl.hpp"
 

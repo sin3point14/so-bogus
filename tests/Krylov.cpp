@@ -59,7 +59,7 @@ TEST( Krylov, CG )
 
 	res.setZero() ;
 	g_meth = "BiCG" ;
-	cg.solve( rhs, res, bogus::krylov::kBiCG ) ;
+	cg.solve( rhs, res, bogus::krylov::BiCG ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 
 	res.setZero() ;
@@ -238,4 +238,59 @@ TEST( Krylov, Preconditioner )
 
 #endif
 }
+
+TEST( Krylov, MultipleRhs )
+{
+	typedef Eigen::Matrix< double, 10, 10 > Block ;
+	Block A ;
+	A <<
+	1044,  -167, -1016,  -735,   329, -1278,  -454,  1273,  -963, 	-651	,
+	  631, -1409,  1633,  1989,  -596,  -493,  -969,    92,  1949, 	939		,
+	-1842,  1161, -1341,  1407, -1720, -1099,   516, -1437, -1645, -492		,
+	 1741,  1069,  1011, -1593, -1096,  -748,  1584,    28,  1801,	1417	,
+	 1951,   -25,  1194,  -608, -1555,   304, -1320,  1022,  1881,	1795	,
+	 1535,    22,  1037,  -302,  -339,  -551,   478, -1784,  1826,	-1543	,
+	   84, -1653,  1752,  1786,   945,   221, -1767,   347,  1237,	1260	,
+	 1259,   774, -1990,  1899,   607, -1085,  -566, -1454,   771,	-1668	,
+	 -869,   648,  -864,  -366, -1188,  1193,   -98,  1766,  1381,	-73		,
+	 1426, -1462,  -426,  -367,   906,  1747, -1946,  -651,  1336,	-263	;
+
+	const Block rhs = Block::Identity() ;
+	Block res ;
+	double err ;
+
+	bogus::TrivialPreconditioner< Block > P ;
+	bogus::Signal< unsigned, double > callback ;
+	//callback.connect( &ackCurrentResidual );
+
+	res.setZero() ;
+	g_meth = "BiCG" ;
+	err = bogus::krylov::solvers::BiCG< Block >( A, P, callback, 1.e-16, 10 ).solve( rhs, res ) ;
+	EXPECT_GT( 1.e-15, err ) ;
+	EXPECT_GT( 1.e-15, ( A*res - rhs ).squaredNorm() ) ;
+
+	res.setZero() ;
+	g_meth = "CGS" ;
+	err = bogus::krylov::solvers::CGS< Block >( A, P, callback, 1.e-16, 10 ).solve( rhs, res ) ;
+	EXPECT_GT( 1.e-15, err ) ;
+	EXPECT_GT( 1.e-15, ( A*res - rhs ).squaredNorm() ) ;
+
+	res.setZero() ;
+	g_meth =  "GMRES" ;
+	err = bogus::krylov::solvers::GMRES< Block >( A, P, callback, 1.e-16, 10 )
+			.parallelizeRhs(true).solve( rhs, res ) ;
+	EXPECT_GT( 1.e-15, err ) ;
+	EXPECT_GT( 1.e-15, ( A*res - rhs ).squaredNorm() ) ;
+
+	res.setZero() ;
+	g_meth =  "TFQMR" ;
+	err = bogus::krylov::solvers::TFQMR< Block >( A, P, callback, 1.e-16, 20 ).solve( rhs, res ) ;
+	EXPECT_GT( 1.e-15, err ) ;
+	EXPECT_GT( 1.e-15, ( A*res - rhs ).squaredNorm() ) ;
+
+
+
+}
+
+
 

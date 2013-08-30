@@ -16,12 +16,12 @@ namespace krylov
 {
 enum Method
 {
-	kCG,			//!< Conjugate Gradient. \sa Krylov::solve_CG()
-	kBiCG,			//!< BiConjugate Gradient \sa Krylov::solve_BiCG()
-	kBiCGSTAB, 		//!< BiConjugate Gradient Stabilized \sa Krylov::solve_BiCGSTAB()
-	kCGS, 			//!< Conjugate Gradient Squared \sa Krylov::solve_CGS()
-	kGMRES,			//!< Generalized Minimal Residual \sa Krylov::solve_GMRES()
-	kTFQMR			//!< Tranpose-free Quasi Minimal Residual \sa Krylov::solve_TFQMR()
+	CG,			//!< Conjugate Gradient. \sa Krylov::solve_CG()
+	BiCG,			//!< BiConjugate Gradient \sa Krylov::solve_BiCG()
+	BiCGSTAB, 		//!< BiConjugate Gradient Stabilized \sa Krylov::solve_BiCGSTAB()
+	CGS, 			//!< Conjugate Gradient Squared \sa Krylov::solve_CGS()
+	GMRES,			//!< Generalized Minimal Residual \sa Krylov::solve_GMRES()
+	TFQMR			//!< Tranpose-free Quasi Minimal Residual \sa Krylov::solve_TFQMR()
 } ;
 
 } // namespace iterative_linear_solvers

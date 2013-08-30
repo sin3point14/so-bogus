@@ -28,8 +28,7 @@ struct ProblemTraits : public MatrixTraits< LocalMatrixType >
 	{
 		typedef Eigen::Matrix< Scalar,
 			OtherMatrix::RowsAtCompileTime,
-			OtherMatrix::ColsAtCompileTime,
-			OtherMatrix::Options > Type ;
+			OtherMatrix::ColsAtCompileTime > Type ;
 	} ;
 
 	template< typename VectorType >

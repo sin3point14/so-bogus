@@ -46,15 +46,15 @@ public:
 	//! Sets the system matrix and initializes the preconditioner
 	Krylov& setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
 
-	// For each value of the krylov::Method enum, create a MethodName typedef
-	// and the asMethodName() -> MethodName and solve_MethodName -> Scalar methods
+	// For each value of the krylov::Method enum, create a MethodNameType typedef
+	// and the asMethodName() -> MethodNameType and solve_MethodName -> Scalar methods
 #define BOGUS_PROCESS_KRYLOV_METHOD( MethodName )\
-	typedef krylov::MethodName<  \
+	typedef krylov::solvers::MethodName<  \
 		BlockMatrixType, PreconditionerType< BlockMatrixBase< BlockMatrixType > >, \
-		GlobalProblemTraits > MethodName ; \
+		GlobalProblemTraits > MethodName##Type ; \
 	\
-	MethodName as##MethodName() const { \
-		return MethodName(  \
+	MethodName##Type as##MethodName() const { \
+		return MethodName##Type(  \
 			Base::m_matrix->derived(), m_preconditioner, \
 			Base::m_callback, \
 			Base::m_tol, Base::m_maxIters ) ; } \
@@ -69,7 +69,7 @@ BOGUS_KRYLOV_METHODS
 	//! Solve function that takes the method to use as an argument
 	template < typename RhsT, typename ResT >
 	Scalar solve(  const RhsT &b, ResT &x,
-				   krylov::Method method = krylov::kCG ) const ;
+				   krylov::Method method = krylov::CG ) const ;
 
 protected:
 

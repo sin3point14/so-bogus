@@ -9,10 +9,10 @@
 #define BOGUS_KRYLOV_IMPL_HPP
 
 #include "Krylov.hpp"
+
 #include "Preconditioners.impl.hpp"
 #include "BlockSolverBase.impl.hpp"
-
-#include "../Utils/NumTraits.hpp"
+#include "KrylovMethods.impl.hpp"
 
 namespace bogus {
 
@@ -43,9 +43,6 @@ Krylov< BlockMatrixType, PreconditionerType >::setMatrix(
 	return *this ;
 }
 
-
-
-
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 template < typename RhsT, typename ResT >
 typename Krylov< BlockMatrixType, PreconditionerType >::Scalar
@@ -55,7 +52,7 @@ Krylov< BlockMatrixType, PreconditionerType >::solve( const RhsT &b, ResT &x,
 	switch(method)
 	{
 #define BOGUS_PROCESS_KRYLOV_METHOD( MethodName ) \
-	case krylov::k##MethodName : return solve_##MethodName( b, x ) ;
+	case krylov::MethodName : return solve_##MethodName( b, x ) ;
 BOGUS_KRYLOV_METHODS
 #undef BOGUS_PROCESS_KRYLOV_METHOD
 	}

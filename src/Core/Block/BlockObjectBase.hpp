@@ -18,32 +18,38 @@ namespace bogus
 template < typename Derived >
 struct BlockObjectBase
 {
-    //! Returns a const reference to the implementation
-    const Derived& derived() const ;
-    //! Returns a reference to the implementation
-    Derived& derived() ;
+	//! Returns a const reference to the implementation
+	const Derived& derived() const
+	{
+		return static_cast< const Derived& >( *this ) ;
+	}
+	//! Returns a reference to the implementation
+	Derived& derived()
+	{
+		return static_cast< Derived& >( *this ) ;
+	}
 
-    typedef BlockMatrixTraits< Derived > Traits ;
+	typedef BlockMatrixTraits< Derived > Traits ;
 
-    typedef typename Traits::Index Index ;
-    typedef typename Traits::Scalar Scalar ;
-    typedef typename Traits::ConstTransposeReturnType ConstTransposeReturnType ;
-    typedef typename Traits::TransposeObjectType TransposeObjectType ;
+	typedef typename Traits::Index Index ;
+	typedef typename Traits::Scalar Scalar ;
+	typedef typename Traits::ConstTransposeReturnType ConstTransposeReturnType ;
+	typedef typename Traits::TransposeObjectType TransposeObjectType ;
 
-    typedef typename Traits::PlainObjectType PlainObjectType ;
-    typedef typename Traits::EvalType EvalType ;
-    enum { is_transposed = Traits::is_transposed } ;
+	typedef typename Traits::PlainObjectType PlainObjectType ;
+	typedef typename Traits::EvalType EvalType ;
+	enum { is_transposed = Traits::is_transposed } ;
 
-    //! Returns the total number of rows of the matrix ( expanding blocks )
-    Index rows() const { return derived().rows() ; }
-    //! Returns the total number of columns of the matrix ( expanding blocks )
-    Index cols() const { return derived().cols() ; }
+	//! Returns the total number of rows of the matrix ( expanding blocks )
+	Index rows() const { return derived().rows() ; }
+	//! Returns the total number of columns of the matrix ( expanding blocks )
+	Index cols() const { return derived().cols() ; }
 
-    //! Return a const transposed view of this object
-    ConstTransposeReturnType transpose() const { return derived().transpose() ; }
+	//! Return a const transposed view of this object
+	ConstTransposeReturnType transpose() const { return derived().transpose() ; }
 
-    //! Eval this object in a temporary. For internal use, not part of the public API
-    EvalType eval() const { return derived().eval() ; }
+	//! Eval this object in a temporary. For internal use, not part of the public API
+	EvalType eval() const { return derived().eval() ; }
 };
 
 //! Default specialization of traits for BlockMatrices
@@ -51,14 +57,14 @@ struct BlockObjectBase
 template< typename Derived  >
 struct BlockMatrixTraits< BlockObjectBase< Derived > > {
 
-    typedef BOGUS_DEFAULT_INDEX_TYPE    Index ;
-    typedef BOGUS_DEFAULT_BLOCK_PTR_TYPE BlockPtr ;
+	typedef BOGUS_DEFAULT_INDEX_TYPE    Index ;
+	typedef BOGUS_DEFAULT_BLOCK_PTR_TYPE BlockPtr ;
 
-    typedef Derived PlainObjectType ;
-    typedef const PlainObjectType* EvalType ;
+	typedef Derived PlainObjectType ;
+	typedef const PlainObjectType* EvalType ;
 
-    typedef Transpose< Derived > ConstTransposeReturnType ;
-    typedef ConstTransposeReturnType TransposeObjectType ;
+	typedef Transpose< Derived > ConstTransposeReturnType ;
+	typedef ConstTransposeReturnType TransposeObjectType ;
 } ;
 
 }

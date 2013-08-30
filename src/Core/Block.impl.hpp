@@ -11,7 +11,6 @@
 
 #include "Block.hpp"
 
-#include "Block/BlockObjectBase.impl.hpp"
 #include "Block/SparseBlockIndex.impl.hpp"
 #include "Block/SparseScaleAdd.impl.hpp"
 #include "Block/SparseMatrixMatrixProduct.impl.hpp"

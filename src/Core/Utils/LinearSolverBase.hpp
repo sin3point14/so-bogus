@@ -28,14 +28,23 @@ struct LinearSolverBase
 	typename LinearSolverTraits< Derived >::template Result< RhsT >::Type
 	solve( const RhsT& rhs ) const
 	{
-	   return static_cast< const Derived& >( *this ).solve( rhs ) ;
+	   return derived().solve( rhs ) ;
 	}
 
 	//! Finds the solution \b x of the linear system \b M \c * \b x \c = \c b
 	template < typename ResT, typename RhsT >
 	void solve( const RhsT& rhs, ResT& x ) const
 	{
-	   return static_cast< const Derived& >( *this ).solve( rhs, x ) ;
+	   return derived().solve( rhs, x ) ;
+	}
+
+	const Derived& derived() const
+	{
+		return static_cast< const Derived& >( *this ) ;
+	}
+
+	Derived& derived() {
+		return static_cast< Derived& >( *this ) ;
 	}
 
 

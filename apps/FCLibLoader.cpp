@@ -6,7 +6,7 @@ extern "C"
 
 #include <Core/Block.impl.hpp>
 #include <Core/Block.io.hpp>
-#include <Core/BlockSolvers.impl.hpp>
+#include <Core/BlockSolvers/GaussSeidel.impl.hpp>
 #include <Interfaces/FrictionProblem.hpp>
 
 #include <iostream>
