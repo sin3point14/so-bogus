@@ -55,9 +55,11 @@ public:
 	\
 	MethodName##Type as##MethodName() const { \
 		return MethodName##Type(  \
-			Base::m_matrix->derived(), m_preconditioner, \
-			Base::m_callback, \
-			Base::m_tol, Base::m_maxIters ) ; } \
+				Base::m_matrix->derived(), \
+				Base::m_maxIters, Base::m_tol, \
+				&m_preconditioner, \
+				&this->m_callback  \
+				) ; } \
 	\
 	template < typename RhsT, typename ResT > \
 	Scalar solve_##MethodName( const RhsT &b, ResT &x ) const  \

@@ -259,36 +259,48 @@ TEST( Krylov, MultipleRhs )
 	Block res ;
 	double err ;
 
-	bogus::TrivialPreconditioner< Block > P ;
-	bogus::Signal< unsigned, double > callback ;
+	//bogus::Signal< unsigned, double > callback ;
 	//callback.connect( &ackCurrentResidual );
 
 	res.setZero() ;
 	g_meth = "BiCG" ;
-	err = bogus::krylov::solvers::BiCG< Block >( A, P, callback, 1.e-16, 10 ).solve( rhs, res ) ;
+	err = bogus::krylov::solvers::BiCG< Block >( A, 10 ).solve( rhs, res ) ;
 	EXPECT_GT( 1.e-15, err ) ;
 	EXPECT_GT( 1.e-15, ( A*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
 	g_meth = "CGS" ;
-	err = bogus::krylov::solvers::CGS< Block >( A, P, callback, 1.e-16, 10 ).solve( rhs, res ) ;
+	err = bogus::krylov::solvers::CGS< Block >( A, 10 ).solve( rhs, res ) ;
 	EXPECT_GT( 1.e-15, err ) ;
 	EXPECT_GT( 1.e-15, ( A*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
 	g_meth =  "GMRES" ;
-	err = bogus::krylov::solvers::GMRES< Block >( A, P, callback, 1.e-16, 10 )
+	err = bogus::krylov::solvers::GMRES< Block >( A, 10 )
 			.parallelizeRhs(true).solve( rhs, res ) ;
 	EXPECT_GT( 1.e-15, err ) ;
 	EXPECT_GT( 1.e-15, ( A*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
 	g_meth =  "TFQMR" ;
-	err = bogus::krylov::solvers::TFQMR< Block >( A, P, callback, 1.e-16, 20 ).solve( rhs, res ) ;
+	err = bogus::krylov::solvers::TFQMR< Block >( A, 20 ).solve( rhs, res ) ;
 	EXPECT_GT( 1.e-15, err ) ;
 	EXPECT_GT( 1.e-15, ( A*res - rhs ).squaredNorm() ) ;
 
+	typedef bogus::krylov::solvers::GMRES< Block > GMRES ;
+	typedef bogus::SparseBlockMatrix< GMRES > Mat ;
 
+	Mat sbm ;
+	sbm.setRows( 1, 10 ) ;
+	sbm.setCols( 1, 10 ) ;
+	sbm.insertBack(0,0) = GMRES( A, 50 ) ;
+	sbm.finalize() ;
+
+	bogus::SparseBlockMatrix< Block > mrhs ;
+	mrhs.cloneStructure( sbm ) ;
+	mrhs.block( 0 ) = rhs ;
+
+	EXPECT_TRUE ( ( A * ( sbm*mrhs ).eval()->block( 0 ) ).isApprox( rhs ) ) ;
 
 }
 

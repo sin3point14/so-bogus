@@ -35,7 +35,7 @@ struct LinearSolverBase
 	template < typename ResT, typename RhsT >
 	void solve( const RhsT& rhs, ResT& x ) const
 	{
-	   return derived().solve( rhs, x ) ;
+	   derived().solve( rhs, x ) ;
 	}
 
 	const Derived& derived() const

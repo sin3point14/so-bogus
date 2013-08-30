@@ -5,6 +5,7 @@
 
 #include "../Utils/LinearSolverBase.hpp"
 #include "../Utils/Signal.hpp"
+#include "../Utils/NumTraits.hpp"
 
 #define BOGUS_KRYLOV_METHODS \
 	BOGUS_PROCESS_KRYLOV_METHOD(CG      )\
@@ -34,20 +35,26 @@ struct KrylovSolverBase
 	typedef LinearSolverBase< Derived > Base ;
 	typedef typename Traits::Scalar Scalar ;
 
-	const Matrix &m_A ;
-	const Preconditioner &m_P;
-	const Signal< unsigned, Scalar >  &m_callback ;
+	const Matrix *m_A ;
+	const Preconditioner *m_P;
+	const Signal< unsigned, Scalar >  *m_callback ;
 
 	Scalar m_tol ;
 	unsigned m_maxIters;
 
 	KrylovSolverBase( const Matrix &A,
-					  const Preconditioner &P,
-					  const Signal< unsigned, Scalar > &callback,
-					  Scalar tol, unsigned maxIters )
-		: m_A( A ), m_P( P ), m_callback( callback ),
+					  unsigned maxIters, Scalar tol,
+					  const Preconditioner *P,
+					  const Signal< unsigned, Scalar > *callback
+			)
+		: m_A( &A ), m_P( P ), m_callback( callback ),
 		  m_tol( tol ), m_maxIters( maxIters ),
 		  m_parallelizeRhs( false )
+	{}
+
+	KrylovSolverBase( )
+		: m_A( 0 ), m_P( 0 ), m_callback( 0 ),
+		  m_tol( 0 ), m_maxIters( 0 ), m_parallelizeRhs( false )
 	{}
 
 	//! Returns the solution \b x of the linear system \b M \c * \b x \c = \c rhs
@@ -56,7 +63,8 @@ struct KrylovSolverBase
 	solve( const RhsT& rhs ) const
 	{
 		typename LinearSolverTraits< Derived >::template Result< RhsT >::Type
-				x( m_A.rows(), rhs.cols() ) ;
+				x( m_A->rows(), rhs.cols() ) ;
+		x.setZero() ;
 		Base::solve( rhs, x ) ;
 		return x ;
 	}
@@ -101,15 +109,19 @@ namespace solvers {
 	using Base::m_P ;									\
 	using Base::m_maxIters ;							\
 	using Base::m_tol ;									\
+	using Base::m_callback ;							\
 
 #define BOGUS_MAKE_KRYLOV_SOLVER_HEADER( MethodName ) 	\
 	BOGUS_MAKE_KRYLOV_SOLVER_TYPEDEFS( MethodName )		\
 	MethodName( const Matrix &A, 						\
-	const Preconditioner &P, 							\
-	const Signal< unsigned, Scalar > &callback, 		\
-	Scalar tol, unsigned maxIters ) 					\
-	: Base( A, P, callback, tol, maxIters ) 			\
+	unsigned maxIters,									\
+	Scalar tol = NumTraits< Scalar >::epsilon(),		\
+	const Preconditioner *P = 0, 						\
+	const Signal< unsigned, Scalar > *callback = 0) 	\
+	: Base( A, maxIters, tol, P, callback ) 			\
 		{}												\
+														\
+	MethodName():Base()	{}								\
 														\
 	template < typename RhsT, typename ResT > 			\
 	Scalar vectorSolve( const RhsT &b, ResT x ) const ;		\
@@ -212,18 +224,18 @@ template < typename Matrix,
 		   typename Traits = ProblemTraits< Matrix > >
 struct GMRES : public KrylovSolverBase< GMRES, Matrix, Preconditioner, Traits>
 {
-protected:
 	BOGUS_MAKE_KRYLOV_SOLVER_TYPEDEFS( GMRES )
 
-	unsigned m_restart ;
+	GMRES() : Base(), m_restart( 0 )
+	{}
 
-public:
 	GMRES( const Matrix &A,
-				const Preconditioner &P,
-				const Signal< unsigned, Scalar > &callback,
-				Scalar tol, unsigned maxIters,
-				unsigned restart = 0 )
-		: Base( A, P, callback, tol, maxIters ),
+		   unsigned maxIters,
+		   Scalar tol = NumTraits< Scalar >::epsilon(),
+		   const Preconditioner *P = 0,
+		   const Signal< unsigned, Scalar > *callback = 0,
+		   unsigned restart = 0 )
+		: Base( A, maxIters, tol, P, callback ),
 		  m_restart( restart )
 	{}
 
@@ -236,6 +248,8 @@ public:
 	template < typename RhsT, typename ResT >
 	Scalar vectorSolve( const RhsT &b, ResT x ) const ;
 
+protected:
+	unsigned m_restart ;
 } ;
 
 //! Solves ( m_A * \p x = \p b ) using the transpose-free Quasi Minimal Reisual method
@@ -272,7 +286,14 @@ struct TFQMR : public KrylovSolverBase< TFQMR, Matrix, Preconditioner, Traits>
 	  template < typename RhsT > struct Result { \
 		  typedef typename Traits::template MutableClone< RhsT >::Type Type ; \
 	  } ; \
-	} ;
+	} ; \
+	template< typename Matrix, typename Preconditioner, class Traits, \
+			  typename RhsBlockT, bool TransposeLhs, bool TransposeRhs > \
+	struct BlockBlockProductTraits <  krylov::solvers::MethodName< Matrix, Preconditioner, Traits >, RhsBlockT, TransposeLhs, TransposeRhs > \
+	{ \
+		typedef typename BlockBlockProductTraits < Matrix, RhsBlockT, TransposeLhs, TransposeRhs >::ReturnType \
+		ReturnType ; \
+	} ; \
 
 BOGUS_KRYLOV_METHODS
 #undef BOGUS_PROCESS_KRYLOV_METHOD

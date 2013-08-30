@@ -5,7 +5,6 @@ Core/Block.io.hpp
 Core/Block/Access.hpp
 Core/Block/BlockMatrixBase.hpp
 Core/Block/BlockObjectBase.hpp
-Core/Block/BlockObjectBase.impl.hpp
 Core/Block/CompoundSparseBlockIndex.hpp
 Core/Block/CompressedSparseBlockIndex.hpp
 Core/Block/Constants.hpp
