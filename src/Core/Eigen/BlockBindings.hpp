@@ -86,6 +86,9 @@ struct BlockTraits < Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _M
 		is_self_transpose = ( _Rows == _Cols ) && ( _Rows == 1 )
 	} ;
 
+	typedef Eigen::Matrix< _Scalar, _Cols, _Rows, _Options, _MaxCols, _MaxRows >
+	TransposeStorageType ;
+
 } ;
 
 // Block/block product return type

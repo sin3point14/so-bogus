@@ -9,6 +9,7 @@
 #include "Block/Streams.hpp"
 
 #ifdef BOGUS_WITH_BOOST_SERIALIZATION
+#include <boost/serialization/version.hpp>
 #include <boost/serialization/split_free.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/vector.hpp>
@@ -17,6 +18,7 @@
 #ifndef BOGUS_WITHOUT_EIGEN
 #include "Eigen/EigenSerialization.hpp"
 #endif
+
 #include "Block/Serialization.hpp"
 #endif
 

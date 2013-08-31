@@ -162,7 +162,6 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 	clear() ;
 	m_majorIndex.move( resIndex );
 	resBlocks.swap( m_blocks ) ;
-	m_nBlocks = m_blocks.size() ;
 	m_minorIndex.valid = false ;
 
 	Finalizer::finalize( *this ) ;

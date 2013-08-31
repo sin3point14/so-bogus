@@ -32,6 +32,7 @@ BOGUS_BLOCK_SCALAR_TYPES
 #define BOGUS_PROCESS_SCALAR( Scalar_ ) \
 	template< > struct BlockTraits< Scalar_ > { \
 		typedef Scalar_ Scalar ;  \
+		typedef Scalar_ TransposeStorageType ;  \
 		enum { RowsAtCompileTime = 1, ColsAtCompileTime = 1, \
 			   is_row_major = 0, uses_plain_array_storage = 1, \
 			   is_self_transpose = 1 } ; \

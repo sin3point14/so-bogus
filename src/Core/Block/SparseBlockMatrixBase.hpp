@@ -66,6 +66,9 @@ public:
 
 	typedef typename Base::ConstTransposeReturnType ConstTransposeReturnType ;
 
+	typedef typename BlockTraits< BlockType >::TransposeStorageType TransposeBlockType ;
+	typedef typename ResizableSequenceContainer< TransposeBlockType >::Type TransposeArrayType ;
+
 	using Base::rows ;
 	using Base::cols ;
 	using Base::blocks ;
@@ -184,8 +187,7 @@ public:
 	Derived& prune( const Scalar precision = 0 ) ;
 
 	//! Returns the number of blocks of the matrices
-	/*! \warning This may differ from blocks().size() */
-	std::size_t nBlocks() const { return m_nBlocks ; }
+	std::size_t nBlocks() const { return blocks().size() ; }
 	std::size_t size() const { return nBlocks() ; }
 
 	//! Returns whether the matrix is empty
@@ -364,8 +366,16 @@ public:
 		Dragons, etc. */
 	MajorIndexType& majorIndex() { return m_majorIndex ; }
 
-	//! Resizes \c m_blocks and set \c m_nBlocks to \p nBlocks
+	//! Resizes \c m_blocks
 	void prealloc( std::size_t nBlocks ) ;
+
+	//! Returns the blocks that have been created by cacheTranspose()
+	const TransposeArrayType& transposeBlocks() const
+	{ return m_transposeBlocks ; }
+
+	//! Returns the blocks that have been created by cacheTranspose(), as a raw pointer
+	const TransposeBlockType* transposeData() const
+	{ return &m_transposeBlocks[0] ; }
 
 	//@}
 
@@ -394,8 +404,8 @@ protected:
 
 	SparseBlockMatrixBase() ;
 
-	//! Pushes a block at the back of \c m_blocks, and increments \c m_nBlocks
-	void allocateBlock( BlockPtr &ptr ) ;
+	//! Pushes a block at the back of \c m_blocks
+	BlockType& allocateBlock( BlockPtr &ptr ) ;
 
 	void computeMinorIndex( UncompressedIndexType &cmIndex) const ;
 
@@ -407,8 +417,11 @@ protected:
 	template< typename IndexT >
 	void setInnerOffets( IndexT& index, const Index nBlocks, const unsigned* blockSizes ) const ;
 
+	TransposeBlockType* transposeData()
+	{ return &m_transposeBlocks[0] ; }
+
 	//! Number of blocks on the matrix. Can be different of blocks().size(), for example when the transpose is cached.
-	std::size_t m_nBlocks ;
+	TransposeArrayType m_transposeBlocks ;
 
 	MajorIndexType m_majorIndex ;
 

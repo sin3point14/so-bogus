@@ -26,7 +26,10 @@ template< typename BlockType >
 struct BlockTraits
 {
    typedef typename BlockType::Scalar Scalar ;
-   enum {
+	//! Type for storing the result of transpose_block( BlockType ), useful for cacheTranspose()
+   typedef BlockType TransposeStorageType ;
+
+	enum {
 	   //! Number of rows spanned by a block at compile time ; useful for efficient segmentation
 	   RowsAtCompileTime = BlockType::RowsAtCompileTime,
 	   //! Number of cols spanned by a block at compile time ; useful for efficient segmentation

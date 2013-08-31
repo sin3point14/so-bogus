@@ -17,7 +17,7 @@ void multiply( const Matrix& matrix, const RhsT& rhs, ResT& res )
 TEST( Map, SparseBlock )
 {
 
-  typedef Eigen::MatrixXd BlockT ;
+  typedef Eigen::Matrix< double, 3, 4 > BlockT ;
 
   bogus::MappedSparseBlockMatrix< BlockT > sbm ;
 
@@ -60,12 +60,6 @@ TEST( Map, SparseBlock )
   res.setZero() ;
   sbm.multiply< false >( rhs, res ) ;
 
-
-  Eigen::MatrixXd nah ;
-  nah.setZero( sbm.rows(), sbm.cols() ) ;
-  bogus::multiply( nah, rhs, res ) ;
-  bogus::multiply( sbm, rhs, res ) ;
-
   EXPECT_EQ( expected_1, res ) ;
   EXPECT_EQ( expected_1, sbm*rhs ) ;
 
@@ -83,6 +77,14 @@ TEST( Map, SparseBlock )
   sbm.computeMinorIndex() ;
   EXPECT_TRUE( sbm.minorIndex().valid );
   EXPECT_EQ( expected_3, ( rhs.transpose() * sbm.transpose() ).transpose()  ) ;
+
+  origsbm.cacheTranspose() ;
+  EXPECT_TRUE( origsbm.transposeCached() );
+  EXPECT_EQ( expected_2, ( origsbm.transpose() * res )  ) ;
+
+  sbm.cacheTranspose() ;
+  EXPECT_TRUE( sbm.transposeCached() );
+  EXPECT_EQ( expected_2, ( sbm.transpose() * res )  ) ;
 
   bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::SYMMETRIC > prod( sbm * sbm.transpose() );
   EXPECT_EQ( sbm * expected_2, prod * res ) ;

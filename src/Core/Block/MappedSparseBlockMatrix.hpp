@@ -87,7 +87,6 @@ public:
         Base::clear() ;
 
         Base::m_blocks.setData( dataPtr, numberOfNonZeros ) ;
-        Base::m_nBlocks = numberOfNonZeros ;
         Base::m_majorIndex.inner.setData( innerIndexPtr, numberOfNonZeros ) ;
         Base::m_majorIndex.outer.setData( outerIndexPtr, Base::m_minorIndex.innerSize() + 1 ) ;
 
@@ -118,12 +117,16 @@ struct BlockTraits< MappedSparseBlockMatrix< BlockT, Flags, Index_ > >
 {
     typedef MappedSparseBlockMatrix< BlockT, Flags, Index_ > BlockType ;
     typedef typename BlockType::Scalar Scalar ;
+    typedef MappedSparseBlockMatrix
+		< typename BlockType::TransposeBlockType, Flags ^ flags::COL_MAJOR, Index_ >
+		TransposeStorageType ;
 
     enum {
         RowsAtCompileTime = internal::DYNAMIC,
         ColsAtCompileTime = internal::DYNAMIC,
         uses_plain_array_storage = 0,
-        is_row_major = !BlockMatrixTraits< BlockType >::is_col_major
+        is_row_major = !BlockMatrixTraits< BlockType >::is_col_major,
+		is_self_transpose = BlockMatrixTraits< BlockType >::is_symmetric
     }  ;
 } ;
 

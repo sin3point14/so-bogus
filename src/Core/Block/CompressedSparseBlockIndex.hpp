@@ -35,11 +35,9 @@ struct SparseBlockIndex< true, Index_, BlockPtr_, ArrayType > : public SparseBlo
 	Inner inner ;
 	//! Vector encoding the start and end of inner vectors
 	Outer outer ;
-	//! Constant offset to add to block pointers (i.e. pointer to first block )
-	BlockPtr base ;
 
 	SparseBlockIndex( )
-		: Base(), base(0)
+		: Base()
 	{}
 
 	void resizeOuter( Index size )
@@ -61,7 +59,7 @@ struct SparseBlockIndex< true, Index_, BlockPtr_, ArrayType > : public SparseBlo
 	//! is always required once insertion is finished
 	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
 	{
-		valid &= ( ptr == (BlockPtr) ( base + inner.size() ) )
+		valid &= ( ptr == (BlockPtr) ( inner.size() ) )
 				&& ( 0 == outer[ outIdx+1 ] || inIdx > inner.back() ) ;
 		++outer[ outIdx+1 ] ;
 		inner.push_back( inIdx ) ;
@@ -88,7 +86,6 @@ struct SparseBlockIndex< true, Index_, BlockPtr_, ArrayType > : public SparseBlo
 		inner.clear() ;
 
 		valid = true ;
-		base = 0 ;
 	}
 
 	SparseBlockIndex &operator=( const SparseBlockIndex &compressed )
@@ -99,7 +96,6 @@ struct SparseBlockIndex< true, Index_, BlockPtr_, ArrayType > : public SparseBlo
 			inner = compressed.inner ;
 			if( !compressed.innerOffsets.empty() )
 				innerOffsets = compressed.innerOffsets ;
-			base  = compressed.base ;
 			valid = compressed.valid ;
 		}
 		return *this ;
@@ -123,7 +119,6 @@ struct SparseBlockIndex< true, Index_, BlockPtr_, ArrayType > : public SparseBlo
 			for( typename SourceDerived::InnerIterator it( source.derived(), i ) ;
 				 it ; ++ it )
 			{
-				if( inner.empty() ) base = it.ptr() ;
 				insertBack( i, it.inner(), it.ptr() ) ;
 			}
 		}
@@ -144,7 +139,6 @@ struct SparseBlockIndex< true, Index_, BlockPtr_, ArrayType > : public SparseBlo
 
 			if( !compressed.innerOffsets.empty() )
 				innerOffsets.swap( compressed.innerOffsets ) ;
-			base  = compressed.base ;
 			valid = compressed.valid ;
 			compressed.valid = false ;
 
@@ -163,12 +157,6 @@ struct SparseBlockIndex< true, Index_, BlockPtr_, ArrayType > : public SparseBlo
 		return  outer[ outerIdx + 1 ] - outer[ outerIdx ] ;
 	}
 
-
-	void setBase( const Index b )
-	{
-		base = b ;
-		valid = true ;
-	}
 
 	// MKL BSR
 	const Index* rowIndex() const { return &outer[0] ; }
@@ -203,7 +191,7 @@ struct SparseBlockIndexTraits<  SparseBlockIndex< true, Index_, BlockPtr_, Array
 
 		InnerIterator( const SparseBlockIndexType& index, Index outer )
 			: m_it( index.outer[ outer ] ), m_end( index.outer[ outer + 1] ),
-			  m_base( index.base ), m_inner( &index.inner[0] )
+			  m_inner( &index.inner[0] )
 		{
 		}
 
@@ -251,7 +239,7 @@ struct SparseBlockIndexTraits<  SparseBlockIndex< true, Index_, BlockPtr_, Array
 		}
 
 		Index inner() const { return m_inner[ m_it ] ; }
-		BlockPtr ptr() const { return m_it + m_base ; }
+		BlockPtr ptr() const { return m_it ; }
 
 		BlockPtr rawIndex() const { return m_it ; }
 
@@ -259,7 +247,6 @@ struct SparseBlockIndexTraits<  SparseBlockIndex< true, Index_, BlockPtr_, Array
 
 		Index m_it ;
 		Index m_end ;
-		BlockPtr m_base ;
 		const Index* m_inner ;
 	} ;
 } ;

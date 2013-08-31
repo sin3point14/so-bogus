@@ -76,6 +76,8 @@ TEST( SparseBlock, MatrixVector )
 	copyofsbm = sbm ;
 	EXPECT_TRUE( copyofsbm.majorIndex().valid ) ;
 	EXPECT_TRUE( copyofsbm.transposeCached() ) ;
+	EXPECT_EQ( copyofsbm.transposeBlocks().size(), sbm.nBlocks() ) ;
+	EXPECT_EQ( sbm.transposeBlocks().size(), copyofsbm.nBlocks() ) ;
 	EXPECT_TRUE( copyofsbm.minorIndex().valid ) ;
 
 	EXPECT_EQ( 2u, copyofsbm.blockPtr( 3, 1 ) ) ;

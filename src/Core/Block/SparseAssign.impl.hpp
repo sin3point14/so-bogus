@@ -21,7 +21,7 @@ template< bool Transpose >
 struct BlockCopier
 {
 	template < typename BlockT1, typename BlockT2, typename ScalarT >
-	static void copy( BlockT1* dest, const BlockT2* source, int n, ScalarT scale )
+	static void copy( const BlockT2* source, BlockT1* dest, int n, ScalarT scale )
 	{
 		typedef TransposeIf< Transpose > Getter ;
 		if( scale == 1 )
@@ -46,9 +46,10 @@ Derived& SparseBlockMatrixBase<Derived>::operator= ( const SparseBlockMatrixBase
 {
 	m_rows = source.rows() ;
 	m_cols = source.cols() ;
-	m_blocks = source.blocks() ;
 
-	m_nBlocks = source.nBlocks() ;
+	m_blocks = source.blocks() ;
+	m_transposeBlocks = source.transposeBlocks() ;
+
 	m_majorIndex = source.majorIndex() ;
 	m_minorIndex = source.minorIndex() ;
 	m_transposeIndex = source.transposeIndex() ;
@@ -90,12 +91,12 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 		{
 			rowMajorIndex() = source.colMajorIndex() ;
 			colMajorIndex() = source.rowMajorIndex() ;
+			m_transposeIndex.valid = false ;
 		} else {
 			rowMajorIndex() = source.rowMajorIndex() ;
 			colMajorIndex() = source.colMajorIndex() ;
+			m_transposeIndex = source.transposeIndex() ;
 		}
-		m_transposeIndex.clear() ;
-		m_transposeIndex.valid = false ;
 	}
 
 	m_majorIndex.valid &= sameSymmetry ;
@@ -106,15 +107,25 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 
 	if( m_majorIndex.valid )
 	{
-		m_nBlocks = source.nBlocks() ;
-		m_blocks.resize( source.blocks().size() ) ;
 
 		if( useTransposeIndex )
 		{
-			BlockCopier< false >::copy( this->data(), source.data(), source.blocks().size(), scale ) ;
+			assert( m_transposeIndex.valid ) ;
+			m_blocks.resize( source.transposeBlocks().size() ) ;
+			m_transposeBlocks.resize( source.blocks().size() ) ;
+			BlockCopier< false >::copy( source.transposeData(), this->data(), source.transposeBlocks().size(), scale ) ;
+			BlockCopier< false >::copy( source.data(), this->transposeData(), source.blocks().size(), scale ) ;
 		} else {
-			const bool needTranspose = Transpose ^ ( Traits::is_symmetric && OtherTraits::is_symmetric && !sameMajorness ) ;
-			BlockCopier< needTranspose >::copy( this->data(), source.data(), source.blocks().size(), scale ) ;
+			const bool needTranspose = Transpose != ( Traits::is_symmetric && OtherTraits::is_symmetric && !sameMajorness ) ;
+
+			m_blocks.resize( source.blocks().size() ) ;
+			BlockCopier< needTranspose >::copy( source.data(), this->data(), source.blocks().size(), scale ) ;
+
+			if( m_transposeIndex.valid )
+			{
+				m_transposeBlocks.resize( source.transposeBlocks().size() ) ;
+				BlockCopier< needTranspose >::copy( source.transposeData(), this->transposeData(), source.transposeBlocks().size(), scale ) ;
+			}
 		}
 
 		Finalizer::finalize( *this ) ;

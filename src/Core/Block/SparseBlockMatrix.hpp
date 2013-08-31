@@ -76,7 +76,11 @@ template < typename BlockT, int Flags >
 struct BlockTraits< SparseBlockMatrix< BlockT, Flags > >
 {
 	typedef SparseBlockMatrix< BlockT, Flags > BlockType ;
+
 	typedef typename BlockType::Scalar Scalar ;
+    typedef SparseBlockMatrix
+		< typename BlockType::TransposeBlockType, Flags ^ flags::COL_MAJOR >
+		TransposeStorageType ;
 
 	enum {
 		RowsAtCompileTime = internal::DYNAMIC,
