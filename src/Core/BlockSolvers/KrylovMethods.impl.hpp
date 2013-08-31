@@ -66,7 +66,7 @@ CG< Mat, Prec, Traits >::vectorSolve( const RhsT &b, ResT x ) const
 
     for( unsigned k = 0 ; k < m_maxIters ; ++k )
     {
-        mv_set< false >(*m_A, p, Mp ) ;
+		mv_assign< false >(*m_A, p, Mp ) ;
         const Scalar alpha = zr0 / ( p.dot( Mp ) ) ;
         x += alpha * p ;
         r -= alpha * Mp ;
@@ -118,7 +118,7 @@ BiCG< Mat, Prec, Traits >::vectorSolve( const RhsT &b, ResT x ) const
 
     for( unsigned k = 0 ; k < m_maxIters ; ++k )
     {
-        mv_set< false >( *m_A, p, Mp ) ;
+		mv_assign< false >( *m_A, p, Mp ) ;
         const Scalar alpha = zr0 / ( p_.dot( Mp ) ) ;
         x  += alpha * p  ;
         x_ += alpha * p_ ;
@@ -179,12 +179,12 @@ BiCGSTAB< Mat, Prec, Traits >::vectorSolve( const RhsT &b, ResT x ) const
         const Scalar beta = ( rho1 / rho0 ) * ( alpha / w ) ;
         p = r + beta * ( p - w * nu ) ;
         apply< false >( m_P, p, y ) ;
-        mv_set< false >( *m_A, y, nu ) ;
+		mv_assign< false >( *m_A, y, nu ) ;
 
         alpha = rho1 / r0h.dot( nu ) ;
         s = r - alpha * nu ;
         apply< false >( m_P, s, z ) ;
-        mv_set< false >( *m_A, z, t ) ;
+		mv_assign< false >( *m_A, z, t ) ;
 
         const Scalar nt2 = t.squaredNorm() ;
         if ( nt2 < NumTraits< Scalar >::epsilon( ) )
@@ -243,12 +243,12 @@ CGS< Mat, Prec, Traits >::vectorSolve( const RhsT &b, ResT x ) const
 
 
         apply< false >( m_P, p, y ) ;
-        mv_set< false >( *m_A, y, nu ) ;
+		mv_assign< false >( *m_A, y, nu ) ;
         alpha = rho1 / r0h.dot( nu ) ;
         q = u - alpha*nu ;
 
         apply< false >( m_P, u+q, y ) ;
-        mv_set< false >( *m_A, y, nu ) ;
+		mv_assign< false >( *m_A, y, nu ) ;
 
         x += alpha * y ;
         r -= alpha * nu ;
@@ -317,7 +317,7 @@ GMRES< Mat, Prec, Traits >::vectorSolve( const RhsT &b, ResT x ) const
 
             // 1 - Arnoldi iteration
             typename WorkMatrix::ColXpr v ( V.col(k+1) ) ;
-            mv_set< false >( *m_A, V.col(k), r ) ;
+			mv_assign< false >( *m_A, V.col(k), r ) ;
             apply< false >( m_P, r, v ) ;
 
             H.col(k  ).head( k+1 ) = V.leftCols(k+1).transpose() * v ;
@@ -431,7 +431,7 @@ TFQMR< Mat, Prec, Traits >::vectorSolve( const RhsT &b, ResT x ) const
     d.setZero() ;
 
     apply< false >( m_P, u, y ) ;
-    mv_set< false >( *m_A, y, v ) ;
+	mv_assign< false >( *m_A, y, v ) ;
 
     Scalar tau2 = res/scale ;
     Scalar rho = tau2, rho1 ; // rho = r.dot( r0h )
@@ -448,7 +448,7 @@ TFQMR< Mat, Prec, Traits >::vectorSolve( const RhsT &b, ResT x ) const
         }
 
         apply< false >( m_P, u, y ) ;
-        mv_set< false >( *m_A, y, nu ) ;
+		mv_assign< false >( *m_A, y, nu ) ;
         w -= alpha * nu ;
         d = y + ( theta2 / alpha ) * eta * d ;
 

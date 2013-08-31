@@ -79,32 +79,46 @@ struct IsTransposable
 
 
 //! Utility struct for expressing a compile-time conditional transpose of a block
-// In all of the following get functions, the dummy "bool = false" argument is there so
-// that the specialization of BlockTransposeOption that does not perform a runtime check
-// can just inherit from TransposeIf, and does not have to know the type returned by the get() function
 template < bool DoTranspose >
 struct TransposeIf {
 	template < typename BlockT >
-	inline static const BlockT& get( const BlockT& src, bool = false )
+	inline static const BlockT& get( const BlockT& src )
 	{ return src ; }
 } ;
 template < >
 struct TransposeIf< true > {
 	template < typename BlockT >
-	inline static typename BlockTranspose< BlockT >::ReturnType get( const BlockT& src, bool = false )
+	inline static typename BlockTranspose< BlockT >::ReturnType get( const BlockT& src )
 	{ return transpose_block( src ) ; }
 } ;
 
-template < bool RuntimeCheck, bool DoTranspose >
-struct BlockTransposeOption : public TransposeIf< DoTranspose >
-{} ;
+//! Utility struct to handle both compile-time and runtime optionally transposed ops
+// Case with runtime test
+template < bool RuntimeTest, bool >
+struct BlockTransposeOption {
+	enum { runtime_test = 1, runtime_transpose = 0 } ;
 
-template < bool IgnoredDoTranspose >
-struct BlockTransposeOption< true, IgnoredDoTranspose > {
-	template < typename BlockT >
-	inline static BlockT get( const BlockT& src, bool doTranspose = false )
-	{ return doTranspose ? BlockT( transpose_block( src ) ) : src ; }
+	template < typename RhsT, typename ResT, typename Scalar >
+	inline static void assign( const RhsT& rhs, ResT &res, const Scalar scale, bool doTranspose )
+	{
+		if( doTranspose ) res = scale * transpose_block( rhs ) ;
+		else 			 res = scale * rhs ;
+	}
 } ;
+
+// Case with compile-time check
+template < bool CompileTimeTranspose >
+struct BlockTransposeOption< false, CompileTimeTranspose >
+{
+	enum { runtime_test = 0, runtime_transpose = 1 } ;
+
+	template < typename RhsT, typename ResT, typename Scalar >
+	inline static void assign( const RhsT& rhs, ResT &res, const Scalar scale, bool )
+	{
+		res = scale * TransposeIf< CompileTimeTranspose >::get( rhs ) ;
+	}
+} ;
+
 
 //! Access to the dimensions of a block
 template< typename BlockT, bool Transpose_ = false >
@@ -170,18 +184,18 @@ private:
 
 template < bool DoTranspose, typename Matrix, typename RhsT, typename ResT >
 inline typename DisableIf< HasMVOverload< Matrix >::Value, ResT& >::ReturnType
-mv_set( const Matrix& matrix, const RhsT& rhs, ResT& res )
+mv_assign( const Matrix& matrix, const RhsT& rhs, ResT& res )
 {
-    res = TransposeIf< DoTranspose >::get( matrix ) * rhs ;
-    return res ;
+	res = TransposeIf< DoTranspose >::get( matrix ) * rhs ;
+	return res ;
 }
 
 template < bool DoTranspose, typename Matrix, typename RhsT, typename ResT, typename Scalar >
 inline typename DisableIf< HasMVOverload< Matrix >::Value, ResT& >::ReturnType
 mv_add( const Matrix& matrix, const RhsT& rhs, ResT& res, Scalar alpha )
 {
-    res += alpha * ( TransposeIf< DoTranspose >::get( matrix ) * rhs ) ;
-    return res ;
+	res += alpha * ( TransposeIf< DoTranspose >::get( matrix ) * rhs ) ;
+	return res ;
 }
 
 }

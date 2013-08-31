@@ -23,11 +23,11 @@ struct LinearSolverTraits< LU< Eigen::MatrixBase< Derived > > >
   typedef Eigen::FullPivLU< MatrixType > FactType ;
 
   template < typename RhsT > struct Result {
-	  typedef Eigen::internal::solve_retval< FactType, RhsT > Type ;
+      typedef Eigen::internal::solve_retval< FactType, RhsT > Type ;
   } ;
   template < typename RhsT >
   struct Result< Eigen::MatrixBase< RhsT > > {
-	  typedef typename Result< RhsT >::Type Type ;
+      typedef typename Result< RhsT >::Type Type ;
   } ;
 } ;
 
@@ -66,7 +66,7 @@ struct LU< Eigen::MatrixBase< Derived > >
 	}
 
   private:
-	typename Traits::FactType m_fact ;
+    typename Traits::FactType m_fact ;
 } ;
 
 template < typename Scalar, int Rows, int Cols = Rows, int Options = 0 >
@@ -86,11 +86,11 @@ struct LinearSolverTraits< LDLT< Eigen::MatrixBase< Derived > > >
   typedef Eigen::LDLT< MatrixType > FactType ;
 
   template < typename RhsT > struct Result {
-	  typedef Eigen::internal::solve_retval< FactType, RhsT > Type ;
+      typedef Eigen::internal::solve_retval< FactType, RhsT > Type ;
   } ;
   template < typename RhsT >
   struct Result< Eigen::MatrixBase< RhsT > > {
-	  typedef typename Result< RhsT >::Type Type ;
+      typedef typename Result< RhsT >::Type Type ;
   } ;
 } ;
 
@@ -129,7 +129,7 @@ struct LDLT< Eigen::MatrixBase< Derived > >
 	}
 
   private:
-	typename Traits::FactType m_fact ;
+    typename Traits::FactType m_fact ;
 } ;
 
 template < typename Scalar, int Rows, int Options = 0 >
@@ -143,7 +143,7 @@ struct DenseLDLT : public LDLT< Eigen::MatrixBase< Eigen::Matrix< Scalar, Rows, 
 } ;
 
 template < bool DoTranspose, typename Derived, typename RhsT, typename ResT >
-ResT & mv_set( const bogus::LinearSolverBase< Derived >& solver,
+ResT & mv_assign( const bogus::LinearSolverBase< Derived >& solver,
 			   const Eigen::MatrixBase< RhsT >& rhs, ResT &res )
 {
 	BOGUS_STATIC_ASSERT( !DoTranspose, TRANSPOSE_MAKES_NO_SENSE_IN_THIS_CONTEXT ) ;
@@ -160,15 +160,15 @@ ResT & mv_add( const bogus::LinearSolverBase< Derived >& solver,
 	return res ;
 }
 
-
-} //namespace bogus
-
-
 template < typename Derived, typename RhsT >
-typename bogus::LinearSolverTraits< Derived >::template Result< Eigen::MatrixBase< RhsT > >::Type operator*
-	( const bogus::LinearSolverBase< Derived >& solver, const Eigen::MatrixBase< RhsT >& rhs )
+typename LinearSolverTraits< Derived >::template Result< Eigen::MatrixBase< RhsT > >::Type operator*
+    ( const LinearSolverBase< Derived >& solver, const Eigen::MatrixBase< RhsT >& rhs )
 {
   return solver.solve( rhs ) ;
 }
+
+
+} //namespace bogus
+
 
 #endif

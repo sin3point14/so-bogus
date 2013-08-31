@@ -129,7 +129,9 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 				SourceIndexType ;
 		const SourceIndexType &sourceIndex = indexComputer.get() ;
 
-		typedef BlockTransposeOption< OtherTraits::is_symmetric, Transpose > TransposeIf ;
+		typedef BlockTransposeOption<
+				OtherTraits::is_symmetric && !( BlockTraits< typename OtherTraits::BlockType >::is_self_transpose ),
+				Transpose > TransposeIf ;
 
 		assert( sourceIndex.valid ) ;
 
@@ -140,8 +142,9 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 			{
 				const bool afterDiag = ( (bool) Traits::is_col_major )  == ( (bool) OtherTraits::is_col_major )
 						 ? (src_it.inner() > i) : (src_it.inner() < i ) ;
-				insertBackOuterInner( i, src_it.inner() ) = scale *
-						TransposeIf::get( source.block( src_it.ptr() ), afterDiag ) ;
+				TransposeIf::assign( source.block( src_it.ptr() ) ,
+									 insertBackOuterInner( i, src_it.inner() ),
+									 scale, afterDiag ) ;
 			}
 		}
 		finalize() ;

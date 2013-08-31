@@ -8,7 +8,7 @@ namespace bogus {
 template < typename Matrix, typename RhsT, typename ResT >
 void multiply( const Matrix& matrix, const RhsT& rhs, ResT& res )
 {
-    mv_set< false >( matrix, rhs, res ) ;
+    mv_assign< false >( matrix, rhs, res ) ;
 }
 
 }

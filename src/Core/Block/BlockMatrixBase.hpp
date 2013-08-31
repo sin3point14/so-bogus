@@ -113,7 +113,7 @@ public:
 				((int) RowsPerBlock != internal::DYNAMIC )
 	} ;
 
-	//! Tag: mv_add() and mv_set() are redefined for BlockMatrixBase< Derived&>
+	//! Tag: mv_add() and mv_assign() are redefined for BlockMatrixBase< Derived&>
 	typedef char MVOverload ;
 
 protected:
@@ -124,7 +124,7 @@ protected:
 } ;
 
 template < bool DoTranspose, typename Derived, typename RhsT, typename ResT >
-inline ResT& mv_set ( const BlockMatrixBase< Derived >& matrix,
+inline ResT& mv_assign ( const BlockMatrixBase< Derived >& matrix,
 			   const RhsT& rhs, ResT& res )
 {
 	matrix.template multiply< DoTranspose >( rhs, res, 1, 0 ) ;

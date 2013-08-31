@@ -11,6 +11,7 @@ Core/Block/Constants.hpp
 Core/Block/Expressions.hpp
 Core/Block/MappedSparseBlockMatrix.hpp
 Core/Block/MklBindings.hpp
+Core/Block/Operators.hpp
 Core/Block/ScalarBindings.hpp
 Core/Block/Serialization.hpp
 Core/Block/SparseAssign.impl.hpp
@@ -35,6 +36,7 @@ Core/BlockSolvers/GaussSeidel.impl.hpp
 Core/BlockSolvers/Krylov.hpp
 Core/BlockSolvers/Krylov.impl.hpp
 Core/BlockSolvers/KrylovMethods.hpp
+Core/BlockSolvers/KrylovMethods.impl.hpp
 Core/BlockSolvers/Preconditioners.hpp
 Core/BlockSolvers/Preconditioners.impl.hpp
 Core/Eigen/BlockBindings.hpp

@@ -13,51 +13,6 @@
 #include "SparseBlockMatrixBase.hpp"
 #include "SparseBlockIndexComputer.hpp"
 
-// operators +, -, *, /
-
-template < typename LhsT, typename RhsT >
-bogus::Addition< LhsT, RhsT > operator+ ( const bogus::BlockObjectBase< LhsT >& lhs,
-			 const bogus::BlockObjectBase< RhsT > &rhs )
-{
-	return bogus::Addition< LhsT, RhsT >( lhs.derived(), rhs.derived() ) ;
-}
-
-template < typename LhsT, typename RhsT >
-bogus::Addition< LhsT, RhsT > operator- ( const bogus::BlockObjectBase< LhsT >& lhs,
-			 const bogus::BlockObjectBase< RhsT > &rhs )
-{
-	return bogus::Addition<  LhsT, RhsT >( lhs.derived(), rhs.derived(), 1, -1 ) ;
-}
-
-template < typename Derived >
-bogus::Scaling< Derived > operator* ( const bogus::BlockObjectBase< Derived >& lhs,
-			 typename Derived::Scalar rhs )
-{
-	return bogus::Scaling< Derived >( lhs.derived(), rhs ) ;
-}
-
-template < typename Derived >
-bogus::Scaling< Derived > operator* ( typename Derived::Scalar lhs ,
-			 const bogus::BlockObjectBase< Derived >& rhs)
-{
-	return bogus::Scaling< Derived >( rhs.derived(), lhs ) ;
-}
-
-template < typename Derived >
-bogus::Scaling< Derived > operator/ ( const bogus::BlockObjectBase< Derived >& lhs,
-			 typename Derived::Scalar rhs )
-{
-	return bogus::Scaling< Derived >( lhs.derived(), 1/rhs ) ;
-}
-
-template < typename Derived >
-bogus::Scaling< Derived > operator/ ( typename Derived::Scalar lhs ,
-			 const bogus::BlockObjectBase< Derived >& rhs)
-{
-	return bogus::Scaling< Derived >( rhs.derived(), 1/lhs ) ;
-}
-
-
 namespace bogus {
 
 template < typename Derived >
@@ -171,7 +126,9 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 
 	typename Traits::BlocksArrayType resBlocks( offsets.back() ) ;
 
-	typedef BlockTransposeOption< OtherTraits::is_symmetric, Transpose > RhsGetter ;
+	typedef BlockTransposeOption<
+			OtherTraits::is_symmetric && !( BlockTraits< typename OtherTraits::BlockType >::is_self_transpose ),
+			Transpose > RhsGetter ;
 
 	// II - Proper addition
 
@@ -190,12 +147,13 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 									? (nz.first > i) : (nz.first < i) ;
 			if( nz.second.first == InvalidBlockPtr )
 			{
-				res = alpha * RhsGetter::get( rhs.block( nz.second.second ), afterDiag ) ;
+				RhsGetter::assign( rhs.block( nz.second.second ), res, alpha, afterDiag ) ;
 			} else if( nz.second.second == OtherDerived::InvalidBlockPtr )
 			{
 				res = block( nz.second.first ) ;
 			} else {
-				res = block( nz.second.first) + alpha * RhsGetter::get( rhs.block( nz.second.second ), afterDiag ) ;
+				RhsGetter::assign( rhs.block( nz.second.second ), res, alpha, afterDiag ) ;
+				res += block( nz.second.first) ;
 			}
 		}
 	}

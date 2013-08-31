@@ -22,5 +22,6 @@
 
 #include "Block/SparseBlockMatrix.hpp"
 #include "Block/MappedSparseBlockMatrix.hpp"
+#include "Block/Operators.hpp"
 
 #endif

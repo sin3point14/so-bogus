@@ -88,7 +88,6 @@ BOGUS_DEFINE_HAS_TYPE( ReturnType ) ;
 BOGUS_DEFINE_HAS_TYPE( ConstTransposeReturnType ) ;
 BOGUS_DEFINE_HAS_TYPE( Base ) ;
 BOGUS_DEFINE_HAS_TYPE( MVOverload ) ;
-BOGUS_DEFINE_HAS_TYPE( MMOverload ) ;
 
 // Static assertions
 

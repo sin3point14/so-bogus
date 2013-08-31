@@ -17,13 +17,6 @@
 
 #include <map>
 
-template < typename LhsT, typename RhsT  >
-bogus::Product< LhsT, RhsT > operator* ( const bogus::BlockObjectBase< LhsT >& lhs,
-										 const bogus::BlockObjectBase< RhsT > &rhs )
-{
-	return bogus::Product< LhsT, RhsT >( lhs.derived(), rhs.derived() ) ;
-}
-
 namespace bogus
 {
 
@@ -36,59 +29,8 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Product< LhsT, RhsT > 
 }
 
 
-template < typename Derived >
-template < bool ColWise, typename LhsT, typename RhsT >
-void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT > &prod )
+namespace mm_impl
 {
-	typedef Product< LhsT, RhsT> Prod ;
-
-	typename Prod::Lhs::EvalType lhs = prod.lhs.object.eval() ;
-	typename Prod::Rhs::EvalType rhs = prod.rhs.object.eval() ;
-	typedef BlockMatrixTraits< typename Prod::PlainLhsMatrixType > LhsTraits ;
-	typedef BlockMatrixTraits< typename Prod::PlainRhsMatrixType > RhsTraits ;
-
-	BOGUS_STATIC_ASSERT( !Prod::transposeLhs || IsTransposable< typename LhsTraits::BlockType >::Value,
-						 TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
-	) ;
-	BOGUS_STATIC_ASSERT( !Prod::transposeRhs || IsTransposable< typename RhsTraits::BlockType >::Value,
-						 TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
-	) ;
-
-	typedef BlockTransposeOption< LhsTraits::is_symmetric, Prod::transposeLhs > LhsGetter ;
-	LhsGetter lhsGetter ;
-	typedef BlockTransposeOption< RhsTraits::is_symmetric, Prod::transposeRhs > RhsGetter ;
-	RhsGetter rhsGetter ;
-
-	clear() ;
-	if( Prod::transposeLhs )
-	{
-		m_rows = lhs->cols() ;
-		colMajorIndex().innerOffsets = lhs->rowMajorIndex().innerOffsets;
-	} else {
-		m_rows = lhs->rows() ;
-		colMajorIndex().innerOffsets = lhs->colMajorIndex().innerOffsets;
-	}
-	if( Prod::transposeRhs )
-	{
-		m_cols = rhs->rows() ;
-		rowMajorIndex().innerOffsets = rhs->colMajorIndex().innerOffsets;
-	} else {
-		m_cols = rhs->cols() ;
-		rowMajorIndex().innerOffsets = rhs->rowMajorIndex().innerOffsets;
-	}
-
-
-	SparseBlockIndexComputer< typename Prod::PlainLhsMatrixType, LhsTraits::is_symmetric,
-			ColWise, Prod::transposeLhs> lhsIndexComputer ( *lhs ) ;
-	SparseBlockIndexComputer< typename Prod::PlainRhsMatrixType, RhsTraits::is_symmetric,
-			!ColWise, Prod::transposeRhs> rhsIndexComputer ( *rhs ) ;
-
-
-	setFromProduct< ColWise >( lhsIndexComputer.get(), rhsIndexComputer.get(),
-							   lhs->data(), rhs->data(),
-							   lhsGetter, rhsGetter, prod.lhs.scaling * prod.rhs.scaling ) ;
-
-}
 
 template < bool ColWise, typename Index, typename BlockPtr, bool is_symmetric, bool is_col_major >
 struct SparseBlockProductIndex
@@ -101,15 +43,16 @@ struct SparseBlockProductIndex
 
 	static const BlockComputation* get( const InnerIterator& iter ) { return &(*iter) ; }
 
-	SparseBlockIndex< true, Index, BlockPtr > compressed ;
+	typedef SparseBlockIndex< true, Index, BlockPtr > CompressedIndexType ;
+	CompressedIndexType compressed ;
 	std::vector< InnerType > to_compute ;
 
 	template< typename LhsIndex, typename RhsIndex >
 	void compute(
-			const Index outerSize,
-			const Index innerSize,
-			const LhsIndex &lhsIdx,
-			const RhsIndex &rhsIdx )
+	        const Index outerSize,
+	        const Index innerSize,
+	        const LhsIndex &lhsIdx,
+	        const RhsIndex &rhsIdx )
 	{
 		assert( lhsIdx.innerSize() == rhsIdx.innerSize() ) ;
 
@@ -170,7 +113,6 @@ struct SparseBlockProductIndex
 #endif
 
 	}
-
 } ;
 
 template < typename Index, typename BlockPtr, bool is_symmetric, bool is_col_major >
@@ -184,15 +126,16 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 
 	static const BlockComputation* get( const InnerIterator& iter ) { return &(iter->second) ; }
 
-	SparseBlockIndex< true, Index, BlockPtr > compressed ;
+	typedef SparseBlockIndex< true, Index, BlockPtr > CompressedIndexType ;
+	CompressedIndexType compressed ;
 	std::vector< InnerType > to_compute ;
 
 	template< typename LhsIndex, typename RhsIndex >
 	void compute(
-			const Index outerSize,
-			const Index innerSize,
-			const LhsIndex &lhsIdx,
-			const RhsIndex &rhsIdx )
+	        const Index outerSize,
+	        const Index innerSize,
+	        const LhsIndex &lhsIdx,
+	        const RhsIndex &rhsIdx )
 	{
 		assert( lhsIdx.outerSize() == rhsIdx.outerSize() ) ;
 		( void ) innerSize ;
@@ -219,8 +162,8 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 					for( typename RhsIndex::InnerIterator rhs_it ( rhsIdx, i ) ; rhs_it ; ++rhs_it )
 					{
 						for( typename LhsIndex::InnerIterator lhs_it ( lhsIdx, i ) ;
-							 lhs_it && ( !is_symmetric || lhs_it.inner() <= rhs_it.inner() ) ;
-							 ++lhs_it )
+						     lhs_it && ( !is_symmetric || lhs_it.inner() <= rhs_it.inner() ) ;
+						     ++lhs_it )
 						{
 							BlockComputation &bc = loc_compute[ rhs_it.inner() ][ lhs_it.inner() ] ;
 							bc.first.push_back( std::make_pair( lhs_it.inner() > i, lhs_it.ptr() ) ) ;
@@ -231,8 +174,8 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 					for( typename LhsIndex::InnerIterator lhs_it ( lhsIdx, i ) ; lhs_it ; ++lhs_it )
 					{
 						for( typename RhsIndex::InnerIterator rhs_it ( rhsIdx, i ) ;
-							 rhs_it && ( !is_symmetric || rhs_it.inner() <= lhs_it.inner() ) ;
-							 ++rhs_it )
+						     rhs_it && ( !is_symmetric || rhs_it.inner() <= lhs_it.inner() ) ;
+						     ++rhs_it )
 						{
 							BlockComputation &bc = loc_compute[ lhs_it.inner() ][ rhs_it.inner() ] ;
 							bc.first.push_back( std::make_pair( lhs_it.inner() > i, lhs_it.ptr() ) ) ;
@@ -273,48 +216,145 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 
 } ;
 
-template < typename Derived >
-template < bool ColWise, typename LhsIndex, typename RhsIndex, typename LhsBlock, typename RhsBlock,
-		   typename LhsGetter, typename RhsGetter >
-void SparseBlockMatrixBase<Derived>::setFromProduct(const LhsIndex &lhsIdx,
-		const RhsIndex &rhsIdx,
-		const LhsBlock *lhsData,
-		const RhsBlock *rhsData,
-		const LhsGetter &lhsGetter, const RhsGetter &rhsGetter,
-		Scalar scaling)
+template < bool LhsRuntimeTest, bool RhsRunTimeTest,
+           bool LhsCompileTimeTranspose, bool RhsCompileTimeTranspose >
+struct BinaryTransposeOption {
+
+	template< typename LhsT, typename RhsT, typename ResT >
+	static inline void mm_assign (
+	        const LhsT &lhs, const RhsT &rhs, ResT &res,
+	        bool transposeLhs, bool transposeRhs )
+	{
+		if( transposeLhs )
+			if( transposeRhs )
+				res = transpose_block( lhs ) * transpose_block( rhs ) ;
+			else
+				res = transpose_block( lhs ) * rhs ;
+		else
+			if( transposeRhs )
+				res = lhs * transpose_block( rhs ) ;
+			else
+				res = lhs * rhs ;
+	}
+
+	template< typename LhsT, typename RhsT, typename ResT >
+	static inline void mm_add (
+	        const LhsT &lhs, const RhsT &rhs, ResT &res,
+	        bool transposeLhs, bool transposeRhs )
+	{
+		if( transposeLhs )
+			if( transposeRhs )
+				res += transpose_block( lhs ) * transpose_block( rhs ) ;
+			else
+				res += transpose_block( lhs ) * rhs ;
+		else
+			if( transposeRhs )
+				res += lhs * transpose_block( rhs ) ;
+			else
+				res += lhs * rhs ;
+	}
+} ;
+
+// Lhs transpose known at compile time
+template < bool LhsTranspose, bool RhsTranspose >
+struct BinaryTransposeOption< false, true, LhsTranspose, RhsTranspose >
 {
-	typedef SparseBlockProductIndex< ColWise, Index, BlockPtr, Traits::is_symmetric, Traits::is_col_major> ProductIndex ;
+	template< typename LhsT, typename RhsT, typename ResT >
+	static inline void mm_assign (
+	        const LhsT &lhs, const RhsT &rhs, ResT &res,
+	        bool, bool transposeRhs )
+	{
+		if( transposeRhs )
+			res = TransposeIf< LhsTranspose >::get( lhs ) * transpose_block( rhs ) ;
+		else
+			res = TransposeIf< LhsTranspose >::get( lhs ) * rhs ;
+	}
+	template< typename LhsT, typename RhsT, typename ResT >
+	static inline void mm_add (
+	        const LhsT &lhs, const RhsT &rhs, ResT &res,
+	        bool, bool transposeRhs )
+	{
+		if( transposeRhs )
+			res += TransposeIf< LhsTranspose >::get( lhs ) * transpose_block( rhs ) ;
+		else
+			res += TransposeIf< LhsTranspose >::get( lhs ) * rhs ;
+	}
+
+} ;
+
+// Rhs transpose known at compile time
+template < bool LhsTranspose, bool RhsTranspose >
+struct BinaryTransposeOption< true, false, LhsTranspose, RhsTranspose >
+{
+	template< typename LhsT, typename RhsT, typename ResT >
+	static inline void mm_assign (
+	        const LhsT &lhs, const RhsT &rhs, ResT &res,
+	        bool transposeLhs, bool )
+	{
+		if( transposeLhs )
+			res = transpose_block( lhs ) * TransposeIf< RhsTranspose >::get( rhs )  ;
+		else
+			res =                    lhs * TransposeIf< RhsTranspose >::get( rhs )  ;
+	}
+	template< typename LhsT, typename RhsT, typename ResT >
+	static inline void mm_add (
+	        const LhsT &lhs, const RhsT &rhs, ResT &res,
+	        bool transposeLhs, bool )
+	{
+		if( transposeLhs )
+			res += transpose_block( lhs ) * TransposeIf< RhsTranspose >::get( rhs )  ;
+		else
+			res +=                    lhs * TransposeIf< RhsTranspose >::get( rhs )  ;
+	}
+
+} ;
+
+// Both transpose known at compile time
+template < bool LhsTranspose, bool RhsTranspose >
+struct BinaryTransposeOption< false, false, LhsTranspose, RhsTranspose >
+{
+	template< typename LhsT, typename RhsT, typename ResT >
+	static inline void mm_assign (
+	        const LhsT &lhs, const RhsT &rhs, ResT &res,
+	        bool , bool )
+	{
+		res = TransposeIf< LhsTranspose >::get( lhs )
+		        * TransposeIf< RhsTranspose >::get( rhs )  ;
+	}
+
+	template< typename LhsT, typename RhsT, typename ResT >
+	static inline void mm_add (
+	        const LhsT &lhs, const RhsT &rhs, ResT &res,
+	        bool , bool )
+	{
+		res += TransposeIf< LhsTranspose >::get( lhs )
+		        * TransposeIf< RhsTranspose >::get( rhs )  ;
+	}
+
+
+} ;
+
+template< typename TransposeOption, typename ProductIndex,
+          typename LhsBlock, typename RhsBlock, typename ResBlock >
+static void compute_blocks(
+        const ProductIndex &productIndex, const std::size_t nBlocks,
+        const LhsBlock *lhsData, const RhsBlock *rhsData,
+        ResBlock* resData, typename BlockTraits< ResBlock >::Scalar scaling)
+{
+
 	typedef typename ProductIndex::BlockComputation BlockComputation ;
 
-	clear() ;
-
-	assert( lhsIdx.valid ) ;
-	assert( rhsIdx.valid ) ;
-	rowMajorIndex().resizeOuter( colMajorIndex().innerSize() ) ;
-	colMajorIndex().resizeOuter( rowMajorIndex().innerSize() ) ;
-
-	const unsigned outerSize = majorIndex().outerSize() ;
-
-	ProductIndex productIndex  ;
-
-	productIndex.compute( majorIndex().outerSize(), minorIndex().outerSize(), lhsIdx, rhsIdx ) ;
-
-
-	prealloc( productIndex.compressed.outer[ outerSize ] ) ;
-
-	std::vector< const BlockComputation* > flat_compute ( nBlocks() ) ;
-	std::vector< Index > outerIndices ( nBlocks() ) ;
+	std::vector< const BlockComputation* > flat_compute ( nBlocks ) ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( int i = 0 ; i < (int) outerSize ; ++i )
+	for( int i = 0 ; i < (int) productIndex.to_compute.size() ; ++i )
 	{
 		typename ProductIndex::InnerIterator j = productIndex.to_compute[i].begin() ;
-		for( typename SparseBlockIndex< true, Index, BlockPtr >::InnerIterator c_it( productIndex.compressed, i ) ;
-			 c_it ; ++c_it, ++j )
+		for( typename ProductIndex::CompressedIndexType::InnerIterator c_it( productIndex.compressed, i ) ;
+		     c_it ; ++c_it, ++j )
 		{
-			outerIndices[ c_it.ptr() ] = i  ;
 			flat_compute[ c_it.ptr() ] = ProductIndex::get( j ) ;
 		}
 	}
@@ -322,23 +362,101 @@ void SparseBlockMatrixBase<Derived>::setFromProduct(const LhsIndex &lhsIdx,
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( long i = 0 ; i < (long) nBlocks() ; ++ i )
+	for( long i = 0 ; i < (long) nBlocks ; ++ i )
 	{
-		BlockType& b = block( i ) ;
+		ResBlock& b = resData[ i ] ;
 		const BlockComputation &bc = *flat_compute[i] ;
-		b = lhsGetter.get( lhsData[ bc.first[0].second ], bc.first[0].first)
-				* rhsGetter.get( rhsData[ bc.second[0].second ], bc.second[0].first) ;
+		TransposeOption::mm_assign(
+		            lhsData[ bc.first[0].second ], rhsData[ bc.second[0].second ],
+		        b, bc.first[0].first, bc.second[0].first ) ;
+
 		for( unsigned j = 1 ; j != bc.first.size() ; ++ j)
 		{
-			b += lhsGetter.get( lhsData[ bc.first[j].second ], bc.first[j].first)
-					* rhsGetter.get( rhsData[ bc.second[j].second ], bc.second[j].first) ;
+			TransposeOption::mm_add(
+			            lhsData[ bc.first[j].second ], rhsData[ bc.second[j].second ],
+			        b, bc.first[j].first, bc.second[j].first ) ;
 		}
 
 		if( scaling != 1 ) b *= scaling ;
 	}
 
-	productIndex.compressed.valid  = true ;
-	m_majorIndex.move( productIndex.compressed );
+}
+
+
+
+} //namespace mm_impl
+
+template < typename Derived >
+template < bool ColWise, typename LhsT, typename RhsT >
+void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT > &prod )
+{
+	typedef Product< LhsT, RhsT> Prod ;
+
+	typename Prod::Lhs::EvalType lhs = prod.lhs.object.eval() ;
+	typename Prod::Rhs::EvalType rhs = prod.rhs.object.eval() ;
+	typedef BlockMatrixTraits< typename Prod::PlainLhsMatrixType > LhsTraits ;
+	typedef BlockMatrixTraits< typename Prod::PlainRhsMatrixType > RhsTraits ;
+
+	BOGUS_STATIC_ASSERT( !Prod::transposeLhs || IsTransposable< typename LhsTraits::BlockType >::Value,
+	                     TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
+	                     ) ;
+	BOGUS_STATIC_ASSERT( !Prod::transposeRhs || IsTransposable< typename RhsTraits::BlockType >::Value,
+	                     TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
+	                     ) ;
+
+	clear() ;
+	if( Prod::transposeLhs )
+	{
+		m_rows = lhs->cols() ;
+		colMajorIndex().innerOffsets = lhs->rowMajorIndex().innerOffsets;
+	} else {
+		m_rows = lhs->rows() ;
+		colMajorIndex().innerOffsets = lhs->colMajorIndex().innerOffsets;
+	}
+	if( Prod::transposeRhs )
+	{
+		m_cols = rhs->rows() ;
+		rowMajorIndex().innerOffsets = rhs->colMajorIndex().innerOffsets;
+	} else {
+		m_cols = rhs->cols() ;
+		rowMajorIndex().innerOffsets = rhs->rowMajorIndex().innerOffsets;
+	}
+
+	rowMajorIndex().resizeOuter( colMajorIndex().innerSize() ) ;
+	colMajorIndex().resizeOuter( rowMajorIndex().innerSize() ) ;
+
+	{
+
+		typedef mm_impl::SparseBlockProductIndex< ColWise, Index, BlockPtr,
+		        Traits::is_symmetric, Traits::is_col_major> ProductIndex ;
+		ProductIndex productIndex  ;
+
+		{
+			SparseBlockIndexComputer< typename Prod::PlainLhsMatrixType, LhsTraits::is_symmetric,
+					ColWise, Prod::transposeLhs> lhsIndexComputer ( *lhs ) ;
+			SparseBlockIndexComputer< typename Prod::PlainRhsMatrixType, RhsTraits::is_symmetric,
+					!ColWise, Prod::transposeRhs> rhsIndexComputer ( *rhs ) ;
+
+			productIndex.compute( majorIndex().outerSize(), minorIndex().outerSize(),
+								  lhsIndexComputer.get(), rhsIndexComputer.get() ) ;
+		}
+
+		const unsigned outerSize = majorIndex().outerSize() ;
+		prealloc( productIndex.compressed.outer[ outerSize ] ) ;
+
+		typedef mm_impl::BinaryTransposeOption
+				< LhsTraits::is_symmetric && !( BlockTraits< typename LhsTraits::BlockType >::is_self_transpose ),
+				RhsTraits::is_symmetric && !( BlockTraits< typename RhsTraits::BlockType >::is_self_transpose ),
+				Prod::transposeLhs, Prod::transposeRhs > TransposeOption ;
+
+		mm_impl::template compute_blocks< TransposeOption >( productIndex, nBlocks(),
+													lhs->data(), rhs->data(), this->data(),
+													prod.lhs.scaling * prod.rhs.scaling ) ;
+
+		productIndex.compressed.valid  = true ;
+		m_majorIndex.move( productIndex.compressed );
+	}
+
 	assert( m_majorIndex.valid ) ;
 
 	Finalizer::finalize( *this ) ;
