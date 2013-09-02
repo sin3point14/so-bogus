@@ -1,4 +1,9 @@
 
+/*
+ * Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ 
+*/
+
 #include <Core/Block.impl.hpp>
 #include <Core/Block.io.hpp>
 #include <gtest/gtest.h>
