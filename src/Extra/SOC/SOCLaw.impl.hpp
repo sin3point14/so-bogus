@@ -10,7 +10,7 @@
 #define BOGUS_SOCLAW_IMPL_HPP
 
 #include "SOCLaw.hpp"
-#include "../Utils/NumTraits.hpp"
+#include "../../Core/Utils/NumTraits.hpp"
 
 #include "FischerBurmeister.hpp"
 #include "LocalSOCSolver.hpp"

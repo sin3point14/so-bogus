@@ -9,7 +9,6 @@
 #ifndef BOGUS_SOCLAW_HPP
 #define BOGUS_SOCLAW_HPP
 
-#include "../BlockSolvers.fwd.hpp"
 #include "FischerBurmeister.hpp"
 #include "LocalSOCSolver.hpp"
 

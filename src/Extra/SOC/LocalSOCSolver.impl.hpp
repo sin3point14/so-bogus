@@ -10,18 +10,12 @@
 #define BOGUS_LOCAL_SOC_SOLVER_IMPL_HPP
 
 #include "LocalSOCSolver.hpp"
-#include "FischerBurmeister.hpp"
+
 #include "FischerBurmeister.impl.hpp"
 
-#include "../Utils/NonSmoothNewton.hpp"
-#include "../Utils/NonSmoothNewton.impl.hpp"
-
-#include "../Utils/Polynomial.hpp"
-#include "../Utils/Polynomial.impl.hpp"
-
-#include "../Utils/LinearSolverBase.hpp"
-
-#define BOGUS_PURE_ENUMERATIVE
+#include "../../Core/Utils/LinearSolverBase.hpp"
+#include "../../Core/Utils/NonSmoothNewton.impl.hpp"
+#include "../../Core/Utils/Polynomial.impl.hpp"
 
 namespace bogus {
 

@@ -5,7 +5,7 @@
 
 #include "Core/Eigen/EigenProblemTraits.hpp"
 #include "Core/Eigen/EigenLinearSolvers.hpp"
-#include "Core/SOC/LocalSOCSolver.impl.hpp"
+#include "Extra/SOC/LocalSOCSolver.impl.hpp"
 
 #include <gtest/gtest.h>
 
@@ -47,7 +47,7 @@ TEST( Polynomial, SOQPQuartic )
 	Eigen::Vector3d u = Eigen::Vector3d::Zero() ;
 	const double mu = 0.6 ;
 
-	double res = bogus::LocalSOCSolver< 3, double, false, bogus::local_soc_solver::RevHybrid >
+	double res = bogus::LocalSOCSolver< 3, double, false, bogus::local_soc_solver::PureEnumerative >
 			::solve( W, b, r, mu, 1.e-12, 1 ) ;
 
 	u = W*r + b ;

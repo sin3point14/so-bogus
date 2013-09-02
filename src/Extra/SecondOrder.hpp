@@ -11,7 +11,7 @@
 
 #include "SecondOrder.fwd.hpp"
 #ifndef BOGUS_WITHOUT_EIGEN
-#include "Eigen/EigenProblemTraits.hpp"
+#include "../Core/Eigen/EigenProblemTraits.hpp"
 #endif
 #include "SOC/SOCLaw.hpp"
 
