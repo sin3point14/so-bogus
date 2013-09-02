@@ -10,6 +10,8 @@ namespace bogus {
 \page block Block
 \tableofcontents
 
+\note This module is released under the terms of the <a href="http://mozilla.org/MPL/2.0/">Mozilla Public License version 2.0</a>
+
 \section block_basics Basics
 
 To use this library, 
@@ -37,7 +39,7 @@ Three steps are necessary to create a block sparse matrix:
  - Define the block dimensions using SparseBlockMatrixBase::setRows() and SparseBlockMatrixBase::setCols()
  - Optionally pre-allocate the necessary memory using SparseBlockMatrixBase::reserve() 
  - Insert the non-zeros block using SparseBlockMatrixBase::insertBack() or SparseBlockMatrixBase::insertBackAndResize()
- - <b> Call SparseBlockMatrixBase::finalize() </b>
+ - <b> Call SparseBlockMatrixBase::finalize() </b>. This would have been a legitimate use for the late HTML blink tag.
 
 Example: Creating a block-diagonal matrix  
 \code

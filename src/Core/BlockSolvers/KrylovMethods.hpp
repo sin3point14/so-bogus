@@ -87,7 +87,7 @@ struct KrylovSolverBase
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for reduction( +:res ) if ( m_parallelizeRhs )
 #endif
-		for( int c = 0 ; c < (int) rhs.cols() ; ++c )
+		for( std::ptrdiff_t c = 0 ; c < (std::ptrdiff_t) rhs.cols() ; ++c )
 		{
 			res += Base::derived().vectorSolve( rhs.col( c ), x.col( c ) ) ;
 		}
@@ -107,6 +107,7 @@ protected:
 
 } ;
 
+//! Namespace containing the implementations of the methods listed in Method, as specializations of KrylovSolverBase
 namespace solvers {
 
 // Useful macros for common declarations

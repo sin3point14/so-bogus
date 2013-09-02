@@ -71,8 +71,16 @@ struct DualFrictionProblem
 	//! Coulomb friction coefficients
 	const double *mu ;
 
+	//! Computes this DualFrictionProblem from the given \p primal
 	void computeFrom( PrimalFrictionProblem< Dimension >& primal ) ;
 
+	//! Solves this problem
+	/*!
+	  \param gs The GaussSeidel< WType > solver to use
+	  \param r  Both the initial guess and the result
+	  \param staticProblem If true, solve this problem as a \b SOCQP instead of a Coulomb Friction problem
+	  \returns the error as returned by the GaussSeidel::solve() function
+	  */
 	double solveWith( GaussSeidelType &gs, double * r, const bool staticProblem = false ) const ;
 
 } ;

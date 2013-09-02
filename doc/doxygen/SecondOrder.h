@@ -10,11 +10,13 @@ namespace bogus {
 \page soc Second Order
 \tableofcontents
 
+\note This module is released under the terms of the <a href="http://www.gnu.org/licenses/gpl-2.0.html">GNU General Public License version 2</a>
+
 \section soc_basics Basics
 
 To use the library, 
 \code
-#include <bogus/Core/SecondOrder.impl.hpp>
+#include <bogus/Extra/SecondOrder.impl.hpp>
 \endcode
 
 The \ref soc module provide tools for dealing with Second Order Cone complementarity problems. 

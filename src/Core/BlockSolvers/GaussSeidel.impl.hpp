@@ -50,7 +50,7 @@ void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatr
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( int i = 0 ; i < (int) n ; ++i )
+	for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) n ; ++i )
 	{
 		m_localMatrices[i] = M.diagonal( i ) ;
 
@@ -75,7 +75,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	const Segmenter< NSLaw::dimension, const ResT, typename BlockMatrixType::Index >
 			ySegmenter( y, m_matrix->rowOffsets() ) ;
 
-	const int n = (int) m_localMatrices.size() ;
+	const std::ptrdiff_t n = (std::ptrdiff_t) m_localMatrices.size() ;
 
 	Scalar err = 0., lres ;
 	typename NSLaw::Traits::Vector lx, ly ;
@@ -170,7 +170,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for private( lb, lx, ldx ) if( !m_deterministic )
 #endif
-		for( int i = 0 ; i < (int) n ; ++ i )
+		for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) n ; ++ i )
 		{
 			if( skip[i] ) {
 				--skip[i] ;

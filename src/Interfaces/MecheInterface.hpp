@@ -38,7 +38,7 @@ public:
 
 	//! Allocates and sets up the primal friction problem \ref m_primal
 	/*! \warning copies the contents of the matrices M, E and H !
-		Manually construnction a PrimalFrictionProblem would be more efficient
+		Manually constructing a PrimalFrictionProblem would be more efficient
 	*/
 	void fromPrimal (
 			unsigned int NObj, //!< number of subsystems
@@ -55,7 +55,7 @@ public:
 			const double *const HB[] //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjB[i] </c> (\c NULL for an external object)
 			);
 
-	//! Solves the friction problem \ref m_primal ; see GaussSeidel
+	//! Solves the friction problem \ref m_primal ; \sa GaussSeidel
 	double solve(double * r, //!< length \a nd : initialization for \a r (in world space coordinates) + used to return computed r
 			double * v, //!< length \a m: to return computed v ( or NULL if not needed )
 			bool deterministic = false,       //!< Whether the Gauss-Seidel should be eterministic
@@ -75,9 +75,17 @@ public:
 	unsigned nDegreesOfFreedom() const ;
 	unsigned nContacts() const ;
 
+	//! Sets the standard output stream ( \p out can be NULL )
 	void setOutStream( std::ostream *out ) ;
 
+	//! Dumps the current primal() to \p fileName
+	/*! \param r0 The initial guess that shouls be saved with the problem, or NULL */
 	bool dumpToFile( const char* fileName, const double *r0 = 0 ) const ;
+	//! Loads the primal from a previously saved problem file
+	/*! \param r0 Will be set to ploint to a newly allocated array containing the initial
+		guess, if such one was saved with the problem. Will have to be manually freed
+		by the caller using the delete[] operator.
+	*/
 	bool fromFile( const char* fileName, double* &r0 ) ;
 
 	// Gauss-Seidel's Callback
@@ -103,6 +111,10 @@ protected:
 	DualFrictionProblem<3u>  * m_dual ;
 
 private:
+	// Non copyable, non assignable
+	MecheFrictionProblem( const MecheFrictionProblem & ) ;
+	MecheFrictionProblem &operator=( const MecheFrictionProblem & ) ;
+
 	// Used to store data when loading problem from file
 	double *m_f ;
 	double *m_w ;

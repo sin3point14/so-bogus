@@ -23,6 +23,10 @@
 #define BOGUS_SHARED_PTR( Type, Name ) NaiveSharedPtr< Type > Name
 #endif
 
+#if defined( _MSC_VER ) && !defined( BOGUS_DONT_USE_BUILTIN_ATOMICS )
+	#define BOGUS_DONT_USE_BUILTIN_ATOMICS
+#endif
+
 namespace bogus {
 
 //! Naive reference-counting Shared Pointer
@@ -38,12 +42,12 @@ class NaiveSharedPtr
 {
 private:
 
-    T* m_instance ;
-    int* m_refCount ;
+	T* m_instance ;
+	int* m_refCount ;
 
 public:
 
-    explicit NaiveSharedPtr( T * instance = 0 )
+	explicit NaiveSharedPtr( T * instance = 0 )
 	{
 		acquire( instance ) ;
 	}
@@ -76,15 +80,15 @@ public:
 
 	void release()
 	{
-        T* instance = 0 ;
-        std::swap( m_instance, instance ) ;
+		T* instance = 0 ;
+		std::swap( m_instance, instance ) ;
 
 
-        if( instance && 0 == sync_add< -1 > () )
-        {
-            delete instance ;
-            delete m_refCount ;
-        }
+		if( instance && 0 == sync_add< -1 > () )
+		{
+			delete instance ;
+			delete m_refCount ;
+		}
 	}
 
 	T& operator * ( ) {
@@ -112,45 +116,45 @@ public:
 
 private:
 
-    T* add_ref() const
-    {
-        T* instance = m_instance ;
+	T* add_ref() const
+	{
+		T* instance = m_instance ;
 
-        if( instance && sync_add< 1 >() <= 1 )
-        {
-            // Here m_refCount may already been deleted if another thread is simultaneously releasing
-            // this object. We hope that the memory location is still accessible and check for destruction
-            // But as I said previously, this class is *NOT* thread-safe
-            instance = 0 ;
-        }
+		if( instance && sync_add< 1 >() <= 1 )
+		{
+			// Here m_refCount may already been deleted if another thread is simultaneously releasing
+			// this object. We hope that the memory location is still accessible and check for destruction
+			// But as I said previously, this class is *NOT* thread-safe
+			instance = 0 ;
+		}
 
-        return instance ;
-    }
+		return instance ;
+	}
 
 	void add_ref( const NaiveSharedPtr< T >& rhs )
 	{
-        m_refCount = rhs.m_refCount ;
-        m_instance = rhs.add_ref() ;
-    }
+		m_refCount = rhs.m_refCount ;
+		m_instance = rhs.add_ref() ;
+	}
 
 	void acquire( T* instance )
 	{
-        if( instance ) {
-            m_refCount = new int ;
-            *m_refCount = 1 ;
-        }
-        m_instance = instance ;
-    }
+		if( instance ) {
+			m_refCount = new int ;
+			*m_refCount = 1 ;
+		}
+		m_instance = instance ;
+	}
 
 
-    template< int val >
-    inline int sync_add() const
-    {
+	template< int val >
+	inline int sync_add() const
+	{
 
 #ifndef BOGUS_DONT_USE_BUILTIN_ATOMICS
-        return __sync_add_and_fetch( m_refCount, val );
+		return __sync_add_and_fetch( m_refCount, val );
 #else
-        int t;
+		int t;
 
 #ifdef OPENMP_3_1
 #pragma omp atomic capture
@@ -159,10 +163,10 @@ private:
 #pragma omp critical
 #endif
 #endif
-        { t = ( *m_refCount += val ) ; }
-        return t;
+		{ t = ( *m_refCount += val ) ; }
+		return t;
 #endif
-    }
+	}
 
 } ;
 

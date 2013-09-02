@@ -189,7 +189,7 @@ public:
 	/*! This function compacts the blocks and rebuild the index, which can be slow */
 	Derived& prune( const Scalar precision = 0 ) ;
 
-	//! Returns the number of blocks of the matrices
+	//! Returns the number of (non-zero) blocks of the matrix
 	std::size_t nBlocks() const { return blocks().size() ; }
 	std::size_t size() const { return nBlocks() ; }
 
@@ -238,9 +238,8 @@ public:
 	bool computeMinorIndex() ;
 
 	//! Computes and caches the tranpose of the matrix.
-	/*! This will speed up some operations; especially splitRowMultiply() on symmetric matrices
-	  \warning Since the transposed blocks will be stored at the end of the blocks() array,
-	  the blocks should either be square or have dynamic sizes ( e.e they should be assignable )
+	/*! This will speed up some operations, especially splitRowMultiply() on symmetric matrices
+		( At a cost of doubling the memory storage, obviously )
 	*/
 	void cacheTranspose() ;
 	//! Returns whether the transpose has been cached
@@ -423,12 +422,12 @@ protected:
 	TransposeBlockType* transposeData()
 	{ return &m_transposeBlocks[0] ; }
 
-	//! Number of blocks on the matrix. Can be different of blocks().size(), for example when the transpose is cached.
+
 	TransposeArrayType m_transposeBlocks ;
 
 	MajorIndexType m_majorIndex ;
-
 	UncompressedIndexType m_minorIndex ;
+
 	CompressedIndexType   m_transposeIndex ;
 } ;
 

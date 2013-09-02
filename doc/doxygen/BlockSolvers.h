@@ -10,6 +10,8 @@ namespace bogus {
 \page block_solvers BlockSolvers
 \tableofcontents
 
+\note This module is released under the terms of the <a href="http://mozilla.org/MPL/2.0/">Mozilla Public License version 2.0</a>
+
 \section block_basics Basics
 
 To use this library, 
@@ -30,6 +32,7 @@ At the moment, those solvers are:
 \section block_solvers_is Iterative Linear Solvers
 
 A few Krylov methods are available through the Krylov class, as well as some naive preconditioners.
+For the full list of available solvers, see the krylov::Method enum or the krylov::solvers namespace.
 	
 Here is some code solving a very simple system without preconditioning:
 \code
@@ -77,6 +80,32 @@ If we wanted to use a preconditioner
   err = sldltcg.solve_CG( rhs, res ) ;
   
 \endcode 
+
+Alternatively, a Krylov object may be converted to a particular method-object which
+inherits from LinearSolverBase.
+This means it can be used as a BlockType of a SparseBlockMatrix, and can offer
+more configuration options, such as setting the 'restart' option for the
+krylov::GMRES method.
+
+\code
+  typedef bogus::Krylov< Mat, bogus::DiagonalPreconditioner > KrylovType ;
+  KrylovType krylov( sbm ) ;
+
+  krylov.asGMRES().setRestart( 10 ).solve( rhs, res ) ;
+
+  // Creating a SparseBlockMatrix of GMRES objects
+  
+  typedef typename KrylovType::GMRESType GMRES ;
+  
+  bogus::SparseBlockMatrix< GMRES > gmresMat ;
+  // [..] Set rows, etc
+  gmResmat.block( 0 ) = krylov.asGMRES() ;
+  // [..]
+  //
+  // This performs no convergence check, and is proably a very bad idea
+  res = gmresMat * rhs ; 
+
+\endcode
 
 \section block_solvers_gs Projected Gauss Seidel
 

@@ -134,7 +134,7 @@ void MecheFrictionProblem::fromPrimal (
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( int i = 0 ; i < (int) n_in ; ++i )
+	for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) n_in ; ++i )
 	{
 		const Eigen::Matrix3d Et = m_primal->E.diagonal(i).transpose() ;
 		if( ObjB[i] == -1 )

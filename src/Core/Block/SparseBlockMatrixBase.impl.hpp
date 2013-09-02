@@ -26,8 +26,8 @@ namespace bogus {
 template < bool Symmetric >
 struct SparseBlockMatrixFinalizer
 {
-    template <typename T>
-    static void finalize( const T& ) { }
+	template <typename T>
+	static void finalize( const T& ) { }
 } ;
 template < >
 struct SparseBlockMatrixFinalizer<  true >
@@ -66,11 +66,11 @@ template < typename Derived >
 SparseBlockMatrixBase< Derived >::SparseBlockMatrixBase()
 	: Base()
 {
-    //Resize to zero
-    setRows( 0, (const unsigned*) 0 ) ;
-    setCols( 0, (const unsigned*) 0 ) ;
-    m_transposeIndex.resizeOuter(0) ;
-    m_transposeIndex.valid = false ;
+	//Resize to zero
+	setRows( 0, (const unsigned*) 0 ) ;
+	setCols( 0, (const unsigned*) 0 ) ;
+	m_transposeIndex.resizeOuter(0) ;
+	m_transposeIndex.valid = false ;
 }
 
 template < typename Derived >
@@ -169,7 +169,7 @@ Derived& SparseBlockMatrixBase< Derived >::prune( const Scalar precision )
 {
 	MajorIndexType oldIndex = m_majorIndex ;
 
-    typename Traits::BlocksArrayType old_blocks ;
+	typename Traits::BlocksArrayType old_blocks ;
 	old_blocks.swap( m_blocks ) ;
 
 	reserve( old_blocks.size() ) ;
@@ -224,9 +224,9 @@ SparseBlockMatrixBase< Derived >::getOrComputeMinorIndex( UncompressedIndexType 
 template < typename Derived >
 void SparseBlockMatrixBase<Derived>::cacheTranspose()
 {
-    BOGUS_STATIC_ASSERT( IsTransposable< typename Derived::BlockType >::Value,
-                         TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
-    ) ;
+	BOGUS_STATIC_ASSERT( IsTransposable< typename Derived::BlockType >::Value,
+						 TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
+	) ;
 
 	if ( m_transposeIndex.valid ) return ;
 
@@ -234,7 +234,7 @@ void SparseBlockMatrixBase<Derived>::cacheTranspose()
 
 	BlockPtr base = 0 ;
 
-    std::vector< BlockPtr > ptrOffsets( m_minorIndex.outerSize() ) ;
+	std::vector< BlockPtr > ptrOffsets( m_minorIndex.outerSize() ) ;
 	for( Index i = 0 ; i < m_minorIndex.outerSize() ; ++i )
 	{
 		ptrOffsets[i] = base ;
@@ -244,17 +244,17 @@ void SparseBlockMatrixBase<Derived>::cacheTranspose()
 	m_transposeBlocks.resize( base ) ;
 
 	assert( m_minorIndex.valid ) ;
-    m_transposeIndex = m_minorIndex ;
+	m_transposeIndex = m_minorIndex ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for ( int i = 0 ; i < (int) m_minorIndex.outerSize() ; ++ i )
+	for ( Index i = 0 ; i < m_minorIndex.outerSize() ; ++ i )
 	{
 
-        typename MinorIndexType::InnerIterator uncompressed_it
+		typename MinorIndexType::InnerIterator uncompressed_it
 			 ( m_minorIndex , i ) ;
-        for( typename TransposeIndexType::InnerIterator it( m_transposeIndex, i ) ;
+		for( typename TransposeIndexType::InnerIterator it( m_transposeIndex, i ) ;
 			 it ; ++ it, ++uncompressed_it )
 		{
 			const BlockPtr ptr = ptrOffsets[i]++ ;
@@ -262,7 +262,7 @@ void SparseBlockMatrixBase<Derived>::cacheTranspose()
 		}
 	}
 
-    m_transposeIndex.valid = true ;
+	m_transposeIndex.valid = true ;
 
 }
 
@@ -316,9 +316,9 @@ template < typename Derived >
 template < typename OtherDerived >
 void SparseBlockMatrixBase<Derived>::cloneStructure( const SparseBlockMatrixBase< OtherDerived > &source )
 {
-    BOGUS_STATIC_ASSERT( static_cast<unsigned>(BlockMatrixTraits< Derived >::flags)
-                         == static_cast< unsigned >(BlockMatrixTraits< OtherDerived >::flags),
-                         OPERANDS_HAVE_INCONSISTENT_FLAGS ) ;
+	BOGUS_STATIC_ASSERT( static_cast<unsigned>(BlockMatrixTraits< Derived >::flags)
+						 == static_cast< unsigned >(BlockMatrixTraits< OtherDerived >::flags),
+						 OPERANDS_HAVE_INCONSISTENT_FLAGS ) ;
 
 	rowMajorIndex() = source.rowMajorIndex() ;
 	colMajorIndex() = source.colMajorIndex() ;

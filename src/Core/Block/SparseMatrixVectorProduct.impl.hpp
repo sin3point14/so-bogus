@@ -61,7 +61,7 @@ struct SparseBlockMatrixVectorMultiplier
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-		for( int i = 0 ; i < (int) matrix.majorIndex().outerSize() ; ++i )
+		for( typename Derived::Index i = 0 ; i < (typename Derived::Index) matrix.majorIndex().outerSize() ; ++i )
 		{
 			typename ResSegmenter::ReturnType seg = resSegmenter[ i ] ;
 			innerRowMultiply< Transpose >( matrix.data(), matrix.majorIndex(), i, rhs, seg, alpha ) ;
@@ -94,7 +94,7 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 			ResSegmenter resSegmenter( locRes, matrix.minorIndex().innerOffsetsData() ) ;
 
 #pragma omp for
-			for( int i = 0 ; i < (int) matrix.majorIndex().outerSize() ; ++i )
+			for( typename Derived::Index i = 0 ; i < matrix.majorIndex().outerSize() ; ++i )
 			{
 				typename RhsSegmenter::ConstReturnType rhs_seg( rhsSegmenter[ i ] ) ;
 				typename ResSegmenter::ReturnType res_seg(resSegmenter[ i ] ) ;
@@ -126,13 +126,13 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 		typedef Segmenter< SegDim, const RhsT, typename Derived::Index > RhsSegmenter ;
 		const RhsSegmenter rhsSegmenter( rhs, matrix.majorIndex().innerOffsetsData() ) ;
 
-		typedef typename SparseBlockMatrixBase< Derived >::Index Index ;
+		typedef typename Derived::Index Index ;
 		if( matrix.transposeIndex().valid )
 		{
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-			for( int i = 0 ; i < (int) matrix.majorIndex().outerSize() ; ++i )
+			for( Index i = 0 ; i < matrix.majorIndex().outerSize() ; ++i )
 			{
 				typename ResSegmenter::ReturnType seg( resSegmenter[ i ] ) ;
 				innerRowMultiply< false >( matrix.data(), matrix.majorIndex(), i, rhs, seg, alpha ) ;
@@ -172,7 +172,7 @@ struct OutOfOrderSparseBlockMatrixVectorMultiplier
 	template < typename Derived, typename RhsT, typename ResT, typename LocalResT, typename ScalarT >
 	static void multiplyAndReduct( const SparseBlockMatrixBase< Derived >& matrix,  const RhsT& rhs, ResT& res, const LocalResT&, ScalarT alpha )
 	{
-		typedef typename SparseBlockMatrixBase< Derived >::Index Index ;
+		typedef typename Derived::Index Index ;
 
 		const int RhsSegDim = BlockDims< typename Derived::BlockType, Transpose >::Cols ;
 		typedef Segmenter< RhsSegDim, const RhsT, Index > RhsSegmenter ;
@@ -184,7 +184,7 @@ struct OutOfOrderSparseBlockMatrixVectorMultiplier
 			locRes.setZero() ;
 
 #pragma omp for
-			for( int i = 0 ; i < (int) matrix.majorIndex().outerSize() ; ++i )
+			for( Index i = 0 ; i < matrix.majorIndex().outerSize() ; ++i )
 			{
 				innerColMultiply< Transpose >( matrix.data(), matrix.majorIndex(), i, rhsSegmenter[i], locRes, alpha ) ;
 			}
@@ -241,11 +241,11 @@ struct SparseBlockMatrixVectorMultiplier< false, false, true >
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-			for( int i = 0 ; i < (int) matrix.transposeIndex().outerSize() ; ++i )
+			for( typename Derived::Index i = 0 ; i < matrix.transposeIndex().outerSize() ; ++i )
 			{
 				typename ResSegmenter::ReturnType seg( resSegmenter[ i ] ) ;
 				innerRowMultiply< false >
-				        ( matrix.transposeData(), matrix.transposeIndex(), i, rhs, seg, alpha ) ;
+						( matrix.transposeData(), matrix.transposeIndex(), i, rhs, seg, alpha ) ;
 			}
 		} else {
 			Base::multiply( matrix, rhs, res, alpha ) ;

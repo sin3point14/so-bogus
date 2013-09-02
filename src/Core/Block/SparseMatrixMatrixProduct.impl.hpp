@@ -52,10 +52,10 @@ struct SparseBlockProductIndex
 
 	template< typename LhsIndex, typename RhsIndex >
 	void compute(
-	        const Index outerSize,
-	        const Index innerSize,
-	        const LhsIndex &lhsIdx,
-	        const RhsIndex &rhsIdx )
+			const Index outerSize,
+			const Index innerSize,
+			const LhsIndex &lhsIdx,
+			const RhsIndex &rhsIdx )
 	{
 		assert( lhsIdx.innerSize() == rhsIdx.innerSize() ) ;
 
@@ -73,7 +73,7 @@ struct SparseBlockProductIndex
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for private( currentBlock )
 #endif
-		for( int i = 0 ; i < (int) outerSize ; ++i )
+		for( Index i = 0 ; i < outerSize ; ++i )
 		{
 			const Index last = is_symmetric ? i+1 : innerSize ;
 			for( Index j = 0 ; j != last ; ++ j )
@@ -135,10 +135,10 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 
 	template< typename LhsIndex, typename RhsIndex >
 	void compute(
-	        const Index outerSize,
-	        const Index innerSize,
-	        const LhsIndex &lhsIdx,
-	        const RhsIndex &rhsIdx )
+			const Index outerSize,
+			const Index innerSize,
+			const LhsIndex &lhsIdx,
+			const RhsIndex &rhsIdx )
 	{
 		assert( lhsIdx.outerSize() == rhsIdx.outerSize() ) ;
 		( void ) innerSize ;
@@ -156,17 +156,15 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 			std::vector< InnerType > loc_compute( outerSize ) ;
 #pragma omp for
 #endif
-			for( int ii = 0 ; ii < (int) productSize ; ++ii )
+			for( Index i = 0 ; i < productSize ; ++i )
 			{
-				const Index i = (Index) ii ;
-
 				if( is_col_major )
 				{
 					for( typename RhsIndex::InnerIterator rhs_it ( rhsIdx, i ) ; rhs_it ; ++rhs_it )
 					{
 						for( typename LhsIndex::InnerIterator lhs_it ( lhsIdx, i ) ;
-						     lhs_it && ( !is_symmetric || lhs_it.inner() <= rhs_it.inner() ) ;
-						     ++lhs_it )
+							 lhs_it && ( !is_symmetric || lhs_it.inner() <= rhs_it.inner() ) ;
+							 ++lhs_it )
 						{
 							BlockComputation &bc = loc_compute[ rhs_it.inner() ][ lhs_it.inner() ] ;
 							bc.first.push_back( std::make_pair( lhs_it.inner() > i, lhs_it.ptr() ) ) ;
@@ -177,8 +175,8 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 					for( typename LhsIndex::InnerIterator lhs_it ( lhsIdx, i ) ; lhs_it ; ++lhs_it )
 					{
 						for( typename RhsIndex::InnerIterator rhs_it ( rhsIdx, i ) ;
-						     rhs_it && ( !is_symmetric || rhs_it.inner() <= lhs_it.inner() ) ;
-						     ++rhs_it )
+							 rhs_it && ( !is_symmetric || rhs_it.inner() <= lhs_it.inner() ) ;
+							 ++rhs_it )
 						{
 							BlockComputation &bc = loc_compute[ lhs_it.inner() ][ rhs_it.inner() ] ;
 							bc.first.push_back( std::make_pair( lhs_it.inner() > i, lhs_it.ptr() ) ) ;
@@ -220,13 +218,13 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 } ;
 
 template < bool LhsRuntimeTest, bool RhsRunTimeTest,
-           bool LhsCompileTimeTranspose, bool RhsCompileTimeTranspose >
+		   bool LhsCompileTimeTranspose, bool RhsCompileTimeTranspose >
 struct BinaryTransposeOption {
 
 	template< typename LhsT, typename RhsT, typename ResT >
 	static inline void mm_assign (
-	        const LhsT &lhs, const RhsT &rhs, ResT &res,
-	        bool transposeLhs, bool transposeRhs )
+			const LhsT &lhs, const RhsT &rhs, ResT &res,
+			bool transposeLhs, bool transposeRhs )
 	{
 		if( transposeLhs )
 			if( transposeRhs )
@@ -242,8 +240,8 @@ struct BinaryTransposeOption {
 
 	template< typename LhsT, typename RhsT, typename ResT >
 	static inline void mm_add (
-	        const LhsT &lhs, const RhsT &rhs, ResT &res,
-	        bool transposeLhs, bool transposeRhs )
+			const LhsT &lhs, const RhsT &rhs, ResT &res,
+			bool transposeLhs, bool transposeRhs )
 	{
 		if( transposeLhs )
 			if( transposeRhs )
@@ -264,8 +262,8 @@ struct BinaryTransposeOption< false, true, LhsTranspose, RhsTranspose >
 {
 	template< typename LhsT, typename RhsT, typename ResT >
 	static inline void mm_assign (
-	        const LhsT &lhs, const RhsT &rhs, ResT &res,
-	        bool, bool transposeRhs )
+			const LhsT &lhs, const RhsT &rhs, ResT &res,
+			bool, bool transposeRhs )
 	{
 		if( transposeRhs )
 			res = TransposeIf< LhsTranspose >::get( lhs ) * transpose_block( rhs ) ;
@@ -274,8 +272,8 @@ struct BinaryTransposeOption< false, true, LhsTranspose, RhsTranspose >
 	}
 	template< typename LhsT, typename RhsT, typename ResT >
 	static inline void mm_add (
-	        const LhsT &lhs, const RhsT &rhs, ResT &res,
-	        bool, bool transposeRhs )
+			const LhsT &lhs, const RhsT &rhs, ResT &res,
+			bool, bool transposeRhs )
 	{
 		if( transposeRhs )
 			res += TransposeIf< LhsTranspose >::get( lhs ) * transpose_block( rhs ) ;
@@ -291,8 +289,8 @@ struct BinaryTransposeOption< true, false, LhsTranspose, RhsTranspose >
 {
 	template< typename LhsT, typename RhsT, typename ResT >
 	static inline void mm_assign (
-	        const LhsT &lhs, const RhsT &rhs, ResT &res,
-	        bool transposeLhs, bool )
+			const LhsT &lhs, const RhsT &rhs, ResT &res,
+			bool transposeLhs, bool )
 	{
 		if( transposeLhs )
 			res = transpose_block( lhs ) * TransposeIf< RhsTranspose >::get( rhs )  ;
@@ -301,8 +299,8 @@ struct BinaryTransposeOption< true, false, LhsTranspose, RhsTranspose >
 	}
 	template< typename LhsT, typename RhsT, typename ResT >
 	static inline void mm_add (
-	        const LhsT &lhs, const RhsT &rhs, ResT &res,
-	        bool transposeLhs, bool )
+			const LhsT &lhs, const RhsT &rhs, ResT &res,
+			bool transposeLhs, bool )
 	{
 		if( transposeLhs )
 			res += transpose_block( lhs ) * TransposeIf< RhsTranspose >::get( rhs )  ;
@@ -318,31 +316,31 @@ struct BinaryTransposeOption< false, false, LhsTranspose, RhsTranspose >
 {
 	template< typename LhsT, typename RhsT, typename ResT >
 	static inline void mm_assign (
-	        const LhsT &lhs, const RhsT &rhs, ResT &res,
-	        bool , bool )
+			const LhsT &lhs, const RhsT &rhs, ResT &res,
+			bool , bool )
 	{
 		res = TransposeIf< LhsTranspose >::get( lhs )
-		        * TransposeIf< RhsTranspose >::get( rhs )  ;
+				* TransposeIf< RhsTranspose >::get( rhs )  ;
 	}
 
 	template< typename LhsT, typename RhsT, typename ResT >
 	static inline void mm_add (
-	        const LhsT &lhs, const RhsT &rhs, ResT &res,
-	        bool , bool )
+			const LhsT &lhs, const RhsT &rhs, ResT &res,
+			bool , bool )
 	{
 		res += TransposeIf< LhsTranspose >::get( lhs )
-		        * TransposeIf< RhsTranspose >::get( rhs )  ;
+				* TransposeIf< RhsTranspose >::get( rhs )  ;
 	}
 
 
 } ;
 
 template< typename TransposeOption, typename ProductIndex,
-          typename LhsBlock, typename RhsBlock, typename ResBlock >
+		  typename LhsBlock, typename RhsBlock, typename ResBlock >
 static void compute_blocks(
-        const ProductIndex &productIndex, const std::size_t nBlocks,
-        const LhsBlock *lhsData, const RhsBlock *rhsData,
-        ResBlock* resData, typename BlockTraits< ResBlock >::Scalar scaling)
+		const ProductIndex &productIndex, const std::size_t nBlocks,
+		const LhsBlock *lhsData, const RhsBlock *rhsData,
+		ResBlock* resData, typename BlockTraits< ResBlock >::Scalar scaling)
 {
 
 	typedef typename ProductIndex::BlockComputation BlockComputation ;
@@ -352,11 +350,11 @@ static void compute_blocks(
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( int i = 0 ; i < (int) productIndex.to_compute.size() ; ++i )
+	for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) productIndex.to_compute.size() ; ++i )
 	{
 		typename ProductIndex::InnerIterator j = productIndex.to_compute[i].begin() ;
 		for( typename ProductIndex::CompressedIndexType::InnerIterator c_it( productIndex.compressed, i ) ;
-		     c_it ; ++c_it, ++j )
+			 c_it ; ++c_it, ++j )
 		{
 			flat_compute[ c_it.ptr() ] = ProductIndex::get( j ) ;
 		}
@@ -365,19 +363,19 @@ static void compute_blocks(
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( long i = 0 ; i < (long) nBlocks ; ++ i )
+	for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) nBlocks ; ++ i )
 	{
 		ResBlock& b = resData[ i ] ;
 		const BlockComputation &bc = *flat_compute[i] ;
 		TransposeOption::mm_assign(
-		            lhsData[ bc.first[0].second ], rhsData[ bc.second[0].second ],
-		        b, bc.first[0].first, bc.second[0].first ) ;
+					lhsData[ bc.first[0].second ], rhsData[ bc.second[0].second ],
+				b, bc.first[0].first, bc.second[0].first ) ;
 
 		for( unsigned j = 1 ; j != bc.first.size() ; ++ j)
 		{
 			TransposeOption::mm_add(
-			            lhsData[ bc.first[j].second ], rhsData[ bc.second[j].second ],
-			        b, bc.first[j].first, bc.second[j].first ) ;
+						lhsData[ bc.first[j].second ], rhsData[ bc.second[j].second ],
+					b, bc.first[j].first, bc.second[j].first ) ;
 		}
 
 		if( scaling != 1 ) b *= scaling ;
@@ -401,11 +399,11 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 	typedef BlockMatrixTraits< typename Prod::PlainRhsMatrixType > RhsTraits ;
 
 	BOGUS_STATIC_ASSERT( !Prod::transposeLhs || IsTransposable< typename LhsTraits::BlockType >::Value,
-	                     TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
-	                     ) ;
+						 TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
+						 ) ;
 	BOGUS_STATIC_ASSERT( !Prod::transposeRhs || IsTransposable< typename RhsTraits::BlockType >::Value,
-	                     TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
-	                     ) ;
+						 TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
+						 ) ;
 
 	clear() ;
 	if( Prod::transposeLhs )
@@ -431,7 +429,7 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 	{
 
 		typedef mm_impl::SparseBlockProductIndex< ColWise, Index, BlockPtr,
-		        Traits::is_symmetric, Traits::is_col_major> ProductIndex ;
+				Traits::is_symmetric, Traits::is_col_major> ProductIndex ;
 		ProductIndex productIndex  ;
 
 		{

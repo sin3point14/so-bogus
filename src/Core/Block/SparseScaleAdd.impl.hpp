@@ -28,7 +28,7 @@ Derived& SparseBlockMatrixBase< Derived >::scale( const Scalar alpha )
 	#ifndef BOGUS_DONT_PARALLELIZE
 	#pragma omp parallel for
 	#endif
-		for( int i = 0 ; i < (int) blocks().size() ;  ++i )
+		for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) nBlocks() ;  ++i )
 		{
 			block( i ) *= alpha ;
 		}
@@ -70,7 +70,7 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 	#ifndef BOGUS_DONT_PARALLELIZE
 	#pragma omp parallel for
 	#endif
-		for ( int i = 0 ; i < (int) lhsIndex.outerSize() ; ++i )
+		for ( Index i = 0 ; i < lhsIndex.outerSize() ; ++i )
 		{
 			typename MajorIndexType::InnerIterator lhs_it ( lhsIndex, i ) ;
 			typename SourceIndexType::InnerIterator rhs_it ( rhsIndex, i ) ;
@@ -138,7 +138,7 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( int i = 0 ; i < (int) nonZeros.size() ; ++i )
+	for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) nonZeros.size() ; ++i )
 	{
 		for( unsigned j = 0 ; j < nonZeros[i].size() ; ++j )
 		{

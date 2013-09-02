@@ -1,6 +1,6 @@
 /*
  * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ 
+ * http://creativecommons.org/publicdomain/zero/1.0/
 */
 
 #include <iostream>
@@ -503,7 +503,7 @@ TEST( SparseBlock, Sparse )
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-		for( int i = 0 ; i < (int) isbm.nBlocks() ; ++i )
+		for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) isbm.nBlocks() ; ++i )
 		{
 			isbm.block(i).compute( sbm.block(i) );
 		}
@@ -522,7 +522,7 @@ TEST( SparseBlock, Sparse )
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-		for( int i = 0 ; i < (int) isbm.nBlocks() ; ++i )
+		for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) isbm.nBlocks() ; ++i )
 		{
 			isbm.block(i).compute( sbm.block(i) );
 		}

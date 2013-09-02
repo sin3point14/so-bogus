@@ -35,7 +35,7 @@ void DualFrictionProblem< Dimension >::computeFrom(PrimalFrictionProblem<Dimensi
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( int i = 0 ; i < (int) primal.M.nBlocks()  ; ++ i )
+	for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) primal.M.nBlocks()  ; ++ i )
 	{
 		primal.MInv.block(i).compute( primal.M.block(i) ) ;
 	}

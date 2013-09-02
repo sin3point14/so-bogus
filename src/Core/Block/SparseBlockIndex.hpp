@@ -125,7 +125,7 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-		for( int i = 0 ; i < (int) outer.size() ; ++i )
+		for( int i = 0 ; i < (Index) outer.size() ; ++i )
 		{
 			std::sort( outer[i].begin(), outer[i].end() ) ;
 		}
