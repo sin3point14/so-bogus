@@ -2,6 +2,16 @@
 execute_process( COMMAND ../updateCMakeSources.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
 file(STRINGS CMakeSources.txt SRC_LIST)
 
+if( WITH_2D )
+        add_definitions( -DBOGUS_INSTANTIATE_2D_SOC )
+endif()
+if( WITH_3D )
+        add_definitions( -DBOGUS_INSTANTIATE_3D_SOC )
+endif()
+if( WITH_DYNAMIC )
+        add_definitions( -DBOGUS_INSTANTIATE_DYNAMIC_SOC )
+endif()
+
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -S --verbose-asm " )
 
 add_library(${CMAKE_PROJECT_NAME} SHARED ${SRC_LIST})

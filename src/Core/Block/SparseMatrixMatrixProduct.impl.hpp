@@ -222,13 +222,10 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 						}
 					}
 				}
-#ifdef BOGUS_DONT_PARALLELIZE
-				std::sort( to_compute[i].begin(), to_compute[i].end() ) ;
-#endif
 			}
 
 #ifndef BOGUS_DONT_PARALLELIZE
-	#pragma omp for
+#pragma omp for
 			for( Index i = 0 ; i < outerSize ; ++i )
 			{
 				for( int t = 0 ; t < (int) temp_compute.size() ; ++t )
@@ -243,6 +240,9 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 
 		for( Index i = 0 ; i < outerSize ; ++i )
 		{
+#ifdef BOGUS_DONT_PARALLELIZE
+			std::sort( to_compute[i].begin(), to_compute[i].end() ) ;
+#endif
 			Index prevIndex = -1 ;
 			for( std::size_t j = 0 ; j != to_compute[i].size() ; ++j )
 			{
