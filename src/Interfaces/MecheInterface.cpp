@@ -213,7 +213,7 @@ double MecheFrictionProblem::solve(double *r,
 	bogus::DualFrictionProblem<3u>::GaussSeidelType gs ;
 	if( tol != 0. ) gs.setTol( tol );
 	if( maxIters != 0 ) gs.setMaxIters( maxIters );
-	gs.setDeterministic( deterministic );
+	gs.enableColoring( deterministic );
 
 	gs.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual );
 	gs.setAutoRegularization( regularization ) ;

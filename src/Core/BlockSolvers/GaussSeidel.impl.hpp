@@ -21,20 +21,17 @@ namespace bogus
 {
 
 template < typename BlockMatrixType >
-GaussSeidel< BlockMatrixType >::GaussSeidel( )
-	: Base( NULL, 250, 1.e-6 ), m_deterministic( true ), m_useInfinityNorm( false ),
-	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 ),
-	  m_autoRegularization( 0. )
+void GaussSeidel< BlockMatrixType >::init( )
 {
-}
+	m_tol = 1.e-6 ;
+	m_maxIters = 250 ;
+	m_enableColoring =  true ;
+	m_useInfinityNorm = false ;
+	m_evalEvery = 25  ;
+	m_skipTol = m_tol * m_tol ;
+	m_skipIters = 10 ;
+	m_autoRegularization = 0. ;
 
-template < typename BlockMatrixType >
-GaussSeidel< BlockMatrixType >::GaussSeidel( const BlockMatrixBase< BlockMatrixType > & M )
-	: Base( &M, 250, 1.e-6 ), m_deterministic( true ), m_useInfinityNorm( false ),
-	  m_evalEvery( 25 ), m_skipTol( m_tol * m_tol ), m_skipIters( 10 ),
-	  m_autoRegularization( 0. )
-{
-	setMatrix( M ) ;
 }
 
 template < typename BlockMatrixType >
@@ -63,6 +60,34 @@ void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatr
 		m_scaling[i] = std::max( 1., m_localMatrices[i].trace() ) ;
 	}
 
+	updateColors() ;
+
+}
+
+template < typename BlockMatrixType >
+void GaussSeidel< BlockMatrixType >::resetColors( )
+{
+	assert( m_matrix ) ;
+
+	const std::ptrdiff_t n = static_cast< std::ptrdiff_t >( m_localMatrices.size() ) ;
+
+	m_permutation.resize( n ) ;
+	m_colors.clear() ;
+	m_colors.push_back( 0 ) ;
+	m_colors.push_back( n ) ;
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
+	for( std::ptrdiff_t i = 0 ; i < n ; ++ i ) { m_permutation[i] = i ; }
+	m_colorsUpToDate = true ;
+}
+
+template < typename BlockMatrixType >
+void GaussSeidel< BlockMatrixType >::computeColors()
+{
+
+	resetColors() ;
 }
 
 template < typename BlockMatrixType >
@@ -139,8 +164,6 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 
 	typedef typename NSLaw::Traits LocalProblemTraits ;
 
-	const unsigned n = m_localMatrices.size() ;
-
 	typename GlobalProblemTraits::DynVector y ( b + (*m_matrix)*x ) ;
 	typename GlobalProblemTraits::DynVector x_best( GlobalProblemTraits::DynVector::Zero( x.rows() ) ) ;
 
@@ -160,39 +183,47 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	this->m_callback.trigger( 0, err_best ) ;
 //	std::cout << err_init << " /// " << err_zero << std::endl ;
 
-	std::vector< unsigned > skip( n, 0 ) ;
+	const std::ptrdiff_t n = static_cast< std::ptrdiff_t >( m_localMatrices.size() ) ;
+	std::vector< unsigned char > skip( n, 0 ) ;
 
 	// see [Daviet et al 2011], Algorithm 1
 	for( unsigned GSIter = 1 ; GSIter <= m_maxIters ; ++GSIter )
 	{
 		typename LocalProblemTraits::Vector lb, lx, ldx ;
 
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp parallel for private( lb, lx, ldx ) if( !m_deterministic )
-#endif
-		for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) n ; ++ i )
+		for( unsigned c = 0 ; c+1 < m_colors.size() ; ++ c )
 		{
-			if( skip[i] ) {
-				--skip[i] ;
-				continue ;
-			}
 
-			lx = xSegmenter[ i ] ;
-			lb = bSegmenter[ i ] - m_regularization(i) * lx ;
-			m_matrix->splitRowMultiply( i, x, lb ) ;
-			ldx = -lx ;
-
-			const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ i ] ) ;
-			ldx += lx ;
-
-			if( !ok ) ldx *= .7 ;
-			xSegmenter[ i ] += ldx ;
-
-			const Scalar scaledSkipTol = m_scaling[ i ] * m_scaling[ i ] * m_skipTol ;
-			if( ldx.squaredNorm() < scaledSkipTol || lx.squaredNorm() < scaledSkipTol )
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for private( lb, lx, ldx )
+#endif
+			for( std::ptrdiff_t pi = m_colors[c] ; pi < m_colors[c+1] ; ++ pi )
 			{
-				skip[i] = m_skipIters ;
+				const std::size_t i = m_permutation[pi] ;
+
+				if( skip[i] ) {
+					--skip[i] ;
+					continue ;
+				}
+
+				lx = xSegmenter[ i ] ;
+				lb = bSegmenter[ i ] - m_regularization(i) * lx ;
+				m_matrix->splitRowMultiply( i, x, lb ) ;
+				ldx = -lx ;
+
+				const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ i ] ) ;
+				ldx += lx ;
+
+				if( !ok ) ldx *= .7 ;
+				xSegmenter[ i ] += ldx ;
+
+				const Scalar scaledSkipTol = m_scaling[ i ] * m_scaling[ i ] * m_skipTol ;
+				if( ldx.squaredNorm() < scaledSkipTol || lx.squaredNorm() < scaledSkipTol )
+				{
+					skip[i] = m_skipIters ;
+				}
 			}
+
 		}
 
 		if( 0 == ( GSIter % m_evalEvery ) )

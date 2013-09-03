@@ -48,9 +48,11 @@ public:
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 
 	//! Default constructor -- you will have to call setMatrix() before using the solve() function
-	GaussSeidel( ) ;
+	GaussSeidel( ) : Base() { init() ; } ;
 	//! Constructor with the system matrix
-	explicit GaussSeidel( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
+	explicit GaussSeidel( const BlockMatrixBase< BlockMatrixType > & matrix )
+	    : Base( &matrix )
+	{ init() ; setMatrix( matrix ) ; }
 
 	//! Sets the system matrix and initializes internal structures
 	void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
@@ -79,8 +81,15 @@ public:
 	template < typename NSLaw, typename RhsT, typename ResT >
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const ;
 
+
 	//! Sets whether the solver is allowed to trade off determiniticity for speed
-	void setDeterministic( bool deterministic ) { m_deterministic = deterministic ; }
+	/*! Determiniticy is achieved through the mean of contact coloring ;
+	  contacts that do not interact directly together can chare the same color,
+	  and all contacts within a given color can be solver in parallel */
+	void enableColoring( bool enable = true ) {
+		m_enableColoring = enable ;
+		updateColors() ;
+	}
 
 	//! Sets whether the solver will use the infinity norm instead of the l1 one to compute the global residual from the local ones
 	void useInfinityNorm( bool useInfNorm ) { m_useInfinityNorm = useInfNorm ; }
@@ -132,6 +141,22 @@ protected:
 	template < typename NSLaw, typename RhsT, typename ResT >
 	Scalar eval ( const NSLaw &law, const RhsT &x, const ResT &y ) const ;
 
+	//! Sets up the default values for all parameters
+	void init() ;
+	//! Creates one single color that span all the contacts
+	void resetColors() ;
+	//! Computes contacts coloring -- contacts can have the same color if they don't interact directly
+	void computeColors() ;
+	//! Call computeColors() if m_enableColoring, resetColors() otherwise
+	void updateColors() {
+		if( !m_matrix ) return ;
+
+		if( m_enableColoring )
+			computeColors() ;
+		else
+			resetColors() ;
+	}
+
 	using Base::m_matrix ;
 	using Base::m_maxIters ;
 	using Base::m_tol ;
@@ -141,8 +166,8 @@ protected:
 	typename GlobalProblemTraits::DynVector m_scaling ;
 	typename GlobalProblemTraits::DynVector m_regularization ;
 
-	//! See setDeterministic(). Defaults to true.
-	bool m_deterministic ;
+	//! See enableColoring(). Defaults to true.
+	bool m_enableColoring ;
 	//! See useInfinityNorm(). Defaults to false.
 	bool m_useInfinityNorm ;
 
@@ -155,6 +180,11 @@ protected:
 
 	//! \sa setAutoRegularization(). Defaults to 0.
 	Scalar m_autoRegularization ;
+
+	//! Coloring
+	bool m_colorsUpToDate ;
+	std::vector< std::size_t > 	  m_permutation ;
+	std::vector< std::ptrdiff_t > m_colors ;
 } ;
 
 } //namespace bogus
