@@ -241,6 +241,11 @@ struct SparseBlockIndexTraits<  SparseBlockIndex< true, Index_, BlockPtr_, Array
 			return *this ;
 		}
 
+		bool after( Index outer ) const
+		{
+			return inner() > outer ;
+		}
+
 		Index inner() const { return m_inner[ m_it ] ; }
 		BlockPtr ptr() const { return m_it ; }
 

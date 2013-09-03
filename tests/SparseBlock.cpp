@@ -665,6 +665,16 @@ TEST( SparseBlock, Add )
 		sbm_ter = 2*sbm_bis + ssbm.transpose() + .5*sbm.transpose() - sbm_bis ;
 		EXPECT_EQ( sym_res, sbm_ter*rhs ) ;
 
+		const Eigen::VectorXd mm_res =  (sbm_bis * ( ssbm.transpose() * rhs )) ;
+		sbm_ter.setFromProduct< false >( sbm_bis * ssbm.transpose() ) ;
+		EXPECT_EQ( mm_res, sbm_ter * rhs ) ;
+		sbm_ter.setFromProduct< true  >( sbm_bis * ssbm.transpose() ) ;
+		EXPECT_EQ( mm_res, sbm_ter * rhs ) ;
+		sbm_ter.setFromProduct< false >( ssbm.transpose() * sbm_bis ) ;
+		EXPECT_EQ( mm_res, sbm_ter * rhs ) ;
+		sbm_ter.setFromProduct< true  >( ssbm.transpose() * sbm_bis ) ;
+		EXPECT_EQ( mm_res, sbm_ter * rhs ) ;
+
 		sbm_ter = 2 * sbm_bis * ssbm.transpose() + .5*sbm - 2 * sbm_bis.transpose() * ssbm ;
 		EXPECT_EQ( sym_res, sbm_ter*rhs ) ;
 	}

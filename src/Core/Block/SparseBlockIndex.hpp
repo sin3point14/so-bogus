@@ -277,6 +277,11 @@ struct SparseBlockIndexTraits<  SparseBlockIndex< Compressed, Index_, BlockPtr_,
 			return *this ;
 		}
 
+		bool after( Index outer ) const
+		{
+			return inner() > outer ;
+		}
+
 		Index inner() const { return m_it->first ; }
 		BlockPtr ptr() const { return m_it->second ; }
 

@@ -154,11 +154,9 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 			for( typename SourceIndexType::InnerIterator src_it( sourceIndex, i ) ;
 				 src_it && !( Traits::is_symmetric && i < src_it.inner() ) ; ++ src_it )
 			{
-				const bool afterDiag = ( (bool) Traits::is_col_major )  == ( (bool) OtherTraits::is_col_major )
-						 ? (src_it.inner() > i) : (src_it.inner() < i ) ;
 				TransposeIf::assign( source.block( src_it.ptr() ) ,
 									 insertBackOuterInner( i, src_it.inner() ),
-									 scale, afterDiag ) ;
+									 scale, src_it.after( i ) ) ;
 			}
 		}
 		finalize() ;

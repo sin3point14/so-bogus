@@ -96,8 +96,11 @@ template < typename MatrixType, bool ColWise, bool Transpose >
 struct SparseBlockIndexComputer< MatrixType, true, ColWise, Transpose >
 {
 	typedef BlockMatrixTraits< MatrixType > Traits ;
-	enum { is_major = true } ;
-	typedef CompoundSparseBlockIndex< typename MatrixType::MajorIndexType, typename MatrixType::MinorIndexType >
+	enum { is_major = (ColWise == bool( Traits::is_col_major )) } ;
+	typedef CompoundSparseBlockIndex<
+		typename MatrixType::MajorIndexType,
+		typename MatrixType::MinorIndexType,
+		bool( is_major ) >
 	ReturnType ;
 
 	SparseBlockIndexComputer( const SparseBlockMatrixBase< MatrixType > &matrix )

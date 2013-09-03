@@ -19,13 +19,14 @@
 namespace bogus
 {
 
-template < typename FirstIndexType, typename SecondIndexType >
-struct CompoundSparseBlockIndex : public SparseBlockIndexBase< CompoundSparseBlockIndex< FirstIndexType, SecondIndexType > >
+template < typename FirstIndexType, typename SecondIndexType, bool NativeOrder >
+struct CompoundSparseBlockIndex : public SparseBlockIndexBase<
+		CompoundSparseBlockIndex< FirstIndexType, SecondIndexType, NativeOrder > >
 {
 	typedef typename FirstIndexType::Index Index ;
 	typedef typename FirstIndexType::BlockPtr BlockPtr ;
 
-	typedef SparseBlockIndexBase< CompoundSparseBlockIndex< FirstIndexType, SecondIndexType > > Base ;
+	typedef SparseBlockIndexBase< CompoundSparseBlockIndex< FirstIndexType, SecondIndexType, NativeOrder > > Base ;
 	typedef typename Base::InnerOffsetsType InnerOffsetsType ;
 	typedef typename Base::InnerIterator    InnerIterator ;
 	using Base::valid ;
@@ -55,13 +56,13 @@ struct CompoundSparseBlockIndex : public SparseBlockIndexBase< CompoundSparseBlo
 	const InnerOffsetsType &innerOffsets ;
 } ;
 
-template < typename FirstIndexType, typename SecondIndexType >
-struct SparseBlockIndexTraits< CompoundSparseBlockIndex< FirstIndexType, SecondIndexType > >
+template < typename FirstIndexType, typename SecondIndexType, bool NativeOrder >
+struct SparseBlockIndexTraits< CompoundSparseBlockIndex< FirstIndexType, SecondIndexType, NativeOrder > >
 {
 	typedef typename FirstIndexType::Index Index ;
 	typedef typename FirstIndexType::BlockPtr BlockPtr ;
 
-	typedef CompoundSparseBlockIndex< FirstIndexType, SecondIndexType > SparseBlockIndexType ;
+	typedef CompoundSparseBlockIndex< FirstIndexType, SecondIndexType, NativeOrder > SparseBlockIndexType ;
 
 	struct InnerIterator
 	{
@@ -106,6 +107,11 @@ struct SparseBlockIndexTraits< CompoundSparseBlockIndex< FirstIndexType, SecondI
 			m_it1.toEnd() ;
 			m_it2.toEnd() ;
 			return *this ;
+		}
+
+		bool after( Index outer ) const
+		{
+			return NativeOrder ? ( inner() > outer ) : ( inner() < outer ) ;
 		}
 
 	private:

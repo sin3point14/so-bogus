@@ -18,7 +18,9 @@
 #include "SparseBlockMatrixBase.hpp"
 #include "SparseBlockIndexComputer.hpp"
 
-#include <map>
+#ifndef BOGUS_DONT_PARALLELIZE
+#include <omp.h>
+#endif
 
 namespace bogus
 {
@@ -35,20 +37,44 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Product< LhsT, RhsT > 
 namespace mm_impl
 {
 
+template < typename Index_, typename BlockPtr >
+struct SparseBlockProductTerm
+{
+	typedef Index_ Index ;
+	Index index ;
+
+	BlockPtr lhsPtr ;
+	BlockPtr rhsPtr ;
+	bool 	 lhsIsAfterDiag ;
+	bool 	 rhsIsAfterDiag ;
+
+	SparseBlockProductTerm(
+			Index idx,
+			BlockPtr lPtr, BlockPtr rPtr,
+			bool lIAD, bool rIAD
+			)
+		: index( idx ),
+		  lhsPtr( lPtr ), rhsPtr( rPtr ),
+		  lhsIsAfterDiag( lIAD ), rhsIsAfterDiag( rIAD )
+	{}
+
+	bool operator< ( const SparseBlockProductTerm& rhs ) const
+	{
+		return index < rhs.index ;
+	}
+
+} ;
+
 template < bool ColWise, typename Index, typename BlockPtr, bool is_symmetric, bool is_col_major >
 struct SparseBlockProductIndex
 {
-	typedef std::vector< std::pair< bool, BlockPtr > > BlockComputationFactor ;
-	typedef std::pair< BlockComputationFactor, BlockComputationFactor > BlockComputation ;
+	typedef SparseBlockProductTerm<Index, BlockPtr>  Term ;
 
-	typedef std::vector< BlockComputation > InnerType;
-	typedef typename InnerType::const_iterator InnerIterator;
-
-	static const BlockComputation* get( const InnerIterator& iter ) { return &(*iter) ; }
+	typedef std::vector< Term > InnerType;
+	std::vector< InnerType > to_compute ;
 
 	typedef SparseBlockIndex< true, Index, BlockPtr > CompressedIndexType ;
 	CompressedIndexType compressed ;
-	std::vector< InnerType > to_compute ;
 
 	template< typename LhsIndex, typename RhsIndex >
 	void compute(
@@ -68,16 +94,16 @@ struct SparseBlockProductIndex
 		compressed.resizeOuter( outerSize ) ;
 #endif
 
-		BlockComputation currentBlock ;
-
 #ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp parallel for private( currentBlock )
+#pragma omp parallel for
 #endif
 		for( Index i = 0 ; i < outerSize ; ++i )
 		{
 			const Index last = is_symmetric ? i+1 : innerSize ;
 			for( Index j = 0 ; j != last ; ++ j )
 			{
+				bool nonZero = false ;
+
 				const Index lhsOuter = is_col_major ? j : i ;
 				const Index rhsOuter = is_col_major ? i : j ;
 				typename LhsIndex::InnerIterator lhs_it ( lhsIdx, lhsOuter ) ;
@@ -88,18 +114,17 @@ struct SparseBlockProductIndex
 					if( lhs_it.inner() > rhs_it.inner() ) ++rhs_it ;
 					else if( lhs_it.inner() < rhs_it.inner() ) ++lhs_it ;
 					else {
-						currentBlock.first. push_back( std::make_pair( lhs_it.inner() > lhsOuter, lhs_it.ptr() ) ) ;
-						currentBlock.second.push_back( std::make_pair( rhs_it.inner() > rhsOuter, rhs_it.ptr() ) ) ;
+						to_compute[i].push_back(
+									Term( j, lhs_it.ptr(), rhs_it.ptr(),
+										  lhs_it.after( lhsOuter ), rhs_it.after( rhsOuter ) ) ) ;
+						nonZero = true ;
 						++lhs_it ;
 						++rhs_it ;
 					}
 				}
 
-				if( !currentBlock.first.empty() )
+				if( nonZero )
 				{
-					to_compute[i].push_back( currentBlock ) ;
-					currentBlock.first.clear() ;
-					currentBlock.second.clear() ;
 #ifndef BOGUS_DONT_PARALLELIZE
 					uncompressed.insertBack( i, j, 0 ) ;
 #else
@@ -121,17 +146,14 @@ struct SparseBlockProductIndex
 template < typename Index, typename BlockPtr, bool is_symmetric, bool is_col_major >
 struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_major >
 {
-	typedef std::vector< std::pair< bool, BlockPtr > > BlockComputationFactor ;
-	typedef std::pair< BlockComputationFactor, BlockComputationFactor > BlockComputation ;
+	typedef SparseBlockProductTerm<Index, BlockPtr>  Term ;
 
-	typedef std::map< Index, BlockComputation > InnerType;
-	typedef typename InnerType::const_iterator InnerIterator;
-
-	static const BlockComputation* get( const InnerIterator& iter ) { return &(iter->second) ; }
+	typedef std::vector< Term > InnerType;
+	std::vector< InnerType > to_compute ;
 
 	typedef SparseBlockIndex< true, Index, BlockPtr > CompressedIndexType ;
 	CompressedIndexType compressed ;
-	std::vector< InnerType > to_compute ;
+
 
 	template< typename LhsIndex, typename RhsIndex >
 	void compute(
@@ -148,12 +170,26 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 		to_compute.resize( outerSize ) ;
 		compressed.resizeOuter( outerSize ) ;
 
+
 #ifdef BOGUS_DONT_PARALLELIZE
-		std::vector< InnerType > &loc_compute = to_compute ;
+		std::vector< InnerType >& loc_compute = to_compute ;
 #else
+
+		std::vector< std::vector< InnerType > > temp_compute ;
+
+
 #pragma omp parallel
 		{
-			std::vector< InnerType > loc_compute( outerSize ) ;
+
+#pragma omp	master
+			{
+				temp_compute.resize( omp_get_num_threads() )  ;
+			}
+#pragma omp barrier
+
+			std::vector< InnerType >& loc_compute = temp_compute[ omp_get_thread_num() ] ;
+			loc_compute.resize( outerSize ) ;
+
 #pragma omp for
 #endif
 			for( Index i = 0 ; i < productSize ; ++i )
@@ -166,9 +202,10 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 							 lhs_it && ( !is_symmetric || lhs_it.inner() <= rhs_it.inner() ) ;
 							 ++lhs_it )
 						{
-							BlockComputation &bc = loc_compute[ rhs_it.inner() ][ lhs_it.inner() ] ;
-							bc.first.push_back( std::make_pair( lhs_it.inner() > i, lhs_it.ptr() ) ) ;
-							bc.second.push_back( std::make_pair( rhs_it.inner() > i, rhs_it.ptr() ) ) ;
+							loc_compute[ rhs_it.inner() ].push_back(
+										Term( (Index) lhs_it.inner(),
+											  lhs_it.ptr(), rhs_it.ptr(),
+											  lhs_it.after( i ), rhs_it.after( i ) ) )  ;
 						}
 					}
 				} else {
@@ -178,36 +215,42 @@ struct SparseBlockProductIndex< true, Index, BlockPtr, is_symmetric, is_col_majo
 							 rhs_it && ( !is_symmetric || rhs_it.inner() <= lhs_it.inner() ) ;
 							 ++rhs_it )
 						{
-							BlockComputation &bc = loc_compute[ lhs_it.inner() ][ rhs_it.inner() ] ;
-							bc.first.push_back( std::make_pair( lhs_it.inner() > i, lhs_it.ptr() ) ) ;
-							bc.second.push_back( std::make_pair( rhs_it.inner() > i, rhs_it.ptr() ) ) ;
+							loc_compute[ lhs_it.inner() ].push_back(
+										Term( (Index) rhs_it.inner(),
+											  lhs_it.ptr(), rhs_it.ptr(),
+											  lhs_it.after( i ), rhs_it.after( i ) ) )  ;
 						}
 					}
 				}
+#ifdef BOGUS_DONT_PARALLELIZE
+				std::sort( to_compute[i].begin(), to_compute[i].end() ) ;
+#endif
 			}
 
 #ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp critical
+	#pragma omp for
+			for( Index i = 0 ; i < outerSize ; ++i )
 			{
-				for( Index i = 0 ; i < outerSize ; ++i )
+				for( int t = 0 ; t < (int) temp_compute.size() ; ++t )
 				{
-					for( InnerIterator j = loc_compute[i].begin() ; j != loc_compute[i].end() ; ++j )
-					{
-						const BlockComputation &src_bc = j->second ;
-						BlockComputation &dest_bc = to_compute[ i ][ j->first ] ;
-						dest_bc.first.insert( dest_bc.first.end(), src_bc.first.begin(), src_bc.first.end() ) ;
-						dest_bc.second.insert( dest_bc.second.end(), src_bc.second.begin(), src_bc.second.end() ) ;
-					}
+					const std::vector< InnerType >& loc_compute = temp_compute[ t ] ;
+					to_compute[i].insert( to_compute[i].end(), loc_compute[i].begin(), loc_compute[i].end() ) ;
 				}
+				std::sort( to_compute[i].begin(), to_compute[i].end() ) ;
 			}
 		}
 #endif
 
 		for( Index i = 0 ; i < outerSize ; ++i )
 		{
-			for( InnerIterator j = to_compute[i].begin() ; j != to_compute[i].end() ; ++j )
+			Index prevIndex = -1 ;
+			for( std::size_t j = 0 ; j != to_compute[i].size() ; ++j )
 			{
-				compressed.insertBack( i, j->first, 0 );
+				if( to_compute[i][j].index != prevIndex )
+				{
+					prevIndex = to_compute[i][j].index ;
+					compressed.insertBack( i, prevIndex, 0 );
+				}
 			}
 		}
 
@@ -343,20 +386,39 @@ static void compute_blocks(
 		ResBlock* resData, typename BlockTraits< ResBlock >::Scalar scaling)
 {
 
-	typedef typename ProductIndex::BlockComputation BlockComputation ;
+	typedef typename ProductIndex::Term Term ;
+	typedef typename Term::Index Index ;
+	typedef std::pair< const Term*, unsigned > BlockComputation ;
 
-	std::vector< const BlockComputation* > flat_compute ( nBlocks ) ;
+	std::vector< BlockComputation > flat_compute ( nBlocks ) ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) productIndex.to_compute.size() ; ++i )
+	for( Index i = 0 ; i < (Index) productIndex.to_compute.size() ; ++i )
 	{
-		typename ProductIndex::InnerIterator j = productIndex.to_compute[i].begin() ;
-		for( typename ProductIndex::CompressedIndexType::InnerIterator c_it( productIndex.compressed, i ) ;
-			 c_it ; ++c_it, ++j )
+		const typename ProductIndex::InnerType& innerVec = productIndex.to_compute[i] ;
+
+		const Index n = static_cast< Index >( innerVec.size() );
+		if( n != 0 )
 		{
-			flat_compute[ c_it.ptr() ] = ProductIndex::get( j ) ;
+			typename ProductIndex::CompressedIndexType::InnerIterator c_it( productIndex.compressed, i ) ;
+
+			for( Index j = 0, curStart = 0 ; ; ++j )
+			{
+				if( j == n || innerVec[j].index != c_it.inner() )
+				{
+					flat_compute[ c_it.ptr() ].first  = &innerVec[curStart] ;
+					flat_compute[ c_it.ptr() ].second = j - curStart ;
+
+					++ c_it ;
+					if( !c_it ) break ;
+
+					curStart = j ;
+				}
+			}
+
+			assert( !c_it ) ;
 		}
 	}
 
@@ -366,16 +428,20 @@ static void compute_blocks(
 	for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) nBlocks ; ++ i )
 	{
 		ResBlock& b = resData[ i ] ;
-		const BlockComputation &bc = *flat_compute[i] ;
-		TransposeOption::mm_assign(
-					lhsData[ bc.first[0].second ], rhsData[ bc.second[0].second ],
-				b, bc.first[0].first, bc.second[0].first ) ;
 
-		for( unsigned j = 1 ; j != bc.first.size() ; ++ j)
+		const Term *  bc = flat_compute[i].first  ;
+		const unsigned n = flat_compute[i].second ;
+
+		TransposeOption::mm_assign(
+					lhsData[ bc->lhsPtr ], rhsData[ bc->rhsPtr ],
+				b, bc->lhsIsAfterDiag, bc->rhsIsAfterDiag ) ;
+
+		for( unsigned j = 1 ; j != n ; ++ j )
 		{
+			++bc ;
 			TransposeOption::mm_add(
-						lhsData[ bc.first[j].second ], rhsData[ bc.second[j].second ],
-					b, bc.first[j].first, bc.second[j].first ) ;
+					lhsData[ bc->lhsPtr ], rhsData[ bc->rhsPtr ],
+				b, bc->lhsIsAfterDiag, bc->rhsIsAfterDiag ) ;
 		}
 
 		if( scaling != 1 ) b *= scaling ;
