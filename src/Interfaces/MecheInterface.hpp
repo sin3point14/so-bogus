@@ -62,9 +62,10 @@ public:
 			double tol = 0.,                  //!< Gauss-Seidel tolerance. 0. means GS's default
 			unsigned maxIters = 0,            //!< Max number of iterations. 0 means GS's default
 			bool staticProblem = false,       //!< If true, do not use DeSaxce change of variable
-			double regularization = 0.,  //!< Coefficient to add on the diagonal of static problems
-			bool useInfinityNorm = false //!< Whether to use the infinity norm to evaluate the residual of the friction problem
-			);
+			double regularization = 0.,  //!< Coefficient to add to the diagonal of static problems / GS regularization coefficient for friction problems
+			bool useInfinityNorm = false, //!< Whether to use the infinity norm to evaluate the residual of the friction problem
+			unsigned cadouxIterations = 0 //!< If staticProblem is false and cadouxIterations is greater than zero, use the Cadoux algorithm to solve the friction problem
+	             );
 
 	//! Computes \ref m_dual from \ref m_primal
 	void computeDual( double regularization ) ;

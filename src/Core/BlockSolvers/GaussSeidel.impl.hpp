@@ -72,7 +72,7 @@ void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatr
 template < typename BlockMatrixType >
 template < typename NSLaw, typename RhsT, typename ResT >
 typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::eval( const NSLaw &law,
-							const RhsT &x, const ResT &y ) const
+							const ResT &y, const RhsT &x ) const
 {
 	const Segmenter< NSLaw::dimension, const RhsT, typename BlockMatrixType::Index >
 			xSegmenter( x, m_matrix->rowOffsets() ) ;
@@ -146,8 +146,8 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	typename GlobalProblemTraits::DynVector y ( b + (*m_matrix)*x ) ;
 	typename GlobalProblemTraits::DynVector x_best( GlobalProblemTraits::DynVector::Zero( x.rows() ) ) ;
 
-	const Scalar err_init = eval( law, x, y ) ;
-	const Scalar err_zero = eval( law, x_best, b ) ;
+	const Scalar err_init = eval( law, y, x      ) ;
+	const Scalar err_zero = eval( law, b, x_best ) ;
 
 	Scalar err_best ;
 	if( err_zero < err_init )
@@ -160,7 +160,6 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	}
 
 	this->m_callback.trigger( 0, err_best ) ;
-//	std::cout << err_init << " /// " << err_zero << std::endl ;
 
 	const std::ptrdiff_t n = static_cast< std::ptrdiff_t >( m_localMatrices.size() ) ;
 	std::vector< unsigned char > skip( n, 0 ) ;
@@ -175,7 +174,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 
 	// see [Daviet et al 2011], Algorithm 1
 	unsigned GSIter ;
-	for( GSIter = 1 ; err_best > m_tol && GSIter <= m_maxIters ; ++GSIter )
+	for( GSIter = 1 ; GSIter <= m_maxIters ; ++GSIter )
 	{
 
 #ifndef BOGUS_DONT_PARALLELIZE
@@ -224,9 +223,15 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 		if( 0 == ( GSIter % m_evalEvery ) )
 		{
 			y = b + (*m_matrix) * x ;
-			const double err = eval( law, x, y ) ;
+			const double err = eval( law, y, x ) ;
 
 			this->m_callback.trigger( GSIter, err ) ;
+
+			if( err < m_tol )
+			{
+				err_best = err ;
+				break ;
+			}
 
 			if( err < err_best )
 			{

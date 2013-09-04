@@ -188,12 +188,13 @@ void MecheFrictionProblem::computeDual( double regularization )
 
 double MecheFrictionProblem::solve(double *r,
 		double *v,
-		int maxThreads, //!< Whether the Gauss-Seidel should be eterministic
-		double tol,                  //!< Gauss-Seidel tolerance. 0. means GS's default
-		unsigned maxIters, //!< Max number of iterations. 0 means GS's default
+		int maxThreads,
+		double tol,
+		unsigned maxIters,
 		bool staticProblem,
 		double regularization,
-		bool useInfinityNorm
+		bool useInfinityNorm,
+		unsigned cadouxIterations
 								   )
 {
 	assert( m_primal ) ;
@@ -206,21 +207,32 @@ double MecheFrictionProblem::solve(double *r,
 		computeDual( staticProblem ? regularization : 0. );
 	}
 
-
 	// r to local coords
 	Eigen::VectorXd r_loc = m_primal->E.transpose() * Eigen::VectorXd::Map( r, 3*n ) ;
 
+	// Setup GS parameters
 	bogus::DualFrictionProblem<3u>::GaussSeidelType gs ;
 	if( tol != 0. ) gs.setTol( tol );
 	if( maxIters != 0 ) gs.setMaxIters( maxIters );
 	gs.enableColoring( maxThreads > 1 );
 	gs.setMaxThreads( maxThreads );
 
-	gs.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual );
 	gs.setAutoRegularization( regularization ) ;
 	gs.useInfinityNorm( useInfinityNorm ) ;
 
-	const double res = m_dual->solveWith( gs, r_loc.data(), staticProblem ) ;
+	double res ;
+
+	// Proper solving
+	if( staticProblem || cadouxIterations == 0 )
+	{
+		gs.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual );
+		res = m_dual->solveWith( gs, r_loc.data(), staticProblem ) ;
+	} else {
+		Signal< unsigned, double > callback ;
+		callback.connect( *this, &MecheFrictionProblem::ackCurrentResidual );
+		res = m_dual->solveCadoux( gs, r_loc.data(), cadouxIterations,
+		                         &callback ) ;
+	}
 
 	// compute v
 	if( v )

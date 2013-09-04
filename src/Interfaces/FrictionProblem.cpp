@@ -70,6 +70,67 @@ double DualFrictionProblem< Dimension >::solveWith( GaussSeidelType &gs, double 
 	return res ;
 }
 
+template< unsigned Dimension >
+double DualFrictionProblem< Dimension >::evalWith( const GaussSeidelType &gs,
+                                               const double *r, const double *u,
+									   const bool staticProblem ) const
+{
+	typedef bogus::SOCLaw< Dimension, double, true  > CoulombLawType	;
+	typedef bogus::SOCLaw< Dimension, double, false > SOCLawType	;
+
+	Eigen::Map< const Eigen::VectorXd > r_map ( r, W.rows() ) ;
+	Eigen::Map< const Eigen::VectorXd > u_map ( u, W.rows() ) ;
+
+	double res = staticProblem
+			? gs.eval( SOCLawType     ( W.rowsOfBlocks(), mu ), u_map, r_map )
+			: gs.eval( CoulombLawType ( W.rowsOfBlocks(), mu ), u_map, r_map ) ;
+
+	return res ;
+}
+
+template< unsigned Dimension >
+double DualFrictionProblem< Dimension >::solveCadoux(GaussSeidelType &gs, double *r, const unsigned cadouxIterations,
+        const Signal<unsigned, double> *callback ) const
+{
+	const std::ptrdiff_t n = W.rowsOfBlocks() ;
+
+	bogus::SOCLaw< Dimension, double, true  > CoulombLaw( n, mu ) ;
+	bogus::SOCLaw< Dimension, double, false > SOCLaw	( n, mu ) ;
+
+	gs.setMatrix( W );
+	Eigen::Map< Eigen::VectorXd > r_map ( r, W.rows() ) ;
+
+	Eigen::VectorXd s( W.rows() ) ;
+
+	double res = -1 ;
+
+	for( unsigned cdxIter = 0 ; cdxIter < cadouxIterations ; ++cdxIter )
+	{
+		s = W * r_map + b ;
+
+		res = gs.eval( CoulombLaw, s, r_map ) ;
+
+		if( callback ) callback->trigger( cdxIter, res ) ;
+		if( res < gs.tol() ) break ;
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
+		for( std::ptrdiff_t i = 0 ; i < n ; ++i )
+		{
+			s[ Dimension*i ] = s.segment< Dimension >( Dimension*i ).norm() * mu[i] ;
+			s.segment< Dimension -1  >( Dimension*i+1 ).setZero() ;
+		}
+
+		s += b ;
+
+		gs.solve( SOCLaw, s, r_map ) ;
+
+	}
+
+	return res ;
+}
+
 #ifdef BOGUS_INSTANTIATE_2D_SOC
 template struct DualFrictionProblem< 2u > ;
 template struct PrimalFrictionProblem< 2u > ;

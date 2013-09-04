@@ -1,7 +1,6 @@
 #TODO
 
  * Compiling/Install/FAQ documentation
- * Coloring Gauss Seidel
  * SOQP interface
  * Mixed Problems ( Equality constraints )
  * Import from matrix-market

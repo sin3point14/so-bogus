@@ -147,17 +147,17 @@ public:
 	//! Sets the number of iterations for temporarily freezing local problems
 	void setSkipIters( unsigned skipIters ) { m_skipIters = skipIters ; }
 
-protected:
-
 	//! Eval the current global residual as a function of the local ones
-	/*! \p y should be such that \p y = \ref m_matrix * \p x
+	/*! \p y should be such that \p y = \ref m_matrix * \p x + rhs
 		\return the current residual \c err defined as follow :
 		- if \ref m_useInfinityNorm is true, then \c err \f$ := \max\limits_{1 \leq i \leq n } law.eval(i,x_i,y_i) \f$
 		- else \c err := \f$  \frac 1 {n+1} \sum\limits_{1 \leq i \leq n } law.eval(i,x_i,y_i) \f$
 
 	*/
 	template < typename NSLaw, typename RhsT, typename ResT >
-	Scalar eval ( const NSLaw &law, const RhsT &x, const ResT &y ) const ;
+	Scalar eval ( const NSLaw &law, const ResT &y, const RhsT &x ) const ;
+
+protected:
 
 	//! Sets up the default values for all parameters
 	void init() ;

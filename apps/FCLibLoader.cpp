@@ -1,7 +1,7 @@
 
 /*
  * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ 
+ * http://creativecommons.org/publicdomain/zero/1.0/
 */
 
 extern "C"
@@ -19,6 +19,8 @@ extern "C"
 #include <string>
 #include <fstream>
 #include <sys/stat.h>
+
+//#define USE_CADOUX
 
 void ackCurrentResidual( unsigned GSIter, double err )
 {
@@ -38,10 +40,18 @@ static double solve( const fclib_local* problem, const Eigen::SparseMatrixBase< 
 	dual.mu = problem->mu ;
 
 	typename bogus::DualFrictionProblem< Dimension >::GaussSeidelType gs ;
-	gs.setMaxIters( 1000 ) ;
 	gs.setTol( 1.e-12 ) ;
+
+#ifdef USE_CADOUX
+	gs.setMaxIters( 100 ) ;
+	bogus::Signal< unsigned, double > callback ;
+	callback.connect( &ackCurrentResidual );
+	double res = dual.solveCadoux( gs, r.data(), 1000, &callback ) ;
+#else
+	gs.setMaxIters( 1000 ) ;
 	gs.callback().connect( &ackCurrentResidual );
 	double res = dual.solveWith( gs, r.data() ) ;
+#endif
 
 	u = dual.W * r + dual.b ;
 

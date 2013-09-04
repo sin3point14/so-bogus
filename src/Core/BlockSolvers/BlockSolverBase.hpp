@@ -39,8 +39,11 @@ public:
 
 	//! For iterative solvers: sets the maximum number of iterations
 	void setMaxIters( unsigned maxIters ) { m_maxIters = maxIters ; }
+	unsigned maxIters() const { return m_maxIters ; }
+
 	//! For iterative solvers: sets the solver tolerance
 	void setTol( Scalar tol ) { m_tol = tol ; }
+	Scalar tol() const { return m_tol ; }
 
 	//! Callback hook; will be triggered every N iterations, depending on the solver
 	/*! Useful to monitor the convergence of the solver. Can be connected to a function
