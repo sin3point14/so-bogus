@@ -13,6 +13,7 @@
 #define BOGUS_BLOCK_GAUSS_SEIDEL_HPP
 
 #include "BlockSolverBase.hpp"
+#include "Coloring.hpp"
 
 #include <vector>
 
@@ -48,10 +49,9 @@ public:
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 
 	//! Default constructor -- you will have to call setMatrix() before using the solve() function
-	GaussSeidel( ) : Base() { init() ; } ;
+	GaussSeidel( ) : Base() { init() ; }
 	//! Constructor with the system matrix
-	explicit GaussSeidel( const BlockMatrixBase< BlockMatrixType > & matrix )
-	    : Base( &matrix )
+	explicit GaussSeidel( const BlockMatrixBase< BlockMatrixType > & matrix ) : Base()
 	{ init() ; setMatrix( matrix ) ; }
 
 	//! Sets the system matrix and initializes internal structures
@@ -87,9 +87,27 @@ public:
 	  contacts that do not interact directly together can chare the same color,
 	  and all contacts within a given color can be solver in parallel */
 	void enableColoring( bool enable = true ) {
-		m_enableColoring = enable ;
-		updateColors() ;
+		if( m_enableColoring != enable )
+		{
+			m_enableColoring = enable ;
+			m_coloring.invalidate();
+		}
 	}
+
+	//! Sets the maximum number of threads that the solver can use.
+	/*! If \p maxThreads is zero, then it will use the current OpenMP setting.
+
+	\warning If multi-threading is enabled without coloring,
+	  the result will not be deterministic, as it will depends on the
+	  order in which threads solve contacts.
+
+	  On the other hand, the algorithm will run much faster.
+ 	*/
+	void setMaxThreads( unsigned maxThreads = 0 ) {
+		m_maxThreads = maxThreads ;
+	}
+
+	//!
 
 	//! Sets whether the solver will use the infinity norm instead of the l1 one to compute the global residual from the local ones
 	void useInfinityNorm( bool useInfNorm ) { m_useInfinityNorm = useInfNorm ; }
@@ -143,19 +161,6 @@ protected:
 
 	//! Sets up the default values for all parameters
 	void init() ;
-	//! Creates one single color that span all the contacts
-	void resetColors() ;
-	//! Computes contacts coloring -- contacts can have the same color if they don't interact directly
-	void computeColors() ;
-	//! Call computeColors() if m_enableColoring, resetColors() otherwise
-	void updateColors() {
-		if( !m_matrix ) return ;
-
-		if( m_enableColoring )
-			computeColors() ;
-		else
-			resetColors() ;
-	}
 
 	using Base::m_matrix ;
 	using Base::m_maxIters ;
@@ -166,8 +171,10 @@ protected:
 	typename GlobalProblemTraits::DynVector m_scaling ;
 	typename GlobalProblemTraits::DynVector m_regularization ;
 
-	//! See enableColoring(). Defaults to true.
+	//! See enableColoring(). Defaults to false.
 	bool m_enableColoring ;
+	//! See setMaxThreads(). Defaults to 0 .
+	unsigned m_maxThreads ;
 	//! See useInfinityNorm(). Defaults to false.
 	bool m_useInfinityNorm ;
 
@@ -181,10 +188,8 @@ protected:
 	//! \sa setAutoRegularization(). Defaults to 0.
 	Scalar m_autoRegularization ;
 
-	//! Coloring
-	bool m_colorsUpToDate ;
-	std::vector< std::size_t > 	  m_permutation ;
-	std::vector< std::ptrdiff_t > m_colors ;
+	// I dislike mutable as well, but I dislike the other solutions even more
+	mutable Coloring m_coloring ;
 } ;
 
 } //namespace bogus

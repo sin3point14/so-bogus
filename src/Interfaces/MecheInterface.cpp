@@ -188,7 +188,7 @@ void MecheFrictionProblem::computeDual( double regularization )
 
 double MecheFrictionProblem::solve(double *r,
 		double *v,
-		bool deterministic, //!< Whether the Gauss-Seidel should be eterministic
+		int maxThreads, //!< Whether the Gauss-Seidel should be eterministic
 		double tol,                  //!< Gauss-Seidel tolerance. 0. means GS's default
 		unsigned maxIters, //!< Max number of iterations. 0 means GS's default
 		bool staticProblem,
@@ -213,7 +213,8 @@ double MecheFrictionProblem::solve(double *r,
 	bogus::DualFrictionProblem<3u>::GaussSeidelType gs ;
 	if( tol != 0. ) gs.setTol( tol );
 	if( maxIters != 0 ) gs.setMaxIters( maxIters );
-	gs.enableColoring( deterministic );
+	gs.enableColoring( maxThreads > 1 );
+	gs.setMaxThreads( maxThreads );
 
 	gs.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual );
 	gs.setAutoRegularization( regularization ) ;

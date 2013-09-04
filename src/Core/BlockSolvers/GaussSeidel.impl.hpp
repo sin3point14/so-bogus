@@ -13,9 +13,14 @@
 #define BOGUS_BLOCK_GAUSS_SEIDEL_IMPL_HPP
 
 #include "GaussSeidel.hpp"
+#include "Coloring.impl.hpp"
 #include "BlockSolverBase.impl.hpp"
 
 #include "../Block/BlockMatrixBase.hpp"
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#include <omp.h>
+#endif
 
 namespace bogus
 {
@@ -25,18 +30,20 @@ void GaussSeidel< BlockMatrixType >::init( )
 {
 	m_tol = 1.e-6 ;
 	m_maxIters = 250 ;
-	m_enableColoring =  true ;
+	m_enableColoring =  false ;
+	m_maxThreads =  0 ;
 	m_useInfinityNorm = false ;
 	m_evalEvery = 25  ;
 	m_skipTol = m_tol * m_tol ;
 	m_skipIters = 10 ;
 	m_autoRegularization = 0. ;
-
 }
 
 template < typename BlockMatrixType >
 void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatrixType > & M )
 {
+	if( m_matrix != &M ) m_coloring.invalidate();
+
 	m_matrix = &M ;
 
 	const unsigned n = M.rowsOfBlocks() ;
@@ -60,34 +67,6 @@ void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatr
 		m_scaling[i] = std::max( 1., m_localMatrices[i].trace() ) ;
 	}
 
-	updateColors() ;
-
-}
-
-template < typename BlockMatrixType >
-void GaussSeidel< BlockMatrixType >::resetColors( )
-{
-	assert( m_matrix ) ;
-
-	const std::ptrdiff_t n = static_cast< std::ptrdiff_t >( m_localMatrices.size() ) ;
-
-	m_permutation.resize( n ) ;
-	m_colors.clear() ;
-	m_colors.push_back( 0 ) ;
-	m_colors.push_back( n ) ;
-
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp parallel for
-#endif
-	for( std::ptrdiff_t i = 0 ; i < n ; ++ i ) { m_permutation[i] = i ; }
-	m_colorsUpToDate = true ;
-}
-
-template < typename BlockMatrixType >
-void GaussSeidel< BlockMatrixType >::computeColors()
-{
-
-	resetColors() ;
 }
 
 template < typename BlockMatrixType >
@@ -186,20 +165,33 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	const std::ptrdiff_t n = static_cast< std::ptrdiff_t >( m_localMatrices.size() ) ;
 	std::vector< unsigned char > skip( n, 0 ) ;
 
-	// see [Daviet et al 2011], Algorithm 1
-	for( unsigned GSIter = 1 ; GSIter <= m_maxIters ; ++GSIter )
-	{
-		typename LocalProblemTraits::Vector lb, lx, ldx ;
+	m_coloring.update( m_enableColoring, *m_matrix ) ;
 
-		for( unsigned c = 0 ; c+1 < m_colors.size() ; ++ c )
+#ifndef BOGUS_DONT_PARALLELIZE
+	const int curMaxThreads = omp_get_max_threads() ;
+	const int newMaxThreads = m_maxThreads == 0 ? curMaxThreads : m_maxThreads ;
+	omp_set_num_threads( newMaxThreads ) ;
+#endif
+
+	// see [Daviet et al 2011], Algorithm 1
+	unsigned GSIter ;
+	for( GSIter = 1 ; err_best > m_tol && GSIter <= m_maxIters ; ++GSIter )
+	{
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel if (m_maxThreads != 1)
+		{
+#endif
+		typename LocalProblemTraits::Vector lb, lx, ldx ;
+		for( unsigned c = 0 ; c+1 < m_coloring.colors.size() ; ++ c )
 		{
 
 #ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp parallel for private( lb, lx, ldx )
+#pragma omp for
 #endif
-			for( std::ptrdiff_t pi = m_colors[c] ; pi < m_colors[c+1] ; ++ pi )
+			for( std::ptrdiff_t pi = m_coloring.colors[c] ; pi < m_coloring.colors[c+1] ; ++ pi )
 			{
-				const std::size_t i = m_permutation[pi] ;
+				const std::size_t i = m_coloring.permutation[pi] ;
 
 				if( skip[i] ) {
 					--skip[i] ;
@@ -225,6 +217,9 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 			}
 
 		}
+#ifndef BOGUS_DONT_PARALLELIZE
+		}
+#endif
 
 		if( 0 == ( GSIter % m_evalEvery ) )
 		{
@@ -232,11 +227,6 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 			const double err = eval( law, x, y ) ;
 
 			this->m_callback.trigger( GSIter, err ) ;
-
-			if( err < m_tol )
-			{
-				return err ;
-			}
 
 			if( err < err_best )
 			{
@@ -247,7 +237,12 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 
 	}
 
-	x = x_best ;
+#ifndef BOGUS_DONT_PARALLELIZE
+	omp_set_num_threads( curMaxThreads ) ;
+#endif
+
+	if( GSIter > m_maxIters ) x = x_best ;
+
 	return err_best ;
 
 }

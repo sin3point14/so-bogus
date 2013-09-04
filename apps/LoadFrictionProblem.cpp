@@ -1,7 +1,7 @@
 
 /*
  * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ 
+ * http://creativecommons.org/publicdomain/zero/1.0/
 */
 
 #include "Interfaces/MecheInterface.hpp"
@@ -29,14 +29,14 @@ int main( int argc, const char* argv[] )
 	if( mfp.fromFile( argv[1], r ) )
 	{
 
-		const int deterministic = argc > 2 ? std::atoi( argv[2] ) : 0 ;
+		const int maxThreads    = argc > 2 ? std::atoi( argv[2] ) : 0 ;
 		const double tol        = argc > 3 ? std::strtod( argv[3], NULL ) : 0 ;
 		const int maxIters      = argc > 4 ? std::atoi( argv[4] ) : 0 ;
 		const int staticPb      = argc > 5 ? std::atoi( argv[5] ) : 0 ;
 		const double regul      = argc > 6 ? std::strtod( argv[6], NULL ) : 0 ;
 		const int useInfNorm    = argc > 7 ? std::atoi( argv[7] ) : 0 ;
 
-		mfp.solve( r, NULL, deterministic, tol, maxIters, staticPb, regul, useInfNorm ) ;
+		mfp.solve( r, NULL, maxThreads, tol, maxIters, staticPb, regul, useInfNorm ) ;
 
 		delete[] r ;
 

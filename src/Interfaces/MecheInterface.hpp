@@ -58,7 +58,7 @@ public:
 	//! Solves the friction problem \ref m_primal ; \sa GaussSeidel
 	double solve(double * r, //!< length \a nd : initialization for \a r (in world space coordinates) + used to return computed r
 			double * v, //!< length \a m: to return computed v ( or NULL if not needed )
-			bool deterministic = false,       //!< Whether the Gauss-Seidel should be eterministic
+			int maxThreads = 0,       //!< Maximum number of threads that the GS will use. If 0, use OpenMP default. If > 1, enable coloring to ensure deterministicity
 			double tol = 0.,                  //!< Gauss-Seidel tolerance. 0. means GS's default
 			unsigned maxIters = 0,            //!< Max number of iterations. 0 means GS's default
 			bool staticProblem = false,       //!< If true, do not use DeSaxce change of variable
