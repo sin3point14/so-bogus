@@ -77,9 +77,10 @@ public:
 		\sa SOCLaw
 	  \param b the const part of the right hand side
 	  \param x the unknown. Can be warm-started
+	  \param tryZeroAsWell If true, the algorithm will reset r to zero if that would result in a lower residual
 	  */
 	template < typename NSLaw, typename RhsT, typename ResT >
-	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const ;
+	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x, bool tryZeroAsWell = true ) const ;
 
 
 	//! Sets whether the solver is allowed to trade off determiniticity for speed

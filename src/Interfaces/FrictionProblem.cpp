@@ -103,6 +103,8 @@ double DualFrictionProblem< Dimension >::solveCadoux(GaussSeidelType &gs, double
 	Eigen::VectorXd s( W.rows() ) ;
 
 	double res = -1 ;
+	const double tol = gs.tol() ;
+	gs.setTol( 1.e-1 * tol ) ;	//We might experience slow convergence is GS not precise enough
 
 	for( unsigned cdxIter = 0 ; cdxIter < cadouxIterations ; ++cdxIter )
 	{
@@ -111,7 +113,7 @@ double DualFrictionProblem< Dimension >::solveCadoux(GaussSeidelType &gs, double
 		res = gs.eval( CoulombLaw, s, r_map ) ;
 
 		if( callback ) callback->trigger( cdxIter, res ) ;
-		if( res < gs.tol() ) break ;
+		if( res < tol ) break ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
@@ -124,9 +126,11 @@ double DualFrictionProblem< Dimension >::solveCadoux(GaussSeidelType &gs, double
 
 		s += b ;
 
-		gs.solve( SOCLaw, s, r_map ) ;
+		gs.solve( SOCLaw, s, r_map, false ) ;
 
 	}
+
+	gs.setTol( tol ) ;
 
 	return res ;
 }

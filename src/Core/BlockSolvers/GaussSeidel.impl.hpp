@@ -132,7 +132,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 template < typename BlockMatrixType >
 template < typename NSLaw, typename RhsT, typename ResT >
 typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
-							const RhsT &b, ResT &x ) const
+							const RhsT &b, ResT &x, bool tryZeroAsWell ) const
 {
 	assert( m_matrix ) ;
 
@@ -147,14 +147,23 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	typename GlobalProblemTraits::DynVector x_best( GlobalProblemTraits::DynVector::Zero( x.rows() ) ) ;
 
 	const Scalar err_init = eval( law, y, x      ) ;
-	const Scalar err_zero = eval( law, b, x_best ) ;
+	Scalar err_zero, err_best ;
 
-	Scalar err_best ;
-	if( err_zero < err_init )
+	bool useZero = false ;
+
+	if( tryZeroAsWell )
 	{
-		err_best = err_zero ;
-		x.setZero() ;
-	} else {
+		err_zero = eval( law, b, x_best ) ;
+
+		if( err_zero < err_init )
+		{
+			err_best = err_zero ;
+			x.setZero() ;
+			useZero = true ;
+		}
+	}
+
+	if( !useZero ) {
 		err_best = err_init ;
 		x_best = x ;
 	}
@@ -205,7 +214,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 				const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ i ] ) ;
 				ldx += lx ;
 
-				if( !ok ) ldx *= .7 ;
+				if( !ok ) { ldx *= .7 ; std::cerr << ":/ " << std::endl ;}
 				xSegmenter[ i ] += ldx ;
 
 				const Scalar scaledSkipTol = m_scaling[ i ] * m_scaling[ i ] * m_skipTol ;
