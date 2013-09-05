@@ -46,7 +46,7 @@ static double solve( const fclib_local* problem, const Eigen::SparseMatrixBase< 
 	gs.setMaxIters( 100 ) ;
 	bogus::Signal< unsigned, double > callback ;
 	callback.connect( &ackCurrentResidual );
-	double res = dual.solveCadoux( gs, r.data(), 1000, &callback ) ;
+	double res = dual.solveCadoux( gs, r.data(), 500, &callback ) ;
 #else
 	gs.setMaxIters( 1000 ) ;
 	gs.callback().connect( &ackCurrentResidual );

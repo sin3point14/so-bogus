@@ -214,7 +214,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 				const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ i ] ) ;
 				ldx += lx ;
 
-				if( !ok ) { ldx *= .7 ; std::cerr << ":/ " << std::endl ;}
+				if( !ok ) { ldx *= .5 ; }
 				xSegmenter[ i ] += ldx ;
 
 				const Scalar scaledSkipTol = m_scaling[ i ] * m_scaling[ i ] * m_skipTol ;

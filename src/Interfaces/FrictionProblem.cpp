@@ -57,8 +57,8 @@ template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::solveWith( GaussSeidelType &gs, double *r,
 									   const bool staticProblem ) const
 {
-	typedef bogus::SOCLaw< Dimension, double, true  > CoulombLawType	;
-	typedef bogus::SOCLaw< Dimension, double, false > SOCLawType	;
+	typedef SOCLaw< Dimension, double, true  > CoulombLawType	;
+	typedef SOCLaw< Dimension, double, false > SOCLawType	;
 
 	gs.setMatrix( W );
 	Eigen::Map< Eigen::VectorXd > r_map ( r, W.rows() ) ;
@@ -75,8 +75,8 @@ double DualFrictionProblem< Dimension >::evalWith( const GaussSeidelType &gs,
                                                const double *r, const double *u,
 									   const bool staticProblem ) const
 {
-	typedef bogus::SOCLaw< Dimension, double, true  > CoulombLawType	;
-	typedef bogus::SOCLaw< Dimension, double, false > SOCLawType	;
+	typedef SOCLaw< Dimension, double, true  > CoulombLawType	;
+	typedef SOCLaw< Dimension, double, false > SOCLawType	;
 
 	Eigen::Map< const Eigen::VectorXd > r_map ( r, W.rows() ) ;
 	Eigen::Map< const Eigen::VectorXd > u_map ( u, W.rows() ) ;
@@ -94,8 +94,8 @@ double DualFrictionProblem< Dimension >::solveCadoux(GaussSeidelType &gs, double
 {
 	const std::ptrdiff_t n = W.rowsOfBlocks() ;
 
-	bogus::SOCLaw< Dimension, double, true  > CoulombLaw( n, mu ) ;
-	bogus::SOCLaw< Dimension, double, false > SOCLaw	( n, mu ) ;
+	SOCLaw< Dimension, double, true  > CoulombLaw( n, mu ) ;
+	SOCLaw< Dimension, double, false > SOCLaw	( n, mu ) ;
 
 	gs.setMatrix( W );
 	Eigen::Map< Eigen::VectorXd > r_map ( r, W.rows() ) ;
@@ -113,15 +113,15 @@ double DualFrictionProblem< Dimension >::solveCadoux(GaussSeidelType &gs, double
 		res = gs.eval( CoulombLaw, s, r_map ) ;
 
 		if( callback ) callback->trigger( cdxIter, res ) ;
-		if( res < tol ) break ;
+		if( cdxIter > 0 && res < tol ) break ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
 		for( std::ptrdiff_t i = 0 ; i < n ; ++i )
 		{
-			s[ Dimension*i ] = s.segment< Dimension >( Dimension*i ).norm() * mu[i] ;
-			s.segment< Dimension -1  >( Dimension*i+1 ).setZero() ;
+			s[ Dimension*i ] = s.segment< Dimension-1 >( Dimension*i+1 ).norm() * mu[i] ;
+			s.segment< Dimension-1  >( Dimension*i+1 ).setZero() ;
 		}
 
 		s += b ;

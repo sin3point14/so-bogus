@@ -230,8 +230,7 @@ double MecheFrictionProblem::solve(double *r,
 	} else {
 		Signal< unsigned, double > callback ;
 		callback.connect( *this, &MecheFrictionProblem::ackCurrentResidual );
-		res = m_dual->solveCadoux( gs, r_loc.data(), cadouxIterations,
-		                         &callback ) ;
+		res = m_dual->solveCadoux( gs, r_loc.data(), cadouxIterations, &callback ) ;
 	}
 
 	// compute v
