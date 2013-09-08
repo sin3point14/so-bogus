@@ -48,6 +48,31 @@ bool SOCLaw< Dimension, Scalar, DeSaxceCOV, Strat >::solveLocal(const unsigned p
 	return m_localTol > LocalSolver::solve(  A, b, xm, m_mu[ problemIndex ], m_localTol, scaling ) ;
 }
 
+template < unsigned Dimension, typename Scalar, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
+void SOCLaw< Dimension, Scalar, DeSaxceCOV, Strat >::projectOnConstraint(
+        const unsigned problemIndex, typename Traits::Vector &x ) const
+{
+	const Scalar nxt = Traits::tp( x ).norm() ;
+	const Scalar mu  = m_mu[ problemIndex ] ;
+	const Scalar xn  = Traits::np( x ) ;
+
+	// x inside cone
+	if ( nxt <= mu * xn ) return ;
+
+	// x inside dual cone
+	if( mu * nxt <= -xn ) {
+		x.setZero() ;
+		return ;
+	}
+
+	const Scalar den2 = ( 1 + mu * mu ) ;
+	const Scalar proj = ( xn + mu * nxt ) / den2 ;
+
+	Traits::np( x ) = proj ;
+	Traits::tp( x ) *= proj * mu / nxt ;
+
+}
+
 }
 
 

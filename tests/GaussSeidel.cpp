@@ -1,11 +1,12 @@
 
 /*
  * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ 
+ * http://creativecommons.org/publicdomain/zero/1.0/
 */
 
 #include "Core/Block.impl.hpp"
 #include "Core/BlockSolvers/GaussSeidel.impl.hpp"
+#include "Core/BlockSolvers/ProjectedGradient.impl.hpp"
 #include "Extra/SecondOrder.impl.hpp"
 
 #include <Eigen/LU>
@@ -13,10 +14,15 @@
 
 #include <gtest/gtest.h>
 
-static void ackCurrentResidual( unsigned GSIter, double err )
+static void ackCurrentGSResidual( unsigned GSIter, double err )
 {
 	EXPECT_TRUE( 0 == ( GSIter % 25 ) ) ;
 	std::cout << "GS: " << GSIter << " ==> " << err << std::endl ;
+}
+
+static void ackCurrentPGResidual( unsigned GSIter, double err )
+{
+	std::cout << "PG: " << GSIter << " ==> " << err << std::endl ;
 }
 
 TEST( GaussSeidel, Small )
@@ -80,7 +86,7 @@ TEST( GaussSeidel, Small )
 	Eigen::VectorXd b = w - H * ( InvMassMat * f );
 
 	bogus::GaussSeidel< WType > gs( W ) ;
-	gs.callback().connect( &ackCurrentResidual );
+	gs.callback().connect( &ackCurrentGSResidual );
 
 	double mu[2] = { 0.5, 0.7 } ;
 
@@ -108,4 +114,45 @@ TEST( GaussSeidel, Small )
 	res = gs.solve( bogus::SOCLaw< 3u, double, true, bogus::local_soc_solver::RevHybrid >( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
+
+
+	x.setOnes() ;
+	gs.setTol( 1.e-8 );
+	res = gs.solve( bogus::SOC3D( 2, mu ), b, x ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
+
+	bogus::ProjectedGradient< WType > pg( W ) ;
+	pg.callback().connect( &ackCurrentPGResidual );
+	pg.setTol( 1.e-8 );
+
+	x.setOnes() ;
+	res = pg.solve( bogus::SOC3D( 2, mu ), b, x ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
+}
+
+TEST( ProjectedGradient, Projection )
+{
+
+	double mu[2] = { 0.5, 3 } ;
+	bogus::SOC3D law( 2, mu ) ;
+
+	Eigen::Vector3d x ;
+
+	x << 2, 0, 1 ;
+	law.projectOnConstraint( 0, x );
+	EXPECT_EQ( Eigen::Vector3d( 2, 0, 1 ), x ) ;
+
+	x << 1, 3, 0 ;
+	law.projectOnConstraint( 1, x );
+	EXPECT_EQ( Eigen::Vector3d( 1, 3, 0 ), x ) ;
+	law.projectOnConstraint( 0, x );
+	EXPECT_TRUE( Eigen::Vector3d( 2, 1, 0 ).isApprox( x ) ) ;
+
+	x << -1, 7, 0 ;
+	law.projectOnConstraint( 0, x );
+	EXPECT_TRUE( Eigen::Vector3d( 2, 1, 0 ).isApprox( x ) ) ;
+
+	x << -1, .3, 0 ;
+	law.projectOnConstraint( 1, x );
+	EXPECT_TRUE( x.isZero() ) ;
 }

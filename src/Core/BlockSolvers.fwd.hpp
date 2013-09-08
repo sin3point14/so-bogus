@@ -35,6 +35,9 @@ struct ProblemTraits ;
 template < typename BlockMatrixType >
 class GaussSeidel ;
 
+template < typename BlockMatrixType >
+class ProjectedGradient ;
+
 template < typename MatrixType >
 class TrivialPreconditioner ;
 

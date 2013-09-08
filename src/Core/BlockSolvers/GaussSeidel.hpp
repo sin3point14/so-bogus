@@ -12,7 +12,7 @@
 #ifndef BOGUS_BLOCK_GAUSS_SEIDEL_HPP
 #define BOGUS_BLOCK_GAUSS_SEIDEL_HPP
 
-#include "BlockSolverBase.hpp"
+#include "ConstrainedSolverBase.hpp"
 #include "Coloring.hpp"
 
 #include <vector>
@@ -40,10 +40,10 @@ namespace bogus
    See also solve() and \cite JAJ98.
   */
 template < typename BlockMatrixType >
-class GaussSeidel : public BlockSolverBase< BlockMatrixType >
+class GaussSeidel : public ConstrainedSolverBase< GaussSeidel, BlockMatrixType >
 {
 public:
-	typedef BlockSolverBase< BlockMatrixType > Base ;
+	typedef ConstrainedSolverBase< bogus::GaussSeidel, BlockMatrixType > Base ;
 
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
@@ -108,12 +108,8 @@ public:
 		m_maxThreads = maxThreads ;
 	}
 
-	//!
 
-	//! Sets whether the solver will use the infinity norm instead of the l1 one to compute the global residual from the local ones
-	void useInfinityNorm( bool useInfNorm ) { m_useInfinityNorm = useInfNorm ; }
-
-	//! Sets the auto-regularization coefficient
+	//! Sets the auto-regularization (a.k.a. proximal point) coefficient
 	/*!
 	  The regularization works by slightly altering the local problems, so at each iteration
 	  we try to solve
@@ -148,15 +144,6 @@ public:
 	//! Sets the number of iterations for temporarily freezing local problems
 	void setSkipIters( unsigned skipIters ) { m_skipIters = skipIters ; }
 
-	//! Eval the current global residual as a function of the local ones
-	/*! \p y should be such that \p y = \ref m_matrix * \p x + rhs
-		\return the current residual \c err defined as follow :
-		- if \ref m_useInfinityNorm is true, then \c err \f$ := \max\limits_{1 \leq i \leq n } law.eval(i,x_i,y_i) \f$
-		- else \c err := \f$  \frac 1 {n+1} \sum\limits_{1 \leq i \leq n } law.eval(i,x_i,y_i) \f$
-
-	*/
-	template < typename NSLaw, typename RhsT, typename ResT >
-	Scalar eval ( const NSLaw &law, const ResT &y, const RhsT &x ) const ;
 
 protected:
 
@@ -166,18 +153,17 @@ protected:
 	using Base::m_matrix ;
 	using Base::m_maxIters ;
 	using Base::m_tol ;
+	using Base::m_scaling ;
 
+	typedef typename Base::Index Index ;
 	typedef typename LocalProblemTraits< GlobalProblemTraits::dimension, Scalar >::Matrix DiagonalMatrixType ;
 	typename ResizableSequenceContainer< DiagonalMatrixType >::Type m_localMatrices ;
-	typename GlobalProblemTraits::DynVector m_scaling ;
 	typename GlobalProblemTraits::DynVector m_regularization ;
 
 	//! See enableColoring(). Defaults to false.
 	bool m_enableColoring ;
 	//! See setMaxThreads(). Defaults to 0 .
 	unsigned m_maxThreads ;
-	//! See useInfinityNorm(). Defaults to false.
-	bool m_useInfinityNorm ;
 
 	//! See setEvalEvery(). Defaults to 25
 	unsigned m_evalEvery ;

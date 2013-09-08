@@ -14,7 +14,6 @@
 #include "Krylov.hpp"
 
 #include "Preconditioners.impl.hpp"
-#include "BlockSolverBase.impl.hpp"
 #include "KrylovMethods.impl.hpp"
 
 namespace bogus {

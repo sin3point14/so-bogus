@@ -24,6 +24,8 @@
 #include "../Core/Block.hpp"
 #include "../Core/BlockSolvers.fwd.hpp"
 
+#include "../Extra/SecondOrder.fwd.hpp"
+
 #include "../Core/Utils/Signal.hpp"
 
 namespace bogus
@@ -62,7 +64,12 @@ struct DualFrictionProblem
 {
 	typedef SparseBlockMatrix< Eigen::Matrix< double, Dimension, Dimension, Eigen::RowMajor >,
 							   SYMMETRIC > WType ;
+
 	typedef GaussSeidel< WType > GaussSeidelType ;
+	typedef ProjectedGradient< WType > ProjectedGradientType ;
+
+	typedef SOCLaw< Dimension, double, true  > CoulombLawType	;
+	typedef SOCLaw< Dimension, double, false > SOCLawType	;
 
 	//! W -- Delassus operator
 	WType W ;
@@ -84,6 +91,7 @@ struct DualFrictionProblem
 	  \returns the error as returned by the GaussSeidel::solve() function
 	  */
 	double solveWith( GaussSeidelType &gs, double * r, const bool staticProblem = false ) const ;
+	double solveWith( ProjectedGradientType &pg, double * r ) const ;
 
 	//! Evaluate a residual using the GS's error function
 	/*!

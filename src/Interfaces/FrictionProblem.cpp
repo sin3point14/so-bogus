@@ -22,6 +22,8 @@
 
 #include "../Core/Block.impl.hpp"
 #include "../Core/BlockSolvers/GaussSeidel.impl.hpp"
+#include "../Core/BlockSolvers/ProjectedGradient.impl.hpp"
+
 #include "../Extra/SecondOrder.impl.hpp"
 
 namespace bogus {
@@ -52,16 +54,12 @@ void DualFrictionProblem< Dimension >::computeFrom(PrimalFrictionProblem<Dimensi
 	mu = primal.mu ;
 }
 
-
 template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::solveWith( GaussSeidelType &gs, double *r,
 									   const bool staticProblem ) const
 {
-	typedef SOCLaw< Dimension, double, true  > CoulombLawType	;
-	typedef SOCLaw< Dimension, double, false > SOCLawType	;
-
 	gs.setMatrix( W );
-	Eigen::Map< Eigen::VectorXd > r_map ( r, W.rows() ) ;
+	typename Eigen::VectorXd::MapType r_map ( r, W.rows() ) ;
 
 	double res = staticProblem
 			? gs.solve( SOCLawType     ( W.rowsOfBlocks(), mu ), b, r_map )
@@ -71,15 +69,22 @@ double DualFrictionProblem< Dimension >::solveWith( GaussSeidelType &gs, double 
 }
 
 template< unsigned Dimension >
+double DualFrictionProblem< Dimension >::solveWith( ProjectedGradientType &pg,
+                                                    double *r ) const
+{
+	pg.setMatrix( W );
+	typename Eigen::VectorXd::MapType r_map ( r, W.rows() ) ;
+
+	return pg.solve( SOCLawType ( W.rowsOfBlocks(), mu ), b, r_map ) ;
+}
+
+template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::evalWith( const GaussSeidelType &gs,
                                                const double *r, const double *u,
 									   const bool staticProblem ) const
 {
-	typedef SOCLaw< Dimension, double, true  > CoulombLawType	;
-	typedef SOCLaw< Dimension, double, false > SOCLawType	;
-
-	Eigen::Map< const Eigen::VectorXd > r_map ( r, W.rows() ) ;
-	Eigen::Map< const Eigen::VectorXd > u_map ( u, W.rows() ) ;
+	typename Eigen::VectorXd::ConstMapType r_map ( r, W.rows() ) ;
+	typename Eigen::VectorXd::ConstMapType u_map ( u, W.rows() ) ;
 
 	double res = staticProblem
 			? gs.eval( SOCLawType     ( W.rowsOfBlocks(), mu ), u_map, r_map )
@@ -94,8 +99,8 @@ double DualFrictionProblem< Dimension >::solveCadoux(GaussSeidelType &gs, double
 {
 	const std::ptrdiff_t n = W.rowsOfBlocks() ;
 
-	SOCLaw< Dimension, double, true  > CoulombLaw( n, mu ) ;
-	SOCLaw< Dimension, double, false > SOCLaw	( n, mu ) ;
+	CoulombLawType coulombLaw( n, mu ) ;
+	SOCLawType         socLaw( n, mu ) ;
 
 	gs.setMatrix( W );
 	Eigen::Map< Eigen::VectorXd > r_map ( r, W.rows() ) ;
@@ -110,7 +115,7 @@ double DualFrictionProblem< Dimension >::solveCadoux(GaussSeidelType &gs, double
 	{
 		s = W * r_map + b ;
 
-		res = gs.eval( CoulombLaw, s, r_map ) ;
+		res = gs.eval( coulombLaw, s, r_map ) ;
 
 		if( callback ) callback->trigger( cdxIter, res ) ;
 		if( cdxIter > 0 && res < tol ) break ;
@@ -126,7 +131,7 @@ double DualFrictionProblem< Dimension >::solveCadoux(GaussSeidelType &gs, double
 
 		s += b ;
 
-		gs.solve( SOCLaw, s, r_map, false ) ;
+		gs.solve( socLaw, s, r_map, false ) ;
 
 	}
 

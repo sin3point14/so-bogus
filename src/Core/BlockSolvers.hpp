@@ -16,5 +16,6 @@
 
 #include "BlockSolvers/GaussSeidel.hpp"
 #include "BlockSolvers/Krylov.hpp"
+#include "BlockSolvers/ProjectedGradient.hpp"
 
 #endif

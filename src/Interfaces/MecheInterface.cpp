@@ -25,6 +25,7 @@
 #include "../Core/Block.impl.hpp"
 #include "../Core/Block.io.hpp"
 #include "../Core/BlockSolvers/GaussSeidel.impl.hpp"
+#include "../Core/BlockSolvers/ProjectedGradient.impl.hpp"
 
 #include <algorithm>
 
@@ -194,7 +195,7 @@ double MecheFrictionProblem::solve(double *r,
 		bool staticProblem,
 		double regularization,
 		bool useInfinityNorm,
-		unsigned cadouxIterations
+		unsigned otherSolverIters
 								   )
 {
 	assert( m_primal ) ;
@@ -223,14 +224,24 @@ double MecheFrictionProblem::solve(double *r,
 	double res ;
 
 	// Proper solving
-	if( staticProblem || cadouxIterations == 0 )
+	if( otherSolverIters == 0 )
 	{
 		gs.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual );
 		res = m_dual->solveWith( gs, r_loc.data(), staticProblem ) ;
+	} else if( staticProblem ) {
+
+		DualFrictionProblem< 3u >::ProjectedGradientType pg ;
+		if( tol != 0. ) pg.setTol( tol );
+		if( maxIters != 0 ) pg.setMaxIters( maxIters );
+		pg.useInfinityNorm( useInfinityNorm ) ;
+
+		pg.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual );
+		res = m_dual->solveWith( pg, r_loc.data() ) ;
+
 	} else {
 		Signal< unsigned, double > callback ;
 		callback.connect( *this, &MecheFrictionProblem::ackCurrentResidual );
-		res = m_dual->solveCadoux( gs, r_loc.data(), cadouxIterations, &callback ) ;
+		res = m_dual->solveCadoux( gs, r_loc.data(), otherSolverIters, &callback ) ;
 	}
 
 	// compute v

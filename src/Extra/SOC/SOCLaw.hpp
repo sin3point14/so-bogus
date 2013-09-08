@@ -90,6 +90,9 @@ public:
 			const Scalar scaling
 			) const ;
 
+	//! Projects x on \f$ K_{ \mu } \f$
+	void projectOnConstraint( const unsigned problemIndex, typename Traits::Vector &x ) const ;
+
 private:
 
 	const double * m_mu ;

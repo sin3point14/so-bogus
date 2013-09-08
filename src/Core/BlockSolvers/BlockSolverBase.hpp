@@ -55,7 +55,9 @@ public:
 protected:
 
 	BlockSolverBase( const BlockMatrixBase< BlockMatrixType > * matrix = 0,
-					 unsigned maxIters = 0, Scalar tol = 0 ) ;
+					 unsigned maxIters = 0, Scalar tol = 0 )
+	    : m_matrix( matrix ), m_maxIters( maxIters ), m_tol( tol )
+	{}
 
 	//! Pointer to the matrix of the system
 	const BlockMatrixBase< BlockMatrixType > * m_matrix ;

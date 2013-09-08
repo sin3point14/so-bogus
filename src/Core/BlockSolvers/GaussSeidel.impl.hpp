@@ -14,9 +14,7 @@
 
 #include "GaussSeidel.hpp"
 #include "Coloring.impl.hpp"
-#include "BlockSolverBase.impl.hpp"
-
-#include "../Block/BlockMatrixBase.hpp"
+#include "ConstrainedSolverBase.impl.hpp"
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #include <omp.h>
@@ -32,7 +30,6 @@ void GaussSeidel< BlockMatrixType >::init( )
 	m_maxIters = 250 ;
 	m_enableColoring =  false ;
 	m_maxThreads =  0 ;
-	m_useInfinityNorm = false ;
 	m_evalEvery = 25  ;
 	m_skipTol = m_tol * m_tol ;
 	m_skipIters = 10 ;
@@ -44,17 +41,16 @@ void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatr
 {
 	if( m_matrix != &M ) m_coloring.invalidate();
 
-	m_matrix = &M ;
+	Base::setMatrix( M  );
 
-	const unsigned n = M.rowsOfBlocks() ;
+	const Index n = M.rowsOfBlocks() ;
 	m_localMatrices.resize( n ) ;
-	m_scaling.resize( n ) ;
 	m_regularization.resize( n ) ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) n ; ++i )
+	for( Index i = 0 ; i <  n ; ++i )
 	{
 		m_localMatrices[i] = M.diagonal( i ) ;
 
@@ -64,70 +60,10 @@ void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatr
 			m_localMatrices[i].diagonal().array() += m_regularization(i) ;
 		} else m_regularization(i) = 0. ;
 
-		m_scaling[i] = std::max( 1., m_localMatrices[i].trace() ) ;
 	}
 
 }
 
-template < typename BlockMatrixType >
-template < typename NSLaw, typename RhsT, typename ResT >
-typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::eval( const NSLaw &law,
-							const ResT &y, const RhsT &x ) const
-{
-	const Segmenter< NSLaw::dimension, const RhsT, typename BlockMatrixType::Index >
-			xSegmenter( x, m_matrix->rowOffsets() ) ;
-	const Segmenter< NSLaw::dimension, const ResT, typename BlockMatrixType::Index >
-			ySegmenter( y, m_matrix->rowOffsets() ) ;
-
-	const std::ptrdiff_t n = (std::ptrdiff_t) m_localMatrices.size() ;
-
-	Scalar err = 0., lres ;
-	typename NSLaw::Traits::Vector lx, ly ;
-
-	if( m_useInfinityNorm )
-	{
-
-	#ifndef BOGUS_DONT_PARALLELIZE
-	#pragma omp parallel private( lx, ly, lres )
-	#endif
-		{
-			lres = 0. ;
-
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp for
-#endif
-			for( int i = 0 ; i < n ; ++ i )
-			{
-				lx = xSegmenter[ i ] * m_scaling[i] ;
-				ly = ySegmenter[ i ] ;
-				lres = std::max( law.eval( i, lx, ly ), lres ) ;
-			}
-
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp critical
-#endif
-			err = std::max( err, lres ) ;
-		}
-
-		return err ;
-
-	} else {
-
-	#ifndef BOGUS_DONT_PARALLELIZE
-	#pragma omp parallel for private( lx, ly, lres ) reduction ( + : err )
-	#endif
-		for( int i = 0 ; i < n ; ++ i )
-		{
-			lx = xSegmenter[ i ] * m_scaling[i] ;
-			ly = ySegmenter[ i ] ;
-			lres = law.eval( i, lx, ly ) ;
-			err += lres ;
-		}
-
-		return err / ( 1 + n );
-
-	}
-}
 
 template < typename BlockMatrixType >
 template < typename NSLaw, typename RhsT, typename ResT >
@@ -146,14 +82,14 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	typename GlobalProblemTraits::DynVector y ( b + (*m_matrix)*x ) ;
 	typename GlobalProblemTraits::DynVector x_best( GlobalProblemTraits::DynVector::Zero( x.rows() ) ) ;
 
-	const Scalar err_init = eval( law, y, x      ) ;
+	const Scalar err_init = Base::eval( law, y, x      ) ;
 	Scalar err_zero, err_best ;
 
 	bool useZero = false ;
 
 	if( tryZeroAsWell )
 	{
-		err_zero = eval( law, b, x_best ) ;
+		err_zero = Base::eval( law, b, x_best ) ;
 
 		if( err_zero < err_init )
 		{
@@ -170,7 +106,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 
 	this->m_callback.trigger( 0, err_best ) ;
 
-	const std::ptrdiff_t n = static_cast< std::ptrdiff_t >( m_localMatrices.size() ) ;
+	const Index n = m_matrix->rowsOfBlocks() ;
 	std::vector< unsigned char > skip( n, 0 ) ;
 
 	m_coloring.update( m_enableColoring, *m_matrix ) ;
@@ -231,8 +167,9 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 
 		if( 0 == ( GSIter % m_evalEvery ) )
 		{
-			y = b + (*m_matrix) * x ;
-			const double err = eval( law, y, x ) ;
+			y = b ;
+			m_matrix->template multiply< false >( x, y, 1, 1 ) ;
+			const double err = Base::eval( law, y, x ) ;
 
 			this->m_callback.trigger( GSIter, err ) ;
 
