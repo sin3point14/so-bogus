@@ -48,9 +48,15 @@ public:
 	}
 
 	//! Sets the system matrix and initializes internal structures
-	void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
+    /*! \note Derived classes should re-implement this function and call updateScalings() */
+    void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix )
+    {
+        return static_cast< Derived& >( *this ).setMatrix( matrix ) ;
+    }
 
 protected:
+
+    void updateScalings( ) ;
 
 	ConstrainedSolverBase() : Base(), m_useInfinityNorm( false ) {}
 	using Base::m_matrix ;

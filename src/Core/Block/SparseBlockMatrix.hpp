@@ -54,7 +54,7 @@ template < typename BlockT, int Flags >
 class SparseBlockMatrix : public  SparseBlockMatrixBase< SparseBlockMatrix< BlockT, Flags > >
 {
 public:
-	typedef SparseBlockMatrixBase< SparseBlockMatrix< BlockT, Flags > > Base ;
+	typedef SparseBlockMatrixBase< SparseBlockMatrix > Base ;
 
 	SparseBlockMatrix() : Base()
 	{
@@ -81,7 +81,7 @@ struct BlockTraits< SparseBlockMatrix< BlockT, Flags > >
 	typedef SparseBlockMatrix< BlockT, Flags > BlockType ;
 
 	typedef typename BlockType::Scalar Scalar ;
-    typedef SparseBlockMatrix
+	typedef SparseBlockMatrix
 		< typename BlockType::TransposeBlockType, Flags ^ flags::COL_MAJOR >
 		TransposeStorageType ;
 

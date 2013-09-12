@@ -116,6 +116,8 @@ struct DualFrictionProblem
 	  */
 	double solveCadoux( GaussSeidelType &gs, double * r, const unsigned fpIterations,
 	       const Signal< unsigned, double >* callback = 0 ) const ;
+	double solveCadoux( ProjectedGradientType &pg, double * r, const unsigned fpIterations,
+	       const Signal< unsigned, double >* callback = 0 ) const ;
 } ;
 
 } //namespace bogus

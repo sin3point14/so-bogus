@@ -63,9 +63,10 @@ public:
 			unsigned maxIters = 0,            //!< Max number of iterations. 0 means GS's default
 			bool staticProblem = false,       //!< If true, do not use DeSaxce change of variable
 			double regularization = 0.,  //!< Coefficient to add to the diagonal of static problems / GS regularization coefficient for friction problems
-			bool useInfinityNorm = false, //!< Whether to use the infinity norm to evaluate the residual of the friction problem
-			unsigned otherSolverIters = 0 //!< Use another solver: If staticProblem is false and otherSolverIters is greater than zero, use the Cadoux algorithm to solve the friction problem. If staticProblem is true, use a ProjectedGradient solver
-	             );
+			bool useInfinityNorm = false, //!< Whether to use the infinity norm to evaluate the residual of the friction problem,
+			bool useProjectedGradient = false, //!< If true, use projected gradient algorithm instead of GS. Require either staticProblem=true, or cadouxIters > 0
+			unsigned cadouxIters = 0 //!< If staticProblem is false and cadouxIters is greater than zero, use the Cadoux algorithm to solve the friction problem.
+				 );
 
 	//! Computes \ref m_dual from \ref m_primal
 	void computeDual( double regularization ) ;

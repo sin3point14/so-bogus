@@ -70,7 +70,7 @@ double DualFrictionProblem< Dimension >::solveWith( GaussSeidelType &gs, double 
 
 template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::solveWith( ProjectedGradientType &pg,
-                                                    double *r ) const
+													double *r ) const
 {
 	pg.setMatrix( W );
 	typename Eigen::VectorXd::MapType r_map ( r, W.rows() ) ;
@@ -80,7 +80,7 @@ double DualFrictionProblem< Dimension >::solveWith( ProjectedGradientType &pg,
 
 template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::evalWith( const GaussSeidelType &gs,
-                                               const double *r, const double *u,
+											   const double *r, const double *u,
 									   const bool staticProblem ) const
 {
 	typename Eigen::VectorXd::ConstMapType r_map ( r, W.rows() ) ;
@@ -93,27 +93,30 @@ double DualFrictionProblem< Dimension >::evalWith( const GaussSeidelType &gs,
 	return res ;
 }
 
-template< unsigned Dimension >
-double DualFrictionProblem< Dimension >::solveCadoux(GaussSeidelType &gs, double *r, const unsigned cadouxIterations,
-        const Signal<unsigned, double> *callback ) const
+namespace impl {
+
+template< unsigned Dimension, template <typename> class Method >
+static double solveCadoux( const DualFrictionProblem< Dimension >& dual,
+		ConstrainedSolverBase< Method, typename DualFrictionProblem< Dimension >::WType > &gs,
+		double *r, const unsigned cadouxIterations, const Signal<unsigned, double> *callback )
 {
-	const std::ptrdiff_t n = W.rowsOfBlocks() ;
+	const std::ptrdiff_t n = dual.W.rowsOfBlocks() ;
 
-	CoulombLawType coulombLaw( n, mu ) ;
-	SOCLawType         socLaw( n, mu ) ;
+	typename DualFrictionProblem< Dimension >::CoulombLawType coulombLaw( n, dual.mu ) ;
+	typename DualFrictionProblem< Dimension >::SOCLawType         socLaw( n, dual.mu ) ;
 
-	gs.setMatrix( W );
-	Eigen::Map< Eigen::VectorXd > r_map ( r, W.rows() ) ;
+	gs.setMatrix( dual.W );
+	Eigen::Map< Eigen::VectorXd > r_map ( r, dual.W.rows() ) ;
 
-	Eigen::VectorXd s( W.rows() ) ;
+	Eigen::VectorXd s( dual.W.rows() ) ;
 
 	double res = -1 ;
 	const double tol = gs.tol() ;
-	gs.setTol( 1.e-1 * tol ) ;	//We might experience slow convergence is GS not precise enough
+	gs.setTol( 1.e-1 * tol ) ;	//dual.We might experience slow convergence is GS not precise enough
 
 	for( unsigned cdxIter = 0 ; cdxIter < cadouxIterations ; ++cdxIter )
 	{
-		s = W * r_map + b ;
+		s = dual.W * r_map + dual.b ;
 
 		res = gs.eval( coulombLaw, s, r_map ) ;
 
@@ -125,19 +128,35 @@ double DualFrictionProblem< Dimension >::solveCadoux(GaussSeidelType &gs, double
 #endif
 		for( std::ptrdiff_t i = 0 ; i < n ; ++i )
 		{
-			s[ Dimension*i ] = s.segment< Dimension-1 >( Dimension*i+1 ).norm() * mu[i] ;
+			s[ Dimension*i ] = s.segment< Dimension-1 >( Dimension*i+1 ).norm() * dual.mu[i] ;
 			s.segment< Dimension-1  >( Dimension*i+1 ).setZero() ;
 		}
 
-		s += b ;
+		s += dual.b ;
 
-		gs.solve( socLaw, s, r_map, false ) ;
+		gs.solve( socLaw, s, r_map ) ;
 
 	}
 
 	gs.setTol( tol ) ;
 
 	return res ;
+}
+
+} //namespace impl
+
+template< unsigned Dimension >
+double DualFrictionProblem< Dimension >::solveCadoux(GaussSeidelType &gs, double *r, const unsigned cadouxIterations,
+		const Signal<unsigned, double> *callback ) const
+{
+	return impl::solveCadoux( *this, gs, r, cadouxIterations, callback ) ;
+}
+
+template< unsigned Dimension >
+double DualFrictionProblem< Dimension >::solveCadoux(ProjectedGradientType &pg, double *r, const unsigned cadouxIterations,
+		const Signal<unsigned, double> *callback ) const
+{
+	return impl::solveCadoux( *this, pg, r, cadouxIterations, callback ) ;
 }
 
 #ifdef BOGUS_INSTANTIATE_2D_SOC

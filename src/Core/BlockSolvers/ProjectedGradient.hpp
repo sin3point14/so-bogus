@@ -39,6 +39,13 @@ public:
 	template < typename NSLaw, typename RhsT, typename ResT >
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const ;
 
+
+    void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix )
+    {
+        m_matrix = &matrix ;
+        Base::updateScalings() ;
+    }
+
 protected:
 
 	typedef typename Base::Index Index ;

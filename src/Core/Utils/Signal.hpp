@@ -46,6 +46,10 @@ public:
 	template <typename T >
 	void connect( T& object, typename Traits::template Method< T >::Type member_func ) ;
 
+	//! Connects the signal to another Signal
+	/*! It should have the same template parameters */
+	void connect( const Derived &other ) ;
+
 protected:
 	typedef std::list< typename Traits::Callable* > Callables ;
 	Callables  m_callees ;
@@ -77,6 +81,13 @@ struct SignalTraits< Signal< Arg1, Arg2 > >
 		Method ( T& _obj, Type _func ) : obj( _obj ), func( _func ) {}
 		virtual void call( Arg1 arg1, Arg2 arg2 ) { (obj.*func)( arg1, arg2 ) ; }
 	} ;
+	struct Proxy : public Callable
+	{
+		typedef Signal< Arg1, Arg2 > Type ;
+		const Type& obj ;
+		Proxy( const Type& _obj ) : obj( _obj ) {}
+		virtual void call( Arg1 arg1, Arg2 arg2 ) { obj.trigger( arg1, arg2 ) ; }
+	};
 } ;
 
 template< typename Arg >
@@ -104,6 +115,13 @@ struct SignalTraits< Signal< Arg, void > >
 		Method ( T& _obj, Type _func ) : obj( _obj ), func( _func ) {}
 		virtual void call( Arg arg ) { (obj.*func)( arg ) ; }
 	} ;
+	struct Proxy : public Callable
+	{
+		typedef Signal< Arg, void > Type ;
+		const Type& obj ;
+		Proxy( const Type& _obj ) : obj( _obj ) {}
+		virtual void call( Arg arg ) { trigger( arg ) ; }
+	};
 
 } ;
 
@@ -121,7 +139,7 @@ struct Signal : public SignalBase< Signal< Arg1, Arg2 > >
 	//! Triggers the signal
 	void trigger( Arg1 arg1, Arg2 arg2 ) const
 	{
-		typedef SignalBase< Signal< Arg1, Arg2 > > Base ;
+		typedef SignalBase< Signal > Base ;
 
 		for( typename Base::Callables::const_iterator it = this->m_callees.begin() ; it != this->m_callees.end() ; ++it )
 		{ (*it)->call( arg1, arg2 ) ; }
@@ -135,11 +153,12 @@ struct Signal< Arg, void > : public SignalBase< Signal< Arg, void > >
 	//! Triggers the signal
 	void trigger( Arg arg ) const
 	{
-		typedef SignalBase< Signal< Arg, void > > Base ;
+		typedef SignalBase< Signal > Base ;
 
 		for( typename Base::Callables::const_iterator it = this->m_callees.begin() ; it != this->m_callees.end() ; ++it )
 		{ (*it)->call( arg ) ; }
 	}
+
 } ;
 
 template< typename Derived >
@@ -164,6 +183,11 @@ void SignalBase< Derived >::connect( T& object, typename Traits::template Method
 	m_callees.push_back( new typename Traits::template Method< T >( object, member_func ) );
 }
 
+template< typename Derived >
+void SignalBase< Derived >::connect( const Derived& other )
+{
+	m_callees.push_back( new typename Traits::Proxy( other ) );
+}
 
 } // namespace bogus
 

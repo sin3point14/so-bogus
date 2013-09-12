@@ -187,7 +187,8 @@ void MecheFrictionProblem::computeDual( double regularization )
 }
 
 
-double MecheFrictionProblem::solve(double *r,
+double MecheFrictionProblem::solve(
+		double *r,
 		double *v,
 		int maxThreads,
 		double tol,
@@ -195,7 +196,8 @@ double MecheFrictionProblem::solve(double *r,
 		bool staticProblem,
 		double regularization,
 		bool useInfinityNorm,
-		unsigned otherSolverIters
+		bool useProjectedGradient,
+		unsigned cadouxIters
 								   )
 {
 	assert( m_primal ) ;
@@ -221,27 +223,42 @@ double MecheFrictionProblem::solve(double *r,
 	gs.setAutoRegularization( regularization ) ;
 	gs.useInfinityNorm( useInfinityNorm ) ;
 
+	Signal< unsigned, double > callback ;
+	callback.connect( *this, &MecheFrictionProblem::ackCurrentResidual );
+
 	double res ;
 
 	// Proper solving
-	if( otherSolverIters == 0 )
-	{
-		gs.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual );
-		res = m_dual->solveWith( gs, r_loc.data(), staticProblem ) ;
-	} else if( staticProblem ) {
+
+	if( useProjectedGradient ) {
 
 		DualFrictionProblem< 3u >::ProjectedGradientType pg ;
 		if( tol != 0. ) pg.setTol( tol );
 		if( maxIters != 0 ) pg.setMaxIters( maxIters );
 		pg.useInfinityNorm( useInfinityNorm ) ;
 
-		pg.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual );
-		res = m_dual->solveWith( pg, r_loc.data() ) ;
+		if( staticProblem || cadouxIters == 0 )
+		{
+			if( !staticProblem )
+			{
+				if( m_out )
+					*m_out << "Cannot solve a friction problem with a ProjectedGradient!" << std::endl ;
+				return -1 ;
+			}
 
+			pg.callback().connect( callback );
+			res = m_dual->solveWith( pg, r_loc.data() ) ;
+		} else {
+			res = m_dual->solveCadoux( pg, r_loc.data(), cadouxIters, &callback ) ;
+		}
 	} else {
-		Signal< unsigned, double > callback ;
-		callback.connect( *this, &MecheFrictionProblem::ackCurrentResidual );
-		res = m_dual->solveCadoux( gs, r_loc.data(), otherSolverIters, &callback ) ;
+		if( staticProblem || cadouxIters == 0 )
+		{
+			gs.callback().connect( callback );
+			res = m_dual->solveWith( gs, r_loc.data(), staticProblem ) ;
+		} else {
+			res = m_dual->solveCadoux( gs, r_loc.data(), cadouxIters, &callback ) ;
+		}
 	}
 
 	// compute v

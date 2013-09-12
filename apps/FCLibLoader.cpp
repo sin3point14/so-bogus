@@ -11,6 +11,7 @@ extern "C"
 
 #include <Core/Block.impl.hpp>
 #include <Core/Block.io.hpp>
+#include <Core/BlockSolvers/ProjectedGradient.impl.hpp>
 #include <Core/BlockSolvers/GaussSeidel.impl.hpp>
 #include <Interfaces/FrictionProblem.hpp>
 
@@ -19,6 +20,8 @@ extern "C"
 #include <string>
 #include <fstream>
 #include <sys/stat.h>
+
+//#define USE_PG_FOR_CADOUX
 
 
 static const char* g_meth  = 0;
@@ -44,19 +47,28 @@ static double solve( const fclib_local* problem, const Eigen::SparseMatrixBase< 
 	gs.setTol( 1.e-12 ) ;
 	gs.setAutoRegularization( 1.e-5 ) ;
 
+	bogus::Signal< unsigned, double > callback ;
+	callback.connect( &ackCurrentResidual );
+
 	double res = -1 ;
 
 	if( useCadoux )
 	{
 		g_meth = "Cadoux" ;
+#ifdef USE_PG_FOR_CADOUX
+		typename bogus::DualFrictionProblem< Dimension >::ProjectedGradientType pg ;
+		pg.setTol( 1.e-12 ) ;
+		pg.setMaxIters( 50 ) ;
+		res = dual.solveCadoux( pg, r.data(), 500, &callback ) ;
+#else
 		gs.setMaxIters( 100 ) ;
-		bogus::Signal< unsigned, double > callback ;
-		callback.connect( &ackCurrentResidual );
 		res = dual.solveCadoux( gs, r.data(), 500, &callback ) ;
+#endif
+
 	} else {
 		g_meth = "GS" ;
 		gs.setMaxIters( 1000 ) ;
-		gs.callback().connect( &ackCurrentResidual );
+		gs.callback().connect( callback );
 		res = dual.solveWith( gs, r.data() ) ;
 	}
 

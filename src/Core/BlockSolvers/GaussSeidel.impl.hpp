@@ -41,7 +41,8 @@ void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatr
 {
 	if( m_matrix != &M ) m_coloring.invalidate();
 
-	Base::setMatrix( M  );
+	m_matrix = &M ;
+	Base::updateScalings() ;
 
 	const Index n = M.rowsOfBlocks() ;
 	m_localMatrices.resize( n ) ;
@@ -68,7 +69,7 @@ void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatr
 template < typename BlockMatrixType >
 template < typename NSLaw, typename RhsT, typename ResT >
 typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
-							const RhsT &b, ResT &x, bool tryZeroAsWell ) const
+																					   const RhsT &b, ResT &x, bool tryZeroAsWell ) const
 {
 	assert( m_matrix ) ;
 
@@ -126,41 +127,41 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 #pragma omp parallel if (m_maxThreads != 1)
 		{
 #endif
-		typename LocalProblemTraits::Vector lb, lx, ldx ;
-		for( unsigned c = 0 ; c+1 < m_coloring.colors.size() ; ++ c )
-		{
+			typename LocalProblemTraits::Vector lb, lx, ldx ;
+			for( unsigned c = 0 ; c+1 < m_coloring.colors.size() ; ++ c )
+			{
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp for
 #endif
-			for( std::ptrdiff_t pi = m_coloring.colors[c] ; pi < m_coloring.colors[c+1] ; ++ pi )
-			{
-				const std::size_t i = m_coloring.permutation[pi] ;
-
-				if( skip[i] ) {
-					--skip[i] ;
-					continue ;
-				}
-
-				lx = xSegmenter[ i ] ;
-				lb = bSegmenter[ i ] - m_regularization(i) * lx ;
-				m_matrix->splitRowMultiply( i, x, lb ) ;
-				ldx = -lx ;
-
-				const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ i ] ) ;
-				ldx += lx ;
-
-				if( !ok ) { ldx *= .5 ; }
-				xSegmenter[ i ] += ldx ;
-
-				const Scalar scaledSkipTol = m_scaling[ i ] * m_scaling[ i ] * m_skipTol ;
-				if( ldx.squaredNorm() < scaledSkipTol || lx.squaredNorm() < scaledSkipTol )
+				for( std::ptrdiff_t pi = m_coloring.colors[c] ; pi < m_coloring.colors[c+1] ; ++ pi )
 				{
-					skip[i] = m_skipIters ;
-				}
-			}
+					const std::size_t i = m_coloring.permutation[pi] ;
 
-		}
+					if( skip[i] ) {
+						--skip[i] ;
+						continue ;
+					}
+
+					lx = xSegmenter[ i ] ;
+					lb = bSegmenter[ i ] - m_regularization(i) * lx ;
+					m_matrix->splitRowMultiply( i, x, lb ) ;
+					ldx = -lx ;
+
+					const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ i ] ) ;
+					ldx += lx ;
+
+					if( !ok ) { ldx *= .5 ; }
+					xSegmenter[ i ] += ldx ;
+
+					const Scalar scaledSkipTol = m_scaling[ i ] * m_scaling[ i ] * m_skipTol ;
+					if( ldx.squaredNorm() < scaledSkipTol || lx.squaredNorm() < scaledSkipTol )
+					{
+						skip[i] = m_skipIters ;
+					}
+				}
+
+			}
 #ifndef BOGUS_DONT_PARALLELIZE
 		}
 #endif

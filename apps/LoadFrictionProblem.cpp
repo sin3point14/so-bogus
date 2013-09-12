@@ -18,7 +18,7 @@ int main( int argc, const char* argv[] )
 	{
 		std::cerr << " Please provide a problem data file " << std::endl ;
 		std::cerr << " Syntax: " << argv[0] << " dataFile "
-				  << " [ deterministic ] [ tol ] [ maxIters ] [ staticPb ] [ regul ] [ useInfNorm ] "
+				  << " [ deterministic ] [ tol ] [ maxIters ] [ staticPb ] [ regul ] [ useInfNorm ] [useProjectGradient] [cadouxIterations]"
 				  << std::endl ;
 		return 1 ;
 	}
@@ -35,9 +35,10 @@ int main( int argc, const char* argv[] )
 		const int staticPb      = argc > 5 ? std::atoi( argv[5] ) : 0 ;
 		const double regul      = argc > 6 ? std::strtod( argv[6], NULL ) : 0 ;
 		const int useInfNorm    = argc > 7 ? std::atoi( argv[7] ) : 0 ;
-		const int cadoux        = argc > 8 ? std::atoi( argv[8] ) : 0 ;
+		const int usePG         = argc > 8 ? std::atoi( argv[8] ) : 0 ;
+		const int cadoux        = argc > 9 ? std::atoi( argv[9] ) : 0 ;
 
-		mfp.solve( r, NULL, maxThreads, tol, maxIters, staticPb, regul, useInfNorm, cadoux ) ;
+		mfp.solve( r, NULL, maxThreads, tol, maxIters, staticPb, regul, useInfNorm, usePG, cadoux ) ;
 
 		delete[] r ;
 

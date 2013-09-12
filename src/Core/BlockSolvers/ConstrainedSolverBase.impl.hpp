@@ -83,10 +83,12 @@ ConstrainedSolverBase< SolverType,BlockMatrixType >::eval( const NSLaw &law,
 }
 
 template < template <typename> class SolverType, typename BlockMatrixType >
-void ConstrainedSolverBase< SolverType,BlockMatrixType >::setMatrix(
-		const BlockMatrixBase< BlockMatrixType > & M )
+void ConstrainedSolverBase< SolverType,BlockMatrixType >::updateScalings()
 {
-	m_matrix = &M ;
+	if( !m_matrix )
+	{
+		return ;
+	}
 
 	const Index n = m_matrix->rowsOfBlocks() ;
 	m_scaling.resize( n ) ;

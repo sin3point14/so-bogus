@@ -225,7 +225,7 @@ struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
 
 	enum { transposeOperand = Operand::do_transpose };
 
-	typedef BlockObjectBase< Scaling< MatrixT > > Base ;
+	typedef BlockObjectBase< Scaling > Base ;
 
 	typedef typename Base::EvalType EvalType;
 
