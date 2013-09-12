@@ -48,7 +48,7 @@ ProjectedGradient< BlockMatrixType >::solve(
 	Mx = (*m_matrix)*x ;
 	Scalar J = x.dot( .5 * Mx + b ) ;
 
-	Scalar res, alpha = 1 ;
+    Scalar res = -1, alpha = 1 ;
 
 	for( unsigned pgIter = 0 ; pgIter < m_maxIters ; ++pgIter )
 	{

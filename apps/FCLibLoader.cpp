@@ -20,16 +20,17 @@ extern "C"
 #include <fstream>
 #include <sys/stat.h>
 
-//#define USE_CADOUX
+
+static const char* g_meth  = 0;
 
 void ackCurrentResidual( unsigned GSIter, double err )
 {
-	std::cout << " .. GS: " << GSIter << " ==> " << err << std::endl ;
+	std::cout << " .. " << g_meth << ": " <<  GSIter << " ==> " << err << std::endl ;
 }
 
 template< unsigned Dimension, typename EigenDerived >
 static double solve( const fclib_local* problem, const Eigen::SparseMatrixBase< EigenDerived >& ei_W,
-					 Eigen::VectorXd &r, Eigen::VectorXd &u )
+					 Eigen::VectorXd &r, Eigen::VectorXd &u, const bool useCadoux )
 {
 	bogus::DualFrictionProblem< Dimension > dual ;
 	bogus::convert( ei_W, dual.W, Dimension, Dimension ) ;
@@ -41,17 +42,23 @@ static double solve( const fclib_local* problem, const Eigen::SparseMatrixBase< 
 
 	typename bogus::DualFrictionProblem< Dimension >::GaussSeidelType gs ;
 	gs.setTol( 1.e-12 ) ;
+	gs.setAutoRegularization( 1.e-5 ) ;
 
-#ifdef USE_CADOUX
-	gs.setMaxIters( 100 ) ;
-	bogus::Signal< unsigned, double > callback ;
-	callback.connect( &ackCurrentResidual );
-	double res = dual.solveCadoux( gs, r.data(), 500, &callback ) ;
-#else
-	gs.setMaxIters( 1000 ) ;
-	gs.callback().connect( &ackCurrentResidual );
-	double res = dual.solveWith( gs, r.data() ) ;
-#endif
+	double res = -1 ;
+
+	if( useCadoux )
+	{
+		g_meth = "Cadoux" ;
+		gs.setMaxIters( 100 ) ;
+		bogus::Signal< unsigned, double > callback ;
+		callback.connect( &ackCurrentResidual );
+		res = dual.solveCadoux( gs, r.data(), 500, &callback ) ;
+	} else {
+		g_meth = "GS" ;
+		gs.setMaxIters( 1000 ) ;
+		gs.callback().connect( &ackCurrentResidual );
+		res = dual.solveWith( gs, r.data() ) ;
+	}
 
 	u = dual.W * r + dual.b ;
 
@@ -67,6 +74,8 @@ int main( int argc, const char* argv[] )
 	std::cerr << " Please provide a problem data file " << std::endl ;
 	return 1 ;
   }
+
+  const bool useCadoux = argc > 2 && 0 == strncmp( argv[2], "-c", 3 ) ;
 
   const char* file = argv[1] ;
 
@@ -138,9 +147,9 @@ int main( int argc, const char* argv[] )
 
 			  if( problem->spacedim == 3 )
 			  {
-				  res = solve< 3u >( problem, ei_W, r, u ) ;
+				  res = solve< 3u >( problem, ei_W, r, u, useCadoux ) ;
 			  } else {
-				  res = solve< 2u >( problem, ei_W, r, u ) ;
+				  res = solve< 2u >( problem, ei_W, r, u, useCadoux ) ;
 			  }
 
 			  std::cout << " => Res: " << res << std::endl ;

@@ -155,7 +155,7 @@ struct AnalyticLocalSOCSolver< 2u, Scalar, true >
 
 		if( !found )
 		{
-			// Case rT = mu * rN
+			// Case rT = - mu * rN
 			const Scalar w_m = W(0,0) - mu * W(0,1) ;
 			if( w_m > NumTraits< Scalar >::epsilon( ) )
 			{
@@ -191,10 +191,6 @@ struct AnalyticLocalSOCSolver< 3u, Scalar, false >
 		typedef typename LocalProblemTraits< 2, Scalar >::Vector Vec2 ;
 		typedef typename LocalProblemTraits< 2, Scalar >::Matrix Mat2 ;
 
-		const Scalar wN = W(0,0) ;
-		if( wN < NumTraits< Scalar >::epsilon() )
-			return false ; // Could we do something better ?
-
 		const Scalar A = (b[1]*W(1,2) - b[2]*W(1,1))*mu*mu + b[0]*W(0,2) - b[2]*W(0,0) ;
 		const Scalar B = (b[0]*W(1,2) + b[1]*W(0,2) - 2*b[2]*W(0,1))*mu ;
 		const Scalar C = 2*( (b[1]*W(2,2) - b[2]*W(1,2))*mu*mu - b[0]*W(0,1) + b[1]*W(0,0) );
@@ -223,18 +219,25 @@ struct AnalyticLocalSOCSolver< 3u, Scalar, false >
 
 			const typename Traits::Vector dir ( 1, mu*CT, mu*ST ) ;
 
-			Scalar den, rN ;
+			Scalar rN ;
 
-			den = ( mu * W.col(1) + CT * W.col( 0 )).dot( dir ) ;
-			if( bogus::NumTraits< Scalar >::isZero( den ) ) {
-				den = ( mu * W.col(2) + ST * W.col( 0 )).dot( dir ) ;
-				if( bogus::NumTraits< Scalar >::isZero( den ) ) {
+			// Chose the better conditionned way to go back to r
+			const Scalar den0 = ( mu * W.col(1) + CT * W.col( 0 )).dot( dir ) ;
+			const Scalar den1 = ( mu * W.col(2) + ST * W.col( 0 )).dot( dir ) ;
+
+			if( std::fabs( den0 ) > std::fabs( den1 ) )
+			{
+				if( bogus::NumTraits< Scalar >::isZero( den0 ) )
+				{
 					continue ;
-				} else {
-					rN = -(ST*b[0] + b[2]*mu)/den ;
 				}
+				rN = -(CT*b[0] + b[1]*mu)/den0 ;
 			} else {
-				rN = -(CT*b[0] + b[1]*mu)/den ;
+				if( bogus::NumTraits< Scalar >::isZero( den1 ) )
+				{
+					continue ;
+				}
+				rN = -(ST*b[0] + b[2]*mu)/den1 ;
 			}
 
 			if( rN <= 0 )
@@ -253,6 +256,46 @@ struct AnalyticLocalSOCSolver< 3u, Scalar, false >
 		return found ;
 	}
 
+} ;
+
+// Specialization for 2D SOC complementarity
+template< typename Scalar >
+struct AnalyticLocalSOCSolver< 2u, Scalar, false >
+{
+	enum { Dimension = 2 } ;
+	typedef LocalProblemTraits< Dimension, Scalar > Traits ;
+	typedef typename Traits::Vector Vector ;
+	typedef typename Traits::Matrix Matrix ;
+
+	static bool solveOrthogonality(
+			const typename Traits::Matrix &W,
+			const typename Traits::Vector &b,
+			typename Traits::Vector &r,
+			const Scalar mu
+			)
+	{
+		bool found = false ;
+
+		// Case rT = mu * rN
+
+		for( int s = 1 ; !found && s > -2 ; s -= 2 )
+		{
+			const Scalar w = W(0,0) + 2 * mu * s * W(0,1) + mu * mu * W( 1, 1 ) ;
+			if( !NumTraits< Scalar >::isZero( w ) )
+			{
+				r[ 0 ] = - ( b[0] + mu * s * b[1] ) / w ;
+				if( r[0] > 0 )
+				{
+					r[ 1 ] = mu * s * r[0] ;
+
+					const Scalar uN = W(0,0)*r[0] + W(1,0)*r[1] + b[0] ;
+					found = 0 < uN ;
+				}
+			}
+		}
+
+		return found ;
+	}
 } ;
 
 
