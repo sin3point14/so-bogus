@@ -70,7 +70,8 @@ struct SparseBlockIndexGetter< Derived, true >
 
 // Index computer
 
-template < typename MatrixType, bool Symmetric, bool ColWise, bool Transpose >
+template < typename MatrixType, bool ColWise, bool Transpose,
+		   bool Symmetric = BlockMatrixTraits< MatrixType >::is_symmetric >
 struct SparseBlockIndexComputer
 {
 	typedef BlockMatrixTraits< MatrixType > Traits ;
@@ -93,7 +94,7 @@ private:
 } ;
 
 template < typename MatrixType, bool ColWise, bool Transpose >
-struct SparseBlockIndexComputer< MatrixType, true, ColWise, Transpose >
+struct SparseBlockIndexComputer< MatrixType, ColWise, Transpose, true >
 {
 	typedef BlockMatrixTraits< MatrixType > Traits ;
 	enum { is_major = (ColWise == bool( Traits::is_col_major )) } ;

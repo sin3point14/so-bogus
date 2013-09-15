@@ -165,35 +165,6 @@ void SparseBlockMatrixBase< Derived >::clear()
 }
 
 template < typename Derived >
-Derived& SparseBlockMatrixBase< Derived >::prune( const Scalar precision )
-{
-	MajorIndexType oldIndex = m_majorIndex ;
-
-	typename Traits::BlocksArrayType old_blocks ;
-	old_blocks.swap( m_blocks ) ;
-
-	reserve( old_blocks.size() ) ;
-	clear() ;
-
-	for( Index outer = 0 ; outer < oldIndex.outerSize() ; ++outer )
-	{
-		for( typename MajorIndexType::InnerIterator it( oldIndex, outer ) ; it ; ++it )
-		{
-			if( ! is_zero( old_blocks[ it.ptr() ], precision ) )
-			{
-				m_majorIndex.insertBack( outer, it.inner(), m_blocks.size() ) ;
-				m_blocks.push_back( old_blocks[ it.ptr() ] ) ;
-			}
-		}
-	}
-
-	m_minorIndex.valid = empty() ;
-	finalize() ;
-
-	return derived() ;
-}
-
-template < typename Derived >
 bool SparseBlockMatrixBase< Derived >::computeMinorIndex()
 {
 	if ( m_minorIndex.valid ) return true ;
@@ -331,7 +302,116 @@ void SparseBlockMatrixBase<Derived>::cloneStructure( const SparseBlockMatrixBase
 	m_transposeIndex.valid = false ;
 }
 
+template < typename Derived >
+Derived& SparseBlockMatrixBase< Derived >::prune( const Scalar precision )
+{
+	MajorIndexType oldIndex = m_majorIndex ;
 
+	typename Traits::BlocksArrayType old_blocks ;
+	old_blocks.swap( m_blocks ) ;
+
+	reserve( old_blocks.size() ) ;
+	clear() ;
+
+	for( Index outer = 0 ; outer < oldIndex.outerSize() ; ++outer )
+	{
+		for( typename MajorIndexType::InnerIterator it( oldIndex, outer ) ; it ; ++it )
+		{
+			if( ! is_zero( old_blocks[ it.ptr() ], precision ) )
+			{
+				m_majorIndex.insertBack( outer, it.inner(), m_blocks.size() ) ;
+				m_blocks.push_back( old_blocks[ it.ptr() ] ) ;
+			}
+		}
+	}
+
+	m_minorIndex.valid = empty() ;
+	finalize() ;
+
+	return derived() ;
 }
+
+template < typename Derived >
+Derived& SparseBlockMatrixBase< Derived >::applyPermutation( const unsigned* indices )
+{
+
+	assert( rowsOfBlocks() == colsOfBlocks() ) ;
+
+	std::vector< unsigned > inv( rowsOfBlocks() ) ;
+	for( unsigned i = 0 ; i < inv.size() ; ++i )
+		inv[ indices[i] ] = i ;
+
+	const MajorIndexType &sourceIndex = majorIndex() ;
+
+	const bool MayTranspose = Traits::is_symmetric && ! BlockTraits< BlockType >::is_self_transpose ;
+	typedef TransposeIf< MayTranspose > TransposeOption ;
+
+	UncompressedIndexType destIndex ;
+	destIndex.resizeOuter( sourceIndex.outerSize() );
+
+	BlockType tmp ; //For temporary evaluation of transpose()
+	for( Index outer = 0 ; outer < sourceIndex.outerSize() ; ++outer )
+	{
+		for( typename MajorIndexType::InnerIterator inner( sourceIndex, indices[ outer ] ) ;
+			 inner ; ++inner )
+		{
+			if( Traits::is_symmetric && static_cast< Index >( inv[inner.inner()] ) > outer )
+			{
+				if( MayTranspose )
+				{
+					tmp = TransposeOption::get( m_blocks[inner.ptr()] ) ;
+					m_blocks[inner.ptr()] = tmp ;
+				}
+				destIndex.insertBack( inv[ inner.inner() ], outer, inner.ptr() );
+			} else {
+				destIndex.insertBack( outer, inv[ inner.inner() ], inner.ptr() );
+			}
+		}
+	}
+	destIndex.finalize();
+
+	// Reorder blocks
+
+	std::vector< BlockPtr > blocksPermutation ;
+	blocksPermutation.reserve( nBlocks() );
+
+	for( Index outer = 0 ; outer < destIndex.outerSize() ; ++outer )
+	{
+		for( typename UncompressedIndexType::InnerIterator inner( destIndex, outer ) ;
+			 inner ; ++inner )
+		{
+			blocksPermutation.push_back( inner.ptr() ) ;
+			destIndex.changePtr( inner, blocksPermutation.size() - 1 ) ;
+		}
+	}
+	m_majorIndex = destIndex ;
+	assert( m_majorIndex.valid ) ;
+
+	std::vector< bool > swapped( nBlocks(), false ) ;
+	for( BlockPtr i = 0 ; i < nBlocks() ; ++i )
+	{
+		if( swapped[ i ] ) continue ;
+
+		for( BlockPtr j = i, p ;; j = p ) {
+			p = blocksPermutation[j] ;
+			swapped[ j ] = true ;
+
+			if( swapped[p] )
+				break ;
+
+			std::swap( m_blocks[j], m_blocks[p] ) ;
+		}
+	}
+
+
+	m_minorIndex.valid = empty() ;
+
+	m_transposeIndex.valid = false ;
+	m_transposeBlocks.clear()  ;
+
+	return derived() ;
+}
+
+} //namespace bogus
 
 #endif

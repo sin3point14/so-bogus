@@ -14,18 +14,25 @@
 
 #include <iostream>
 #include "SparseBlockMatrix.hpp"
+#include "SparseBlockIndexComputer.hpp"
 
 template < typename Derived >
 std::ostream& operator<<( std::ostream &out, const bogus::SparseBlockMatrixBase< Derived > &sbm )
 {
+
+	typedef bogus::SparseBlockIndexComputer< Derived, false, false > IndexComputerType ;
+	IndexComputerType indexComputer( sbm ) ;
+	typedef typename IndexComputerType::ReturnType SourceIndexType ;
+	const SourceIndexType &sourceIndex = indexComputer.get() ;
+
 	out << " Total rows: " << sbm.rows() << " / cols: " << sbm.cols() << std::endl ;
-	for ( unsigned i = 0 ; i < (unsigned) sbm.majorIndex().outerSize() ; ++ i )
+	for ( unsigned i = 0 ; i < (unsigned) sourceIndex.outerSize() ; ++ i )
 	{
-		out << i << ": " ;
-		for( typename bogus::SparseBlockMatrixBase< Derived >::MajorIndexType::InnerIterator it( sbm.majorIndex(), i ) ;
+		out << "Row " << i << ": " ;
+		for( typename SourceIndexType::InnerIterator it( sourceIndex, i ) ;
 			 it ; ++ it )
 		{
-			out << "(" << it.inner() << ";" << it.ptr() << ")" ;
+			out << " " << it.inner() << "@" << it.ptr() << "; " ;
 		}
 		out << std::endl ;
 	}
@@ -33,7 +40,7 @@ std::ostream& operator<<( std::ostream &out, const bogus::SparseBlockMatrixBase<
 	for ( unsigned i = 0 ; i < sbm.nBlocks() ; ++ i )
 	{
 		out << sbm.block(i) << std::endl ;
-		out << " --- " << std::endl ;
+		out << "^-- " << i << std::endl ;
 	}
 	return out ;
 }

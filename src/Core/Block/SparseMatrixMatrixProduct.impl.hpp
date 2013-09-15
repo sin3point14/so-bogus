@@ -499,9 +499,9 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 		ProductIndex productIndex  ;
 
 		{
-			SparseBlockIndexComputer< typename Prod::PlainLhsMatrixType, LhsTraits::is_symmetric,
+			SparseBlockIndexComputer< typename Prod::PlainLhsMatrixType,
 					ColWise, Prod::transposeLhs> lhsIndexComputer ( *lhs ) ;
-			SparseBlockIndexComputer< typename Prod::PlainRhsMatrixType, RhsTraits::is_symmetric,
+			SparseBlockIndexComputer< typename Prod::PlainRhsMatrixType,
 					!ColWise, Prod::transposeRhs> rhsIndexComputer ( *rhs ) ;
 
 			productIndex.compute( majorIndex().outerSize(), minorIndex().outerSize(),

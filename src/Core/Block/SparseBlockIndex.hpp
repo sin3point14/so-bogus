@@ -206,6 +206,11 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 		return nnz ;
 	}
 
+	void changePtr( const InnerIterator& it, BlockPtr ptr )
+	{
+		const_cast< BlockPtr& >( it.asStdIterator()->second ) = ptr ;
+	}
+
 } ;
 
 template < bool Compressed, typename Index_, typename BlockPtr_,  template <typename> class ArrayType >
@@ -285,7 +290,8 @@ struct SparseBlockIndexTraits<  SparseBlockIndex< Compressed, Index_, BlockPtr_,
 		Index inner() const { return m_it->first ; }
 		BlockPtr ptr() const { return m_it->second ; }
 
-		typename SparseBlockIndexType::Inner::const_iterator toStdIterator() const { return m_it ; }
+
+		typename SparseBlockIndexType::Inner::const_iterator asStdIterator() const { return m_it ; }
 	private:
 
 		typename SparseBlockIndexType::Inner::const_iterator m_it ;

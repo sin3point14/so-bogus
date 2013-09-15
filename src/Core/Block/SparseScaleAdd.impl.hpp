@@ -54,9 +54,9 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 	// I - Compute non-zeros
 	{
 
-		SparseBlockIndexComputer< OtherDerived, OtherTraits::is_symmetric, Traits::is_col_major, Transpose >
+		SparseBlockIndexComputer< OtherDerived, Traits::is_col_major, Transpose >
 				indexComputer( rhs ) ;
-		typedef typename SparseBlockIndexComputer< OtherDerived, OtherTraits::is_symmetric, Traits::is_col_major, Transpose >::ReturnType
+		typedef typename SparseBlockIndexComputer< OtherDerived, Traits::is_col_major, Transpose >::ReturnType
 				SourceIndexType ;
 		const SourceIndexType &rhsIndex = indexComputer.get() ;
 

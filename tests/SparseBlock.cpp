@@ -727,3 +727,47 @@ TEST( SparseBlock, YoDawg )
 	EXPECT_EQ( res1 + res2, sbm2 * rhs ) ;
 	EXPECT_EQ( sbm*res2, sbm3 * rhs ) ;
 }
+
+TEST( SparseBlock, Permutation)
+{
+	bogus::SparseBlockMatrix< Eigen::Matrix2i > sbm ;
+
+	sbm.setCols( 8 );
+	sbm.setRows( 8 );
+	unsigned perm[8] = { 3,1,4,2,0,7,6,5 } ;
+
+	for( unsigned i = 0 ; i < 8 ; ++ i )
+	{
+		for( unsigned j = 0 ; j < 8 ; ++ j )
+		{
+			sbm.insertBack( i, j ) << i, 0, 0, j ;
+		}
+	}
+	sbm.finalize();
+
+	sbm.applyPermutation( &perm[0] ) ;
+
+	for( unsigned i = 0 ; i < 8 ; ++ i )
+	{
+		for( unsigned j = 0 ; j < 8 ; ++ j )
+		{
+			ASSERT_EQ( sbm.block( i, j )( 0, 0 ), (int)perm[i] ) ;
+			ASSERT_EQ( sbm.block( i, j )( 1, 1 ), (int)perm[j] ) ;
+		}
+	}
+
+	sbm += sbm.transpose() ;
+
+	bogus::SparseBlockMatrix< Eigen::Matrix2i, bogus::SYMMETRIC > ssbm ( sbm ) ;
+	ssbm.applyPermutation( &perm[0] ) ;
+
+	for( unsigned i = 0 ; i < 8 ; ++ i )
+	{
+		for( unsigned j = 0 ; j <= i ; ++ j )
+		{
+			ASSERT_EQ( ssbm.block( i, j )( 0, 0 ), (int)(perm[perm[i]] + perm[perm[j]]) ) ;
+			ASSERT_EQ( ssbm.block( i, j )( 1, 1 ), (int)(perm[perm[j]] + perm[perm[i]]) ) ;
+		}
+	}
+
+}

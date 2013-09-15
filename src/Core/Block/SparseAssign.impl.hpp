@@ -137,10 +137,9 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 		clear() ;
 		reserve( source.blocks().size() ) ;
 
-		SparseBlockIndexComputer< OtherDerived, OtherTraits::is_symmetric, Traits::is_col_major, Transpose >
-				indexComputer( source ) ;
-		typedef typename SparseBlockIndexComputer< OtherDerived, OtherTraits::is_symmetric, Traits::is_col_major, Transpose >::ReturnType
-				SourceIndexType ;
+		typedef SparseBlockIndexComputer< OtherDerived, Traits::is_col_major, Transpose > IndexComputerType ;
+		IndexComputerType indexComputer( source ) ;
+		typedef typename IndexComputerType::ReturnType SourceIndexType ;
 		const SourceIndexType &sourceIndex = indexComputer.get() ;
 
 		typedef BlockTransposeOption<

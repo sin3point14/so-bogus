@@ -185,10 +185,6 @@ public:
 	//! \sa clear()
 	void setZero() { clear() ; }
 
-	//! Removes all blocks for which \c is_zero( \c block, \c precision ) is \c true
-	/*! This function compacts the blocks and rebuild the index, which can be slow */
-	Derived& prune( const Scalar precision = 0 ) ;
-
 	//! Returns the number of (non-zero) blocks of the matrix
 	std::size_t nBlocks() const { return blocks().size() ; }
 	std::size_t size() const { return nBlocks() ; }
@@ -359,6 +355,22 @@ public:
 
 	//@}
 
+	//! \name Miscellaneous operations
+	//@{
+	//! Removes all blocks for which \c is_zero( \c block, \c precision ) is \c true
+	/*! This function compacts the blocks and rebuild the index, which can be slow */
+	Derived& prune( const Scalar precision = 0 ) ;
+
+	//! Sets *this = P * (*this) * P.transpose().
+	/*! P is build such that its non-zeros blocks are P( i, indices[i] ) = Id.
+ 		This means that after a call to this this function, the block that was originally
+ 		at (indices[i],indices[j]) will end up at (i, j).
+		\warning The number of rows of blocks have to be equal to the number of columns of blocks.
+		\warning This method will move the blocks data so it remains cache-coherent. This is costly.
+	*/
+	Derived& applyPermutation( const unsigned* indices ) ;
+
+	//@}
 
 	//! \name Unsafe API
 	//@{
