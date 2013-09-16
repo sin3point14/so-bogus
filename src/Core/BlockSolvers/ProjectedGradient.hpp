@@ -40,11 +40,11 @@ public:
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const ;
 
 
-    void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix )
-    {
-        m_matrix = &matrix ;
-        Base::updateScalings() ;
-    }
+	void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix )
+	{
+		m_matrix = &matrix ;
+		Base::updateScalings() ;
+	}
 
 protected:
 
@@ -54,7 +54,15 @@ protected:
 	void projectOnConstraints( const NSLaw &projector, VectorT &x ) const ;
 
 	//! Sets up the default values for all parameters
-	void init() ;
+	void init()
+	{
+		m_tol = 1.e-6 ;
+		m_maxIters = 300 ;
+		m_lsIters = 8 ;
+		m_lsOptimisticFactor = 2 ;
+		m_lsPessimisticFactor = .5 ;
+		m_lsArmijoCriterion = 1.e-4;
+	}
 
 	using Base::m_matrix ;
 	using Base::m_maxIters ;

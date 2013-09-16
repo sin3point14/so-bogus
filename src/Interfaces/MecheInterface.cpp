@@ -24,8 +24,9 @@
 
 #include "../Core/Block.impl.hpp"
 #include "../Core/Block.io.hpp"
-#include "../Core/BlockSolvers/GaussSeidel.impl.hpp"
-#include "../Core/BlockSolvers/ProjectedGradient.impl.hpp"
+#include "../Core/BlockSolvers/GaussSeidel.hpp"
+#include "../Core/BlockSolvers/ProjectedGradient.hpp"
+#include "../Core/BlockSolvers/Coloring.impl.hpp"
 
 #include <algorithm>
 
@@ -213,15 +214,6 @@ double MecheFrictionProblem::solve(
 	// r to local coords
 	Eigen::VectorXd r_loc = m_primal->E.transpose() * Eigen::VectorXd::Map( r, 3*n ) ;
 
-	// Setup GS parameters
-	bogus::DualFrictionProblem<3u>::GaussSeidelType gs ;
-	if( tol != 0. ) gs.setTol( tol );
-	if( maxIters != 0 ) gs.setMaxIters( maxIters );
-	gs.enableColoring( maxThreads > 1 );
-	gs.setMaxThreads( maxThreads );
-
-	gs.setAutoRegularization( regularization ) ;
-	gs.useInfinityNorm( useInfinityNorm ) ;
 
 	Signal< unsigned, double > callback ;
 	callback.connect( *this, &MecheFrictionProblem::ackCurrentResidual );
@@ -252,6 +244,26 @@ double MecheFrictionProblem::solve(
 			res = m_dual->solveCadoux( pg, r_loc.data(), cadouxIters, &callback ) ;
 		}
 	} else {
+		// Setup GS parameters
+		bogus::DualFrictionProblem<3u>::GaussSeidelType gs ;
+
+		if( tol != 0. ) gs.setTol( tol );
+		if( maxIters != 0 ) gs.setMaxIters( maxIters );
+
+		gs.setMaxThreads( maxThreads );
+		gs.setAutoRegularization( regularization ) ;
+		gs.useInfinityNorm( useInfinityNorm ) ;
+
+		const bool useColoring = maxThreads > 1 ;
+		gs.coloring().update( useColoring, m_dual->W );
+
+		m_dual->undoPermutation() ;
+		if( useColoring )
+		{
+			m_dual->applyPermutation( gs.coloring().permutation ) ;
+			gs.coloring().resetPermutation();
+		}
+
 		if( staticProblem || cadouxIters == 0 )
 		{
 			gs.callback().connect( callback );
@@ -259,6 +271,7 @@ double MecheFrictionProblem::solve(
 		} else {
 			res = m_dual->solveCadoux( gs, r_loc.data(), cadouxIters, &callback ) ;
 		}
+
 	}
 
 	// compute v

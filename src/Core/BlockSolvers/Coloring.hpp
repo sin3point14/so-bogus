@@ -18,40 +18,45 @@ namespace bogus {
 //! Coloring
 struct Coloring {
 
-    std::vector< std::size_t > 	  permutation ;
-    std::vector< std::ptrdiff_t > colors ;
+	std::vector< std::size_t > 	  permutation ;
+	std::vector< std::ptrdiff_t > colors ;
 
-    Coloring() : upToDate( false )
-    {}
+	Coloring()
+	{}
 
-    void invalidate() { upToDate = false ; }
+	//! Computes a coloring for \p matrix, or simply reset it if \p enable is false
+	template < typename Derived >
+	void update( const bool enable, const BlockMatrixBase< Derived >& matrix ) ;
 
-    template < typename Derived >
-    void update( const bool enable, const BlockMatrixBase< Derived >& matrix ) ;
+	std::size_t size() const { return permutation.size() ; }
 
-
-private:
-
-    bool upToDate ;
-
-    void reset( std::size_t n )
-    {
-        permutation.resize( n ) ;
-        colors.clear() ;
-        colors.push_back( 0 ) ;
-        colors.push_back( n ) ;
-
+	//! Sets the permutation to the identity. Keep the current colors.
+	void resetPermutation( )
+	{
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-        for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) n ; ++ i ) { permutation[i] = i ; }
-    }
+		for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) permutation.size() ; ++ i )
+		{ permutation[i] = i ; }
+	}
 
-    template < typename Derived >
-    void compute( const SparseBlockMatrixBase< Derived >& matrix ) ;
+private:
 
-    template < typename Derived >
-    void compute( const BlockMatrixBase< Derived >& matrix ) ;
+	void reset( std::size_t n )
+	{
+		colors.clear() ;
+		colors.push_back( 0 ) ;
+		colors.push_back( n ) ;
+
+		permutation.resize( n ) ;
+		resetPermutation();
+	}
+
+	template < typename Derived >
+	void compute( const SparseBlockMatrixBase< Derived >& matrix ) ;
+
+	template < typename Derived >
+	void compute( const BlockMatrixBase< Derived >& matrix ) ;
 } ;
 
 }

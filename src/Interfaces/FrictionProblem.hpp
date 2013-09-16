@@ -78,7 +78,7 @@ struct DualFrictionProblem
 	Eigen::VectorXd b ;
 
 	//! Coulomb friction coefficients
-	const double *mu ;
+	Eigen::VectorXd mu ;
 
 	//! Computes this DualFrictionProblem from the given \p primal
 	void computeFrom( PrimalFrictionProblem< Dimension >& primal ) ;
@@ -97,13 +97,11 @@ struct DualFrictionProblem
 	/*!
 	  \param gs The GaussSeidel< WType > solver to use
 	  \param r  Both the current force
-	  \param u  Both the current relative velocity, defines as W*r + b
-	  \param staticProblem If true, solve this problem as a \b SOCQP instead of a Coulomb Friction problem
+	  \param staticProblem If true, eval this problem as a \b SOCQP instead of a Coulomb Friction problem
 
 	  \returns the error as returned by the GaussSeidel::eval() function
 	  */
-	double evalWith( const GaussSeidelType &gs, const double * r, const double *u, const bool staticProblem = false ) const ;
-
+	double evalWith( const GaussSeidelType &gs, const double * r, const bool staticProblem = false ) const ;
 
 	//! Solves this problem using the Cadoux algorithm ( with fixed-point iteration )
 	/*!
@@ -115,9 +113,23 @@ struct DualFrictionProblem
 	  \returns the error as returned by the GaussSeidel::solve() function
 	  */
 	double solveCadoux( GaussSeidelType &gs, double * r, const unsigned fpIterations,
-	       const Signal< unsigned, double >* callback = 0 ) const ;
+		   const Signal< unsigned, double >* callback = 0 ) const ;
 	double solveCadoux( ProjectedGradientType &pg, double * r, const unsigned fpIterations,
-	       const Signal< unsigned, double >* callback = 0 ) const ;
+		   const Signal< unsigned, double >* callback = 0 ) const ;
+
+
+	//! \warning To use the permutation releated functions, all the blocks have to have the same size
+	void applyPermutation( const std::vector< std::size_t > &permutation ) ;
+	void undoPermutation() ;
+	bool permuted() const { return !m_permutation.empty() ; }
+
+	const std::vector< std::size_t > &permutation() const { return m_permutation ; }
+	const std::vector< std::size_t > &invPermutation() const { return m_invPermutation ; }
+private:
+
+	// Current permutation of contact indices
+	std::vector< std::size_t > m_permutation ;
+	std::vector< std::size_t > m_invPermutation ;
 } ;
 
 } //namespace bogus

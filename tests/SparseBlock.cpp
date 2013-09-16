@@ -734,7 +734,7 @@ TEST( SparseBlock, Permutation)
 
 	sbm.setCols( 8 );
 	sbm.setRows( 8 );
-	unsigned perm[8] = { 3,1,4,2,0,7,6,5 } ;
+	std::size_t perm[8] = { 3,1,4,2,0,7,6,5 } ;
 
 	for( unsigned i = 0 ; i < 8 ; ++ i )
 	{

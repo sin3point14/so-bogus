@@ -24,22 +24,12 @@ namespace bogus
 {
 
 template < typename BlockMatrixType >
-void GaussSeidel< BlockMatrixType >::init( )
-{
-	m_tol = 1.e-6 ;
-	m_maxIters = 250 ;
-	m_enableColoring =  false ;
-	m_maxThreads =  0 ;
-	m_evalEvery = 25  ;
-	m_skipTol = m_tol * m_tol ;
-	m_skipIters = 10 ;
-	m_autoRegularization = 0. ;
-}
-
-template < typename BlockMatrixType >
 void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatrixType > & M )
 {
-	if( m_matrix != &M ) m_coloring.invalidate();
+	if( m_matrix != &M && ( m_matrix != NULL ||
+							m_coloring.size() != (std::size_t) M.rowsOfBlocks() )) {
+		m_coloring.update( false, M );
+	}
 
 	m_matrix = &M ;
 	Base::updateScalings() ;
@@ -109,8 +99,6 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 
 	const Index n = m_matrix->rowsOfBlocks() ;
 	std::vector< unsigned char > skip( n, 0 ) ;
-
-	m_coloring.update( m_enableColoring, *m_matrix ) ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 	const int curMaxThreads = omp_get_max_threads() ;

@@ -363,12 +363,12 @@ public:
 
 	//! Sets *this = P * (*this) * P.transpose().
 	/*! P is build such that its non-zeros blocks are P( i, indices[i] ) = Id.
- 		This means that after a call to this this function, the block that was originally
- 		at (indices[i],indices[j]) will end up at (i, j).
+		This means that after a call to this this function, the block that was originally
+		at (indices[i],indices[j]) will end up at (i, j).
 		\warning The number of rows of blocks have to be equal to the number of columns of blocks.
 		\warning This method will move the blocks data so it remains cache-coherent. This is costly.
 	*/
-	Derived& applyPermutation( const unsigned* indices ) ;
+	Derived& applyPermutation( const std::size_t* indices ) ;
 
 	//@}
 

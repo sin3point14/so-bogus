@@ -19,17 +19,6 @@ namespace bogus
 {
 
 template < typename BlockMatrixType >
-void ProjectedGradient< BlockMatrixType >::init( )
-{
-	m_tol = 1.e-6 ;
-	m_maxIters = 300 ;
-	m_lsIters = 8 ;
-	m_lsOptimisticFactor = 2 ;
-	m_lsPessimisticFactor = .5 ;
-	m_lsArmijoCriterion = 1.e-4;
-}
-
-template < typename BlockMatrixType >
 template < typename NSLaw, typename RhsT, typename ResT >
 typename ProjectedGradient< BlockMatrixType >::Scalar
 ProjectedGradient< BlockMatrixType >::solve(
@@ -48,7 +37,7 @@ ProjectedGradient< BlockMatrixType >::solve(
 	Mx = (*m_matrix)*x ;
 	Scalar J = x.dot( .5 * Mx + b ) ;
 
-    Scalar res = -1, alpha = 1 ;
+	Scalar res = -1, alpha = 1 ;
 
 	for( unsigned pgIter = 0 ; pgIter < m_maxIters ; ++pgIter )
 	{

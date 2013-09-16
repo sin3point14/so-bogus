@@ -83,17 +83,11 @@ public:
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x, bool tryZeroAsWell = true ) const ;
 
 
-	//! Sets whether the solver is allowed to trade off determiniticity for speed
+	//! Access to the current Coloring. Will be reset whenever the matrix is changed.
 	/*! Determiniticy is achieved through the mean of contact coloring ;
 	  contacts that do not interact directly together can chare the same color,
 	  and all contacts within a given color can be solver in parallel */
-	void enableColoring( bool enable = true ) {
-		if( m_enableColoring != enable )
-		{
-			m_enableColoring = enable ;
-			m_coloring.invalidate();
-		}
-	}
+	Coloring& coloring( ) { return m_coloring ; }
 
 	//! Sets the maximum number of threads that the solver can use.
 	/*! If \p maxThreads is zero, then it will use the current OpenMP setting.
@@ -103,7 +97,7 @@ public:
 	  order in which threads solve contacts.
 
 	  On the other hand, the algorithm will run much faster.
- 	*/
+	*/
 	void setMaxThreads( unsigned maxThreads = 0 ) {
 		m_maxThreads = maxThreads ;
 	}
@@ -148,7 +142,16 @@ public:
 protected:
 
 	//! Sets up the default values for all parameters
-	void init() ;
+	void init()
+	{
+		m_tol = 1.e-6 ;
+		m_maxIters = 250 ;
+		m_maxThreads =  0 ;
+		m_evalEvery = 25  ;
+		m_skipTol = m_tol * m_tol ;
+		m_skipIters = 10 ;
+		m_autoRegularization = 0. ;
+	}
 
 	using Base::m_matrix ;
 	using Base::m_maxIters ;
@@ -160,8 +163,6 @@ protected:
 	typename ResizableSequenceContainer< DiagonalMatrixType >::Type m_localMatrices ;
 	typename GlobalProblemTraits::DynVector m_regularization ;
 
-	//! See enableColoring(). Defaults to false.
-	bool m_enableColoring ;
 	//! See setMaxThreads(). Defaults to 0 .
 	unsigned m_maxThreads ;
 
@@ -175,8 +176,8 @@ protected:
 	//! \sa setAutoRegularization(). Defaults to 0.
 	Scalar m_autoRegularization ;
 
-	// I dislike mutable as well, but I dislike the other solutions even more
-	mutable Coloring m_coloring ;
+	//! \sa coloring()
+	Coloring m_coloring ;
 } ;
 
 } //namespace bogus

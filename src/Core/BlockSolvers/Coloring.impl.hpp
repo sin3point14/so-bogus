@@ -21,55 +21,55 @@ template < typename Derived >
 void Coloring::compute( const SparseBlockMatrixBase< Derived >& matrix )
 {
 
-    // Affects each contact to the first color with which it does not have any interaction
-    // This is not optimimal, but optimality would be costly
+	// Affects each contact to the first color with which it does not have any interaction
+	// This is not optimimal, but optimality would be costly
 
-    const std::ptrdiff_t n = static_cast< std::ptrdiff_t >( matrix.rowsOfBlocks() ) ;
+	const std::ptrdiff_t n = static_cast< std::ptrdiff_t >( matrix.rowsOfBlocks() ) ;
 
-    std::vector< std::vector< std::ptrdiff_t > > tmp_colors ;
-    for( std::ptrdiff_t i = 0 ; i < n ; ++i )
-    {
-        bool ok = false ;
+	std::vector< std::vector< std::ptrdiff_t > > tmp_colors ;
+	for( std::ptrdiff_t i = 0 ; i < n ; ++i )
+	{
+		bool ok = false ;
 
-        const unsigned nColors = tmp_colors.size() ;
+		const unsigned nColors = tmp_colors.size() ;
 
-        for( unsigned c = 0 ; c < nColors ; ++c )
-        {
-            std::vector< std::ptrdiff_t > &color = tmp_colors[ c ] ;
-            ok = true ;
-            for( typename Derived::MajorIndexType::InnerIterator it( matrix.majorIndex(), i ) ;
-                 it && it.inner() < i ; ++ it )
-            {
-                if( color.end() !=
-                        std::lower_bound( color.begin(), color.end(), it.inner() ) )
-                {
-                    ok = false ;
-                    break ;
-                }
-            }
-            if( ok )
-            {
-                color.push_back( i ) ;
-                break ;
-            }
-        }
-        if( !ok )
-        {
-            tmp_colors.resize( nColors+1 ) ;
-            tmp_colors.back().push_back( i ) ;
-        }
-    }
+		for( unsigned c = 0 ; c < nColors ; ++c )
+		{
+			std::vector< std::ptrdiff_t > &color = tmp_colors[ c ] ;
+			ok = true ;
+			for( typename Derived::MajorIndexType::InnerIterator it( matrix.majorIndex(), i ) ;
+				 it && it.inner() < i ; ++ it )
+			{
+				if( color.end() !=
+						std::lower_bound( color.begin(), color.end(), it.inner() ) )
+				{
+					ok = false ;
+					break ;
+				}
+			}
+			if( ok )
+			{
+				color.push_back( i ) ;
+				break ;
+			}
+		}
+		if( !ok )
+		{
+			tmp_colors.resize( nColors+1 ) ;
+			tmp_colors.back().push_back( i ) ;
+		}
+	}
 
-    permutation.clear() ;
+	permutation.clear() ;
 
-    colors.resize( tmp_colors.size()+1 ) ;
-    colors[ 0 ] = 0 ;
+	colors.resize( tmp_colors.size()+1 ) ;
+	colors[ 0 ] = 0 ;
 
-    for( unsigned c = 0 ; c < tmp_colors.size() ; ++c )
-    {
-        colors[ c+1 ] = colors[c] + tmp_colors[c].size() ;
-        permutation.insert( permutation.end(), tmp_colors[c].begin(), tmp_colors[c].end() ) ;
-    }
+	for( unsigned c = 0 ; c < tmp_colors.size() ; ++c )
+	{
+		colors[ c+1 ] = colors[c] + tmp_colors[c].size() ;
+		permutation.insert( permutation.end(), tmp_colors[c].begin(), tmp_colors[c].end() ) ;
+	}
 
 }
 
@@ -80,16 +80,12 @@ void Coloring::compute( const BlockMatrixBase< Derived >& matrix )
 template < typename Derived >
 void Coloring::update( const bool enable, const BlockMatrixBase< Derived >& matrix )
 {
-    if( upToDate ) return ;
-
-    if( enable )
-    {
-        compute( matrix.derived() ) ;
-    } else {
-        reset( matrix.rowsOfBlocks() ) ;
-    }
-
-    upToDate = true ;
+	if( enable )
+	{
+		compute( matrix.derived() ) ;
+	} else {
+		reset( matrix.rowsOfBlocks() ) ;
+	}
 }
 
 

@@ -331,14 +331,48 @@ Derived& SparseBlockMatrixBase< Derived >::prune( const Scalar precision )
 	return derived() ;
 }
 
+namespace perm_impl {
+template< typename T, typename U >
+typename EnableIf<U::RowsAtCompileTime == T::RowsAtCompileTime, void >::ReturnType
+swap( T t, U u )
+{
+	using std::swap ;
+	for( unsigned i = 0 ; i < u.rows() ; ++i )
+		swap( t[i], u[i] ) ;
+}
+}
+
+template < typename IndexT, typename ArrayT >
+void applyPermutation( const IndexT n, const IndexT* permutation, ArrayT& array )
+{
+	using std::swap ;
+	using perm_impl::swap ;
+
+	std::vector< bool > swapped( n, false ) ;
+	for( IndexT i = 0 ; i < n ; ++i )
+	{
+		if( swapped[ i ] ) continue ;
+
+		for( IndexT j = i, p ;; j = p ) {
+			p = permutation[j] ;
+			swapped[ j ] = true ;
+
+			if( swapped[p] )
+				break ;
+
+			swap( array[j], array[p] ) ;
+		}
+	}
+}
+
 template < typename Derived >
-Derived& SparseBlockMatrixBase< Derived >::applyPermutation( const unsigned* indices )
+Derived& SparseBlockMatrixBase< Derived >::applyPermutation( const std::size_t* indices )
 {
 
 	assert( rowsOfBlocks() == colsOfBlocks() ) ;
 
-	std::vector< unsigned > inv( rowsOfBlocks() ) ;
-	for( unsigned i = 0 ; i < inv.size() ; ++i )
+	std::vector< std::size_t > inv( rowsOfBlocks() ) ;
+	for( std::size_t i = 0 ; i < inv.size() ; ++i )
 		inv[ indices[i] ] = i ;
 
 	const MajorIndexType &sourceIndex = majorIndex() ;
@@ -387,27 +421,14 @@ Derived& SparseBlockMatrixBase< Derived >::applyPermutation( const unsigned* ind
 	m_majorIndex = destIndex ;
 	assert( m_majorIndex.valid ) ;
 
-	std::vector< bool > swapped( nBlocks(), false ) ;
-	for( BlockPtr i = 0 ; i < nBlocks() ; ++i )
-	{
-		if( swapped[ i ] ) continue ;
-
-		for( BlockPtr j = i, p ;; j = p ) {
-			p = blocksPermutation[j] ;
-			swapped[ j ] = true ;
-
-			if( swapped[p] )
-				break ;
-
-			std::swap( m_blocks[j], m_blocks[p] ) ;
-		}
-	}
-
+	bogus::applyPermutation( nBlocks(), &blocksPermutation[0], m_blocks ) ;
 
 	m_minorIndex.valid = empty() ;
 
 	m_transposeIndex.valid = false ;
 	m_transposeBlocks.clear()  ;
+
+	Finalizer::finalize( *this ) ;
 
 	return derived() ;
 }

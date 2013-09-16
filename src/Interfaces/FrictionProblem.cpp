@@ -45,55 +45,24 @@ void DualFrictionProblem< Dimension >::computeFrom(PrimalFrictionProblem<Dimensi
 	//W
 	W = primal.H * ( primal.MInv * primal.H.transpose() ) ;
 
-	W.cacheTranspose() ;
-
 	// M^-1 f, b
 	b = primal.E.transpose() * Eigen::VectorXd::Map( primal.w, primal.H.rows())
 			- primal.H * ( primal.MInv * Eigen::VectorXd::Map( primal.f, primal.H.cols() ) );
 
-	mu = primal.mu ;
+	mu = Eigen::VectorXd::Map( primal.mu, W.rowsOfBlocks() ) ;
 }
+namespace fp_impl {
 
-template< unsigned Dimension >
-double DualFrictionProblem< Dimension >::solveWith( GaussSeidelType &gs, double *r,
-									   const bool staticProblem ) const
+template< unsigned Dimension, typename EigenDerived, typename Index >
+void applyPermutation(
+		const std::vector< std::size_t >& permutation,
+		Eigen::MatrixBase< EigenDerived > &vec,
+		const Index* offsets
+		)
 {
-	gs.setMatrix( W );
-	typename Eigen::VectorXd::MapType r_map ( r, W.rows() ) ;
-
-	double res = staticProblem
-			? gs.solve( SOCLawType     ( W.rowsOfBlocks(), mu ), b, r_map )
-			: gs.solve( CoulombLawType ( W.rowsOfBlocks(), mu ), b, r_map ) ;
-
-	return res ;
+	Segmenter< Dimension, EigenDerived, Index > segmenter( vec.derived(), offsets ) ;
+	bogus::applyPermutation( permutation.size(), &permutation[0], segmenter ) ;
 }
-
-template< unsigned Dimension >
-double DualFrictionProblem< Dimension >::solveWith( ProjectedGradientType &pg,
-													double *r ) const
-{
-	pg.setMatrix( W );
-	typename Eigen::VectorXd::MapType r_map ( r, W.rows() ) ;
-
-	return pg.solve( SOCLawType ( W.rowsOfBlocks(), mu ), b, r_map ) ;
-}
-
-template< unsigned Dimension >
-double DualFrictionProblem< Dimension >::evalWith( const GaussSeidelType &gs,
-											   const double *r, const double *u,
-									   const bool staticProblem ) const
-{
-	typename Eigen::VectorXd::ConstMapType r_map ( r, W.rows() ) ;
-	typename Eigen::VectorXd::ConstMapType u_map ( u, W.rows() ) ;
-
-	double res = staticProblem
-			? gs.eval( SOCLawType     ( W.rowsOfBlocks(), mu ), u_map, r_map )
-			: gs.eval( CoulombLawType ( W.rowsOfBlocks(), mu ), u_map, r_map ) ;
-
-	return res ;
-}
-
-namespace impl {
 
 template< unsigned Dimension, template <typename> class Method >
 static double solveCadoux( const DualFrictionProblem< Dimension >& dual,
@@ -102,11 +71,14 @@ static double solveCadoux( const DualFrictionProblem< Dimension >& dual,
 {
 	const std::ptrdiff_t n = dual.W.rowsOfBlocks() ;
 
-	typename DualFrictionProblem< Dimension >::CoulombLawType coulombLaw( n, dual.mu ) ;
-	typename DualFrictionProblem< Dimension >::SOCLawType         socLaw( n, dual.mu ) ;
+	typename DualFrictionProblem< Dimension >::CoulombLawType coulombLaw( n, dual.mu.data() ) ;
+	typename DualFrictionProblem< Dimension >::SOCLawType         socLaw( n, dual.mu.data() ) ;
 
 	gs.setMatrix( dual.W );
 	Eigen::Map< Eigen::VectorXd > r_map ( r, dual.W.rows() ) ;
+
+	if( dual.permuted() )
+		fp_impl::applyPermutation< Dimension >( dual.permutation(), r_map, dual.W.majorIndex().innerOffsetsData() ) ;
 
 	Eigen::VectorXd s( dual.W.rows() ) ;
 
@@ -140,23 +112,116 @@ static double solveCadoux( const DualFrictionProblem< Dimension >& dual,
 
 	gs.setTol( tol ) ;
 
+	if( dual.permuted() )
+		fp_impl::applyPermutation< Dimension >( dual.invPermutation(), r_map, dual.W.majorIndex().innerOffsetsData() ) ;
+
 	return res ;
 }
 
-} //namespace impl
+} //namespace fp_impl
+
+template< unsigned Dimension >
+double DualFrictionProblem< Dimension >::solveWith( GaussSeidelType &gs, double *r,
+									   const bool staticProblem ) const
+{
+	gs.setMatrix( W );
+	typename Eigen::VectorXd::MapType r_map ( r, W.rows() ) ;
+
+	if( permuted())
+		fp_impl::applyPermutation< Dimension >( m_permutation, r_map, W.majorIndex().innerOffsetsData() ) ;
+
+	double res = staticProblem
+			? gs.solve( SOCLawType     ( W.rowsOfBlocks(), mu.data() ), b, r_map )
+			: gs.solve( CoulombLawType ( W.rowsOfBlocks(), mu.data() ), b, r_map ) ;
+
+	if( permuted())
+		fp_impl::applyPermutation< Dimension >( m_invPermutation, r_map, W.majorIndex().innerOffsetsData() ) ;
+
+	return res ;
+}
+
+template< unsigned Dimension >
+double DualFrictionProblem< Dimension >::solveWith( ProjectedGradientType &pg,
+													double *r ) const
+{
+	pg.setMatrix( W );
+	typename Eigen::VectorXd::MapType r_map ( r, W.rows() ) ;
+
+	if( permuted())
+		fp_impl::applyPermutation< Dimension >( m_permutation, r_map, W.majorIndex().innerOffsetsData() ) ;
+
+	const double res = pg.solve( SOCLawType ( W.rowsOfBlocks(), mu.data() ), b, r_map ) ;
+
+	if( permuted())
+		fp_impl::applyPermutation< Dimension >( m_invPermutation, r_map, W.majorIndex().innerOffsetsData() ) ;
+
+	return res ;
+}
+
+template< unsigned Dimension >
+double DualFrictionProblem< Dimension >::evalWith( const GaussSeidelType &gs,
+											   const double *r_data,
+									   const bool staticProblem ) const
+{
+	Eigen::VectorXd r = Eigen::VectorXd::Map( r_data, W.rows() ) ;
+	Eigen::VectorXd u = W*r + b ;
+
+	if( permuted())
+		fp_impl::applyPermutation< Dimension >( m_permutation, r, W.majorIndex().innerOffsetsData() ) ;
+
+
+	double res = staticProblem
+			? gs.eval( SOCLawType     ( W.rowsOfBlocks(), mu.data() ), u, r )
+			: gs.eval( CoulombLawType ( W.rowsOfBlocks(), mu.data() ), u, r ) ;
+
+	return res ;
+}
+
 
 template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::solveCadoux(GaussSeidelType &gs, double *r, const unsigned cadouxIterations,
 		const Signal<unsigned, double> *callback ) const
 {
-	return impl::solveCadoux( *this, gs, r, cadouxIterations, callback ) ;
+	return fp_impl::solveCadoux( *this, gs, r, cadouxIterations, callback ) ;
 }
 
 template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::solveCadoux(ProjectedGradientType &pg, double *r, const unsigned cadouxIterations,
 		const Signal<unsigned, double> *callback ) const
 {
-	return impl::solveCadoux( *this, pg, r, cadouxIterations, callback ) ;
+	return fp_impl::solveCadoux( *this, pg, r, cadouxIterations, callback ) ;
+}
+
+template< unsigned Dimension >
+void DualFrictionProblem< Dimension >::applyPermutation(
+		const std::vector<std::size_t> &permutation)
+{
+	assert( !permuted() ) ;
+
+	m_permutation = permutation ;
+
+	m_invPermutation.resize( m_permutation.size() );
+	for( std::size_t i = 0 ; i < m_permutation.size() ; ++i )
+		m_invPermutation[ m_permutation[i] ] = i ;
+
+	W.applyPermutation( &m_permutation[0] ) ;
+	W.cacheTranspose();
+	fp_impl::applyPermutation< Dimension >( m_permutation, b, W.majorIndex().innerOffsetsData() ) ;
+	bogus::applyPermutation( m_permutation.size(), &m_permutation[0], mu ) ;
+}
+
+template< unsigned Dimension >
+void DualFrictionProblem< Dimension >::undoPermutation()
+{
+	if( !permuted() )
+		return ;
+
+	W.applyPermutation( &m_invPermutation[0] ) ;
+	W.cacheTranspose();
+	fp_impl::applyPermutation< Dimension >( m_invPermutation, b, W.majorIndex().innerOffsetsData() ) ;
+	bogus::applyPermutation( m_invPermutation.size(), &m_invPermutation[0], mu ) ;
+
+	m_permutation.clear() ;
 }
 
 #ifdef BOGUS_INSTANTIATE_2D_SOC

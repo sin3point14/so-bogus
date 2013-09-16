@@ -41,7 +41,7 @@ static double solve( const fclib_local* problem, const Eigen::SparseMatrixBase< 
 	dual.W.cacheTranspose();
 
 	dual.b = Eigen::VectorXd::Map( problem->q, problem->W->n ) ;
-	dual.mu = problem->mu ;
+	dual.mu = Eigen::VectorXd::Map( problem->mu, problem->W->n/Dimension ) ;
 
 	typename bogus::DualFrictionProblem< Dimension >::GaussSeidelType gs ;
 	gs.setTol( 1.e-12 ) ;
