@@ -263,6 +263,7 @@ double MecheFrictionProblem::solve(
 			m_dual->applyPermutation( gs.coloring().permutation ) ;
 			gs.coloring().resetPermutation();
 		}
+                m_dual->W.cacheTranspose() ;
 
 		if( staticProblem || cadouxIters == 0 )
 		{

@@ -205,7 +205,6 @@ void DualFrictionProblem< Dimension >::applyPermutation(
 		m_invPermutation[ m_permutation[i] ] = i ;
 
 	W.applyPermutation( &m_permutation[0] ) ;
-	W.cacheTranspose();
 	fp_impl::applyPermutation< Dimension >( m_permutation, b, W.majorIndex().innerOffsetsData() ) ;
 	bogus::applyPermutation( m_permutation.size(), &m_permutation[0], mu ) ;
 }
@@ -217,7 +216,6 @@ void DualFrictionProblem< Dimension >::undoPermutation()
 		return ;
 
 	W.applyPermutation( &m_invPermutation[0] ) ;
-	W.cacheTranspose();
 	fp_impl::applyPermutation< Dimension >( m_invPermutation, b, W.majorIndex().innerOffsetsData() ) ;
 	bogus::applyPermutation( m_invPermutation.size(), &m_invPermutation[0], mu ) ;
 
