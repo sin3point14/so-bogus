@@ -18,13 +18,11 @@
  * along with So-bogus.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "FrictionProblem.hpp"
+#include "FrictionProblem.impl.hpp"
 
-#include "../Core/Block.impl.hpp"
 #include "../Core/BlockSolvers/GaussSeidel.impl.hpp"
 #include "../Core/BlockSolvers/ProjectedGradient.impl.hpp"
 
-#include "../Extra/SecondOrder.impl.hpp"
 
 namespace bogus {
 
@@ -125,19 +123,8 @@ double DualFrictionProblem< Dimension >::solveWith( GaussSeidelType &gs, double 
 									   const bool staticProblem ) const
 {
 	gs.setMatrix( W );
-	typename Eigen::VectorXd::MapType r_map ( r, W.rows() ) ;
 
-	if( permuted())
-		fp_impl::applyPermutation< Dimension >( m_permutation, r_map, W.majorIndex().innerOffsetsData() ) ;
-
-	double res = staticProblem
-			? gs.solve( SOCLawType     ( W.rowsOfBlocks(), mu.data() ), b, r_map )
-			: gs.solve( CoulombLawType ( W.rowsOfBlocks(), mu.data() ), b, r_map ) ;
-
-	if( permuted())
-		fp_impl::applyPermutation< Dimension >( m_invPermutation, r_map, W.majorIndex().innerOffsetsData() ) ;
-
-	return res ;
+	return friction_problem::solve( *this, gs, r, staticProblem ) ;
 }
 
 template< unsigned Dimension >
@@ -145,36 +132,23 @@ double DualFrictionProblem< Dimension >::solveWith( ProjectedGradientType &pg,
 													double *r ) const
 {
 	pg.setMatrix( W );
-	typename Eigen::VectorXd::MapType r_map ( r, W.rows() ) ;
 
-	if( permuted())
-		fp_impl::applyPermutation< Dimension >( m_permutation, r_map, W.majorIndex().innerOffsetsData() ) ;
-
-	const double res = pg.solve( SOCLawType ( W.rowsOfBlocks(), mu.data() ), b, r_map ) ;
-
-	if( permuted())
-		fp_impl::applyPermutation< Dimension >( m_invPermutation, r_map, W.majorIndex().innerOffsetsData() ) ;
-
-	return res ;
+	return friction_problem::solve( *this, pg, r, true ) ;
 }
 
 template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::evalWith( const GaussSeidelType &gs,
-											   const double *r_data,
-									   const bool staticProblem ) const
+												   const double *r,
+												   const bool staticProblem ) const
 {
-	Eigen::VectorXd r = Eigen::VectorXd::Map( r_data, W.rows() ) ;
-	Eigen::VectorXd u = W*r + b ;
+	return friction_problem::eval( *this, gs, r, staticProblem ) ;
+}
 
-	if( permuted())
-		fp_impl::applyPermutation< Dimension >( m_permutation, r, W.majorIndex().innerOffsetsData() ) ;
-
-
-	double res = staticProblem
-			? gs.eval( SOCLawType     ( W.rowsOfBlocks(), mu.data() ), u, r )
-			: gs.eval( CoulombLawType ( W.rowsOfBlocks(), mu.data() ), u, r ) ;
-
-	return res ;
+template< unsigned Dimension >
+double DualFrictionProblem< Dimension >::evalWith( const ProjectedGradientType &gs,
+												   const double *r ) const
+{
+	return friction_problem::eval( *this, gs, r, true) ;
 }
 
 

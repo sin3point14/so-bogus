@@ -32,6 +32,9 @@ enum Method
 template < typename MatrixType >
 struct ProblemTraits ;
 
+template < template <typename> class Method, typename BlockMatrixType >
+class ConstrainedSolverBase ;
+
 template < typename BlockMatrixType >
 class GaussSeidel ;
 

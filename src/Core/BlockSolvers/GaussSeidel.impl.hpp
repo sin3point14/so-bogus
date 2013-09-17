@@ -14,7 +14,7 @@
 
 #include "GaussSeidel.hpp"
 #include "Coloring.impl.hpp"
-#include "ConstrainedSolverBase.impl.hpp"
+#include "GaussSeidelBase.impl.hpp"
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #include <omp.h>
@@ -32,29 +32,9 @@ void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatr
 	}
 
 	m_matrix = &M ;
-	Base::updateScalings() ;
 
-	const Index n = M.rowsOfBlocks() ;
-	m_localMatrices.resize( n ) ;
-	m_regularization.resize( n ) ;
-
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp parallel for
-#endif
-	for( Index i = 0 ; i <  n ; ++i )
-	{
-		m_localMatrices[i] = M.diagonal( i ) ;
-
-		if( m_autoRegularization > 0. )
-		{
-			m_regularization(i) = std::max( 0., m_autoRegularization - m_localMatrices[i].eigenvalues().real().minCoeff() ) ;
-			m_localMatrices[i].diagonal().array() += m_regularization(i) ;
-		} else m_regularization(i) = 0. ;
-
-	}
-
+	Base::updateLocalMatrices() ;
 }
-
 
 template < typename BlockMatrixType >
 template < typename NSLaw, typename RhsT, typename ResT >
@@ -106,7 +86,6 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	omp_set_num_threads( newMaxThreads ) ;
 #endif
 
-	// see [Daviet et al 2011], Algorithm 1
 	unsigned GSIter ;
 	for( GSIter = 1 ; GSIter <= m_maxIters ; ++GSIter )
 	{

@@ -102,6 +102,7 @@ struct DualFrictionProblem
 	  \returns the error as returned by the GaussSeidel::eval() function
 	  */
 	double evalWith( const GaussSeidelType &gs, const double * r, const bool staticProblem = false ) const ;
+	double evalWith( const ProjectedGradientType &gs, const double * r ) const ;
 
 	//! Solves this problem using the Cadoux algorithm ( with fixed-point iteration )
 	/*!
