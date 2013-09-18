@@ -1,4 +1,3 @@
-
 ####bogus
  is a template C++ 98 header-only **sparse block matrix** library. It allows to express in a concise way algebraic operations on sparse matrices whose elements can be a variety of block types, such as [Eigen](http://eigen.tuxfamily.org) dense or sparse matrices.
 
@@ -15,7 +14,7 @@ For more information, see [LICENCE.md](src/master/LICENSE.md).
 ###Documentation
 
 **bogus** includes documentation in the doxygen format, along with usage samples.
-Run `doxygen` from the `doc/doxygen` folder, or [browse it online](soon !).
+Run `doxygen` from the `doc/doxygen` folder, or [browse it online](http://gdaviet.fr/doc/bogus/master/doxygen/).
 
 ###Requirements
 
