@@ -6,11 +6,11 @@
  is a library that uses and completes bogus to solve systems with **second order cone constraints**, such as **Coulomb friction problems**.
 
 ###License
-**bogus** is released under the terms of  the  [Mozilla Public License v2.0](MPL-LICENSE-2.0.txt). 
+**bogus** is released under the terms of  the  [Mozilla Public License v2.0](src/master/MPL-LICENSE-2.0.txt). 
 
-**So-bogus** is released under the terms of the [GNU General Public License version 2](GPL-LICENSE-2.txt) or, at your option, any later version.
+**So-bogus** is released under the terms of the [GNU General Public License version 2](src/master/GPL-LICENSE-2.txt) or, at your option, any later version.
 
-For more information, see [LICENCE.md](LICENSE.md).
+For more information, see [LICENCE.md](src/master/LICENSE.md).
 
 ###Documentation
 
@@ -25,7 +25,7 @@ Apart from a C++98 compiler, the only requirement is  [Eigen](http://eigen.tuxfa
 and on Mac OSX 10.8 with both gcc 4.2 and clang 3.2. 
 Visual Studio 2012 ( and maybe earlier ) should also be able to compile and run the test suite, though no particular attention is given to this platform.
 
-For more information, see [INSTALL.md](INSTALL.md).
+For more information, see [INSTALL.md](src/master/INSTALL.md).
 
 
 ###About
