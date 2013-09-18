@@ -1,1 +1,39 @@
-So-BoGuS is a **B**l**o**ck **G**a**u**ss **S**eidel solver for **S**econd **o**rder cone problems.
+
+####bogus
+ is a template C++ 98 header-only **sparse block matrix** library. It allows to express in a concise way algebraic operations on sparse matrices whose elements can be a variety of block types, such as [Eigen](http://eigen.tuxfamily.org) dense or sparse matrices.
+
+####So-bogus
+ is a library that uses and completes bogus to solve systems with **second order cone constraints**, such as **Coulomb friction problems**.
+
+###License
+**bogus** is released under the terms of  the  [Mozilla Public License v2.0](MPL-LICENSE-2.0.txt). 
+
+**So-bogus** is released under the terms of the [GNU General Public License version 2](GPL-LICENSE-2.txt) or, at your option, any later version.
+
+For more information, see [LICENCE.md](LICENSE.md).
+
+###Documentation
+
+**bogus** includes documentation in the doxygen format, along with usage samples.
+Run `doxygen` from the `doc/doxygen` folder, or [browse it online](soon !).
+
+###Requirements
+
+Apart from a C++98 compiler, the only requirement is  [Eigen](http://eigen.tuxfamily.org).
+
+**bogus** has been successfully tested on a variety of Linux distributions  with gcc 4.5+,  
+and on Mac OSX 10.8 with both gcc 4.2 and clang 3.2. 
+Visual Studio 2012 ( and maybe earlier ) should also be able to compile and run the test suite, though no particular attention is given to this platform.
+
+For more information, see [INSTALL.md](INSTALL.md).
+
+
+###About
+**bogus** and **So-bogus** are Copyright 2013 Gilles Daviet <gdaviet@gmail.com>.
+
+**So-bogus** implements some algorithms initially developed within the [BiPop](http://bipop.inrialpes.fr) team at [Inria Rhônes-Alpes](http://inria.fr/en/centre/grenoble).
+
+
+
+
+
