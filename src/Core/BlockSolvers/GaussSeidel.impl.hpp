@@ -39,7 +39,7 @@ void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatr
 template < typename BlockMatrixType >
 template < typename NSLaw, typename RhsT, typename ResT >
 typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
-																					   const RhsT &b, ResT &x, bool tryZeroAsWell ) const
+																						 const RhsT &b, ResT &x, bool tryZeroAsWell ) const
 {
 	assert( m_matrix ) ;
 
@@ -91,7 +91,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	{
 
 #ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp parallel if (m_maxThreads != 1)
+#pragma omp parallel if (m_maxThreads != 1 && n > newMaxThreads*newMaxThreads )
 		{
 #endif
 			typename LocalProblemTraits::Vector lb, lx, ldx ;
@@ -121,7 +121,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 					if( !ok ) { ldx *= .5 ; }
 					xSegmenter[ i ] += ldx ;
 
-					const Scalar scaledSkipTol = m_scaling[ i ] * m_scaling[ i ] * m_skipTol ;
+					const Scalar scaledSkipTol = m_skipTol / ( m_scaling[ i ] * m_scaling[ i ] ) ;
 					if( ldx.squaredNorm() < scaledSkipTol || lx.squaredNorm() < scaledSkipTol )
 					{
 						skip[i] = m_skipIters ;
