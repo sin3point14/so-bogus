@@ -440,16 +440,27 @@ void set_identity( SparseBlockMatrixBase< Derived >& block )
 }
 
 template < typename Derived >
+typename SparseBlockMatrixBase< Derived >::BlockType&
+SparseBlockMatrixBase< Derived >::insertBackAndResize( Index row, Index col )
+{
+	BlockType& block = insertBack( row, col ) ;
+	resize( block, blockRows( row ), blockCols( col ) ) ;
+	return block ;
+}
+
+template < typename Derived >
 Derived& SparseBlockMatrixBase< Derived >::setIdentity(  )
 {
 	clear() ;
 
 	Index m = std::min( rowsOfBlocks(), colsOfBlocks() ) ;
 
-	reserve(m) ;
+	prealloc(m) ;
 	for( Index i = 0 ; i < m ; ++i )
 	{
-		set_identity( insertBackAndResize( i, i ) ) ;
+		majorIndex().insertBack( i, i, i ) ;
+		resize( m_blocks[i], blockRows(i), blockCols(i) ) ;
+		set_identity( m_blocks[i] ) ;
 	}
 	finalize();
 

@@ -167,12 +167,7 @@ public:
 	}
 
 	//! Convenience method that insertBack() a block and immediately resize it according to the dimensions given to setRows() and setCols()
-	BlockType& insertBackAndResize( Index row, Index col )
-	{
-		BlockType& block = insertBack( row, col ) ;
-		block.resize( blockRows( row ), blockCols( col ) ) ;
-		return block ;
-	}
+	BlockType& insertBackAndResize( Index row, Index col ) ;
 
 	//! Insert a block, specifying directily the outer and inner indices instead of row and column
 	BlockType& insertBackOuterInner( Index outer, Index inner ) ;

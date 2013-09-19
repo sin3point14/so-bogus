@@ -25,6 +25,7 @@ namespace bogus {
 #define BOGUS_PROCESS_SCALAR( Scalar ) \
 	inline bool is_zero( Scalar s, Scalar precision ) { return std::abs( s ) <= precision ; } \
 	inline void set_identity( Scalar &s ) { s = 1 ; } \
+	inline void resize( Scalar &, int ,int ) { } \
 	inline const Scalar* data_pointer( const Scalar &s ) { return &s ; }
 BOGUS_BLOCK_SCALAR_TYPES
 #undef BOGUS_PROCESS_SCALAR

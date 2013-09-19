@@ -38,7 +38,7 @@
 namespace bogus
 {
 
-// transpose_block, is_zero, set_identity
+// transpose_block, is_zero, resize, set_identity
 
 template< typename EigenDerived >
 inline bool is_zero ( const Eigen::MatrixBase< EigenDerived >& block,
@@ -50,7 +50,13 @@ inline bool is_zero ( const Eigen::MatrixBase< EigenDerived >& block,
 template< typename EigenDerived >
 inline void set_identity ( Eigen::MatrixBase< EigenDerived >& block )
 {
-	block.setIdentity( ) ;
+	block.derived().setIdentity( ) ;
+}
+
+template< typename EigenDerived >
+inline void resize ( Eigen::MatrixBase< EigenDerived >& block, int rows, int cols )
+{
+	block.derived().resize( rows, cols ) ;
 }
 
 template< typename EigenDerived >
@@ -79,10 +85,16 @@ inline bool is_zero ( const Eigen::SparseMatrixBase< EigenDerived >& block,
 	return block.isZero( precision ) ;
 }
 
-template< typename EigenDerived >
-inline void set_identity ( Eigen::SparseMatrixBase< EigenDerived >& block )
+template < typename Scalar, int Options, typename Index >
+inline void set_identity ( Eigen::SparseMatrix< Scalar, Options, Index >& block )
 {
 	return block.setIdentity( ) ;
+}
+
+template < typename Scalar, int Options, typename Index >
+inline void resize ( Eigen::SparseMatrix< Scalar, Options, Index >& block, Index rows, Index cols )
+{
+	block.resize( rows, cols ) ;
 }
 
 #endif

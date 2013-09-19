@@ -119,8 +119,8 @@ void MecheFrictionProblem::fromPrimal (
 	Eigen::Map< const Eigen::Matrix< double, Eigen::Dynamic, 3 > > E_flat( E_in, 3*n_in, 3 ) ;
 
 	m_primal->E.reserve( n_in ) ;
-	m_primal->E.setRows( n_in, 3 ) ;
-	m_primal->E.setCols( n_in, 3 ) ;
+	m_primal->E.setRows( n_in ) ;
+	m_primal->E.setCols( n_in ) ;
 	for( unsigned i = 0 ; i < n_in ; ++i )
 	{
 		m_primal->E.insertBack( i, i ) = E_flat.block< 3,3 > ( 3*i, 0 ) ;
@@ -131,7 +131,7 @@ void MecheFrictionProblem::fromPrimal (
 
 	// Build H
 	m_primal->H.reserve( 2*n_in ) ;
-	m_primal->H.setRows( n_in, 3 ) ;
+	m_primal->H.setRows( n_in ) ;
 	m_primal->H.setCols( NObj, ndof ) ;
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
