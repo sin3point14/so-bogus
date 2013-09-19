@@ -29,7 +29,7 @@ template < typename Derived, bool Major > struct SparseBlockIndexGetter ;
 
 //! Base class for SparseBlockMatrix
 /*! Most of the useful functions are defined and implemented here, but instantiation
-  should be done throught derived classes such as SparseBlockMatrix */
+	should be done throught derived classes such as SparseBlockMatrix */
 template < typename Derived >
 class SparseBlockMatrixBase : public BlockMatrixBase< Derived >
 {
@@ -66,6 +66,7 @@ public:
 	{
 		typedef SparseBlockMatrix< OtherBlockType, Traits::flags & ~flags::UNCOMPRESSED > Type ;
 	} ;
+	typedef typename MutableImpl< BlockType >::Type CopyResultType ;
 
 	typedef typename Base::ConstTransposeReturnType ConstTransposeReturnType ;
 
@@ -148,15 +149,15 @@ public:
 
 	//! Inserts a block in the matrix, and returns a reference to it
 	/*! \warning If the matrix is Compressed, the insertion order should be such that the pair
-	  ( outerIndex, innerIndex ) is always strictly increasing.
-	  That is, if the matrix is row-major, the insertion should be done one row at a time,
-	  and for each row from the left-most column to the right most.
+		( outerIndex, innerIndex ) is always strictly increasing.
+		That is, if the matrix is row-major, the insertion should be done one row at a time,
+		and for each row from the left-most column to the right most.
 
-	  For non-compressed matrices, this limitation does not apply, though out of order insertion might lead
-	  to bad cache performance, and a std::sort will be performed on each inner vector so we
-	  can keep efficient block( row, col ) look-up functions. The name \a insertBack  is kept
-	  to make the caller think twice about out-of-order insertion
-	  */
+		For non-compressed matrices, this limitation does not apply, though out of order insertion might lead
+		to bad cache performance, and a std::sort will be performed on each inner vector so we
+		can keep efficient block( row, col ) look-up functions. The name \a insertBack  is kept
+		to make the caller think twice about out-of-order insertion
+		*/
 	BlockType& insertBack( Index row, Index col )
 	{
 		if( Traits::is_col_major )
@@ -183,7 +184,9 @@ public:
 	//! Clears the matrix
 	void clear() ;
 	//! \sa clear()
-	void setZero() { clear() ; }
+	Derived& setZero() { clear() ; return derived() ; }
+	//! Calls set_identity() on each diagonal block, discard off-diagonal blocks
+	Derived& setIdentity() ;
 
 	//! Returns the number of (non-zero) blocks of the matrix
 	std::size_t nBlocks() const { return blocks().size() ; }
@@ -372,6 +375,23 @@ public:
 
 	//@}
 
+	//! \name Dimension-cloning construction methods
+	//@{
+	CopyResultType Zero() const
+	{
+		CopyResultType m ;
+		m.cloneDimensions( *this ) ;
+		return m.setZero() ;
+	}
+
+	CopyResultType Identity() const
+	{
+		CopyResultType m ;
+		m.cloneDimensions( *this ) ;
+		return m.setIdentity() ;
+	}
+	//@}
+
 	//! \name Unsafe API
 	//@{
 
@@ -391,13 +411,13 @@ public:
 	const TransposeBlockType* transposeData() const
 	{ return &m_transposeBlocks[0] ; }
 
-	//@}
-
 	//! Returns an array containing the first index of each row
 	const Index* rowOffsets() const { return colMajorIndex().innerOffsetsData() ; }
 
 	//! Returns an array containing the first index of each column
 	const Index* colOffsets() const { return rowMajorIndex().innerOffsetsData() ; }
+
+	//@}
 
 protected:
 

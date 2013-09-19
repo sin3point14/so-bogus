@@ -76,7 +76,7 @@ static double solveCadoux( const DualFrictionProblem< Dimension >& dual,
 	Eigen::Map< Eigen::VectorXd > r_map ( r, dual.W.rows() ) ;
 
 	if( dual.permuted() )
-		fp_impl::applyPermutation< Dimension >( dual.permutation(), r_map, dual.W.majorIndex().innerOffsetsData() ) ;
+		fp_impl::applyPermutation< Dimension >( dual.permutation(), r_map, dual.W.colOffsets() ) ;
 
 	Eigen::VectorXd s( dual.W.rows() ) ;
 
@@ -111,7 +111,7 @@ static double solveCadoux( const DualFrictionProblem< Dimension >& dual,
 	gs.setTol( tol ) ;
 
 	if( dual.permuted() )
-		fp_impl::applyPermutation< Dimension >( dual.invPermutation(), r_map, dual.W.majorIndex().innerOffsetsData() ) ;
+		fp_impl::applyPermutation< Dimension >( dual.invPermutation(), r_map, dual.W.colOffsets() ) ;
 
 	return res ;
 }
@@ -120,7 +120,7 @@ static double solveCadoux( const DualFrictionProblem< Dimension >& dual,
 
 template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::solveWith( GaussSeidelType &gs, double *r,
-									   const bool staticProblem ) const
+										 const bool staticProblem ) const
 {
 	gs.setMatrix( W );
 
@@ -138,15 +138,15 @@ double DualFrictionProblem< Dimension >::solveWith( ProjectedGradientType &pg,
 
 template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::evalWith( const GaussSeidelType &gs,
-												   const double *r,
-												   const bool staticProblem ) const
+													 const double *r,
+													 const bool staticProblem ) const
 {
 	return friction_problem::eval( *this, gs, r, staticProblem ) ;
 }
 
 template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::evalWith( const ProjectedGradientType &gs,
-												   const double *r ) const
+													 const double *r ) const
 {
 	return friction_problem::eval( *this, gs, r, true) ;
 }
@@ -179,7 +179,7 @@ void DualFrictionProblem< Dimension >::applyPermutation(
 		m_invPermutation[ m_permutation[i] ] = i ;
 
 	W.applyPermutation( &m_permutation[0] ) ;
-	fp_impl::applyPermutation< Dimension >( m_permutation, b, W.majorIndex().innerOffsetsData() ) ;
+	fp_impl::applyPermutation< Dimension >( m_permutation, b, W.colOffsets() ) ;
 	bogus::applyPermutation( m_permutation.size(), &m_permutation[0], mu ) ;
 }
 
@@ -190,7 +190,7 @@ void DualFrictionProblem< Dimension >::undoPermutation()
 		return ;
 
 	W.applyPermutation( &m_invPermutation[0] ) ;
-	fp_impl::applyPermutation< Dimension >( m_invPermutation, b, W.majorIndex().innerOffsetsData() ) ;
+	fp_impl::applyPermutation< Dimension >( m_invPermutation, b, W.colOffsets() ) ;
 	bogus::applyPermutation( m_invPermutation.size(), &m_invPermutation[0], mu ) ;
 
 	m_permutation.clear() ;

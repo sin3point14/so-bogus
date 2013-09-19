@@ -23,12 +23,13 @@
 namespace bogus {
 
 #define BOGUS_PROCESS_SCALAR( Scalar ) \
-	inline bool is_zero( Scalar s, Scalar precision ) { return std::abs( s ) <= precision ; }
+	inline bool is_zero( Scalar s, Scalar precision ) { return std::abs( s ) <= precision ; } \
+	inline void set_identity( Scalar &s ) { s = 1 ; } \
+	inline const Scalar* data_pointer( const Scalar &s ) { return &s ; }
 BOGUS_BLOCK_SCALAR_TYPES
 #undef BOGUS_PROCESS_SCALAR
 
 #define BOGUS_PROCESS_SCALAR( Scalar ) \
-inline const Scalar* data_pointer( const Scalar &s ) { return &s ; }
 BOGUS_BLOCK_SCALAR_TYPES
 #undef BOGUS_PROCESS_SCALAR
 
@@ -37,8 +38,8 @@ BOGUS_BLOCK_SCALAR_TYPES
 		typedef Scalar_ Scalar ;  \
 		typedef Scalar_ TransposeStorageType ;  \
 		enum { RowsAtCompileTime = 1, ColsAtCompileTime = 1, \
-			   is_row_major = 0, uses_plain_array_storage = 1, \
-			   is_self_transpose = 1 } ; \
+				 is_row_major = 0, uses_plain_array_storage = 1, \
+				 is_self_transpose = 1 } ; \
 	} ;
 BOGUS_BLOCK_SCALAR_TYPES
 #undef BOGUS_PROCESS_SCALAR

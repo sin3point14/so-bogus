@@ -42,8 +42,8 @@ namespace bogus
 
 MecheFrictionProblem::MecheFrictionProblem()
 	: m_primal( 0 ), m_dual( 0 ),
-	  m_f( 0 ), m_w( 0 ), m_mu( 0 ),
-	  m_out( &std::cout )
+		m_f( 0 ), m_w( 0 ), m_mu( 0 ),
+		m_out( &std::cout )
 {
 }
 
@@ -72,8 +72,8 @@ void MecheFrictionProblem::ackCurrentResidual( unsigned GSIter, double err )
 	if( m_out )
 	{
 		*m_out << "Finished iteration " << GSIter
-			   << " with residual " << err
-			   << std::endl ;
+				 << " with residual " << err
+				 << std::endl ;
 	}
 }
 
@@ -180,10 +180,7 @@ void MecheFrictionProblem::computeDual( double regularization )
 
 	if( regularization > 0. )
 	{
-		for( int i = 0 ; i < m_dual->W.rowsOfBlocks() ; ++ i )
-		{
-			m_dual->W.diagonal( i ).diagonal() += Eigen::Vector3d::Constant( regularization ) ;
-		}
+		m_dual->W += regularization * m_dual->W.Identity() ;
 	}
 }
 
@@ -199,7 +196,7 @@ double MecheFrictionProblem::solve(
 		bool useInfinityNorm,
 		bool useProjectedGradient,
 		unsigned cadouxIters
-								   )
+									 )
 {
 	assert( m_primal ) ;
 	const unsigned m = m_primal->H.cols() ;
@@ -263,7 +260,7 @@ double MecheFrictionProblem::solve(
 			m_dual->applyPermutation( gs.coloring().permutation ) ;
 			gs.coloring().resetPermutation();
 		}
-                m_dual->W.cacheTranspose() ;
+								m_dual->W.cacheTranspose() ;
 
 		if( staticProblem || cadouxIters == 0 )
 		{

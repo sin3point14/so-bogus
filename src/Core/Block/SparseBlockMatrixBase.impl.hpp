@@ -433,6 +433,30 @@ Derived& SparseBlockMatrixBase< Derived >::applyPermutation( const std::size_t* 
 	return derived() ;
 }
 
+template < typename Derived >
+void set_identity( SparseBlockMatrixBase< Derived >& block )
+{
+	block.setIdentity() ;
+}
+
+template < typename Derived >
+Derived& SparseBlockMatrixBase< Derived >::setIdentity(  )
+{
+	clear() ;
+
+	Index m = std::min( rowsOfBlocks(), colsOfBlocks() ) ;
+
+	reserve(m) ;
+	for( Index i = 0 ; i < m ; ++i )
+	{
+		set_identity( insertBackAndResize( i, i ) ) ;
+	}
+	finalize();
+
+	return derived() ;
+}
+
+
 } //namespace bogus
 
 #endif

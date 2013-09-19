@@ -38,13 +38,19 @@
 namespace bogus
 {
 
-// transpose_block, is_zero
+// transpose_block, is_zero, set_identity
 
 template< typename EigenDerived >
 inline bool is_zero ( const Eigen::MatrixBase< EigenDerived >& block,
-			   typename EigenDerived::Scalar precision )
+				 typename EigenDerived::Scalar precision )
 {
 	return block.isZero( precision ) ;
+}
+
+template< typename EigenDerived >
+inline void set_identity ( Eigen::MatrixBase< EigenDerived >& block )
+{
+	block.setIdentity( ) ;
 }
 
 template< typename EigenDerived >
@@ -68,9 +74,15 @@ transpose_block( const Eigen::SparseMatrixBase< EigenDerived >& block )
 
 template< typename EigenDerived >
 inline bool is_zero ( const Eigen::SparseMatrixBase< EigenDerived >& block,
-			   typename EigenDerived::Scalar precision )
+				 typename EigenDerived::Scalar precision )
 {
 	return block.isZero( precision ) ;
+}
+
+template< typename EigenDerived >
+inline void set_identity ( Eigen::SparseMatrixBase< EigenDerived >& block )
+{
+	return block.setIdentity( ) ;
 }
 
 #endif
@@ -101,8 +113,8 @@ template<
 	typename _Scalar2, int _Rows2, int _Cols2, int _Options2, int _MaxRows2, int _MaxCols2,
 	bool TransposeLhs, bool TransposeRhs >
 struct BlockBlockProductTraits <
-	   Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>,
-	   Eigen::Matrix<_Scalar2, _Rows2, _Cols2, _Options2, _MaxRows2, _MaxCols2>,
+		 Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>,
+		 Eigen::Matrix<_Scalar2, _Rows2, _Cols2, _Options2, _MaxRows2, _MaxCols2>,
 		TransposeLhs, TransposeRhs >
 {
 	typedef Eigen::Matrix< _Scalar,
