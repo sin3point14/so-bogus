@@ -138,74 +138,127 @@ struct BlockBlockProductTraits <
 	ReturnType ;
 } ;
 
-// Matrix vector product traits and operator*
-
-template< typename EigenDerived >
-struct BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >
-{
-	typedef Eigen::Matrix< typename Eigen::internal::traits<EigenDerived>::Scalar, EigenDerived::RowsAtCompileTime, EigenDerived::ColsAtCompileTime > ResVec ;
-} ;
-
 template< typename Derived >
 inline typename BlockVectorProductTraits< Eigen::MatrixBase< Derived > >::ResVec
 get_mutable_vector( const Eigen::MatrixBase< Derived > & )
 {
-	return typename BlockVectorProductTraits< Eigen::MatrixBase< Derived > >::ResVec() ;
+	return typename Eigen::internal::plain_matrix_type<Derived>::type() ;
 }
 
+// Matrix vector product return types and operator*
+
+template< typename Derived, typename EigenDerived, bool MatrixOnTheLeft >
+struct BlockMatrixEigenProduct
+		: public Eigen::ReturnByValue< BlockMatrixEigenProduct< Derived, EigenDerived, MatrixOnTheLeft > >
+{
+	typedef typename Eigen::ReturnByValue< BlockMatrixEigenProduct >::Index Index ;
+	typedef typename Eigen::ReturnByValue< BlockMatrixEigenProduct >::Scalar Scalar ;
+
+	BlockMatrixEigenProduct( const Derived &matrix, const EigenDerived &vector, Scalar scaling = 1 )
+		: m_matrix( matrix) , m_vector( vector ), m_scaling ( scaling )
+	{}
+
+	template<typename Dest> inline void evalTo(Dest& dst) const
+	{
+		m_matrix.eval()->template multiply< Derived::is_transposed >( m_vector.derived(), dst, m_scaling, 0 ) ;
+	}
+
+	Index rows() const { return m_matrix.rows() ; }
+	Index cols() const { return m_vector.cols() ; }
+
+private:
+	const Derived& m_matrix ;
+	const EigenDerived &m_vector ;
+	const Scalar m_scaling ;
+};
+template< typename Derived, typename EigenDerived >
+struct BlockMatrixEigenProduct< Derived, EigenDerived, false >
+		: public Eigen::ReturnByValue< BlockMatrixEigenProduct< Derived, EigenDerived, false > >
+{
+	typedef typename Eigen::ReturnByValue< BlockMatrixEigenProduct >::Index Index ;
+	typedef typename Eigen::ReturnByValue< BlockMatrixEigenProduct >::Scalar Scalar ;
+
+	BlockMatrixEigenProduct( const Derived &matrix, const EigenDerived &vector, Scalar scaling = 1 )
+		: m_matrix( matrix) , m_vector( vector ), m_scaling ( scaling )
+	{}
+
+	template<typename Dest> inline void evalTo(Dest& dst) const
+	{
+		Eigen::Transpose< Dest > transposed( dst.transpose() ) ;
+		m_matrix.eval()->template multiply< !Derived::is_transposed >( m_vector.transpose(), transposed, m_scaling, 0 ) ;
+	}
+
+	Index rows() const { return m_vector.rows() ; }
+	Index cols() const { return m_matrix.cols() ; }
+
+private:
+	const Derived& m_matrix ;
+	const EigenDerived &m_vector ;
+	const Scalar m_scaling ;
+};
+} //namespace bogus
+
+namespace Eigen {
+namespace internal {
+template < typename Derived, typename EigenDerived, bool MatrixOnTheLeft >
+struct traits< bogus::BlockMatrixEigenProduct< Derived, EigenDerived, MatrixOnTheLeft > >
+{
+	typedef Eigen::Matrix<
+		typename EigenDerived::Scalar,
+		Eigen::Dynamic, EigenDerived::ColsAtCompileTime,
+		0,
+		Eigen::Dynamic, EigenDerived::MaxColsAtCompileTime >
+	ReturnType ;
+} ;
+template < typename Derived, typename EigenDerived >
+struct traits< bogus::BlockMatrixEigenProduct< Derived, EigenDerived, false > >
+{
+	typedef Eigen::Matrix<
+		typename EigenDerived::Scalar,
+		EigenDerived::RowsAtCompileTime, Eigen::Dynamic,
+		Eigen::RowMajor,
+		EigenDerived::MaxRowsAtCompileTime, Eigen::Dynamic >
+	ReturnType ;
+} ;
+}
+} //namespace Eigen
+
+namespace bogus{
 
 template < typename Derived, typename EigenDerived >
-typename BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec operator* ( const BlockObjectBase< Derived >& lhs,
-						 const Eigen::MatrixBase< EigenDerived > &rhs )
+BlockMatrixEigenProduct< Derived, EigenDerived, true > operator* (
+		const BlockObjectBase< Derived >& lhs,
+		const Eigen::MatrixBase< EigenDerived > &rhs )
 {
 	assert( rhs.rows() == lhs.cols() ) ;
-
-	typedef typename BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
-	ResVec res ( lhs.rows(), rhs.cols() ) ;
-
-	lhs.eval()->template multiply< Derived::is_transposed >( rhs.derived(), res, 1, 0 ) ;
-	return res ;
+	return BlockMatrixEigenProduct< Derived, EigenDerived, true > ( lhs.derived(), rhs.derived() ) ;
 }
 
 template < typename Derived, typename EigenDerived >
-typename BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec operator* ( const Scaling< Derived >& lhs,
-						 const Eigen::MatrixBase< EigenDerived > &rhs )
+BlockMatrixEigenProduct< Derived, EigenDerived, true > operator* (
+		const Scaling< Derived >& lhs,
+		const Eigen::MatrixBase< EigenDerived > &rhs )
 {
 	assert( rhs.rows() == lhs.cols() ) ;
-
-	typedef typename BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
-	ResVec res ( lhs.rows(), rhs.cols() ) ;
-
-	lhs.operand.object.eval()->template multiply< Derived::is_transposed >( rhs.derived(), res, lhs.operand.scaling, 0 ) ;
-	return res ;
+	return BlockMatrixEigenProduct< Derived, EigenDerived, true > ( lhs.operand.object, rhs.derived(), lhs.operand.scaling ) ;
 }
 
 template < typename Derived, typename EigenDerived >
-typename BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec operator* ( const Eigen::MatrixBase< EigenDerived > &lhs,
-						 const BlockObjectBase< Derived >& rhs )
+BlockMatrixEigenProduct< Derived, EigenDerived, false > operator* (
+		const Eigen::MatrixBase< EigenDerived > &lhs,
+		const BlockObjectBase< Derived >& rhs )
 {
 	assert( lhs.cols() == rhs.rows() ) ;
-
-	typedef typename BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
-	ResVec res ( lhs.rows(), rhs.cols() ) ;
-
-	Eigen::Transpose< ResVec > resTrans ( res ) ;
-	rhs.eval()->template multiply< !Derived::is_transposed >( lhs.transpose(), resTrans, 1, 0 ) ;
-	return res ;
+	return BlockMatrixEigenProduct< Derived, EigenDerived, false > ( rhs.derived(), lhs.derived() ) ;
 }
 
 template < typename Derived, typename EigenDerived >
-typename BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec operator* ( const Eigen::MatrixBase< EigenDerived > &lhs,
-						 const Scaling< Derived >& rhs )
+BlockMatrixEigenProduct< Derived, EigenDerived, false > operator* (
+		const Eigen::MatrixBase< EigenDerived > &lhs,
+		const Scaling< Derived >& rhs )
 {
 	assert( lhs.cols() == rhs.rows() ) ;
-
-	typedef typename BlockVectorProductTraits< Eigen::MatrixBase< EigenDerived > >::ResVec ResVec ;
-	ResVec res ( lhs.rows(), rhs.cols() ) ;
-
-	Eigen::Transpose< ResVec > resTrans ( res ) ;
-	rhs.operand.object.eval()->template multiply< !Derived::is_transposed >( lhs.transpose(), resTrans, rhs.operand.scaling, 0 ) ;
-	return res ;
+	return BlockMatrixEigenProduct< Derived, EigenDerived, false > ( rhs.operand.object, lhs.derived(), rhs.operand.scaling ) ;
 }
 
 

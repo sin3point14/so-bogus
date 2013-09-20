@@ -16,8 +16,8 @@
 
 TEST( SparseBlock, MatrixVector )
 {
-        //Eigen::initParallel()
-        Eigen::MatrixXf A = Eigen::MatrixXf::Zero(1,1); A = A*A; 
+		//Eigen::initParallel()
+		Eigen::MatrixXf A = Eigen::MatrixXf::Zero(1,1); A = A*A;
 
 	Eigen::VectorXd expected_1(15), expected_2(8), expected_3(15) ;
 	expected_1 << 4, 4, 4, 0, 0, 0, 0, 0, 0, 20, 20, 20, 0, 0, 0 ;
@@ -49,6 +49,9 @@ TEST( SparseBlock, MatrixVector )
 	sbm.multiply< false >( rhs, res ) ;
 
 	EXPECT_EQ( expected_1, res ) ;
+
+	res = sbm*rhs ;
+	EXPECT_EQ( expected_1, res) ;
 	EXPECT_EQ( expected_1, sbm*rhs ) ;
 
 	rhs.setZero() ;
@@ -322,6 +325,8 @@ TEST( SparseBlock, ColMajor )
 	EXPECT_EQ( expected_2, lhs * sbm ) ;
 
 }
+
+
 
 TEST( SparseBlock, MMult )
 {
