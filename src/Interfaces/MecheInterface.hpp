@@ -36,7 +36,7 @@ public:
 	MecheFrictionProblem() ;
 	~MecheFrictionProblem() ;
 
-	//! Allocates and sets up the primal friction problem \ref m_primal
+	//! Allocates and sets up the primal friction problem
 	/*! \warning copies the contents of the matrices M, E and H !
 		Manually constructing a PrimalFrictionProblem would be more efficient
 	*/
@@ -55,7 +55,7 @@ public:
 			const double *const HB[] //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjB[i] </c> (\c NULL for an external object)
 			);
 
-	//! Solves the friction problem \ref m_primal ; \sa GaussSeidel
+	//! Solves the friction problem ; \sa GaussSeidel
 	double solve(double * r, //!< length \a nd : initialization for \a r (in world space coordinates) + used to return computed r
 			double * v, //!< length \a m: to return computed v ( or NULL if not needed )
 			int maxThreads = 0,       //!< Maximum number of threads that the GS will use. If 0, use OpenMP default. If > 1, enable coloring to ensure deterministicity
@@ -68,7 +68,7 @@ public:
 			unsigned cadouxIters = 0 //!< If staticProblem is false and cadouxIters is greater than zero, use the Cadoux algorithm to solve the friction problem.
 				 );
 
-	//! Computes \ref m_dual from \ref m_primal
+	//! Computes the dual from the primal
 	void computeDual( double regularization ) ;
 
 	//! Cleams up the problem, then allocates a new PrimalFrictionProblem and make m_primal point to it
@@ -105,12 +105,17 @@ public:
 	double *w (){ return m_w  ; }
 	double *mu(){ return m_mu ; }
 
+	//! Time spent in last solver call. In seconds.
+	double lastSolveTime() const { return m_lastSolveTime ; }
+
 protected:
 
 	void destroy() ;
 
 	PrimalFrictionProblem<3u> * m_primal ;
 	DualFrictionProblem<3u>  * m_dual ;
+
+	double m_lastSolveTime ;
 
 private:
 	// Non copyable, non assignable

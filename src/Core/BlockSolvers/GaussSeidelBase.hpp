@@ -75,7 +75,7 @@ public:
 	/*! ( Those evaluations require a full matrix/vector product, and are therfore quite costly ) */
 	void setEvalEvery( unsigned evalEvery ) { m_evalEvery = evalEvery ; }
 	//! Sets the minimum iteration step size under which local problems are temporarily frozen
-	void setSkipTol  ( unsigned skipTol   ) { m_skipTol   = skipTol   ; }
+	void setSkipTol  ( Scalar skipTol   ) { m_skipTol   = skipTol   ; }
 	//! Sets the number of iterations for temporarily freezing local problems
 	void setSkipIters( unsigned skipIters ) { m_skipIters = skipIters ; }
 
@@ -85,12 +85,12 @@ protected:
 	GaussSeidelBase() :
 		m_maxThreads (  0 ),
 		m_evalEvery ( 25  ),
-		m_skipTol ( m_tol * m_tol ),
 		m_skipIters ( 10 ),
 		m_autoRegularization ( 0. )
 	{
 		m_tol = 1.e-6 ;
 		m_maxIters = 250 ;
+		m_skipTol  = m_tol ;
 	}
 
 	void updateLocalMatrices() ;

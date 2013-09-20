@@ -121,8 +121,8 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 					if( !ok ) { ldx *= .5 ; }
 					xSegmenter[ i ] += ldx ;
 
-					const Scalar scaledSkipTol = m_skipTol / ( m_scaling[ i ] * m_scaling[ i ] ) ;
-					if( ldx.squaredNorm() < scaledSkipTol || lx.squaredNorm() < scaledSkipTol )
+					if( m_scaling[ i ] * m_scaling[ i ] * ldx.squaredNorm() < m_skipTol ||
+						m_scaling[ i ] * m_scaling[ i ] *  lx.squaredNorm() < m_tol )
 					{
 						skip[i] = m_skipIters ;
 					}

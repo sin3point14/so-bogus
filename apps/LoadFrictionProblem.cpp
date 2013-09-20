@@ -39,6 +39,8 @@ int main( int argc, const char* argv[] )
 		const int cadoux        = argc > 9 ? std::atoi( argv[9] ) : 0 ;
 
 		mfp.solve( r, NULL, maxThreads, tol, maxIters, staticPb, regul, useInfNorm, usePG, cadoux ) ;
+		std::cout << "Solver timer: " << mfp.lastSolveTime() << " seconds" << std::endl ;
+
 
 		delete[] r ;
 

@@ -24,9 +24,12 @@
 
 #include "../Core/Block.impl.hpp"
 #include "../Core/Block.io.hpp"
+
 #include "../Core/BlockSolvers/GaussSeidel.hpp"
 #include "../Core/BlockSolvers/ProjectedGradient.hpp"
 #include "../Core/BlockSolvers/Coloring.impl.hpp"
+
+#include "../Core/Utils/Timer.hpp"
 
 #include <algorithm>
 
@@ -42,8 +45,9 @@ namespace bogus
 
 MecheFrictionProblem::MecheFrictionProblem()
 	: m_primal( 0 ), m_dual( 0 ),
-		m_f( 0 ), m_w( 0 ), m_mu( 0 ),
-		m_out( &std::cout )
+	  m_lastSolveTime( 0 ),
+	  m_f( 0 ), m_w( 0 ), m_mu( 0 ),
+	  m_out( &std::cout )
 {
 }
 
@@ -82,6 +86,7 @@ void MecheFrictionProblem::reset ()
 	destroy() ;
 
 	m_primal = new PrimalFrictionProblem<3u>() ;
+	m_lastSolveTime = 0 ;
 }
 
 void MecheFrictionProblem::fromPrimal (
@@ -219,6 +224,7 @@ double MecheFrictionProblem::solve(
 
 	// Proper solving
 
+	Timer timer ;
 	if( useProjectedGradient ) {
 
 		DualFrictionProblem< 3u >::ProjectedGradientType pg ;
@@ -250,6 +256,7 @@ double MecheFrictionProblem::solve(
 		gs.setMaxThreads( maxThreads );
 		gs.setAutoRegularization( regularization ) ;
 		gs.useInfinityNorm( useInfinityNorm ) ;
+		gs.setSkipTol( std::sqrt( gs.tol() ) ) ;
 
 		const bool useColoring = maxThreads > 1 ;
 		gs.coloring().update( useColoring, m_dual->W );
@@ -260,7 +267,7 @@ double MecheFrictionProblem::solve(
 			m_dual->applyPermutation( gs.coloring().permutation ) ;
 			gs.coloring().resetPermutation();
 		}
-								m_dual->W.cacheTranspose() ;
+		m_dual->W.cacheTranspose() ;
 
 		if( staticProblem || cadouxIters == 0 )
 		{
@@ -271,6 +278,7 @@ double MecheFrictionProblem::solve(
 		}
 
 	}
+	m_lastSolveTime = timer.elapsed() ;
 
 	// compute v
 	if( v )
@@ -282,7 +290,7 @@ double MecheFrictionProblem::solve(
 
 	if( m_out && n != 0 )
 	{
-		*m_out << "Max coeff : " << r_loc.lpNorm< Eigen::Infinity >() << std::endl ;
+		*m_out << "Max coeff: " << r_loc.lpNorm< Eigen::Infinity >() << std::endl ;
 	}
 
 	// r to world coords

@@ -36,6 +36,8 @@ Core/BlockSolvers/ConstrainedSolverBase.hpp
 Core/BlockSolvers/ConstrainedSolverBase.impl.hpp
 Core/BlockSolvers/GaussSeidel.hpp
 Core/BlockSolvers/GaussSeidel.impl.hpp
+Core/BlockSolvers/GaussSeidelBase.hpp
+Core/BlockSolvers/GaussSeidelBase.impl.hpp
 Core/BlockSolvers/Krylov.hpp
 Core/BlockSolvers/Krylov.impl.hpp
 Core/BlockSolvers/KrylovMethods.hpp
@@ -73,5 +75,6 @@ Extra/SecondOrder.hpp
 Extra/SecondOrder.impl.hpp
 Interfaces/FrictionProblem.cpp
 Interfaces/FrictionProblem.hpp
+Interfaces/FrictionProblem.impl.hpp
 Interfaces/MecheInterface.cpp
 Interfaces/MecheInterface.hpp
