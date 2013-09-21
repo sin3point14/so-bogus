@@ -125,10 +125,10 @@ template < typename Derived >
 typename SparseBlockMatrixBase< Derived >::BlockType&
 SparseBlockMatrixBase< Derived >::allocateBlock( BlockPtr &ptr )
 {
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp critical (allocateBlock)
-#endif
 	{
+#ifndef BOGUS_DONT_PARALLELIZE
+		Lock::Guard guard( m_insertLock ) ;
+#endif
 		ptr = m_blocks.size() ;
 		m_blocks.resize( ptr+1 ) ;
 	}

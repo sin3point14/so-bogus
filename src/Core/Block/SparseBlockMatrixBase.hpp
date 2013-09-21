@@ -19,6 +19,7 @@
 #include "CompressedSparseBlockIndex.hpp"
 
 #include "../Utils/CppTools.hpp"
+#include "../Utils/Lock.hpp"
 
 namespace bogus
 {
@@ -456,6 +457,8 @@ protected:
 	UncompressedIndexType m_minorIndex ;
 
 	CompressedIndexType   m_transposeIndex ;
+
+	Lock m_insertLock ;
 } ;
 
 }

@@ -160,10 +160,10 @@ private:
 #pragma omp atomic capture
 #else
 #ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp critical
+#pragma omp critical (BogusNaiveSharedPtr)
 #endif
 #endif
-		{ t = ( *m_refCount += val ) ; }
+		{  *m_refCount += val ; t = *m_refCount ; }
 		return t;
 #endif
 	}

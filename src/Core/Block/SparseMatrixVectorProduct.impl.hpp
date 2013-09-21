@@ -91,6 +91,8 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 		typedef Segmenter< SegDim, const RhsT, typename Derived::Index > RhsSegmenter ;
 		const RhsSegmenter rhsSegmenter( rhs, matrix.majorIndex().innerOffsetsData() ) ;
 
+		Lock lock ;
+
 		typedef typename SparseBlockMatrixBase< Derived >::MajorIndexType MajorIndexType ;
 #pragma omp parallel
 		{
@@ -116,8 +118,10 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 				}
 			}
 
-#pragma omp critical
-			res += locRes ;
+			{
+				Lock::Guard guard( lock ) ;
+				res += locRes ;
+			}
 		}
 	}
 #endif
@@ -184,6 +188,8 @@ struct OutOfOrderSparseBlockMatrixVectorMultiplier
 		typedef Segmenter< RhsSegDim, const RhsT, Index > RhsSegmenter ;
 		const RhsSegmenter rhsSegmenter( rhs, matrix.minorIndex().innerOffsetsData() ) ;
 
+		Lock lock ;
+
 #pragma omp parallel
 		{
 			LocalResT locRes( res.rows(), res.cols() ) ;
@@ -195,8 +201,10 @@ struct OutOfOrderSparseBlockMatrixVectorMultiplier
 				innerColMultiply< Transpose >( matrix.data(), matrix.majorIndex(), i, rhsSegmenter[i], locRes, alpha ) ;
 			}
 
-#pragma omp critical
-			res += locRes ;
+			{
+				Lock::Guard guard( lock ) ;
+				res += locRes ;
+			}
 		}
 	}
 #endif
