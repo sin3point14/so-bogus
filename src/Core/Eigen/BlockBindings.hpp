@@ -139,7 +139,7 @@ struct BlockBlockProductTraits <
 } ;
 
 template< typename Derived >
-inline typename BlockVectorProductTraits< Eigen::MatrixBase< Derived > >::ResVec
+inline typename Eigen::internal::plain_matrix_type<Derived>::type
 get_mutable_vector( const Eigen::MatrixBase< Derived > & )
 {
 	return typename Eigen::internal::plain_matrix_type<Derived>::type() ;
