@@ -50,10 +50,9 @@ TEST( SparseBlock, MatrixVector )
 
 	EXPECT_EQ( expected_1, res ) ;
 
-	res = sbm*rhs ;
-	EXPECT_EQ( expected_1, res) ;
+	res.noalias() += sbm*rhs ;
+	res -= sbm*rhs ;
 	EXPECT_EQ( expected_1, sbm*rhs ) ;
-
 	rhs.setZero() ;
 	sbm.multiply< true >( res, rhs ) ;
 
@@ -571,12 +570,13 @@ TEST( SparseBlock, Scalar )
 	EXPECT_TRUE( res1d.isZero() ) ;
 
 	bogus::SparseBlockMatrix< float, bogus::flags::SYMMETRIC > ssm ;
+	Eigen::Vector2f frhs( 1, 1 ) ;
 	ssm = sbm.transpose() * sbm ;
-	EXPECT_TRUE( expected_1.isApprox( ssm * rhs ) );
-	EXPECT_TRUE( expected_1.isApprox( ssm.transpose() * rhs ) );
+	EXPECT_TRUE( expected_1.cast< float >().isApprox( ssm * frhs ) );
+	EXPECT_TRUE( expected_1.cast< float >().isApprox( ssm.transpose() * frhs ) );
 
 	ssm.scale( .5 ) ;
-	EXPECT_TRUE( expected_1.isApprox( 2 * ( ssm * rhs ) ) );
+	EXPECT_TRUE( expected_1.cast< float >().isApprox( 2 * ( ssm * frhs ) ) );
 
 }
 
@@ -776,5 +776,4 @@ TEST( SparseBlock, Permutation)
 			ASSERT_EQ( ssbm.block( i, j )( 1, 1 ), (int)(perm[perm[j]] + perm[perm[i]]) ) ;
 		}
 	}
-
 }

@@ -59,8 +59,6 @@ struct LinearSolverBase
 		IsRowMajor = UnderlyingBlockTraits::is_row_major
 	} ;
 
-	//! Tag: mv_add() and mv_assign() are redefined for LinearSolverBase< Derived >
-	typedef char MVOverload ;
 } ;
 
 //! Base class for LU factorizations

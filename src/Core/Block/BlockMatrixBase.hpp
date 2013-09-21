@@ -116,32 +116,12 @@ public:
 				((int) RowsPerBlock != internal::DYNAMIC )
 	} ;
 
-	//! Tag: mv_add() and mv_assign() are redefined for BlockMatrixBase< Derived&>
-	typedef char MVOverload ;
-
 protected:
 	Index m_rows ;
 	Index m_cols ;
 
 	typename Traits::BlocksArrayType m_blocks ;
 } ;
-
-template < bool DoTranspose, typename Derived, typename RhsT, typename ResT >
-inline ResT& mv_assign ( const BlockMatrixBase< Derived >& matrix,
-			   const RhsT& rhs, ResT& res )
-{
-	matrix.template multiply< DoTranspose >( rhs, res, 1, 0 ) ;
-	return res ;
-}
-
-template < bool DoTranspose, typename Derived, typename RhsT, typename ResT >
-inline ResT& mv_add ( const BlockMatrixBase< Derived >& matrix,
-			   const RhsT& rhs, ResT& res,
-			   typename Derived::Scalar alpha )
-{
-	matrix.template multiply< DoTranspose >( rhs, res, alpha, 1 ) ;
-	return res ;
-}
 
 }
 

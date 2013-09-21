@@ -90,7 +90,6 @@ struct DisableIf< false, ReturnType_ >
 BOGUS_DEFINE_HAS_TYPE( ReturnType ) ;
 BOGUS_DEFINE_HAS_TYPE( ConstTransposeReturnType ) ;
 BOGUS_DEFINE_HAS_TYPE( Base ) ;
-BOGUS_DEFINE_HAS_TYPE( MVOverload ) ;
 
 // Static assertions
 

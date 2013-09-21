@@ -20,6 +20,12 @@ namespace bogus {
 
 namespace mv_impl {
 
+template < bool DoTranspose, typename Matrix, typename RhsT, typename ResT, typename Scalar >
+inline void mv_add( const Matrix& matrix, const RhsT& rhs, ResT& res, Scalar alpha )
+{
+	res.noalias() += alpha * ( TransposeIf< DoTranspose >::get( matrix ) * rhs ) ;
+}
+
 template < bool Transpose, typename BlockT, typename IndexT, typename RhsT, typename ResT, typename ScalarT >
 static inline void innerRowMultiply( const BlockT* blocks, const IndexT &index,
 							const typename IndexT::Index outerIdx, const RhsT& rhs, ResT& res, ScalarT alpha )

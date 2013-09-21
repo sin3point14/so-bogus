@@ -185,22 +185,6 @@ private:
 	const Index* m_offsets ;
 } ;
 
-template < bool DoTranspose, typename Matrix, typename RhsT, typename ResT >
-inline typename DisableIf< HasMVOverload< Matrix >::Value, ResT& >::ReturnType
-mv_assign( const Matrix& matrix, const RhsT& rhs, ResT& res )
-{
-	res = TransposeIf< DoTranspose >::get( matrix ) * rhs ;
-	return res ;
-}
-
-template < bool DoTranspose, typename Matrix, typename RhsT, typename ResT, typename Scalar >
-inline typename DisableIf< HasMVOverload< Matrix >::Value, ResT& >::ReturnType
-mv_add( const Matrix& matrix, const RhsT& rhs, ResT& res, Scalar alpha )
-{
-	res += alpha * ( TransposeIf< DoTranspose >::get( matrix ) * rhs ) ;
-	return res ;
-}
-
 }
 
 #endif

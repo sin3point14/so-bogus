@@ -60,7 +60,7 @@ ProjectedGradient< BlockMatrixType >::solve(
 			xs = x - alpha * y ;
 			projectOnConstraints( law, xs ) ;
 
-			m_matrix->template multiply< false >( xs, Mx ) ;
+			Mx = (*m_matrix) * xs ;
 			Js = xs.dot( .5 * Mx + b ) ;
 
 			if( Js < J + m_lsArmijoCriterion * y.dot( xs - x ) )

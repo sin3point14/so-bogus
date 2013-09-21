@@ -1,23 +1,12 @@
 
 /*
  * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ 
+ * http://creativecommons.org/publicdomain/zero/1.0/
 */
 
 #include <Core/Block.impl.hpp>
 #include <Core/Block.io.hpp>
 #include <gtest/gtest.h>
-
-namespace bogus {
-
-template < typename Matrix, typename RhsT, typename ResT >
-void multiply( const Matrix& matrix, const RhsT& rhs, ResT& res )
-{
-    mv_assign< false >( matrix, rhs, res ) ;
-}
-
-}
-
 
 TEST( Map, SparseBlock )
 {
@@ -48,11 +37,11 @@ TEST( Map, SparseBlock )
 
   sbm.cloneDimensions( origsbm ) ;
   sbm.mapTo(
-              origsbm.nBlocks(),
-              origsbm.data(),
-              origsbm.majorIndex().rowIndex(),
-              origsbm.majorIndex().columns()
-            );
+			  origsbm.nBlocks(),
+			  origsbm.data(),
+			  origsbm.majorIndex().rowIndex(),
+			  origsbm.majorIndex().columns()
+			);
 
   EXPECT_EQ( 2u, sbm.blockPtr( 3, 1 ) ) ;
   EXPECT_EQ( sbm.InvalidBlockPtr, sbm.blockPtr( 0, 0 ) ) ;
