@@ -77,7 +77,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 		for( typename std::map< Index, BlockPtr >::iterator bIt = nzBlocks.begin() ; bIt != nzBlocks.end() ; ++bIt )
 		{
 			bIt->second = (BlockPtr) dest.nBlocks() ;
-			dest.insertBackOuterInner( outer, bIt->first ).setZero( RowsPerBlock, ColsPerBlock ) ;
+			dest.template insertByOuterInner< true >( outer, bIt->first ).setZero( RowsPerBlock, ColsPerBlock ) ;
 		}
 
 		// III - copy values
@@ -154,7 +154,7 @@ void convert( const SparseBlockMatrixBase< BogusDerived >& source,
 					const Index bcol = Traits::is_col_major ? bout : binn ;
 					const EigenScalar val = source.block( it.ptr() )( brow, bcol ) ;
 
-					dest.insertBackByOuterInner( outer, inner ) = val;
+					dest.template insertByOuterInner< true >( outer, inner ) = val;
 				}
 			}
 		}

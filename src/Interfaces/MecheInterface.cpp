@@ -146,17 +146,17 @@ void MecheFrictionProblem::fromPrimal (
 		const Eigen::Matrix3d Et = m_primal->E.diagonal(i).transpose() ;
 		if( ObjB[i] == -1 )
 		{
-			m_primal->H.insertBack( i, ObjA[i] ) =  Et *
+			m_primal->H.insert( i, ObjA[i] ) =  Et *
 					Eigen::MatrixXd::Map( HA[i], 3, ndof[ ObjA[i] ] ) ;
 		} else if( ObjB[i] == ObjA[i] )
 		{
-			m_primal->H.insertBack( i, ObjA[i] ) =  Et *
+			m_primal->H.insert( i, ObjA[i] ) =  Et *
 					( Eigen::MatrixXd::Map( HA[i], 3, ndof[ ObjA[i] ] ) -
 					Eigen::MatrixXd::Map( HB[i], 3, ndof[ ObjA[i] ] ) ) ;
 		} else {
-			m_primal->H.insertBack( i, ObjA[i] ) =  Et *
+			m_primal->H.insert( i, ObjA[i] ) =  Et *
 					Eigen::MatrixXd::Map( HA[i], 3, ndof[ ObjA[i] ] ) ;
-			m_primal->H.insertBack( i, ObjB[i] ) =  - Et *
+			m_primal->H.insert( i, ObjB[i] ) =  - Et *
 					Eigen::MatrixXd::Map( HB[i], 3, ndof[ ObjB[i] ] ) ;
 		}
 	}

@@ -607,10 +607,10 @@ TEST( SparseBlock, Add )
 		sbm2.setRows( 4, 3 ) ;
 		sbm2.setCols( 2, 4 ) ;
 
-		sbm2.insertBackOuterInner( 0, 1 ) = BlockT::Ones() ;
-		sbm2.insertBackOuterInner( 1, 0 ) = sample ;
-		sbm2.insertBackOuterInner( 1, 1 ) = 3 * BlockT::Ones() ;
-		sbm2.insertBackOuterInner( 1, 2 ) = 5 * BlockT::Ones() ;
+		sbm2.insertByOuterInner< true >( 0, 1 ) = BlockT::Ones() ;
+		sbm2.insertByOuterInner< true >( 1, 0 ) = sample ;
+		sbm2.insertByOuterInner< true >( 1, 1 ) = 3 * BlockT::Ones() ;
+		sbm2.insertByOuterInner< true >( 1, 2 ) = 5 * BlockT::Ones() ;
 
 		sbm2.finalize() ;
 

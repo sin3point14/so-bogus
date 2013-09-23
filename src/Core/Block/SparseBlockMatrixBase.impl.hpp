@@ -110,28 +110,32 @@ void SparseBlockMatrixBase< Derived >::setInnerOffets(
 }
 
 template < typename Derived >
-typename SparseBlockMatrixBase< Derived >::BlockType& SparseBlockMatrixBase< Derived >::insertBackOuterInner( Index outer, Index inner )
+template < bool Ordered >
+typename SparseBlockMatrixBase< Derived >::BlockType&
+SparseBlockMatrixBase< Derived >::insertByOuterInner( Index outer, Index inner )
 {
 	BlockPtr ptr ;
-	BlockType &b = allocateBlock( ptr ) ;
+	BlockType &b = allocateBlock< !Ordered >( ptr ) ;
 
-	m_majorIndex.insertBack( outer, inner, ptr ) ;
+	m_majorIndex.template insert< Ordered >( outer, inner, ptr ) ;
 	m_minorIndex.valid = false ;
 
 	return b ;
 }
 
 template < typename Derived >
+template < bool EnforceThreadSafety >
 typename SparseBlockMatrixBase< Derived >::BlockType&
 SparseBlockMatrixBase< Derived >::allocateBlock( BlockPtr &ptr )
 {
-	{
+
 #ifndef BOGUS_DONT_PARALLELIZE
-		Lock::Guard guard( m_insertLock ) ;
+	Lock::Guard< EnforceThreadSafety > guard( m_insertLock ) ;
 #endif
-		ptr = m_blocks.size() ;
-		m_blocks.resize( ptr+1 ) ;
-	}
+
+	ptr = m_blocks.size() ;
+	m_blocks.resize( ptr+1 ) ;
+
 	return m_blocks[ptr] ;
 }
 
@@ -396,9 +400,9 @@ Derived& SparseBlockMatrixBase< Derived >::applyPermutation( const std::size_t* 
 					tmp = TransposeOption::get( m_blocks[inner.ptr()] ) ;
 					m_blocks[inner.ptr()] = tmp ;
 				}
-				destIndex.insertBack( inv[ inner.inner() ], outer, inner.ptr() );
+				destIndex.template insert< false >( inv[ inner.inner() ], outer, inner.ptr() );
 			} else {
-				destIndex.insertBack( outer, inv[ inner.inner() ], inner.ptr() );
+				destIndex.template insert< false >( outer, inv[ inner.inner() ], inner.ptr() );
 			}
 		}
 	}
@@ -444,6 +448,15 @@ typename SparseBlockMatrixBase< Derived >::BlockType&
 SparseBlockMatrixBase< Derived >::insertBackAndResize( Index row, Index col )
 {
 	BlockType& block = insertBack( row, col ) ;
+	resize( block, blockRows( row ), blockCols( col ) ) ;
+	return block ;
+}
+
+template < typename Derived >
+typename SparseBlockMatrixBase< Derived >::BlockType&
+SparseBlockMatrixBase< Derived >::insertAndResize( Index row, Index col )
+{
+	BlockType& block = insert( row, col ) ;
 	resize( block, blockRows( row ), blockCols( col ) ) ;
 	return block ;
 }

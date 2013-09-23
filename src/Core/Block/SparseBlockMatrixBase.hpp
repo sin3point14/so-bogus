@@ -148,30 +148,51 @@ public:
 		m_majorIndex.reserve( nBlocks ) ;
 	}
 
-	//! Inserts a block in the matrix, and returns a reference to it
-	/*! \warning If the matrix is Compressed, the insertion order should be such that the pair
+	//! Inserts a block at the end of the matrix, and returns a reference to it
+	/*! \warning The insertion order must be such that the pair
 		( outerIndex, innerIndex ) is always strictly increasing.
 		That is, if the matrix is row-major, the insertion should be done one row at a time,
 		and for each row from the left-most column to the right most.
-
-		For non-compressed matrices, this limitation does not apply, though out of order insertion might lead
-		to bad cache performance, and a std::sort will be performed on each inner vector so we
-		can keep efficient block( row, col ) look-up functions. The name \a insertBack  is kept
-		to make the caller think twice about out-of-order insertion
 		*/
 	BlockType& insertBack( Index row, Index col )
 	{
 		if( Traits::is_col_major )
-			return insertBackOuterInner( col, row ) ;
+			return insertByOuterInner< true >( col, row ) ;
 		else
-			return insertBackOuterInner( row, col ) ;
+			return insertByOuterInner< true >( row, col ) ;
 	}
 
 	//! Convenience method that insertBack() a block and immediately resize it according to the dimensions given to setRows() and setCols()
 	BlockType& insertBackAndResize( Index row, Index col ) ;
 
+	//! Insert a block anywhere in the matrix, and returns a reference to it
+	/*!
+		\warning Only available for matrices which use an Uncompressed index
+
+		\note Out of order insertion might lead to bad cache performance,
+		and a std::sort will be performed on each inner vector so we
+		can keep efficient block( row, col ) look-up functions.
+
+		\note An long as concurrent insertion is done in different outer vectors,
+		this methd is thread-safe
+	*/
+	BlockType& insert( Index row, Index col )
+	{
+		BOGUS_STATIC_ASSERT( !Traits::is_compressed, UNORDERED_INSERTION_WITH_COMPRESSED_INDEX ) ;
+		if( Traits::is_col_major )
+			return insertByOuterInner< false >( col, row ) ;
+		else
+			return insertByOuterInner< false >( row, col ) ;
+	}
+
+	//! Convenience method that insert() a block and immediately resize it according to the dimensions given to setRows() and setCols()
+	BlockType& insertAndResize( Index row, Index col ) ;
+
 	//! Insert a block, specifying directily the outer and inner indices instead of row and column
-	BlockType& insertBackOuterInner( Index outer, Index inner ) ;
+	/*! \tparam Ordered If true, then we assume that the insertion is sequential and in stricly increasing order
+		( as defined in insertBack() ) */
+	template< bool Ordered >
+	BlockType& insertByOuterInner( Index outer, Index inner ) ;
 
 	//! Finalizes the matrix.
 	//! \warning Should always be called after all blocks have been inserted, or bad stuff may happen
@@ -435,6 +456,7 @@ protected:
 	SparseBlockMatrixBase() ;
 
 	//! Pushes a block at the back of \c m_blocks
+	template< bool EnforceThreadSafety >
 	BlockType& allocateBlock( BlockPtr &ptr ) ;
 
 	void computeMinorIndex( UncompressedIndexType &cmIndex) const ;

@@ -37,8 +37,8 @@ public:
 	{}
 
 	//! Performs a matrix vector multiplication
-	/*! \tparam Transpose If true, performs \c res = \c M' * \c rhs + beta * res,
-						  otherwise \c res = M * \c rhs + beta * res
+	/*! \tparam Transpose If true, performs \c res = \c alpha * \c M' * \c rhs + beta * res,
+						  otherwise \c res = \c alpha * M * \c rhs + beta * res
 	  */
 	template < bool DoTranspose, typename RhsT, typename ResT >
 	void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const

@@ -101,7 +101,9 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 	InnerOffsetsType innerOffsets ;
 	Outer outer ;
 
-	SparseBlockIndex() : Base( )
+	bool ordered;
+
+	SparseBlockIndex() : Base( ), ordered( true )
 	{}
 
 	void resizeOuter( Index size )
@@ -115,13 +117,19 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 	Index outerSize( ) const { return outer.size() ; }
 	const InnerOffsetsType& innerOffsetsArray() const { return innerOffsets ; }
 
-	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
+	template < bool Ordered >
+	void insert( Index outIdx, Index inIdx, BlockPtr ptr )
 	{
 		outer[ outIdx ].push_back( std::make_pair( inIdx, ptr ) ) ;
+		ordered &= Ordered ;
 	}
+	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
+	{ insert< true >( outIdx, inIdx, ptr ) ; }
 
 	void finalize()
 	{
+		if( ordered ) return ;
+
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
@@ -135,6 +143,7 @@ struct SparseBlockIndex : public SparseBlockIndexBase< SparseBlockIndex< Compres
 	{
 		std::vector< Inner >( outer.size() ).swap( outer ) ;
 		valid = true ;
+		ordered = true ;
 	}
 
 	SparseBlockIndex &operator=( const SparseBlockIndex &o )

@@ -154,7 +154,7 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 				 src_it && !( Traits::is_symmetric && i < src_it.inner() ) ; ++ src_it )
 			{
 				TransposeIf::assign( source.block( src_it.ptr() ) ,
-									 insertBackOuterInner( i, src_it.inner() ),
+									 insertByOuterInner< true >( i, src_it.inner() ),
 									 scale, src_it.after( i ) ) ;
 			}
 		}

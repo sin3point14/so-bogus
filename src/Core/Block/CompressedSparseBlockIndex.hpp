@@ -58,15 +58,21 @@ struct SparseBlockIndex< true, Index_, BlockPtr_, ArrayType > : public SparseBlo
 
 	const InnerOffsetsType& innerOffsetsArray() const { return innerOffsets ; }
 
-	//! \warning Only works for back insertion, and a call to \ref finalize()
+	//! \warning Only works for ordered insertion, and a call to \ref finalize()
 	//! is always required once insertion is finished
-	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
+	template < bool Ordered >
+	void insert( Index outIdx, Index inIdx, BlockPtr ptr )
 	{
+		BOGUS_STATIC_ASSERT( Ordered, UNORDERED_INSERTION_WITH_COMPRESSED_INDEX
+	 ) ;
+
 		valid &= ( ptr == (BlockPtr) ( inner.size() ) )
 				&& ( 0 == outer[ outIdx+1 ] || inIdx > inner.back() ) ;
 		++outer[ outIdx+1 ] ;
 		inner.push_back( inIdx ) ;
 	}
+	void insertBack( Index outIdx, Index inIdx, BlockPtr ptr )
+	{ insert< true >( outIdx, inIdx, ptr ) ; }
 
 	//! Finalizes the outer indices vector
 	/*! Before calling this function, \c outer[i] contains the number of blocks

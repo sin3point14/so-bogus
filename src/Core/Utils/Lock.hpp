@@ -16,8 +16,10 @@ class Lock {
 public:
 	int  *for_abi_compat ;
 
+	template< bool DoLock = true >
 	struct Guard {
 		explicit Guard( Lock& ) {}
+		~Guard() {} ;
 	} ;
 };
 #else
@@ -26,6 +28,7 @@ public:
 
 class Lock {
 public:
+	template< bool DoLock = true >
 	struct Guard {
 		explicit Guard( const Lock& lock )
 			: lockPtr( lock.ptr() )
@@ -43,6 +46,12 @@ public:
 
 		omp_lock_t * lockPtr ;
 	} ;
+
+	template< >
+	struct Guard< false > {
+		explicit Guard( const Lock& ) {}
+		~Guard() {}
+	};
 
 	Lock()
 		: m_lock( new omp_lock_t )

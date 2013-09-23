@@ -43,7 +43,7 @@ namespace flags
 			such as MKL's BSR.
 			<b>If the matrix can be created in a compressed way, that is with all its elements inserted
 			in order, you probably should not set the UNCOMPRESSED flag. </b>
-			\sa SparseBlockMatrixBase::insertBack()
+			\sa SparseBlockMatrixBase::insert() and SparseBlockMatrixBase::insertBack()
 		*/
 		UNCOMPRESSED = 0x1,
 		//! Store and index blocks in a column major way
