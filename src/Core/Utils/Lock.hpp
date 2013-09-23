@@ -31,14 +31,16 @@ public:
 	template< bool DoLock = true >
 	struct Guard {
 		explicit Guard( const Lock& lock )
-			: lockPtr( lock.ptr() )
 		{
-			omp_set_lock( lockPtr ) ;
+			if(DoLock) {
+				lockPtr = lock.ptr() ;
+				omp_set_lock( lockPtr ) ;
+			}
 		}
 
 		~Guard()
 		{
-			omp_unset_lock( lockPtr ) ;
+			if(DoLock) omp_unset_lock( lockPtr ) ;
 		}
 	private:
 		Guard(const Guard &guard) ;
@@ -46,12 +48,6 @@ public:
 
 		omp_lock_t * lockPtr ;
 	} ;
-
-	template< >
-	struct Guard< false > {
-		explicit Guard( const Lock& ) {}
-		~Guard() {}
-	};
 
 	Lock()
 		: m_lock( new omp_lock_t )

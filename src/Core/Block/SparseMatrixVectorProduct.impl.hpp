@@ -119,7 +119,7 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 			}
 
 			{
-				Lock::Guard guard( lock ) ;
+				Lock::Guard<> guard( lock ) ;
 				res += locRes ;
 			}
 		}
@@ -202,7 +202,7 @@ struct OutOfOrderSparseBlockMatrixVectorMultiplier
 			}
 
 			{
-				Lock::Guard guard( lock ) ;
+				Lock::Guard<> guard( lock ) ;
 				res += locRes ;
 			}
 		}
