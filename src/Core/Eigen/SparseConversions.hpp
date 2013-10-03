@@ -26,8 +26,8 @@ namespace bogus
 
 template< typename EigenDerived, typename BogusDerived >
 void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
-			  SparseBlockMatrixBase< BogusDerived >& dest,
-			  int destRowsPerBlock = 0, int destColsPerBlock = 0
+				SparseBlockMatrixBase< BogusDerived >& dest,
+				int destRowsPerBlock = 0, int destColsPerBlock = 0
 			)
 {
 	typedef BlockMatrixTraits< BogusDerived > Traits ;
@@ -46,7 +46,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 
 	BOGUS_STATIC_ASSERT(
 				( ( (bool) Eigen::SparseMatrixBase< EigenDerived >::IsRowMajor )
-				  ^ ( (bool) Traits::is_col_major ) ),
+					^ ( (bool) Traits::is_col_major ) ),
 				MATRICES_ORDERING_IS_INCONSISTENT ) ;
 
 	assert( 0 == ( source.rows() % RowsPerBlock ) ) ;
@@ -115,7 +115,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 
 template< typename BogusDerived, typename EigenScalar, int EigenOptions, typename EigenIndex >
 void convert( const SparseBlockMatrixBase< BogusDerived >& source,
-			  Eigen::SparseMatrix< EigenScalar, EigenOptions, EigenIndex >& dest )
+				Eigen::SparseMatrix< EigenScalar, EigenOptions, EigenIndex >& dest )
 {
 	typedef BlockMatrixTraits< BogusDerived > Traits ;
 	typedef typename Traits::Index Index ;
@@ -154,7 +154,7 @@ void convert( const SparseBlockMatrixBase< BogusDerived >& source,
 					const Index bcol = Traits::is_col_major ? bout : binn ;
 					const EigenScalar val = source.block( it.ptr() )( brow, bcol ) ;
 
-					dest.template insertByOuterInner< true >( outer, inner ) = val;
+					dest.insertBackByOuterInner( outer, inner ) = val;
 				}
 			}
 		}
