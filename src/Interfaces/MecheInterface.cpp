@@ -45,9 +45,9 @@ namespace bogus
 
 MecheFrictionProblem::MecheFrictionProblem()
 	: m_primal( 0 ), m_dual( 0 ),
-	  m_lastSolveTime( 0 ),
-	  m_f( 0 ), m_w( 0 ), m_mu( 0 ),
-	  m_out( &std::cout )
+		m_lastSolveTime( 0 ),
+		m_f( 0 ), m_w( 0 ), m_mu( 0 ),
+		m_out( &std::cout )
 {
 }
 
@@ -79,6 +79,7 @@ void MecheFrictionProblem::ackCurrentResidual( unsigned GSIter, double err )
 				 << " with residual " << err
 				 << std::endl ;
 	}
+	m_callback.trigger( GSIter, err, m_timer.elapsed() );
 }
 
 void MecheFrictionProblem::reset ()
@@ -224,7 +225,7 @@ double MecheFrictionProblem::solve(
 
 	// Proper solving
 
-	Timer timer ;
+	m_timer.reset();
 	if( useProjectedGradient ) {
 
 		DualFrictionProblem< 3u >::ProjectedGradientType pg ;
@@ -256,7 +257,6 @@ double MecheFrictionProblem::solve(
 		gs.setMaxThreads( maxThreads );
 		gs.setAutoRegularization( regularization ) ;
 		gs.useInfinityNorm( useInfinityNorm ) ;
-		gs.setSkipTol( std::sqrt( gs.tol() ) ) ;
 
 		const bool useColoring = maxThreads > 1 ;
 		gs.coloring().update( useColoring, m_dual->W );
@@ -278,7 +278,7 @@ double MecheFrictionProblem::solve(
 		}
 
 	}
-	m_lastSolveTime = timer.elapsed() ;
+	m_lastSolveTime = m_timer.elapsed() ;
 
 	// compute v
 	if( v )

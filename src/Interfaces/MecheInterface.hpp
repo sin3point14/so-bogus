@@ -20,6 +20,9 @@
 
 #include <iosfwd>
 
+#include "../Core/Utils/Signal.hpp"
+#include "../Core/Utils/Timer.hpp"
+
 #ifndef BOGUS_MECHE_INTERFACE_HPP
 #define BOGUS_MECHE_INTERFACE_HPP
 
@@ -77,8 +80,11 @@ public:
 	unsigned nDegreesOfFreedom() const ;
 	unsigned nContacts() const ;
 
-	//! Sets the standard output stream ( \p out can be NULL )
+	//! Sets the standard output stream ( \p out can be NULL to remove all output )
 	void setOutStream( std::ostream *out ) ;
+
+	//! Signal< interationNumber, error, elapsedTime > that will be triggered every few iterations
+	Signal< unsigned, double, double > &callback() { return m_callback ; }
 
 	//! Dumps the current primal() to \p fileName
 	/*! \param r0 The initial guess that shouls be saved with the problem, or NULL */
@@ -90,7 +96,7 @@ public:
 	*/
 	bool fromFile( const char* fileName, double* &r0 ) ;
 
-	// Gauss-Seidel's Callback
+	// solvers Callback
 	void ackCurrentResidual( unsigned GSIter, double err ) ;
 
 	// Accessors
@@ -116,6 +122,9 @@ protected:
 	DualFrictionProblem<3u>  * m_dual ;
 
 	double m_lastSolveTime ;
+
+	Signal< unsigned, double, double > m_callback ;
+	Timer m_timer ;
 
 private:
 	// Non copyable, non assignable

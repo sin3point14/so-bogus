@@ -9,6 +9,7 @@
 */
 
 #ifndef BOGUS_TIMER_HPP
+#define BOGUS_TIMER_HPP
 
 #ifdef WIN32
 #include <Winbase.h>

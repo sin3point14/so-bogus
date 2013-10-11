@@ -19,7 +19,7 @@ template < typename Derived >
 struct SignalTraits
 { } ;
 
-template< typename Arg1, typename Arg2 = void >
+template< typename Arg1, typename Arg2 = void, typename Arg3 = void >
 struct Signal ;
 
 //! Base class for Signal of different arities
@@ -54,6 +54,40 @@ protected:
 	typedef std::list< typename Traits::Callable* > Callables ;
 	Callables  m_callees ;
 
+} ;
+
+template < typename Arg1, typename Arg2, typename Arg3 >
+struct SignalTraits< Signal< Arg1, Arg2, Arg3 > >
+{
+	struct Callable
+	{
+		virtual ~Callable() {}
+		virtual void call( Arg1, Arg2, Arg3 ) = 0 ;
+	} ;
+
+	struct Function : public Callable
+	{
+		typedef  void (*Type)( Arg1, Arg2, Arg3 ) ;
+		Type func ;
+		Function ( Type _func ) : func( _func ) {}
+		virtual void call( Arg1 arg1, Arg2 arg2, Arg3 arg3 ) { func( arg1, arg2, arg3 ) ; }
+	} ;
+	template< typename T >
+	struct Method : public Callable
+	{
+		typedef  void (T::*Type)( Arg1, Arg2, Arg3 ) ;
+		T& obj ;
+		Type func ;
+		Method ( T& _obj, Type _func ) : obj( _obj ), func( _func ) {}
+		virtual void call( Arg1 arg1, Arg2 arg2, Arg3 arg3 ) { (obj.*func)( arg1, arg2, arg3 ) ; }
+	} ;
+	struct Proxy : public Callable
+	{
+		typedef Signal< Arg1, Arg2, Arg3 > Type ;
+		const Type& obj ;
+		Proxy( const Type& _obj ) : obj( _obj ) {}
+		virtual void call( Arg1 arg1, Arg2 arg2, Arg3 arg3 ) { obj.trigger( arg1, arg2, arg3 ) ; }
+	};
 } ;
 
 template < typename Arg1, typename Arg2 >
@@ -127,14 +161,28 @@ struct SignalTraits< Signal< Arg, void > >
 
 //! Signal class, to which an arbitrary number of listeners can be connected
 /*!
-  Each time the Signal::trigger() method is called with arguments ( Arg 1, ..., Arg n ),
-  the listener functions are called with those same arguments.
-  The number and types of arguments are determined by the template parameters of the Signal class.
+	Each time the Signal::trigger() method is called with arguments ( Arg 1, ..., Arg n ),
+	the listener functions are called with those same arguments.
+	The number and types of arguments are determined by the template parameters of the Signal class.
 
-  At the moment, only signals with 1 or 2 parameters are supported.
-  */
+	At the moment, only signals with up to 3 parameters are supported.
+	*/
+template< typename Arg1, typename Arg2, typename Arg3 >
+struct Signal : public SignalBase< Signal< Arg1, Arg2, Arg3 > >
+{
+	//! Triggers the signal
+	void trigger( Arg1 arg1, Arg2 arg2, Arg3 arg3 ) const
+	{
+		typedef SignalBase< Signal > Base ;
+
+		for( typename Base::Callables::const_iterator it = this->m_callees.begin() ; it != this->m_callees.end() ; ++it )
+		{ (*it)->call( arg1, arg2, arg3 ) ; }
+	}
+
+} ;
+
 template< typename Arg1, typename Arg2 >
-struct Signal : public SignalBase< Signal< Arg1, Arg2 > >
+struct Signal< Arg1, Arg2, void > : public SignalBase< Signal< Arg1, Arg2 > >
 {
 	//! Triggers the signal
 	void trigger( Arg1 arg1, Arg2 arg2 ) const
@@ -148,7 +196,7 @@ struct Signal : public SignalBase< Signal< Arg1, Arg2 > >
 } ;
 
 template< typename Arg >
-struct Signal< Arg, void > : public SignalBase< Signal< Arg, void > >
+struct Signal< Arg, void, void > : public SignalBase< Signal< Arg, void > >
 {
 	//! Triggers the signal
 	void trigger( Arg arg ) const
