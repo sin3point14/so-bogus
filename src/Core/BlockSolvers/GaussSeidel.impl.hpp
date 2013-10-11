@@ -89,21 +89,27 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	unsigned GSIter ;
 	for( GSIter = 1 ; GSIter <= m_maxIters ; ++GSIter )
 	{
+		const Scalar skipTol = std::min( m_skipTol, .1*err_best ) ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel if (m_maxThreads != 1 && n > newMaxThreads*newMaxThreads )
 		{
 #endif
+
 			typename LocalProblemTraits::Vector lb, lx, ldx ;
 			for( unsigned c = 0 ; c+1 < m_coloring.colors.size() ; ++ c )
 			{
 
+				const std::ptrdiff_t pn = m_coloring.colors[c+1] -  m_coloring.colors[c] ;
+
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp for
 #endif
-				for( std::ptrdiff_t pi = m_coloring.colors[c] ; pi < m_coloring.colors[c+1] ; ++ pi )
+				for( std::ptrdiff_t pi = 0 ; pi < pn ; ++ pi )
 				{
-					const std::size_t i = m_coloring.permutation[pi] ;
+
+					const std::size_t i = m_coloring.permutation[
+							m_coloring.colors[c] +(  (pi+GSIter)%pn ) ] ;
 
 					if( skip[i] ) {
 						--skip[i] ;
@@ -121,8 +127,9 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 					if( !ok ) { ldx *= .5 ; }
 					xSegmenter[ i ] += ldx ;
 
-					if( m_scaling[ i ] * m_scaling[ i ] * ldx.squaredNorm() < m_skipTol ||
-						m_scaling[ i ] * m_scaling[ i ] *  lx.squaredNorm() < m_tol )
+					const Scalar nx2 = lx.squaredNorm() ;
+					if( m_scaling[i] * ldx.squaredNorm() < skipTol * nx2 ||
+						m_scaling[ i ] * m_scaling[ i ] * nx2 < m_tol )
 					{
 						skip[i] = m_skipIters ;
 					}

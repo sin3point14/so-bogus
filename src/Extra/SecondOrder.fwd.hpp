@@ -47,9 +47,9 @@ struct LocalProblemTraits ;
 
 template < unsigned Dimension, typename Scalar, bool DeSaxceCOV,
 #ifndef BOGUS_WITHOUT_EIGEN
-		   local_soc_solver::Strategy Strat = local_soc_solver::RevHybrid  >
+			 local_soc_solver::Strategy Strat = local_soc_solver::RevHybrid  >
 #else
-		   local_soc_solver::Strategy Strat = local_soc_solver::PureNewton  >
+			 local_soc_solver::Strategy Strat = local_soc_solver::PureNewton  >
 #endif
 class SOCLaw ;
 
