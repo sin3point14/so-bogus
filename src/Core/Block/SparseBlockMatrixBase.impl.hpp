@@ -130,7 +130,7 @@ SparseBlockMatrixBase< Derived >::allocateBlock( BlockPtr &ptr )
 {
 
 #ifndef BOGUS_DONT_PARALLELIZE
-	Lock::Guard< EnforceThreadSafety > guard( m_insertLock ) ;
+	Lock::Guard< EnforceThreadSafety > guard( m_lock ) ;
 #endif
 
 	ptr = m_blocks.size() ;

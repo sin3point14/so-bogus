@@ -100,16 +100,13 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 			for( unsigned c = 0 ; c+1 < m_coloring.colors.size() ; ++ c )
 			{
 
-				const std::ptrdiff_t pn = m_coloring.colors[c+1] -  m_coloring.colors[c] ;
-
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp for
 #endif
-				for( std::ptrdiff_t pi = 0 ; pi < pn ; ++ pi )
+				for( std::ptrdiff_t pi = m_coloring.colors[c] ; pi < m_coloring.colors[c+1] ; ++ pi )
 				{
 
-					const std::size_t i = m_coloring.permutation[
-							m_coloring.colors[c] +(  (pi+GSIter)%pn ) ] ;
+					const std::size_t i = m_coloring.permutation[ pi ] ;
 
 					if( skip[i] ) {
 						--skip[i] ;

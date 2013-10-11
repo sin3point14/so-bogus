@@ -41,7 +41,7 @@ static inline void innerRowMultiply( const BlockT* blocks, const IndexT &index,
 
 template < bool Transpose, typename BlockT, typename IndexT, typename RhsT, typename ResT, typename ScalarT >
 static inline void innerColMultiply( const BlockT* blocks, const IndexT &index,
-							  const typename IndexT::Index outerIdx, const RhsT& rhs, ResT& res, ScalarT alpha )
+								const typename IndexT::Index outerIdx, const RhsT& rhs, ResT& res, ScalarT alpha )
 {
 	typedef Segmenter< BlockDims< BlockT, Transpose >::Rows, ResT, typename IndexT::Index > ResSegmenter ;
 	ResSegmenter segmenter( res, index.innerOffsetsData() ) ;
@@ -91,7 +91,7 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 		typedef Segmenter< SegDim, const RhsT, typename Derived::Index > RhsSegmenter ;
 		const RhsSegmenter rhsSegmenter( rhs, matrix.majorIndex().innerOffsetsData() ) ;
 
-		Lock lock ;
+		const Lock& lock = matrix.lock();
 
 		typedef typename SparseBlockMatrixBase< Derived >::MajorIndexType MajorIndexType ;
 #pragma omp parallel
@@ -188,7 +188,7 @@ struct OutOfOrderSparseBlockMatrixVectorMultiplier
 		typedef Segmenter< RhsSegDim, const RhsT, Index > RhsSegmenter ;
 		const RhsSegmenter rhsSegmenter( rhs, matrix.minorIndex().innerOffsetsData() ) ;
 
-		Lock lock ;
+		const Lock& lock = matrix.lock();
 
 #pragma omp parallel
 		{
@@ -329,7 +329,7 @@ struct SparseBlockMatrixOpProxy
 
 	template < bool Transpose, typename Derived, typename RhsT, typename ResT >
 	static void multiply( const SparseBlockMatrixBase< Derived >& matrix,  const RhsT& rhs, ResT& res,
-						  Scalar alpha, Scalar beta )
+							Scalar alpha, Scalar beta )
 	{
 
 		if( ( Scalar ) 0 == beta )

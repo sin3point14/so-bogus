@@ -434,6 +434,9 @@ public:
 	//! Returns an array containing the first index of each column
 	const Index* colOffsets() const { return rowMajorIndex().innerOffsetsData() ; }
 
+	//! Reference to matrix private mutex
+	const Lock& lock() const { return m_lock ; }
+
 	//@}
 
 protected:
@@ -480,7 +483,7 @@ protected:
 
 	CompressedIndexType   m_transposeIndex ;
 
-	Lock m_insertLock ;
+	Lock m_lock ;
 } ;
 
 }

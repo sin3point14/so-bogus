@@ -11,10 +11,52 @@
 #ifndef BOGUS_LOCK_HPP
 #define BOGUS_LOCK_HPP
 
-#ifdef BOGUS_DONT_PARALLELIZE
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
+namespace bogus {
+
+namespace lock_impl {
+
+#ifdef _OPENMP
+typedef omp_lock_t RawData ;
+#else
+typedef void*      RawData ;
+#endif
+
+struct AbstractLock
+{
+	mutable union {
+		RawData api_type ;
+		unsigned char padding[24] ;
+	} data;
+
+	void (*set_f  )(RawData*) ;
+	void (*unset_f)(RawData*) ;
+
+	void set() const {
+		if( set_f ) set_f( &data.api_type ) ;
+	}
+
+	void unset() const {
+		if( unset_f ) unset_f( &data.api_type ) ;
+	}
+
+} ;
+
+} //namespace lock_impl
+
+#ifndef _OPENMP
 class Lock {
 public:
-	int  *for_abi_compat ;
+	lock_impl::AbstractLock  for_abi_compat ;
+
+	Lock()
+	{
+		for_abi_compat.  set_f = 0 ;
+		for_abi_compat.unset_f = 0 ;
+	}
 
 	template< bool DoLock = true >
 	struct Guard {
@@ -24,41 +66,37 @@ public:
 };
 #else
 
-#include <omp.h>
-
 class Lock {
+
 public:
 	template< bool DoLock = true >
 	struct Guard {
 		explicit Guard( const Lock& lock )
+			: m_lock( lock )
 		{
-			if(DoLock) {
-				lockPtr = lock.ptr() ;
-				omp_set_lock( lockPtr ) ;
-			}
+			if(DoLock) m_lock.set() ;
 		}
 
 		~Guard()
 		{
-			if(DoLock) omp_unset_lock( lockPtr ) ;
+			if(DoLock) m_lock.unset() ;
 		}
+
 	private:
 		Guard(const Guard &guard) ;
 		Guard& operator=(const Guard &guard) ;
 
-		omp_lock_t * lockPtr ;
+		const Lock &m_lock ;
 	} ;
 
 	Lock()
-		: m_lock( new omp_lock_t )
 	{
-		omp_init_lock( m_lock ) ;
+		init() ;
 	}
 
 	Lock( const Lock& )
-		: m_lock( new omp_lock_t )
 	{
-		omp_init_lock( m_lock ) ;
+		init() ;
 	}
 
 	Lock& operator=( const Lock& )
@@ -68,15 +106,35 @@ public:
 
 	~Lock()
 	{
-		delete m_lock ;
+		omp_destroy_lock( data() ) ;
 	}
 
-	omp_lock_t* ptr() const { return m_lock ; }
+	void set() const {
+		m_impl.set() ;
+	}
+
+	void unset() const {
+		m_impl.unset() ;
+	}
+
+	lock_impl::RawData* data() const {
+		return &m_impl.data.api_type ;
+	}
 
 private:
-	omp_lock_t* m_lock ;
+
+	void init()
+	{
+		m_impl.  set_f = &omp_set_lock ;
+		m_impl.unset_f = &omp_unset_lock ;
+		omp_init_lock( data() ) ;
+	}
+
+	lock_impl::AbstractLock m_impl ;
 };
 
 #endif
+
+} //namespace bogus
 
 #endif
