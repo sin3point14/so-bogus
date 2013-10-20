@@ -90,7 +90,7 @@ protected:
 	{
 		m_tol = 1.e-6 ;
 		m_maxIters = 250 ;
-		m_skipTol  = m_tol ;
+		m_skipTol  = 1.e-6 ;
 	}
 
 	void updateLocalMatrices() ;

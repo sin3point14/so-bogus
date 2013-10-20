@@ -74,7 +74,6 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 		err_best = err_init ;
 		x_best = x ;
 	}
-
 	this->m_callback.trigger( 0, err_best ) ;
 
 	const Index n = m_matrix->rowsOfBlocks() ;
@@ -86,10 +85,12 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	omp_set_num_threads( newMaxThreads ) ;
 #endif
 
+	Scalar ndxRef = 0 ; //Reference step size
+	const Scalar absSkipTol = std::min( m_skipTol, m_tol ) ;
+
 	unsigned GSIter ;
 	for( GSIter = 1 ; GSIter <= m_maxIters ; ++GSIter )
 	{
-		const Scalar skipTol = std::min( m_skipTol, .1*err_best ) ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel if (m_maxThreads != 1 && n > newMaxThreads*newMaxThreads )
@@ -124,9 +125,12 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 					if( !ok ) { ldx *= .5 ; }
 					xSegmenter[ i ] += ldx ;
 
-					const Scalar nx2 = lx.squaredNorm() ;
-					if( m_scaling[i] * ldx.squaredNorm() < skipTol * nx2 ||
-						m_scaling[ i ] * m_scaling[ i ] * nx2 < m_tol )
+					const Scalar nx2 = m_scaling[ i ] * m_scaling[ i ] * lx.squaredNorm() ;
+					const Scalar ndx2 = m_scaling[ i ] * m_scaling[ i ] * ldx.squaredNorm() ;
+					if( ndx2 > ndxRef ) ndxRef = ndx2 ;
+
+					if(  std::min(nx2, ndx2) < absSkipTol ||
+						 ndx2 < m_skipTol * std::min( nx2, ndxRef ) )
 					{
 						skip[i] = m_skipIters ;
 					}
@@ -139,6 +143,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 
 		if( 0 == ( GSIter % m_evalEvery ) )
 		{
+
 			y = b ;
 			m_matrix->template multiply< false >( x, y, 1, 1 ) ;
 			const double err = Base::eval( law, y, x ) ;
@@ -156,6 +161,8 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 				x_best = x ;
 				err_best = err ;
 			}
+
+			ndxRef /= m_skipIters ;
 		}
 
 	}
