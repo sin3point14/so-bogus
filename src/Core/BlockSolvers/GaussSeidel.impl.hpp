@@ -87,6 +87,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 
 	Scalar ndxRef = 0 ; //Reference step size
 	const Scalar absSkipTol = std::min( m_skipTol, m_tol ) ;
+	const Scalar absSkipIters = std::min( m_skipIters, (unsigned) std::sqrt( (Scalar) n ) ) ;
 
 	unsigned GSIter ;
 	for( GSIter = 1 ; GSIter <= m_maxIters ; ++GSIter )
@@ -132,7 +133,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 					if(  std::min(nx2, ndx2) < absSkipTol ||
 						 ndx2 < m_skipTol * std::min( nx2, ndxRef ) )
 					{
-						skip[i] = m_skipIters ;
+						skip[i] = absSkipIters ;
 					}
 				}
 
@@ -162,7 +163,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 				err_best = err ;
 			}
 
-			ndxRef /= m_skipIters ;
+			ndxRef /= m_evalEvery ;
 		}
 
 	}
