@@ -12,16 +12,18 @@ namespace bogus {
 
 \note This module is released under the terms of the <a href="http://mozilla.org/MPL/2.0/">Mozilla Public License version 2.0</a>
 
-\section block_basics Basics
+\section block_introduction Introduction
 
 The goal of this module is to make arithmetic expressions involving sparse block matrices trivial to express,
-without sacrificing performance. For instance, will be able to compute the regularized Delassus operator,
+without sacrificing performance. For instance, we will be able to compute the regularized Delassus operator,
 \f$ W := H M^{-1} H' + \gamma Id \f$ by simply writing
 \code
 W = H * ( MInv * H.transpose() ) + gamma * Id  ;
 \endcode
-where \c MInv is a block diagonal matrix containing LDLT factorizations of
+where \c MInv is a block diagonal matrix containing LDLT factorizations 
 of the diagonal blocks of \c M.
+
+\section block_basics Basics
 
 To use this library,
 \code
