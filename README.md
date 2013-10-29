@@ -5,7 +5,7 @@
  is a library that uses and completes bogus to solve systems with **second order cone constraints**, such as **Coulomb friction problems**.
 
 ###License
-**bogus** is released under the terms of  the  [Mozilla Public License v2.0](src/master/MPL-LICENSE-2.0.txt). 
+**bogus** is released under the terms of  the  [Mozilla Public License v2.0](src/master/MPL-LICENSE-2.0.txt).
 
 **So-bogus** is released under the terms of the [GNU General Public License version 2](src/master/GPL-LICENSE-2.txt) or, at your option, any later version.
 
@@ -15,13 +15,14 @@ For more information, see [LICENCE.md](src/master/LICENSE.md).
 
 **bogus** includes documentation in the doxygen format, along with usage samples.
 Run `doxygen` from the `doc/doxygen` folder, or [browse it online](http://gdaviet.fr/doc/bogus/master/doxygen/).
+A good starting point is the introduction to [bogus Block module](http://gdaviet.fr/doc/bogus/master/doxygen/block.html).
 
 ###Requirements
 
 Apart from a C++98 compiler, the only requirement is  [Eigen](http://eigen.tuxfamily.org).
 
-**bogus** has been successfully tested on a variety of Linux distributions  with gcc 4.5+,  
-and on Mac OSX 10.8 with both gcc 4.2 and clang 3.2. 
+**bogus** has been successfully tested on a variety of Linux distributions  with gcc 4.5+,
+and on Mac OSX 10.8 with both gcc 4.2 and clang 3.2.
 Visual Studio 2012 ( and maybe earlier ) should also be able to compile and run the test suite, though no particular attention is given to this platform.
 
 For more information, see [INSTALL.md](src/master/INSTALL.md).

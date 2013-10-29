@@ -14,6 +14,15 @@ namespace bogus {
 
 \section block_basics Basics
 
+The goal of this module is to make arithmetic expressions involving sparse block matrices trivial to express,
+without sacrificing performance. For instance, will be able to compute the regularized Delassus operator,
+\f$ W := H M^{-1} H' + \gamma Id \f$ by simply writing
+\code
+W = H * ( MInv * H.transpose() ) + gamma * Id  ;
+\endcode
+where \c MInv is a block diagonal matrix containing LDLT factorizations of
+of the diagonal blocks of \c M.
+
 To use this library,
 \code
 #include <bogus/Core/Block.impl.hpp>
@@ -153,7 +162,7 @@ bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::COL_MAJOR >
 
 \subsection block_scaling Coefficient-wise scaling
 
-The multiplication of each block of a SparseBlockMatrix with a scalar can be conveniently done using the SparseBlockMatrixBase::scale() method or the \c '*=' and \c '+=' operators.
+The multiplication of each block of a SparseBlockMatrix with a scalar can be conveniently done using the SparseBlockMatrixBase::scale() method or the \c '*=' and \c '/=' operators.
 
 
 \subsection block_transpose Transpose
