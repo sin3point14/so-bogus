@@ -16,12 +16,15 @@ namespace bogus {
 
 The goal of this module is to make arithmetic expressions involving sparse block matrices trivial to express,
 without sacrificing performance. For instance, we will be able to compute the regularized Delassus operator,
-\f$ W := H M^{-1} H' + \gamma Id \f$ by simply writing
+\f$ W := H M^{-1} H' + \gamma Id \f$ simply by writing
 \code
 W = H * ( MInv * H.transpose() ) + gamma * Id  ;
 \endcode
 where \c MInv is a block diagonal matrix containing LDLT factorizations 
-of the diagonal blocks of \c M.
+of the diagonal blocks of \c M. The evaluation will be somewhat lazy -- which 
+means that it will try to use as little as possible temporary storage -- and
+will take advantage of parallel architectures 
+-- provided OpenMP support is enabled, see \ref core_configuration.
 
 \section block_basics Basics
 

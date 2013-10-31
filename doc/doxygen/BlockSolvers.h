@@ -28,6 +28,7 @@ The \ref block_solvers module is a collection of solvers operating on \ref block
 At the moment, those solvers are:
  - \ref block_solvers_is
  - \ref block_solvers_gs
+ - \ref block_solvers_pg
 
 \section block_solvers_is Iterative Linear Solvers
 
@@ -131,6 +132,16 @@ double res = gs.solve( bogus::Coulomb3D( n, mu ), b, x ) ;
 
 
 \endcode 
+
+\section block_solvers_pg Projected Gradient
+
+A projected gradient algorithm is also implemented in the ProjectedGradient class.
+Its interface is very similar to that of the above GaussSeidel.
+
+\code
+bogus::ProjectedGradient< WType > pg( W ) ;
+\endcode 
+
 
 */
 

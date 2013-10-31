@@ -18,17 +18,17 @@ So-bogus is a set of loosely connected components, organized as follow:
   - \ref block_solvers, Solvers ( Projected Gauss-Seidel, Krylov linear solvers ) using those matrices
 - \ref extra, a GPL-licensed header-only library, which include
   - \ref soc Tools for solving Second Order Cone complementarity problems with \ref block_solvers
-- \ref interfaces Convenient, compilable wrappers for the most popular uses of the header-onlty libraries, 
+- \ref interfaces Convenient, compilable wrappers for the most popular uses of the header-only libraries, 
     such as solving Coulomb friction problems. GPL licensed.
 
 \section core Core ( a.k.a. bogus )
 
-\ref core is a set of heavily templated, header-only libraries.
-\ref block is self-contained and independent from the other modules
-\ref block_solvers is written to operate on matrices from \ref block
+- \ref core is a set of heavily templated, header-only libraries.
+- \ref block is self-contained and independent from the other modules.
+- \ref block_solvers is written to operate on matrices from \ref block.
 
 \subsection core_conventions Header Naming Conventions
-For each module of the \c Core library, several header files are available, follwing this naming pattern:
+For each module of the \c Core library, several header files are available, following this naming pattern:
 - \c Module.fwd.hpp Forward declarations of the module's public classes
 - \c Module.hpp Public classes and operators definitions 
 - \c Module.impl.hpp Full implementation
@@ -36,6 +36,8 @@ For each module of the \c Core library, several header files are available, foll
 For the \ref block module, the file Block.io.hpp includes additional definitions for IO and serialization-related functions. 
 
 \subsection core_configuration Configuration
+
+The behavior of the header-only libraries may be customized using the following compile-time macros:
 
 \c BOGUS_DONT_PARALLELIZE
 
@@ -92,14 +94,22 @@ At the time, the only module in \ref extra is \ref soc.
 
 \section interfaces Interfaces
 
-The \ref Interfaces part of So-bogus is not considered stable yet, but can be used 
-as examples of how to use the \ref core and \ref extra libraries. For instance, 
+The \ref Interfaces part of So-bogus is not considered stable yet, but provide examples of how to use the \ref core and \ref extra libraries. For instance, 
 PrimalFrictionProblem is a relatively generic representation of a 2D or 3D friction
 problem for which the mass matrix is a diagonal of dense blocks. It can be converted
-to a DualFrictionProblem, which in turn can be solved using a GaussSeidel block solver.
+to a DualFrictionProblem, which in turn can be solved using a GaussSeidel or ProjectedGradient block solver, or the Cadoux algorithm \cite ACML11 .
 
 On the other hand, MecheFrictionProblem defines a more specific interface, but
 provides more features, such as serialization or diagonal regularization.
+Its public interface rely on as few custom classes as possible.
+
+\note
+So-bogus header-only parts are meant to be modular and composable; the \ref Interfaces library is not, and address a very specific use case.
+Consequently, you should probably not use the compiled library in your program, but create your own wrapper over the \ref core and \ref extra modules. 
+For instance, for maximal coordinates models,
+PrimalFrictionProblem will not be optimal, as its mass matrix uses dense diagonal blocks. You will probably want to use a variation that use Eigen::SparseMatrix blocks for M and H.
+
+Similarly, while bogus provides all the components required for solving Mixed Complementarity Problems, no such solver is exposed through the \ref Interfaces .
 
 */
 
