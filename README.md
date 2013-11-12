@@ -1,6 +1,6 @@
 ###Overview
 
-This free software consist of two complementary libraries, the first being fairly generic while the other targets more specific problems. Both are open-source and can be downloaded from the [BitBucket repository](http://bitbucket.org/gdaviet/sbgs/overview). 
+This free software consist of two complementary libraries, the first being fairly generic while the other targets more specific problems. Both are open-source and can be downloaded from the [BitBucket repository](http://bitbucket.org/gdaviet/so-bogus/overview). 
 
 ####bogus
  is a template C++ 98 header-only **sparse block matrix** library. It allows to express in a concise way algebraic operations on sparse matrices whose elements can be a variety of block types, such as [Eigen](http://eigen.tuxfamily.org) dense or sparse matrices.

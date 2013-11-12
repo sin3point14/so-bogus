@@ -28,7 +28,7 @@ endif()
 # Add gtest
 ExternalProject_Add(
 	googletest
-	URL https://googletest.googlecode.com/files/gtest-1.6.0.zip
+	URL https://googletest.googlecode.com/files/gtest-1.7.0.zip
 	CMAKE_ARGS ${GTEST_CMAKE_ARGS}
 	UPDATE_COMMAND ""
 	PATCH_COMMAND ${GTEST_PATCH_COMMAND}
