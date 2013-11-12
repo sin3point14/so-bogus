@@ -13,6 +13,7 @@
 
 #include "Expressions.hpp"
 #include <cmath>
+#include <cstdlib>
 
 #define BOGUS_BLOCK_SCALAR_TYPES \
 	BOGUS_PROCESS_SCALAR( double   ) \
