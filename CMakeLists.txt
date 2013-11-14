@@ -40,7 +40,7 @@ if( BOOST_SERIALIZATION )
                 if( Boost_FOUND )
                                 add_definitions( -DBOGUS_WITH_BOOST_SERIALIZATION )
                                 SET( EXTERNAL_INCLUDES ${EXTERNAL_INCLUDES} ${Boost_INCLUDE_DIR} )
-                                SET( EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} boost_serialization )
+                                SET( EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} ${Boost_LIBRARIES} )
                 endif()
 endif()
 
