@@ -70,7 +70,7 @@ void SparseBlockMatrixBase< Derived >::serialize(
 	   const unsigned int file_version
    )
 {
-	std::size_t dummyNBlocks ;
+	std::size_t dummyNBlocks( 0 ) ;
 
 	ar & m_rows ;
 	ar & m_cols ;

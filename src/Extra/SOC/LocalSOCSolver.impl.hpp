@@ -188,9 +188,6 @@ struct AnalyticLocalSOCSolver< 3u, Scalar, false >
 	{
 		// see doc/sage/poySOC.sage
 
-		typedef typename LocalProblemTraits< 2, Scalar >::Vector Vec2 ;
-		typedef typename LocalProblemTraits< 2, Scalar >::Matrix Mat2 ;
-
 		const Scalar A = (b[1]*W(1,2) - b[2]*W(1,1))*mu*mu + b[0]*W(0,2) - b[2]*W(0,0) ;
 		const Scalar B = (b[0]*W(1,2) + b[1]*W(0,2) - 2*b[2]*W(0,1))*mu ;
 		const Scalar C = 2*( (b[1]*W(2,2) - b[2]*W(1,2))*mu*mu - b[0]*W(0,1) + b[1]*W(0,0) );

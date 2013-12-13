@@ -119,7 +119,6 @@ void convert( const SparseBlockMatrixBase< BogusDerived >& source,
 {
 	typedef BlockMatrixTraits< BogusDerived > Traits ;
 	typedef typename Traits::Index Index ;
-	typedef typename Traits::BlockPtr BlockPtr ;
 
 	typedef Eigen::SparseMatrix< EigenScalar, EigenOptions, EigenIndex > EigenMatrixType ;
 
