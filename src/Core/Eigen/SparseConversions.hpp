@@ -149,8 +149,8 @@ void convert( const SparseBlockMatrixBase< BogusDerived >& source,
 
 					const Index bout = outer - outerOffsets[ outerBlock ] ;
 					const Index binn = inner - index.innerOffsets[ it.inner() ] ;
-					const Index brow = Traits::is_col_major ? binn : bout ;
-					const Index bcol = Traits::is_col_major ? bout : binn ;
+					const Index bcol = EigenMatrixType::IsRowMajor ? binn : bout ;
+					const Index brow = EigenMatrixType::IsRowMajor ? bout : binn ;
 					const EigenScalar val = source.block( it.ptr() )( brow, bcol ) ;
 
 					dest.insertBackByOuterInner( outer, inner ) = val;
