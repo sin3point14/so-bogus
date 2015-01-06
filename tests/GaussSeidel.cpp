@@ -128,6 +128,10 @@ TEST( GaussSeidel, Small )
 	x.setOnes() ;
 	res = pg.solve( bogus::SOC3D( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
+
+	x.setOnes() ;
+	res = pg.solve< true >( bogus::SOC3D( 2, mu ), b, x ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
 }
 
 TEST( ProjectedGradient, Projection )

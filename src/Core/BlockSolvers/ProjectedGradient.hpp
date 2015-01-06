@@ -36,15 +36,32 @@ public:
 	{ init() ; Base::setMatrix( matrix ) ; }
 
 	//! Finds an approximate solution for a constrained linear problem
+	//! using classical Projected gradient algorithm
 	template < typename NSLaw, typename RhsT, typename ResT >
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const ;
 
+	//! Finds an approximate solution for a constrained linear problem,
+	//! with optional conjugation of search directions
+	template < bool Conjugate, typename NSLaw, typename RhsT, typename ResT >
+	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const ;
 
 	void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix )
 	{
 		m_matrix = &matrix ;
 		Base::updateScalings() ;
 	}
+
+	void setLineSearchIterations( const Scalar lsIterations )
+	{ m_lsIters = lsIterations ; }
+
+	void setLineSearchOptimisticFactor( const Scalar lsOptimisticFactor )
+	{ m_lsOptimisticFactor = lsOptimisticFactor ; }
+
+	void setLineSearchPessimisticFactor( const Scalar lsPessimisticFactor )
+	{ m_lsPessimisticFactor = lsPessimisticFactor ; }
+
+	void setLineSearchArmijoCriterion( const Scalar lsArmijoCirterion )
+	{ m_lsArmijoCriterion = lsArmijoCirterion ; }
 
 protected:
 

@@ -24,12 +24,28 @@ typename ProjectedGradient< BlockMatrixType >::Scalar
 ProjectedGradient< BlockMatrixType >::solve(
 		const NSLaw &law, const RhsT &b, ResT &x ) const
 {
+	return solve< false, NSLaw, RhsT, ResT >( law, b, x ) ;
+}
+
+template < typename BlockMatrixType >
+template < bool Conjugate, typename NSLaw, typename RhsT, typename ResT >
+typename ProjectedGradient< BlockMatrixType >::Scalar
+ProjectedGradient< BlockMatrixType >::solve(
+		const NSLaw &law, const RhsT &b, ResT &x ) const
+{
 
 	typename GlobalProblemTraits::DynVector
 			Mx ( b.rows() ),
 			y  ( b.rows() ), // = Mx +b
 			xs ( x.rows() )  // tentative new value for x
 			;
+
+	//Conjugation
+	typename GlobalProblemTraits::DynVector
+			dir,
+			prev_proj,
+			prev_dir ;
+	Scalar prev_n2 = 0. ;
 
 	projectOnConstraints( law, x ) ;
 
@@ -48,6 +64,33 @@ ProjectedGradient< BlockMatrixType >::solve(
 		this->m_callback.trigger( pgIter, res );
 		if( res < m_tol ) break ;
 
+		if(Conjugate)
+		{
+
+			dir = x - y ;
+			projectOnConstraints( law, dir ) ;
+			dir = x - dir ;
+
+			//Conjugation
+			const Scalar ng2 = dir.squaredNorm() ;
+			if( prev_n2 == 0. ) {
+				prev_proj = dir ;
+				dir = -y ;
+			} else {
+				const Scalar c = (ng2 - dir.dot(prev_proj)) / prev_n2 ;
+				prev_proj = dir ;
+				dir = c * prev_dir - y;
+
+				if( dir.dot(y) >= 0. )
+				{
+					dir = -y ;
+				}
+			}
+
+			prev_n2 = ng2 ;
+
+		}
+
 		Scalar Js = J ;
 
 		alpha *= m_lsOptimisticFactor ;
@@ -57,7 +100,12 @@ ProjectedGradient< BlockMatrixType >::solve(
 			 lsIter < m_lsIters ;
 			 ++ lsIter, alpha *= m_lsPessimisticFactor )
 		{
-			xs = x - alpha * y ;
+
+			if(Conjugate)
+				xs = x + alpha * dir ;
+			else
+				xs = x - alpha * y ;
+
 			projectOnConstraints( law, xs ) ;
 
 			Mx = (*m_matrix) * xs ;
@@ -66,6 +114,11 @@ ProjectedGradient< BlockMatrixType >::solve(
 			if( Js < J + m_lsArmijoCriterion * y.dot( xs - x ) )
 				break ;
 
+		}
+
+		if(Conjugate)
+		{
+			prev_dir = (xs - x) / alpha ;
 		}
 
 		x = xs ;
