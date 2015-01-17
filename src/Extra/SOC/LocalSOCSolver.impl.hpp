@@ -304,6 +304,12 @@ Scalar LocalSOCSolver< Dimension, Scalar, DeSaxceCOV, Strat >::solve(
 		const Scalar mu, const Scalar tol, const Scalar scaling
 		)
 {
+        if(mu < 0 )
+        {
+          x = A.fullPivHouseholderQr().solve( -b ) ;
+          return (A*x + b).squaredNorm() ;
+        }
+
 	// see [Daviet et al 2011], Appendix B.2
 
 	// Newton solver

@@ -56,6 +56,8 @@ void SOCLaw< Dimension, Scalar, DeSaxceCOV, Strat >::projectOnConstraint(
 	const Scalar mu  = m_mu[ problemIndex ] ;
 	const Scalar xn  = Traits::np( x ) ;
 
+        if( mu < 0 ){ x.setZero() ; return ; }
+
 	// x inside cone
 	if ( nxt <= mu * xn ) return ;
 
