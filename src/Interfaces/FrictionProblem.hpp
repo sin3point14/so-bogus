@@ -118,6 +118,12 @@ struct DualFrictionProblem
 	double solveCadoux( ProjectedGradientType &pg, double * r, const unsigned fpIterations,
 		   const Signal< unsigned, double >* callback = 0 ) const ;
 
+	//! Idem as solveCadoux, but interpreting the problem as r = Wu + b
+	double solveCadouxVel( GaussSeidelType &gs, double * u, const unsigned fpIterations,
+		   const Signal< unsigned, double >* callback = 0 ) const ;
+	double solveCadouxVel( ProjectedGradientType &pg, double * u, const unsigned fpIterations,
+		   const Signal< unsigned, double >* callback = 0 ) const ;
+
 
 	//! \warning To use the permutation releated functions, all the blocks have to have the same size
 	void applyPermutation( const std::vector< std::size_t > &permutation ) ;

@@ -99,6 +99,20 @@ double DualFrictionProblem< Dimension >::solveCadoux(ProjectedGradientType &pg, 
 }
 
 template< unsigned Dimension >
+double DualFrictionProblem< Dimension >::solveCadouxVel(GaussSeidelType &gs, double *u, const unsigned cadouxIterations,
+		const Signal<unsigned, double> *callback ) const
+{
+	return friction_problem::solveCadouxVel( *this, gs, u, cadouxIterations, callback ) ;
+}
+
+template< unsigned Dimension >
+double DualFrictionProblem< Dimension >::solveCadouxVel(ProjectedGradientType &pg, double *u, const unsigned cadouxIterations,
+		const Signal<unsigned, double> *callback ) const
+{
+	return friction_problem::solveCadouxVel( *this, pg, u, cadouxIterations, callback ) ;
+}
+
+template< unsigned Dimension >
 void DualFrictionProblem< Dimension >::applyPermutation(
 		const std::vector<std::size_t> &permutation)
 {

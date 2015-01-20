@@ -84,20 +84,39 @@ static double eval( const DualFrictionProblem< Dimension >& dual,
 }
 
 template< unsigned Dimension, template <typename> class Method >
-static double solveCadoux( const DualFrictionProblem< Dimension >& dual,
-		ConstrainedSolverBase< Method, typename DualFrictionProblem< Dimension >::WType > &gs,
+static double solveCadoux( const DualFrictionProblem< Dimension >& problem,
+		ConstrainedSolverBase< Method, typename DualFrictionProblem< Dimension >::WType > &minimizer,
 		double *r, const unsigned cadouxIterations, const Signal<unsigned, double> *callback )
 {
-	Eigen::Map< Eigen::VectorXd > r_map ( r, dual.W.rows() ) ;
+	Eigen::Map< Eigen::VectorXd > r_map ( r, problem.W.rows() ) ;
 
-	if( dual.permuted() )
-		applyPermutation< Dimension >( dual.permutation(), r_map, dual.W.majorIndex().innerOffsetsData() ) ;
+	if( problem.permuted() )
+		applyPermutation< Dimension >( problem.permutation(), r_map, problem.W.majorIndex().innerOffsetsData() ) ;
 
-	const double res = solveCadoux< Dimension >( dual.W, dual.b.data(), dual.mu.data(),
-									gs, r, cadouxIterations, callback ) ;
+	const double res = solveCadoux< Dimension >( problem.W, problem.b.data(), problem.mu.data(),
+									minimizer, r, cadouxIterations, callback ) ;
 
-	if( dual.permuted() )
-		applyPermutation< Dimension >( dual.invPermutation(), r_map, dual.W.majorIndex().innerOffsetsData() ) ;
+	if( problem.permuted() )
+		applyPermutation< Dimension >( problem.invPermutation(), r_map, problem.W.majorIndex().innerOffsetsData() ) ;
+
+	return res ;
+}
+
+template< unsigned Dimension, template <typename> class Method >
+static double solveCadouxVel( const DualFrictionProblem< Dimension >& problem,
+		ConstrainedSolverBase< Method, typename DualFrictionProblem< Dimension >::WType > &minimizer,
+		double *u, const unsigned cadouxIterations, const Signal<unsigned, double> *callback )
+{
+	Eigen::Map< Eigen::VectorXd > u_map ( u, problem.W.rows() ) ;
+
+	if( problem.permuted() )
+		applyPermutation< Dimension >( problem.permutation(), u_map, problem.W.majorIndex().innerOffsetsData() ) ;
+
+	const double res = solveCadouxVel< Dimension >( problem.W, problem.b.data(), problem.mu.data(),
+									minimizer, u, cadouxIterations, callback ) ;
+
+	if( problem.permuted() )
+		applyPermutation< Dimension >( problem.invPermutation(), u_map, problem.W.majorIndex().innerOffsetsData() ) ;
 
 	return res ;
 }
