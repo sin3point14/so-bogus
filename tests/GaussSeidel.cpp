@@ -130,7 +130,11 @@ TEST( GaussSeidel, Small )
 	ASSERT_LT( res, 1.e-8 ) ;
 
 	x.setOnes() ;
-	res = pg.solve< true >( bogus::SOC3D( 2, mu ), b, x ) ;
+	res = pg.solve< bogus::projected_gradient::Conjugated >( bogus::SOC3D( 2, mu ), b, x ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
+
+	x.setOnes() ;
+	res = pg.solve< bogus::projected_gradient::APGD >( bogus::SOC3D( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 }
 

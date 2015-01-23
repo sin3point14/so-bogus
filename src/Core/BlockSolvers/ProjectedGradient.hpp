@@ -19,6 +19,14 @@
 namespace bogus
 {
 
+namespace projected_gradient {
+	enum Variant {
+		Standard,
+		Conjugated,
+		APGD
+	} ;
+}
+
 //! Projected Gradient iterative solver.
 template < typename BlockMatrixType >
 class ProjectedGradient : public ConstrainedSolverBase< ProjectedGradient, BlockMatrixType >
@@ -42,7 +50,7 @@ public:
 
 	//! Finds an approximate solution for a constrained linear problem,
 	//! with optional conjugation of search directions
-	template < bool Conjugate, typename NSLaw, typename RhsT, typename ResT >
+	template < projected_gradient::Variant variant, typename NSLaw, typename RhsT, typename ResT >
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const ;
 
 	void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix )

@@ -24,11 +24,11 @@ typename ProjectedGradient< BlockMatrixType >::Scalar
 ProjectedGradient< BlockMatrixType >::solve(
 		const NSLaw &law, const RhsT &b, ResT &x ) const
 {
-	return solve< false, NSLaw, RhsT, ResT >( law, b, x ) ;
+	return solve< projected_gradient::Standard, NSLaw, RhsT, ResT >( law, b, x ) ;
 }
 
 template < typename BlockMatrixType >
-template < bool Conjugate, typename NSLaw, typename RhsT, typename ResT >
+template < projected_gradient::Variant variant, typename NSLaw, typename RhsT, typename ResT >
 typename ProjectedGradient< BlockMatrixType >::Scalar
 ProjectedGradient< BlockMatrixType >::solve(
 		const NSLaw &law, const RhsT &b, ResT &x ) const
@@ -47,13 +47,26 @@ ProjectedGradient< BlockMatrixType >::solve(
 			prev_dir ;
 	Scalar prev_n2 = 0. ;
 
+
+	//APGD
+	Scalar theta_prev = 1. ;
+
+
 	projectOnConstraints( law, x ) ;
+	prev_proj = x ;
 
 	// Unconstrained objective function
 	Mx = (*m_matrix)*x ;
 	Scalar J = x.dot( .5 * Mx + b ) ;
 
-	Scalar res = -1, alpha = 1 ;
+	Scalar res = -1,
+		   alpha = 1. ;
+
+	// Eval optimal alpha
+	xs.setOnes() ;
+	const Scalar nMx = ( (*m_matrix)*xs ).squaredNorm() ;
+	if( nMx > 1.e-4 )
+		alpha = b.rows() / nMx ;
 
 	for( unsigned pgIter = 0 ; pgIter < m_maxIters ; ++pgIter )
 	{
@@ -64,44 +77,43 @@ ProjectedGradient< BlockMatrixType >::solve(
 		this->m_callback.trigger( pgIter, res );
 		if( res < m_tol ) break ;
 
-		if(Conjugate)
+		if(variant == projected_gradient::Conjugated)
 		{
 
-			dir = x - y ;
-			projectOnConstraints( law, dir ) ;
-			dir = x - dir ;
+			xs = x - y ;
+			projectOnConstraints( law, xs ) ;
+			xs = x - xs ;
 
 			//Conjugation
-			const Scalar ng2 = dir.squaredNorm() ;
+			const Scalar ng2 = xs.squaredNorm() ;
 			if( prev_n2 == 0. ) {
-				prev_proj = dir ;
 				dir = -y ;
 			} else {
-				const Scalar c = (ng2 - dir.dot(prev_proj)) / prev_n2 ;
-				prev_proj = dir ;
-				dir = c * prev_dir - y;
+				const Scalar num = 1 ? (ng2 - xs.dot(prev_proj)) : ng2 ;
+				const Scalar den = 0 ? (prev_dir.dot( xs - prev_proj )) : prev_n2 ;
+				const Scalar beta = std::max( 0., num/den );
+				// Polak-Ribiere
+				//const Scalar beta = std::max( 0., (ng2 - xs.dot(prev_proj)) ) / prev_n2 ;
 
-				if( dir.dot(y) >= 0. )
-				{
-					dir = -y ;
-				}
+				dir = beta * prev_dir - y;
 			}
 
+			prev_proj = xs ;
 			prev_n2 = ng2 ;
 
 		}
+
 
 		Scalar Js = J ;
 
 		alpha *= m_lsOptimisticFactor ;
 
-		// Armijo line-search
+		// Line-search
 		for( unsigned lsIter = 0 ;
 			 lsIter < m_lsIters ;
 			 ++ lsIter, alpha *= m_lsPessimisticFactor )
 		{
-
-			if(Conjugate)
+			if(variant == projected_gradient::Conjugated)
 				xs = x + alpha * dir ;
 			else
 				xs = x - alpha * y ;
@@ -111,18 +123,41 @@ ProjectedGradient< BlockMatrixType >::solve(
 			Mx = (*m_matrix) * xs ;
 			Js = xs.dot( .5 * Mx + b ) ;
 
-			if( Js < J + m_lsArmijoCriterion * y.dot( xs - x ) )
+			const Scalar decr = (variant == projected_gradient::Conjugated)
+					? - dir.dot( xs - x )
+					:     y.dot(xs - x) ;
+
+			if( Js < J + decr + .5 / alpha * ( xs - x ).squaredNorm() )
 				break ;
 
 		}
 
-		if(Conjugate)
+		if( variant == projected_gradient::APGD && (xs - x).dot( y ) <= 0. )
 		{
-			prev_dir = (xs - x) / alpha ;
+			const Scalar theta_p2 = theta_prev * theta_prev ;
+			const Scalar delta = std::sqrt( theta_p2 + 4 ) ;
+			Scalar theta = .5 * ( theta_prev * delta - theta_p2 ) ;
+
+			const Scalar beta = ( theta_prev - theta_p2 ) / (theta_p2 + theta ) ;
+			x = xs + beta * (xs - prev_proj) ;
+
+			Mx = (*m_matrix) * x ;
+			J = x.dot( .5 * Mx + b ) ;
+
+			prev_proj = xs ;
+			theta_prev = theta ;
+		} else {
+
+			if(variant  == projected_gradient::Conjugated) {
+				prev_dir = (xs - x) / alpha ;
+			}
+
+			x = xs ;
+			J = Js ;
+
+			theta_prev = 1. ; //APGD
 		}
 
-		x = xs ;
-		J = Js ;
 	}
 
 
