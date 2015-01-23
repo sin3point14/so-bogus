@@ -21,8 +21,11 @@ namespace bogus
 
 namespace projected_gradient {
 	enum Variant {
+		//! Standard projected gradient
 		Standard,
+		//! Projected gradient with conjugation of search direction
 		Conjugated,
+		//! Accelerated Projected Gradient Descent based on \cite Nesterov1983
 		APGD
 	} ;
 }
@@ -59,17 +62,23 @@ public:
 		Base::updateScalings() ;
 	}
 
+	//! Sets the maximum number of line-search iterations
 	void setLineSearchIterations( const Scalar lsIterations )
 	{ m_lsIters = lsIterations ; }
 
+	//! Sets the amount by which the step size will be multiplied at the beginninf of each PG iteration.
+	//! Should be greater than 1
 	void setLineSearchOptimisticFactor( const Scalar lsOptimisticFactor )
 	{ m_lsOptimisticFactor = lsOptimisticFactor ; }
 
+	//! Sets the amount by which the step size will be multiplied at the end of each line-search iterations.
+	//! Should be in ]0,1[
 	void setLineSearchPessimisticFactor( const Scalar lsPessimisticFactor )
 	{ m_lsPessimisticFactor = lsPessimisticFactor ; }
 
-	void setLineSearchArmijoCriterion( const Scalar lsArmijoCirterion )
-	{ m_lsArmijoCriterion = lsArmijoCirterion ; }
+	//! Sets the variant that will be used when calling solve() without template arguments
+	void setDefaultVariant( projected_gradient::Variant variant )
+	{ m_defaultVariant = variant ; }
 
 protected:
 
@@ -84,9 +93,9 @@ protected:
 		m_tol = 1.e-6 ;
 		m_maxIters = 300 ;
 		m_lsIters = 8 ;
-		m_lsOptimisticFactor = 2 ;
+		m_lsOptimisticFactor = 1.25 ;
 		m_lsPessimisticFactor = .5 ;
-		m_lsArmijoCriterion = 1.e-4;
+		m_defaultVariant = projected_gradient::APGD ;
 	}
 
 	using Base::m_matrix ;
@@ -96,7 +105,8 @@ protected:
 	Scalar m_lsIters ;
 	Scalar m_lsOptimisticFactor ;
 	Scalar m_lsPessimisticFactor ;
-	Scalar m_lsArmijoCriterion ;
+
+	projected_gradient::Variant m_defaultVariant ;
 
 } ;
 

@@ -24,7 +24,17 @@ typename ProjectedGradient< BlockMatrixType >::Scalar
 ProjectedGradient< BlockMatrixType >::solve(
 		const NSLaw &law, const RhsT &b, ResT &x ) const
 {
-	return solve< projected_gradient::Standard, NSLaw, RhsT, ResT >( law, b, x ) ;
+	switch ( m_defaultVariant )
+	{
+	case projected_gradient::Standard:
+		return solve< projected_gradient::Standard, NSLaw, RhsT, ResT >( law, b, x ) ;
+	case projected_gradient::Conjugated:
+		return solve< projected_gradient::Conjugated, NSLaw, RhsT, ResT >( law, b, x ) ;
+	case projected_gradient::APGD:
+		return solve< projected_gradient::APGD, NSLaw, RhsT, ResT >( law, b, x ) ;
+	}
+
+	return -1 ;
 }
 
 template < typename BlockMatrixType >
@@ -36,15 +46,12 @@ ProjectedGradient< BlockMatrixType >::solve(
 
 	typename GlobalProblemTraits::DynVector
 			Mx ( b.rows() ),
-			y  ( b.rows() ), // = Mx +b
+			y  ( b.rows() ), // = Mx +b  (gradient)
 			xs ( x.rows() )  // tentative new value for x
 			;
 
 	//Conjugation
-	typename GlobalProblemTraits::DynVector
-			dir,
-			prev_proj,
-			prev_dir ;
+	typename GlobalProblemTraits::DynVector	dir, prev_dir, prev_proj ;
 	Scalar prev_n2 = 0. ;
 
 
@@ -59,14 +66,16 @@ ProjectedGradient< BlockMatrixType >::solve(
 	Mx = (*m_matrix)*x ;
 	Scalar J = x.dot( .5 * Mx + b ) ;
 
-	Scalar res = -1,
-		   alpha = 1. ;
-
-	// Eval optimal alpha
+	// Eval optimal alpha (step size )
+	Scalar alpha = 1. ;
 	xs.setOnes() ;
 	const Scalar nMx = ( (*m_matrix)*xs ).squaredNorm() ;
-	if( nMx > 1.e-4 )
+	if( nMx > 1.e-4 ) //Don't try too big alphas
 		alpha = b.rows() / nMx ;
+
+	// Best iterate storage
+	typename GlobalProblemTraits::DynVector x_best ;
+	Scalar res, min_res = -1 ;
 
 	for( unsigned pgIter = 0 ; pgIter < m_maxIters ; ++pgIter )
 	{
@@ -75,6 +84,10 @@ ProjectedGradient< BlockMatrixType >::solve(
 		res = Base::eval( law, y, x ) ;
 
 		this->m_callback.trigger( pgIter, res );
+		if( 0 == pgIter || res < min_res ) {
+			x_best = x ;
+			min_res = res ;
+		}
 		if( res < m_tol ) break ;
 
 		if(variant == projected_gradient::Conjugated)
@@ -89,13 +102,16 @@ ProjectedGradient< BlockMatrixType >::solve(
 			if( prev_n2 == 0. ) {
 				dir = -y ;
 			} else {
-				const Scalar num = 1 ? (ng2 - xs.dot(prev_proj)) : ng2 ;
-				const Scalar den = 0 ? (prev_dir.dot( xs - prev_proj )) : prev_n2 ;
-				const Scalar beta = std::max( 0., num/den );
-				// Polak-Ribiere
-				//const Scalar beta = std::max( 0., (ng2 - xs.dot(prev_proj)) ) / prev_n2 ;
+				const Scalar den = prev_dir.dot( xs - prev_proj ) ;
+				const Scalar beta = ( den < 1.e-12 )
+						// Polak-Ribiere
+						? std::max( 0., (ng2 - xs.dot(prev_proj))) / prev_n2
+						// Hestness-Stiefel
+						: std::max( 0., (ng2 - xs.dot(prev_proj))) / den  ;
+
 
 				dir = beta * prev_dir - y;
+
 			}
 
 			prev_proj = xs ;
@@ -160,8 +176,8 @@ ProjectedGradient< BlockMatrixType >::solve(
 
 	}
 
-
-	return res ;
+	x = x_best ;
+	return min_res ;
 }
 
 template < typename BlockMatrixType >
