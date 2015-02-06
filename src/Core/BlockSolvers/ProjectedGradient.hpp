@@ -25,7 +25,7 @@ namespace projected_gradient {
 		Standard,
 		//! Projected gradient with conjugation of search direction
 		Conjugated,
-		//! Accelerated Projected Gradient Descent based on \cite Nesterov1983
+		//! Accelerated Projected Gradient Descent based on \cite Nesterov1983 and developed in \cite Heyn13
 		APGD
 	} ;
 }

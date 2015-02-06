@@ -148,7 +148,7 @@ ProjectedGradient< BlockMatrixType >::solve(
 
 		}
 
-		if( variant == projected_gradient::APGD && (xs - x).dot( y ) <= 0. )
+		if( variant == projected_gradient::APGD && (xs - prev_proj).dot( y ) < 0. )
 		{
 			const Scalar theta_p2 = theta_prev * theta_prev ;
 			const Scalar delta = std::sqrt( theta_p2 + 4 ) ;
@@ -173,6 +173,8 @@ ProjectedGradient< BlockMatrixType >::solve(
 
 			theta_prev = 1. ; //APGD
 		}
+
+		alpha = std::max(1.e-4, alpha) ;
 
 	}
 
