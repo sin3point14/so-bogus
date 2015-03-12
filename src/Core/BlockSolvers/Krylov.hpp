@@ -76,6 +76,10 @@ BOGUS_KRYLOV_METHODS
 	Scalar solve(  const RhsT &b, ResT &x,
 				   krylov::Method method = krylov::CG ) const ;
 
+
+        const PreconditionerImplType& preconditioner() const {return m_preconditioner ; }
+        PreconditionerImplType& preconditioner() { return m_preconditioner ; }
+
 protected:
 
 	PreconditionerType< BlockMatrixBase< BlockMatrixType > > m_preconditioner ;
