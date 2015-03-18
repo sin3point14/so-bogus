@@ -308,6 +308,8 @@ Scalar LocalSOCSolver< Dimension, Scalar, DeSaxceCOV, Strat >::solve(
 
 	// Newton solver
 	typedef FischerBurmeister< Dimension, Scalar, DeSaxceCOV > FBFunc ;
+	typedef typename Traits::LUType LUType ;
+
 	FBFunc fb( mu, A, b, scaling ) ;
 	NonSmoothNewton< FBFunc > nsNewton( fb, tol )  ;
 
@@ -348,7 +350,7 @@ Scalar LocalSOCSolver< Dimension, Scalar, DeSaxceCOV, Strat >::solve(
 	// Continuing enumerative fallback
 
 	Vector x0 = x ;
-	DenseLU< Scalar, Dimension >( A ).solve( -b, x ) ;
+	LUType( A ).solve( -b, x ) ;
 	if( mu * Traits::np( x ) >= Traits::tp( x ).norm() )
 	{
 		// Sticking case
