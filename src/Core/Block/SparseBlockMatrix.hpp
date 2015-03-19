@@ -34,9 +34,9 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
 		is_transposed = 0,
 		is_temporary  = 0,
 
-		is_compressed = ~Flags & flags::UNCOMPRESSED,
-		is_symmetric  =  Flags & flags::SYMMETRIC,
-		is_col_major  =  Flags & flags::COL_MAJOR,
+		is_compressed =  !!( ~Flags & flags::UNCOMPRESSED ),
+		is_symmetric  =  !!(  Flags & flags::SYMMETRIC    ),
+		is_col_major  =  !!(  Flags & flags::COL_MAJOR    ),
 		flags         =  Flags
 	} ;
 

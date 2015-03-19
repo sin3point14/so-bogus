@@ -109,7 +109,7 @@ struct BlockTraits < Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _M
 		RowsAtCompileTime = _Rows,
 		ColsAtCompileTime = _Cols,
 		uses_plain_array_storage = 1,
-		is_row_major = _Options & Eigen::RowMajorBit,
+		is_row_major = !!( _Options & Eigen::RowMajorBit ),
 		is_self_transpose = ( _Rows == _Cols ) && ( _Rows == 1 )
 	} ;
 

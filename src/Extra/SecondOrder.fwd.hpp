@@ -22,6 +22,8 @@
 #ifndef BOGUS_SECOND_ORDER_FWD_HPP
 #define BOGUS_SECOND_ORDER_FWD_HPP
 
+#include "../Core/Block.fwd.hpp"
+
 namespace bogus
 {
 
@@ -42,10 +44,10 @@ enum Strategy
 } ;
 }
 
-template< unsigned Dimension, typename Scalar >
+template< DenseIndexType Dimension, typename Scalar >
 struct LocalProblemTraits ;
 
-template < unsigned Dimension, typename Scalar, bool DeSaxceCOV,
+template < DenseIndexType Dimension, typename Scalar, bool DeSaxceCOV,
 #ifndef BOGUS_WITHOUT_EIGEN
 			 local_soc_solver::Strategy Strat = local_soc_solver::RevHybrid  >
 #else

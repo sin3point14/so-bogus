@@ -27,7 +27,7 @@
 #include <iostream>
 namespace bogus {
 
-template< unsigned Dimension, typename Scalar >
+template< DenseIndexType Dimension, typename Scalar >
 void FBBaseFunction< Dimension, Scalar >::compute(
 	 const Scalar mu, const Vector& x, const Vector& y, Vector& fb )
 {
@@ -45,7 +45,7 @@ void FBBaseFunction< Dimension, Scalar >::compute(
 	}
 }
 
-template< unsigned Dimension, typename Scalar >
+template< DenseIndexType Dimension, typename Scalar >
 void FBBaseFunction< Dimension, Scalar >::computeJacobian(
 		const Scalar mu, const Vector& x, const Vector& y,
 		Vector& fb, Matrix& dFb_dx, Matrix& dFb_dy )
@@ -75,7 +75,7 @@ void FBBaseFunction< Dimension, Scalar >::computeJacobian(
 
 }
 
-template< unsigned Dimension, typename Scalar >
+template< DenseIndexType Dimension, typename Scalar >
 template< bool JacobianAsWell >
 void FBBaseFunction< Dimension, Scalar >::compute(
 			const Vector& x, const Vector& y, Vector& fb,
@@ -158,7 +158,7 @@ void FBBaseFunction< Dimension, Scalar >::compute(
 
 }
 
-template< unsigned Dimension, typename Scalar, bool DeSaxceCOV >
+template< DenseIndexType Dimension, typename Scalar, bool DeSaxceCOV >
 void FischerBurmeister< Dimension, Scalar, DeSaxceCOV >::
 compute( const Scalar mu, const Vector& x, const Vector& y, Vector& fb )
 {
@@ -172,7 +172,7 @@ compute( const Scalar mu, const Vector& x, const Vector& y, Vector& fb )
   }
 }
 
-template< unsigned Dimension, typename Scalar, bool DeSaxceCOV >
+template< DenseIndexType Dimension, typename Scalar, bool DeSaxceCOV >
 void FischerBurmeister< Dimension, Scalar, DeSaxceCOV >::compute(
 	const Vector& x, Vector& fb ) const
 {
@@ -181,7 +181,7 @@ void FischerBurmeister< Dimension, Scalar, DeSaxceCOV >::compute(
   compute( m_mu, xs, y, fb ) ;
 }
 
-template< unsigned Dimension, typename Scalar, bool DeSaxceCOV >
+template< DenseIndexType Dimension, typename Scalar, bool DeSaxceCOV >
 void FischerBurmeister< Dimension, Scalar, DeSaxceCOV >::computeJacobian(
 	  const Vector& x, Vector& fb, Matrix& dFb_dx ) const
 {

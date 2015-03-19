@@ -38,7 +38,7 @@ namespace bogus
 	Should be \c true for modeling Coulomb friction, or \c false for standard SOC complementarity. \sa solveLocal()
 	\tparam Strat local_soc_solver::Strategy for solving the local problems. Unavailable for dimensions other than 2 and 3.
   */
-template < unsigned Dimension, typename Scalar, bool DeSaxceCOV,
+template < DenseIndexType Dimension, typename Scalar, bool DeSaxceCOV,
 		   local_soc_solver::Strategy Strat >
 class SOCLaw
 {
@@ -102,13 +102,13 @@ private:
 } ;
 
 //! Predefined non-smooth law for 2D Coulomb friction
-typedef SOCLaw< 2u, double,  true > Coulomb2D ;
+typedef SOCLaw< 2, double,  true > Coulomb2D ;
 //! Predefined non-smooth law for 3D Coulomb friction
-typedef SOCLaw< 3u, double,  true > Coulomb3D ;
+typedef SOCLaw< 3, double,  true > Coulomb3D ;
 //! Predefined non-smooth law for 2D SOC complementarity
-typedef SOCLaw< 2u, double, false > SOC2D ;
+typedef SOCLaw< 2, double, false > SOC2D ;
 //! Predefined non-smooth law for 3D SOC complementarity
-typedef SOCLaw< 3u, double, false > SOC3D ;
+typedef SOCLaw< 3, double, false > SOC3D ;
 
 }
 

@@ -26,6 +26,14 @@
 #define BOGUS_DEFAULT_BLOCK_PTR_TYPE std::size_t
 #endif
 
+#ifndef BOGUS_DEFAULT_DENSE_INDEX_TYPE
+#ifndef EIGEN_DEFAULT_DENSE_INDEX_TYPE
+#define BOGUS_DEFAULT_DENSE_INDEX_TYPE int
+#else
+#define BOGUS_DEFAULT_DENSE_INDEX_TYPE EIGEN_DEFAULT_DENSE_INDEX_TYPE
+#endif
+#endif
+
 namespace bogus
 {
 
@@ -64,6 +72,8 @@ namespace internal
 	//! Indicates a value that is not known at compile time
 	enum { DYNAMIC = -1 } ;
 }
+
+typedef BOGUS_DEFAULT_DENSE_INDEX_TYPE DenseIndexType ;
 
 }
 

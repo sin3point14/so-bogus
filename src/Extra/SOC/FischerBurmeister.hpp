@@ -27,7 +27,7 @@
 namespace bogus {
 
 //! Binary Fischer-Burmeister function and jacobian computation
-template< unsigned Dimension, typename Scalar >
+template< DenseIndexType Dimension, typename Scalar >
 struct FBBaseFunction
 {
 	typedef LocalProblemTraits< Dimension, Scalar > Traits ;
@@ -57,7 +57,7 @@ struct FBBaseFunction
 
 //! Fischer-Burmeister function and jacobian computation, with optional change of variable
 /*! \tparam DeSaxceCOV whther to perform the DeSaxce change of variable. \sa SOCLaw */
-template< unsigned Dimension, typename Scalar, bool DeSaxceCOV >
+template< DenseIndexType Dimension, typename Scalar, bool DeSaxceCOV >
 class FischerBurmeister
 {
 

@@ -43,7 +43,7 @@ struct ProblemTraits : public MatrixTraits< LocalMatrixType >
 
 } ;
 
-template< unsigned Dimension, typename Scalar >
+template< DenseIndexType Dimension, typename Scalar >
 struct LocalProblemTraits : public ProblemTraits< Eigen::Matrix< Scalar, Dimension, Dimension > >
 {
 

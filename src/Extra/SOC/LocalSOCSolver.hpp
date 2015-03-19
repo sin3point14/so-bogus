@@ -27,7 +27,7 @@
 namespace bogus {
 
 
-template< unsigned Dimension, typename Scalar, bool DeSaxceCOV,
+template< DenseIndexType Dimension, typename Scalar, bool DeSaxceCOV,
 		   local_soc_solver::Strategy Strat = local_soc_solver::Hybrid  >
 struct LocalSOCSolver
 {

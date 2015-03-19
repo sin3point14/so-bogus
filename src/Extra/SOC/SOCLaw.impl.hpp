@@ -31,14 +31,14 @@
 
 namespace bogus {
 
-template < unsigned Dimension, typename Scalar, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
+template < DenseIndexType Dimension, typename Scalar, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
 SOCLaw< Dimension, Scalar, DeSaxceCOV, Strat >::SOCLaw(const unsigned n, const double *mu )
-    : m_mu(mu), m_n(n), m_localTol( std::pow( NumTraits< Scalar >::epsilon(), .75 ) )
+	: m_mu(mu), m_n(n), m_localTol( std::pow( NumTraits< Scalar >::epsilon(), .75 ) )
 {
 }
 
 
-template < unsigned Dimension, typename Scalar, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
+template < DenseIndexType Dimension, typename Scalar, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
 bool SOCLaw< Dimension, Scalar, DeSaxceCOV, Strat >::solveLocal(const unsigned problemIndex,
 			const typename Traits::Matrix &A,
 			const typename Traits::Vector &b,
@@ -48,9 +48,9 @@ bool SOCLaw< Dimension, Scalar, DeSaxceCOV, Strat >::solveLocal(const unsigned p
 	return m_localTol > LocalSolver::solve(  A, b, xm, m_mu[ problemIndex ], m_localTol, scaling ) ;
 }
 
-template < unsigned Dimension, typename Scalar, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
+template < DenseIndexType Dimension, typename Scalar, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
 void SOCLaw< Dimension, Scalar, DeSaxceCOV, Strat >::projectOnConstraint(
-        const unsigned problemIndex, typename Traits::Vector &x ) const
+		const unsigned problemIndex, typename Traits::Vector &x ) const
 {
 	const Scalar nxt = Traits::tp( x ).norm() ;
 	const Scalar mu  = m_mu[ problemIndex ] ;

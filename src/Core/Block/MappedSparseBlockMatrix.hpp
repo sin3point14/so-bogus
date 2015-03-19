@@ -37,8 +37,8 @@ struct BlockMatrixTraits< MappedSparseBlockMatrix< BlockT, Flags, Index_ > >
 		is_temporary   = 0,
 
 		is_compressed  = 1,
-		is_symmetric   = Flags & flags::SYMMETRIC,
-		is_col_major   = Flags & flags::COL_MAJOR,
+		is_symmetric   = !!( Flags & flags::SYMMETRIC ),
+		is_col_major   = !!( Flags & flags::COL_MAJOR ),
 		flags          = Flags & ~flags::UNCOMPRESSED
 	} ;
 

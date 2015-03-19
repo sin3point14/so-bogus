@@ -13,6 +13,8 @@ OPTION( WITH_2D "Build lib with 2d support" ON )
 OPTION( WITH_3D "Build lib with 3d support" ON )
 OPTION( WITH_DYNAMIC "Build lib with dynamic dim support" OFF )
 
+OPTION( CPP11 "Build with c++11 standard" OFF )
+
 SET( BOGUS_ROOT ${CMAKE_CURRENT_SOURCE_DIR} )
 SET( CMAKE_MODULE_PATH ${BOGUS_ROOT}/cmake )
 
@@ -24,13 +26,13 @@ SET( EXTERNAL_LIBRARIES "" )
 
 # OpenMP
 if( OPENMP )
-	FIND_PACKAGE(OpenMP)
+    FIND_PACKAGE(OpenMP)
     if(OPENMP_FOUND)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-		add_definitions(-DEIGEN_DONT_PARALLELIZE)
-	else()
-    	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas " )
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        add_definitions(-DEIGEN_DONT_PARALLELIZE)
+    else()
+        set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas " )
     endif()
 endif()
 
@@ -69,6 +71,9 @@ endif()
 
 if ( GCC OR CLANG )
                 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra " )
+                if( CPP11 )
+                        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated-declarations " )
+                endif()
                 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Werror " )
 
                 if( GCC AND APPLE )

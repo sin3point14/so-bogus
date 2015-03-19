@@ -33,7 +33,7 @@
 namespace bogus {
 
 // No analytic solution in the general case
-template < unsigned Dimension, typename Scalar, bool DeSaxceCOV >
+template < DenseIndexType Dimension, typename Scalar, bool DeSaxceCOV >
 struct AnalyticLocalSOCSolver
 {
 	typedef LocalProblemTraits< Dimension, Scalar > Traits ;
@@ -296,7 +296,7 @@ struct AnalyticLocalSOCSolver< 2u, Scalar, false >
 } ;
 
 
-template< unsigned Dimension, typename Scalar, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
+template< DenseIndexType Dimension, typename Scalar, bool DeSaxceCOV, local_soc_solver::Strategy Strat >
 Scalar LocalSOCSolver< Dimension, Scalar, DeSaxceCOV, Strat >::solve(
 		const typename Traits::Matrix &A,
 		const typename Traits::Vector &b,
