@@ -1,11 +1,11 @@
-/*! 
-  \file BlockSolvers.h 
+/*!
+  \file BlockSolvers.h
   \brief High level documentation for the Core/BlockSolvers module
 */
 
 namespace bogus {
 
-/*! 
+/*!
 
 \page block_solvers BlockSolvers
 \tableofcontents
@@ -14,7 +14,7 @@ namespace bogus {
 
 \section block_basics Basics
 
-To use this library, 
+To use this library,
 \code
 #include <bogus/Core/BlockSolvers.impl.hpp>
 // or if you only plan to use a specific part
@@ -34,7 +34,7 @@ At the moment, those solvers are:
 
 A few Krylov methods are available through the Krylov class, as well as some naive preconditioners.
 For the full list of available solvers, see the krylov::Method enum or the krylov::solvers namespace.
-	
+
 Here is some code solving a very simple system without preconditioning:
 \code
   // Building a block matrix
@@ -49,14 +49,14 @@ Here is some code solving a very simple system without preconditioning:
   Eigen::Vector3d rhs, res ;
   rhs.setOnes( ) ;
 
-  // Solving 
+  // Solving
   bogus::Krylov< Mat > cg( sbm ) ;
   cg.solve_CG( rhs, res ) ;
-  //or 
+  //or
   cg.solve_GMRES( rhs, res ) ;
   //or
   cg.solve( rhs, res, bogus::krylov::CGS ) ;
-\endcode 
+\endcode
 
 If we wanted to use a preconditioner
 \code
@@ -65,7 +65,7 @@ If we wanted to use a preconditioner
   bogus::Krylov< Mat, bogus::DiagonalLDLTPreconditioner > ldltcg( sbm ) ;
 
   pcg.solve_CG( rhs, res ) ;
-\endcode 
+\endcode
 
 ... or sparse matrices
 
@@ -79,8 +79,8 @@ If we wanted to use a preconditioner
   // DiagonalLDLTPreconditioner on SparseMatrix blocks requires Eigen 3.1+
   bogus::Krylov< SparseMat, bogus::DiagonalLDLTPreconditioner > sldltcg( ssbm ) ;
   err = sldltcg.solve_CG( rhs, res ) ;
-  
-\endcode 
+
+\endcode
 
 Alternatively, a Krylov object may be converted to a particular method-object which
 inherits from LinearSolverBase.
@@ -95,16 +95,16 @@ krylov::GMRES method.
   krylov.asGMRES().setRestart( 10 ).solve( rhs, res ) ;
 
   // Creating a SparseBlockMatrix of GMRES objects
-  
+
   typedef typename KrylovType::GMRESType GMRES ;
-  
+
   bogus::SparseBlockMatrix< GMRES > gmresMat ;
   // [..] Set rows, etc
   gmResmat.block( 0 ) = krylov.asGMRES() ;
   // [..]
   //
   // This performs no convergence check, and is proably a very bad idea
-  res = gmresMat * rhs ; 
+  res = gmresMat * rhs ;
 
 \endcode
 
@@ -131,18 +131,26 @@ Eigen::VectorXd x( W.rows() ) ;
 double res = gs.solve( bogus::Coulomb3D( n, mu ), b, x ) ;
 
 
-\endcode 
+\endcode
 
 \section block_solvers_pg Projected Gradient
 
 A projected gradient algorithm is also implemented in the ProjectedGradient class.
-Its interface is very similar to that of the above GaussSeidel.
+Its interface is very similar to that of the above GaussSeidel. A few variants of the
+algorithm, such as the Nesterov \cite Nesterov1983 acceleration, are implemented; they can be selected using the ProjectedGradient::setDefaultVariant()
+method or using a template parameter. See \ref projected_gradient::Variant for more information.
 
 \code
 bogus::ProjectedGradient< WType > pg( W ) ;
-\endcode 
+res = pg.solve( bogus::SOC3D( n, mu ), b, x ) ;
 
+// ... or explicitely chose a variant
 
+res = pg.solve< bogus::projected_gradient::Standard >( bogus::SOC3D( n, mu ), b, x ) ;
+\endcode
+
+\note This algorithm can only be used to solve constrained quadratic optimization problems.
+Coulomb friction does not belong to this class, but Cone Complementarity problems do.
 */
 
 }

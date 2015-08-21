@@ -45,6 +45,7 @@ public:
 	typedef typename Base::Index                    Index ;
 
 	typedef typename Traits::MajorIndexType         MajorIndexType ;
+	typedef typename MajorIndexType::InnerIterator  InnerIterator ;
 
 	typedef SparseBlockIndex< false, Index, BlockPtr > UncompressedIndexType ;
 	typedef SparseBlockIndex<  true, Index, BlockPtr > CompressedIndexType ;
@@ -260,6 +261,21 @@ public:
 	void cacheTranspose() ;
 	//! Returns whether the transpose has been cached
 	bool transposeCached() const { return m_transposeIndex.valid ; }
+
+	//! Returns an InnerIterator to efficiently browse matrix
+	/*!
+	  The iterator supports the pre-increment and casting-to-bool operations ot check
+	  fot its validity. The column (resp row.) can be accessed through the \c inner()
+	  method, and the block index through the \c ptr() method.
+
+	  \param outer Index of the row (resp. column) of a row-major (resp. column-major) matrix
+				   on which to iterate
+	  \sa \ref block_access
+	 */
+	InnerIterator innerIterator( Index outer ) const
+	{
+		return InnerIterator( m_majorIndex, outer ) ;
+	}
 
 	const MajorIndexType& majorIndex() const
 	{

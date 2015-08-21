@@ -20,10 +20,10 @@ without sacrificing performance. For instance, we will be able to compute the re
 \code
 W = H * ( MInv * H.transpose() ) + gamma * Id  ;
 \endcode
-where \c MInv is a block diagonal matrix containing LDLT factorizations 
-of the diagonal blocks of \c M. The evaluation will be somewhat lazy -- which 
+where \c MInv is a block diagonal matrix containing LDLT factorizations
+of the diagonal blocks of \c M. The evaluation will be somewhat lazy -- which
 means that it will try to use as little as possible temporary storage -- and
-will take advantage of parallel architectures 
+will take advantage of parallel architectures
 -- provided OpenMP support is enabled, see \ref core_configuration.
 
 \section block_basics Basics
@@ -134,6 +134,27 @@ map.mapTo( source.nBlocks(),
 \endcode
 
 in the previous example, note that the call to SparseBlockMatrixBase::cloneDimensions() could be replaced by calls to SparseBlockMatrixBase::setRows() and SparseBlockMatrixBase::setCols().
+
+\section block_access Reading the contents of a SparseBlockMatrix
+
+Iterators over the inner dimension of a SparseBlockMatrix can be constructed
+using the SparseBlockMatrixBase::innerIterator() method. For instance,
+the contents of a row-major matrix can be read as follow
+
+\code
+typedef bogus::SparseBlockMatrix< Eigen::MatrixXd > SBM ;
+SBM sbm ;
+
+//...
+
+for( int row = 0 ; row < sbm.rowsOfBlocks() ; ++ row ) {
+	for( SBM::InnerIterator it ( sbm.innerIterator( row ) ) ; it ; ++it ) {
+		std::cout << "Block at (" << row << ", " << it.inner() << ") is \n "
+				  << sbm.block( it.ptr() ) << "\n" ;
+	}
+}
+
+\endcode
 
 \section block_operations Using a SparseBlockMatrix (or a MappedSparseBlockMatrix)
 

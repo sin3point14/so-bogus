@@ -28,6 +28,7 @@
 
 namespace bogus {
 
+//! Krylov methods implementation
 namespace krylov {
 
 /*!

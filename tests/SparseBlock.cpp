@@ -37,6 +37,13 @@ TEST( SparseBlock, MatrixVector )
 	sbm.finalize();
 	//std::cout << sbm << std::endl ;
 
+//	for( int row = 0 ; row < sbm.rowsOfBlocks() ; ++ row ) {
+//		for( bogus::SparseBlockMatrix< BlockT, bogus::flags::UNCOMPRESSED >::InnerIterator it ( sbm.innerIterator( row ) ) ; it ; ++it ) {
+//			std::cout << "Block at (" << row << ", " << it.inner() << ") is \n "
+//					  << sbm.block( it.ptr() ) << "\n" ;
+//		}
+//	}
+
 	EXPECT_EQ( 2u, sbm.blockPtr( 3, 1 ) ) ;
 	EXPECT_EQ( sbm.InvalidBlockPtr, sbm.blockPtr( 0, 0 ) ) ;
 	EXPECT_EQ( sbm.InvalidBlockPtr, sbm.blockPtr( 1, 1 ) ) ;

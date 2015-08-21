@@ -19,7 +19,9 @@
 namespace bogus
 {
 
+//! Options for ProjectedGradient solvers
 namespace projected_gradient {
+	//! Variants of Projected Gradient algorithm
 	enum Variant {
 		//! Standard projected gradient
 		Standard,
