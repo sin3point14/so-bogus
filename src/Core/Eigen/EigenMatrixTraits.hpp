@@ -12,10 +12,10 @@
 #ifndef BOGUS_EIGEN_MATRIX_TRAITS_HPP
 #define BOGUS_EIGEN_MATRIX_TRAITS_HPP
 
-#include "../Utils/LinearSolverBase.hpp"
-
 #include <Eigen/Core>
-#include "SparseHeader.hpp"
+
+#include "EigenLinearSolvers.hpp"
+#include "EigenSparseLinearSolvers.hpp"
 
 namespace bogus
 {
