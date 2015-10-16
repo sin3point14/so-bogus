@@ -35,6 +35,8 @@
 
 #include "../Utils/CppTools.hpp"
 
+#define BOGUS_EIGEN_NEW_EXPRESSIONS EIGEN_VERSION_AT_LEAST(3,2,90)
+
 namespace bogus
 {
 
@@ -145,106 +147,223 @@ get_mutable_vector( const Eigen::MatrixBase< Derived > & )
 	return typename Eigen::internal::plain_matrix_type<Derived>::type() ;
 }
 
+} //ns bogus
+
 // Matrix vector product return types and operator*
 
+namespace bogus {
 namespace mv_impl {
 
+//! Wrapper so our SparseBlockMatrix can be used inside Eigen expressions
 template< typename Derived >
 struct EigenBlockWrapper : public Eigen::EigenBase< EigenBlockWrapper< Derived > >
 {
 	typedef EigenBlockWrapper Nested ;
+	typedef EigenBlockWrapper NestedExpression ;
 	typedef EigenBlockWrapper PlainObject ;
 	typedef Eigen::internal::traits< EigenBlockWrapper< Derived > > Traits ;
 	typedef typename Traits::Scalar Scalar ;
 	typedef typename Traits::Index Index ;
 
-	enum { Flags = Traits::Flags, IsVectorAtCompileTime = 0 } ;
+	enum { Flags = Traits::Flags, IsVectorAtCompileTime = 0,
+	MaxRowsAtCompileTime = Traits::MaxRowsAtCompileTime,
+	MaxColsAtCompileTime = Traits::MaxColsAtCompileTime
+		 } ;
 
-	const Derived &obj ;
-	EigenBlockWrapper ( const Derived &obj_ ) : obj( obj_ ) {}
+	EigenBlockWrapper ( const Derived &obj_, Scalar s = 1 )
+		: obj( obj_ ), scaling(s)
+	{}
 
 	Index rows() const { return obj.rows() ; }
 	Index cols() const { return obj.cols() ; }
+
+	// Mult by scalar
+
+	inline EigenBlockWrapper
+	operator*(const Scalar& scalar) const
+	{ return EigenBlockWrapper( obj, scaling * scalar ) ; }
+
+	inline friend EigenBlockWrapper
+	operator*(const Scalar& scalar, const EigenBlockWrapper& matrix)
+	{ return EigenBlockWrapper( matrix.obj, matrix.scaling * scalar ) ; }
+
+
+	// Product with other Eigen expr
+#if BOGUS_EIGEN_NEW_EXPRESSIONS
+	template < typename EigenDerived >
+	inline Eigen::Product< EigenBlockWrapper, EigenDerived > operator* (
+		const EigenDerived &rhs ) const
+	{
+		return Eigen::Product< EigenBlockWrapper, EigenDerived > (*this, rhs) ;
+	}
+	template < typename EigenDerived >
+	friend inline Eigen::Product< EigenDerived, EigenBlockWrapper > operator* (
+		const EigenDerived &lhs, const EigenBlockWrapper &matrix )
+	{
+		return Eigen::Product< EigenDerived, EigenBlockWrapper > (lhs, matrix) ;
+	}
+#endif
+
+	const Derived &obj ;
+	const Scalar scaling ;
 };
 
-template< typename Derived, typename EigenDerived, bool MatrixOnTheLeft >
-struct BlockEigenProduct : public Eigen::ProductBase<
-			BlockEigenProduct< Derived, EigenDerived, MatrixOnTheLeft >,
-			EigenBlockWrapper< Derived >, EigenDerived >
+//! SparseBlockMatrix / Dense producty expression
+#if BOGUS_EIGEN_NEW_EXPRESSIONS
+template < typename Lhs, typename Rhs >
+struct BlockEigenProduct
+		: public Eigen::Product< Lhs, Rhs >
 {
-	typedef Eigen::ProductBase< BlockEigenProduct,
-			EigenBlockWrapper< Derived >, EigenDerived > Base ;
+	typedef Eigen::Product< Lhs, Rhs > Base ;
+
+	BlockEigenProduct( const Lhs& lhs, const Rhs& rhs )
+		: Base( lhs, rhs)
+	{}
+} ;
+#else
+
+template< typename Lhs, typename Rhs >
+struct block_product_impl;
+
+template < typename Lhs, typename Rhs >
+struct BlockEigenProduct
+		: public Eigen::ProductBase< BlockEigenProduct< Lhs, Rhs>, Lhs, Rhs >
+{
+	typedef Eigen::ProductBase< BlockEigenProduct, Lhs, Rhs > Base ;
+
+	BlockEigenProduct( const Lhs& lhs, const Rhs& rhs )
+		: Base( lhs, rhs)
+	{}
 
 	EIGEN_DENSE_PUBLIC_INTERFACE( BlockEigenProduct )
 	using Base::m_lhs;
 	using Base::m_rhs;
-
-	BlockEigenProduct( const Derived &matrix, const EigenDerived &vector, Scalar scaling = 1 )
-		: Base( EigenBlockWrapper< Derived >(matrix), vector ), m_scaling ( scaling )
-	{}
+	typedef block_product_impl< typename Base::LhsNested, typename Base::RhsNested > product_impl ;
 
 	template<typename Dest> inline void evalTo(Dest& dst) const
 	{
-		m_lhs.obj.eval()->template multiply< Derived::is_transposed >( m_rhs.derived(), dst, m_scaling, 0 ) ;
+		product_impl::evalTo( dst, m_lhs, this->m_rhs ) ;
 	}
 	template<typename Dest> inline void scaleAndAddTo(Dest& dst, Scalar alpha) const
 	{
-		m_lhs.obj.eval()->template multiply< Derived::is_transposed >( m_rhs.derived(), dst, alpha*m_scaling, 1 ) ;
+		product_impl::scaleAndAddTo( dst, m_lhs, m_rhs, alpha ) ;
 	}
-
-private:
-	const Scalar m_scaling ;
 };
+#endif
+
 template< typename Derived, typename EigenDerived >
-struct BlockEigenProduct< Derived, EigenDerived, false > : public Eigen::ProductBase<
-			BlockEigenProduct< Derived, EigenDerived, false >,
-			EigenDerived, EigenBlockWrapper< Derived > >
+BlockEigenProduct< EigenBlockWrapper< Derived >, EigenDerived >  block_eigen_product(
+		const Derived &matrix, const EigenDerived &vector, typename Derived::Scalar scaling = 1 )
 {
-	typedef Eigen::ProductBase< BlockEigenProduct,
-			EigenDerived, EigenBlockWrapper< Derived > > Base ;
+	return BlockEigenProduct< EigenBlockWrapper< Derived >, EigenDerived > ( EigenBlockWrapper< Derived >(matrix, scaling), vector ) ;
+}
 
-	EIGEN_DENSE_PUBLIC_INTERFACE( BlockEigenProduct )
-	using Base::m_lhs;
-	using Base::m_rhs;
+template< typename Derived, typename EigenDerived >
+BlockEigenProduct< EigenDerived, EigenBlockWrapper< Derived > >  eigen_block_product(
+		const EigenDerived &vector, const Derived &matrix, typename Derived::Scalar scaling = 1 )
+{
+	return BlockEigenProduct< EigenDerived, EigenBlockWrapper< Derived > > ( vector, EigenBlockWrapper< Derived >(matrix, scaling) ) ;
+}
 
-	BlockEigenProduct( const Derived &matrix, const EigenDerived &vector, Scalar scaling = 1 )
-		: Base( vector, EigenBlockWrapper< Derived >(matrix)), m_scaling ( scaling )
-	{}
-
-	template<typename Dest> inline void evalTo(Dest& dst) const
-	{
-		Eigen::Transpose< Dest > transposed( dst.transpose() ) ;
-		m_rhs.obj.eval()->template multiply< !Derived::is_transposed >( m_lhs.transpose(), transposed, m_scaling, 0 ) ;
-	}
-	template<typename Dest> inline void scaleAddAddTo(Dest& dst, Scalar alpha) const
-	{
-		Eigen::Transpose< Dest > transposed( dst.transpose() ) ;
-		m_rhs.obj.eval()->template multiply< !Derived::is_transposed >( m_lhs.transpose(), transposed, m_scaling*alpha, 1 ) ;
-	}
-
-private:
-	const Scalar m_scaling ;
-};
 } //namespace mv_impl
 } //namespace bogus
 
+
+#if BOGUS_EIGEN_NEW_EXPRESSIONS
 namespace Eigen {
-
 namespace internal {
-template < typename Derived, typename EigenDerived, bool MatrixOnTheLeft >
-struct traits< bogus::mv_impl::BlockEigenProduct< Derived, EigenDerived, MatrixOnTheLeft > >
-		: traits< ProductBase<
-			bogus::mv_impl::BlockEigenProduct< Derived, EigenDerived, MatrixOnTheLeft >,
-			bogus::mv_impl::EigenBlockWrapper< Derived >, EigenDerived > >
-{
-  typedef Dense StorageKind;
-} ;
+#else
+namespace bogus {
+namespace mv_impl {
+#endif
 
-template < typename Derived, typename EigenDerived >
-struct traits< bogus::mv_impl::BlockEigenProduct< Derived, EigenDerived, false > >
-		: traits< ProductBase<
-			bogus::mv_impl::BlockEigenProduct< Derived, EigenDerived, false >,
-			EigenDerived, bogus::mv_impl::EigenBlockWrapper< Derived > > >
+// Eigen evaluators implementation
+
+#if BOGUS_EIGEN_NEW_EXPRESSIONS
+template<typename Derived, typename EigenDerived, int ProductType >
+struct generic_product_impl< bogus::mv_impl::EigenBlockWrapper<Derived>, EigenDerived, SparseShape, DenseShape, ProductType>
+		: public generic_product_impl_base <
+			bogus::mv_impl::EigenBlockWrapper<Derived>, EigenDerived,
+			generic_product_impl< bogus::mv_impl::EigenBlockWrapper<Derived>, EigenDerived, SparseShape, DenseShape, ProductType > >
+#else
+template<typename Derived, typename EigenDerived >
+struct block_product_impl< bogus::mv_impl::EigenBlockWrapper<Derived>, EigenDerived >
+#endif
+{
+	typedef bogus::mv_impl::EigenBlockWrapper<Derived> Lhs ;
+	typedef EigenDerived Rhs ;
+	typedef typename Derived::Scalar Scalar;
+
+	template<typename Dst>
+	static void evalTo(Dst& dst, const Lhs& lhs, const Rhs& rhs)
+	{
+		lhs.obj.eval()->template multiply< Derived::is_transposed >( rhs.derived(), dst, lhs.scaling, 0 ) ;
+	}
+	template<typename Dst>
+	static void scaleAndAddTo(Dst& dst, const Lhs& lhs, const Rhs& rhs, const Scalar& alpha)
+	{
+		lhs.obj.eval()->template multiply< Derived::is_transposed >( rhs.derived(), dst, alpha*lhs.scaling, 1 ) ;
+	}
+};
+
+#if BOGUS_EIGEN_NEW_EXPRESSIONS
+template<typename Derived, typename EigenDerived, int ProductType >
+struct generic_product_impl< EigenDerived, bogus::mv_impl::EigenBlockWrapper<Derived>, DenseShape, SparseShape, ProductType >
+		: public generic_product_impl_base <
+			EigenDerived, bogus::mv_impl::EigenBlockWrapper<Derived>,
+			generic_product_impl< EigenDerived, bogus::mv_impl::EigenBlockWrapper<Derived>, DenseShape, SparseShape, ProductType > >
+#else
+template<typename Derived, typename EigenDerived >
+		struct block_product_impl< EigenDerived, bogus::mv_impl::EigenBlockWrapper<Derived> >
+#endif
+{
+	typedef EigenDerived Lhs ;
+	typedef bogus::mv_impl::EigenBlockWrapper<Derived> Rhs ;
+	typedef typename Derived::Scalar Scalar;
+
+	template<typename Dst>
+	static void evalTo(Dst& dst, const Lhs& lhs, const Rhs& rhs)
+	{
+		Eigen::Transpose< Dst > transposed( dst.transpose() ) ;
+		rhs.obj.eval()->template multiply< !Derived::is_transposed >( lhs.transpose(), transposed, rhs.scaling, 0 ) ;
+	}
+	template<typename Dst>
+	static void scaleAndAddTo(Dst& dst, const Lhs& lhs, const Rhs& rhs, const Scalar& alpha)
+	{
+		Eigen::Transpose< Dst > transposed( dst.transpose() ) ;
+		rhs.obj.eval()->template multiply< !Derived::is_transposed >( lhs.transpose(), transposed, alpha * rhs.scaling, 1 ) ;
+	}
+};
+
+#if BOGUS_EIGEN_NEW_EXPRESSIONS
+// (A * B * s ) -> ( (s*A) * B )
+template<typename Derived, typename Rhs, typename Scalar>
+struct evaluator<CwiseUnaryOp<internal::scalar_multiple_op<Scalar>, const Product<bogus::mv_impl::EigenBlockWrapper<Derived>, Rhs, DefaultProduct> > >
+ : public evaluator<Product<bogus::mv_impl::EigenBlockWrapper<Derived>, Rhs, DefaultProduct> >
+{
+  typedef        CwiseUnaryOp<internal::scalar_multiple_op<Scalar>, const Product<bogus::mv_impl::EigenBlockWrapper<Derived>, Rhs, DefaultProduct> > XprType;
+  typedef evaluator<Product<bogus::mv_impl::EigenBlockWrapper<Derived>, Rhs, DefaultProduct> > Base;
+
+  EIGEN_DEVICE_FUNC explicit evaluator(const XprType& xpr)
+	: Base( ( xpr.functor().m_other * xpr.nestedExpression().lhs() ) * xpr.nestedExpression().rhs() )
+  {}
+};
+#endif
+
+} // ns mv_impl/internal
+} // ns Eigen/bogus
+
+// Eigen traits for our new structs
+namespace Eigen{
+namespace internal {
+
+template < typename Lhs, typename Rhs >
+struct traits< bogus::mv_impl::BlockEigenProduct< Lhs, Rhs > >
+#if BOGUS_EIGEN_NEW_EXPRESSIONS
+		: public traits< typename bogus::mv_impl::BlockEigenProduct< Lhs, Rhs >::Base >
+		#else
+		: public traits< ProductBase< bogus::mv_impl::BlockEigenProduct< Lhs, Rhs >, Lhs, Rhs > >
+		#endif
 {
   typedef Dense StorageKind;
 } ;
@@ -254,7 +373,12 @@ struct traits<bogus::mv_impl::EigenBlockWrapper<Derived> >
 {
   typedef typename Derived::Scalar Scalar;
   typedef typename Derived::Index Index;
+  typedef typename Derived::Index StorageIndex;
+#if BOGUS_EIGEN_NEW_EXPRESSIONS
+  typedef Sparse StorageKind;
+#else
   typedef Dense StorageKind;
+#endif
   typedef MatrixXpr XprKind;
   enum {
 	RowsAtCompileTime = Dynamic,
@@ -268,42 +392,45 @@ struct traits<bogus::mv_impl::EigenBlockWrapper<Derived> >
 
 } //namespace Eigen
 
+
+// Matrix-Vector operators
+
 namespace bogus{
 
 template < typename Derived, typename EigenDerived >
-mv_impl::BlockEigenProduct< Derived, EigenDerived, true > operator* (
+mv_impl::BlockEigenProduct< mv_impl::EigenBlockWrapper<Derived>, EigenDerived > operator* (
 		const BlockObjectBase< Derived >& lhs,
 		const Eigen::MatrixBase< EigenDerived > &rhs )
 {
 	assert( rhs.rows() == lhs.cols() ) ;
-	return mv_impl::BlockEigenProduct< Derived, EigenDerived, true > ( lhs.derived(), rhs.derived() ) ;
+	return mv_impl::block_eigen_product ( lhs.derived(), rhs.derived() ) ;
 }
 
 template < typename Derived, typename EigenDerived >
-mv_impl::BlockEigenProduct< Derived, EigenDerived, true > operator* (
+mv_impl::BlockEigenProduct< mv_impl::EigenBlockWrapper<Derived>, EigenDerived > operator* (
 		const Scaling< Derived >& lhs,
 		const Eigen::MatrixBase< EigenDerived > &rhs )
 {
 	assert( rhs.rows() == lhs.cols() ) ;
-	return mv_impl::BlockEigenProduct< Derived, EigenDerived, true > ( lhs.operand.object, rhs.derived(), lhs.operand.scaling ) ;
+	return mv_impl::block_eigen_product ( lhs.operand.object, rhs.derived(), lhs.operand.scaling ) ;
 }
 
 template < typename Derived, typename EigenDerived >
-mv_impl::BlockEigenProduct< Derived, EigenDerived, false > operator* (
+mv_impl::BlockEigenProduct< EigenDerived, mv_impl::EigenBlockWrapper<Derived> > operator* (
 		const Eigen::MatrixBase< EigenDerived > &lhs,
 		const BlockObjectBase< Derived >& rhs )
 {
 	assert( lhs.cols() == rhs.rows() ) ;
-	return mv_impl::BlockEigenProduct< Derived, EigenDerived, false > ( rhs.derived(), lhs.derived() ) ;
+	return mv_impl::eigen_block_product ( lhs.derived(), rhs.derived() ) ;
 }
 
 template < typename Derived, typename EigenDerived >
-mv_impl::BlockEigenProduct< Derived, EigenDerived, false > operator* (
+mv_impl::BlockEigenProduct< EigenDerived, mv_impl::EigenBlockWrapper<Derived> > operator* (
 		const Eigen::MatrixBase< EigenDerived > &lhs,
 		const Scaling< Derived >& rhs )
 {
 	assert( lhs.cols() == rhs.rows() ) ;
-	return mv_impl::BlockEigenProduct< Derived, EigenDerived, false > ( rhs.operand.object, lhs.derived(), rhs.operand.scaling ) ;
+	return mv_impl::eigen_block_product ( lhs.derived(), rhs.operand.object, rhs.operand.scaling ) ;
 }
 
 
