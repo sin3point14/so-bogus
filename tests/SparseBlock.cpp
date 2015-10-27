@@ -88,6 +88,16 @@ TEST( SparseBlock, MatrixVector )
 	EXPECT_TRUE( structofsbm.minorIndex().valid ) ;
 	structofsbm = sbm ;
 
+	bogus::SparseBlockMatrix< BlockT, bogus::flags::UNCOMPRESSED > closbm ;
+	closbm.setRows( 5, 2 ) ;
+	closbm.setCols( 2, 3 ) ;
+	closbm.cloneIndex( sbm.majorIndex() );
+	EXPECT_EQ( closbm.nBlocks(), sbm.nBlocks() ) ;
+	EXPECT_EQ( closbm.rowsOfBlocks(), sbm.rowsOfBlocks() ) ;
+	EXPECT_EQ( closbm.colsOfBlocks(), sbm.colsOfBlocks() ) ;
+	EXPECT_EQ( closbm.rows(), 10 ) ;
+	EXPECT_EQ( closbm.rowOffset( 3 ), 6 ) ;
+
 	bogus::SparseBlockMatrix< Eigen::MatrixXd > copyofsbm ;
 	copyofsbm = sbm ;
 	EXPECT_TRUE( copyofsbm.majorIndex().valid ) ;

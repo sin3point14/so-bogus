@@ -307,6 +307,29 @@ void SparseBlockMatrixBase<Derived>::cloneStructure( const SparseBlockMatrixBase
 }
 
 template < typename Derived >
+void SparseBlockMatrixBase<Derived>::cloneIndex( const MajorIndexType &source )
+{
+	assert( m_majorIndex.outerSize() == source.outerSize() ) ;
+	assert( source.valid ) ;
+	assert( !source.hasInnerOffsets() || m_majorIndex.innerSize() == source.innerSize() ) ;
+
+	// Preserve current innerOffsets
+	typename MajorIndexType::InnerOffsetsType tmpOffsets ;
+	std::swap( tmpOffsets, m_majorIndex.innerOffsets ) ;
+	m_majorIndex = source ;
+	std::swap( tmpOffsets, m_majorIndex.innerOffsets ) ;
+
+	m_blocks.resize( source.nonZeros() ) ;
+
+	m_minorIndex.valid = false ;
+
+	m_transposeBlocks.clear() ;
+	m_transposeIndex.valid = false ;
+
+	Finalizer::finalize( *this ) ;
+}
+
+template < typename Derived >
 Derived& SparseBlockMatrixBase< Derived >::prune( const Scalar precision )
 {
 	MajorIndexType oldIndex = m_majorIndex ;

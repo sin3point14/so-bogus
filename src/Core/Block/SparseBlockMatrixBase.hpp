@@ -331,6 +331,10 @@ public:
 	template< typename OtherDerived >
 	void cloneStructure( const SparseBlockMatrixBase< OtherDerived > &source ) ;
 
+	//! Clone an external index and allocate corresponding blocks.
+	/// Rows and Cols dimensions should be set beforhand
+	void cloneIndex( const MajorIndexType &index ) ;
+
 	//@}
 
 	//! \name Linear algebra
