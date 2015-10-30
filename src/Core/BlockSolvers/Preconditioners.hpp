@@ -59,6 +59,38 @@ class DiagonalLDLTPreconditioner
 {
 } ;
 
+//! Matrix preconditioner
+/*! Explicitely define the preconditioner with an arbitray matrix*/
+
+template < typename PreconditionerMatrixType >
+struct MatrixPreconditioner {
+
+	template < typename MatrixType >
+	class Type
+	{
+		const PreconditionerMatrixType* m_preconditionerMatrix ;
+
+	public:
+
+		Type() : m_preconditionerMatrix( 0 )
+		{}
+
+		void setMatrix( const MatrixType & )
+		{}
+
+		void setPreconditionerMatrix( const PreconditionerMatrixType & preconditioner )
+		{
+			m_preconditionerMatrix = &preconditioner ;
+		}
+
+		template < bool transpose, typename ResT, typename RhsT >
+		void apply( const RhsT& rhs, ResT &res ) const
+		{
+			m_preconditionerMatrix->template multiply< transpose >( rhs, res ) ;
+		}
+	} ;
+} ;
+
 }
 
 #endif
