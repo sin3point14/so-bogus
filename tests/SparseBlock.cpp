@@ -140,6 +140,9 @@ TEST( SparseBlock, MatrixVector )
 	EXPECT_EQ( expected_2, mres.col(0) ) ;
 	EXPECT_EQ( 2*expected_2, mres.col(1) ) ;
 
+	sbm.setBlocksToZero() ;
+	mres = sbm * mrhs ;
+	EXPECT_TRUE( mres.isZero() ) ;
 }
 
 TEST( SparseBlock, Symmetric )

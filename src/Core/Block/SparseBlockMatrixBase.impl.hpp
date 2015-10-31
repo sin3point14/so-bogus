@@ -503,6 +503,19 @@ Derived& SparseBlockMatrixBase< Derived >::setIdentity(  )
 	return derived() ;
 }
 
+template < typename Derived >
+Derived& SparseBlockMatrixBase< Derived >::setBlocksToZero(  )
+{
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
+	for( Index i = 0 ; i < nBlocks() ; ++i )
+	{
+		set_zero( block(i) ) ;
+	}
+
+	return derived() ;
+}
 
 } //namespace bogus
 

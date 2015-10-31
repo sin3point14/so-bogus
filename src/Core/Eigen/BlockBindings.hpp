@@ -50,6 +50,12 @@ inline bool is_zero ( const Eigen::MatrixBase< EigenDerived >& block,
 }
 
 template< typename EigenDerived >
+inline void set_zero ( Eigen::MatrixBase< EigenDerived >& block )
+{
+	block.derived().setZero( ) ;
+}
+
+template< typename EigenDerived >
 inline void set_identity ( Eigen::MatrixBase< EigenDerived >& block )
 {
 	block.derived().setIdentity( ) ;

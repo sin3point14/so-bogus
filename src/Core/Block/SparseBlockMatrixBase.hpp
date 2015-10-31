@@ -205,6 +205,8 @@ public:
 	Derived& setZero() { clear() ; return derived() ; }
 	//! Calls set_identity() on each diagonal block, discard off-diagonal blocks
 	Derived& setIdentity() ;
+	//! Sets all allocated blocks to zero. Does not update index
+	Derived& setBlocksToZero() ;
 
 	//! Returns the number of (non-zero) blocks of the matrix
 	std::size_t nBlocks() const { return blocks().size() ; }
