@@ -509,7 +509,7 @@ Derived& SparseBlockMatrixBase< Derived >::setBlocksToZero(  )
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( Index i = 0 ; i < nBlocks() ; ++i )
+	for( std::size_t i = 0 ; i < nBlocks() ; ++i )
 	{
 		set_zero( block(i) ) ;
 	}
