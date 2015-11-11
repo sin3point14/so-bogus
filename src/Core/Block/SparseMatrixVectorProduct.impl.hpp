@@ -23,7 +23,7 @@ namespace mv_impl {
 template < bool DoTranspose, typename Matrix, typename RhsT, typename ResT, typename Scalar >
 inline void mv_add( const Matrix& matrix, const RhsT& rhs, ResT& res, Scalar alpha )
 {
-	res.noalias() += alpha * ( TransposeIf< DoTranspose >::get( matrix ) * rhs ) ;
+	res.noalias() += TransposeIf< DoTranspose >::get( matrix ) * ( alpha * rhs ) ;
 }
 
 template < bool Transpose, typename BlockT, typename IndexT, typename RhsT, typename ResT, typename ScalarT >

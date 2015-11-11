@@ -26,8 +26,8 @@ transpose_block( const SelfTransposeT &block  ) { return  block ; }
 
 //! Specialization of transpose_block() for types that define a ConstTransposeReturnType
 template< typename BlockType >
-typename BlockType::ConstTransposeReturnType
-inline transpose_block ( const BlockType& block )
+inline typename EnableIf< !BlockTraits< BlockType >::is_self_transpose, typename BlockType::ConstTransposeReturnType >::ReturnType
+transpose_block ( const BlockType& block )
 {
 	return block.transpose() ;
 }
