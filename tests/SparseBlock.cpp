@@ -800,3 +800,22 @@ TEST( SparseBlock, Permutation)
 		}
 	}
 }
+
+TEST(SparseBlock, FixedSize)
+{
+	bogus::SparseBlockMatrix< Eigen::Matrix< double, 2, 4 > > sbm ;
+	sbm.setRows(1) ;
+	sbm.setCols(1) ;
+	sbm.insertBack(0,0) << 1,2,3,4,5,6,7,8 ;
+	sbm.finalize() ;
+
+	
+	bogus::SparseBlockMatrix< Eigen::Matrix< double, 2, 4 > > copy = sbm ;
+	ASSERT_EQ( sbm.block(0), copy.block(0) ) ;
+	
+	bogus::SparseBlockMatrix< Eigen::Matrix< double, 4, 2 > > tsbm = sbm.transpose() ;
+	ASSERT_EQ( sbm.block(0), tsbm.block(0).transpose() ) ;
+
+}
+
+

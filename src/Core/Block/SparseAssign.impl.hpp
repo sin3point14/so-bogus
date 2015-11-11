@@ -113,11 +113,12 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 
 		if( useTransposeIndex )
 		{
+			assert( Transpose ) ;
 			assert( m_transposeIndex.valid ) ;
 			m_blocks.resize( source.transposeBlocks().size() ) ;
 			m_transposeBlocks.resize( source.blocks().size() ) ;
-			BlockCopier< false >::copy( source.transposeData(), this->data(), source.transposeBlocks().size(), scale ) ;
-			BlockCopier< false >::copy( source.data(), this->transposeData(), source.blocks().size(), scale ) ;
+			BlockCopier< !Transpose >::copy( source.transposeData(), this->data(), source.transposeBlocks().size(), scale ) ;
+			BlockCopier< !Transpose >::copy( source.data(), this->transposeData(), source.blocks().size(), scale ) ;
 		} else {
 			const bool needTranspose = Transpose != ( Traits::is_symmetric && OtherTraits::is_symmetric && !sameMajorness ) ;
 

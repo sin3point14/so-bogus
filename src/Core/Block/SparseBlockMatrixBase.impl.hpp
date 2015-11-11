@@ -114,6 +114,9 @@ template < bool Ordered >
 typename SparseBlockMatrixBase< Derived >::BlockType&
 SparseBlockMatrixBase< Derived >::insertByOuterInner( Index outer, Index inner )
 {
+	assert( outer < m_majorIndex.outerSize() ) ;
+	assert( inner < m_majorIndex.innerSize() ) ;
+
 	BlockPtr ptr ;
 	BlockType &b = allocateBlock< !Ordered >( ptr ) ;
 
