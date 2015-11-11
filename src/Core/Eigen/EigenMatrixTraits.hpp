@@ -17,6 +17,8 @@
 #include "EigenLinearSolvers.hpp"
 #include "EigenSparseLinearSolvers.hpp"
 
+#include "../Block/ScalarBindings.hpp"
+
 namespace bogus
 {
 
@@ -30,6 +32,8 @@ struct MatrixTraits
 	typedef LU  < Eigen::MatrixBase< MatrixType > > LUType ;
 	typedef LDLT< Eigen::MatrixBase< MatrixType > > LDLTType ;
 
+	static const MatrixType& asConstMatrix ( const MatrixType& src )
+	{ return src; }
 } ;
 
 template < typename _Scalar, int _Options, typename _Index >
@@ -42,8 +46,21 @@ struct MatrixTraits< Eigen::SparseMatrix< _Scalar, _Options, _Index > >
 	typedef LU< Eigen::SparseMatrixBase< Eigen::SparseMatrix< Scalar, _Options, _Index > > > LUType ;
 	typedef LDLT< Eigen::SparseMatrixBase< Eigen::SparseMatrix< Scalar, _Options, _Index > > > LDLTType ;
 
+	static const MatrixType& asConstMatrix ( const MatrixType& src )
+	{ return src; }
 } ;
 
-}
+#define BOGUS_PROCESS_SCALAR( Scalar ) \
+template < > struct MatrixTraits< Scalar > : public MatrixTraits< Eigen::Matrix< Scalar, 1, 1> > {\
+	static Eigen::Matrix< Scalar, 1, 1> asConstMatrix ( const Scalar src ) {\
+		Eigen::Matrix< Scalar, 1, 1>  mat ;\
+		mat(0,0) = src ;\
+		return mat ; \
+	}\
+};
+BOGUS_BLOCK_SCALAR_TYPES
+#undef BOGUS_PROCESS_SCALAR
+
+} //bogus
 
 #endif

@@ -46,7 +46,7 @@ void GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::updateLocalMatrices( )
 			resize( m_localMatrices[i], m_matrix->blockRows(i), m_matrix->blockCols(i) ) ;
 			set_zero( m_localMatrices[i] ) ;
 		} else {
-			m_localMatrices[i] = m_matrix->block( ptr ) ;
+			m_localMatrices[i] = GlobalProblemTraits::asConstMatrix( m_matrix->block( ptr ) ) ;
 		}
 
 		if( m_autoRegularization > 0. )

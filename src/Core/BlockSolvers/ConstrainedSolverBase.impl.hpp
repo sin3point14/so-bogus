@@ -102,7 +102,7 @@ void ConstrainedSolverBase< SolverType,BlockMatrixType >::updateScalings()
 		if( ptr == BlockMatrixType::InvalidBlockPtr ) {
 			m_scaling[i] = 1. ;
 		} else {
-			m_scaling[i] = std::max( 1., m_matrix->block(ptr).trace() ) ;
+			m_scaling[i] = std::max( 1., GlobalProblemTraits::asConstMatrix( m_matrix->block( i ) ).trace() ) ;
 		}
 	}
 
