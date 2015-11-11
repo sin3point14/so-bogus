@@ -52,7 +52,7 @@ class Licenser
 
   def expand_license!( text )
     @text = ''
-    text.each do |l|
+    text.each_line do |l|
       if l.include? '{COPYRIGHT}' then
         COPYRIGHT_LINES.each { |c|
           @text << l.sub( '{COPYRIGHT}', c)
@@ -135,7 +135,7 @@ end
 
 licenser = Licenser.new( Text )
 
-(1..ARGV.count).each do |i| 
+(1..(ARGV.count-1)).each do |i| 
   prefix = ARGV[i] 
   IO.popen(GIT_CMD) do |f|
     f.each_line do |l|
