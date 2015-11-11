@@ -63,12 +63,18 @@ public:
 	typedef typename Base::Scalar                   Scalar ;
 
 	// Canonical type for a mutable matrix with different block type
-	template < typename OtherBlockType >
+	template < typename OtherBlockType, bool PreserveSymmetry = true >
 	struct MutableImpl
 	{
 		typedef SparseBlockMatrix< OtherBlockType, Traits::flags & ~flags::UNCOMPRESSED > Type ;
 	} ;
-	typedef typename MutableImpl< BlockType >::Type CopyResultType ;
+	template < typename OtherBlockType >
+	struct MutableImpl< OtherBlockType, false >
+	{
+		typedef SparseBlockMatrix< OtherBlockType,
+			Traits::flags & ~flags::UNCOMPRESSED & ~flags::SYMMETRIC > Type ;
+	} ;
+	typedef typename MutableImpl< BlockType, true >::Type CopyResultType ;
 
 	typedef typename Base::ConstTransposeReturnType ConstTransposeReturnType ;
 

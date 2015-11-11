@@ -199,14 +199,15 @@ TEST( GaussSeidel, LCP )
 	Eigen::VectorXd x ;
 	x.setZero( b.rows() ) ;
 
+	gs.setTol(1.e-16) ;
 	gs.callback().connect( &ackCurrentGSResidual );
 	double res = gs.solve( bogus::LCPLaw< double >(), b, x ) ;
 	
 	Eigen::VectorXd y = W*x + b ;
 	
 	ASSERT_GT(1.e-16, res) ;
-	ASSERT_GT(1.e-16, (x.array()*y.array()).matrix().squaredNorm() ) ;
-	ASSERT_LT(-1.e-16, x.minCoeff() ) ;
+	ASSERT_GT(1.e-8, (x.array()*y.array()).matrix().squaredNorm() ) ;
+	ASSERT_LT(-1.e-8, x.minCoeff() ) ;
 	ASSERT_LT(-1.e-16, y.minCoeff() ) ;
 }
 

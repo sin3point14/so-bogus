@@ -161,7 +161,7 @@ struct BlockMatrixTraits< Product< LhsMatrixT, RhsMatrixT > >
 		LhsTraits::is_transposed, RhsTraits::is_transposed >::ReturnType ResBlockType ;
 
 	typedef typename LhsTraits::PlainObjectType
-		::template MutableImpl< ResBlockType >::Type PlainObjectType ;
+		::template MutableImpl< ResBlockType, false >::Type PlainObjectType ;
 	typedef std::auto_ptr< const PlainObjectType > EvalType ;
 
 	typedef typename LhsTraits::Scalar Scalar ;
@@ -205,7 +205,7 @@ struct BlockMatrixTraits< Addition< LhsMatrixT, RhsMatrixT > >
 	typedef typename OrigTraits::PlainObjectType::BlockType ResBlockType ;
 
 	typedef typename OrigTraits::PlainObjectType
-		::template MutableImpl< ResBlockType >::Type PlainObjectType ;
+		::template MutableImpl< ResBlockType, false >::Type PlainObjectType ;
 	typedef std::auto_ptr< const PlainObjectType > EvalType ;
 
 	typedef typename OrigTraits::Scalar Scalar ;

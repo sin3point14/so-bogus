@@ -393,6 +393,9 @@ TEST( SparseBlock, MMult )
 		bogus::SparseBlockMatrix< Eigen::MatrixXd > mm_t_mt = mm_t  * sbm.transpose() ;
 		EXPECT_EQ( expected_1, mm_t_mt*rhs ) ;
 		EXPECT_EQ( expected_1, mm_t * ( sbm.transpose() * rhs )  ) ;
+		mm_t_mt -= mm_t  * sbm.transpose() ;
+		EXPECT_TRUE( (mm_t_mt*rhs).isZero() ) ;
+		
 		bogus::SparseBlockMatrix< Eigen::MatrixXd > mm_t_mt_chk = sbm.transpose() * mm;
 		EXPECT_EQ( expected_1, mm_t_mt_chk*rhs );
 		mm_t_mt.setFromProduct< false > ( mm_t  * sbm.transpose() ) ;
