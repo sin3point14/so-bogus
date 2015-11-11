@@ -18,4 +18,6 @@
 #include "BlockSolvers/Krylov.hpp"
 #include "BlockSolvers/ProjectedGradient.hpp"
 
+#include "BlockSolvers/LCPLaw.hpp"
+
 #endif

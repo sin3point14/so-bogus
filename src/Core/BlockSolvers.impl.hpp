@@ -17,4 +17,6 @@
 #include "BlockSolvers/ProjectedGradient.impl.hpp"
 #include "BlockSolvers/Krylov.impl.hpp"
 
+#include "BlockSolvers/LCPLaw.impl.hpp"
+
 #endif
