@@ -40,7 +40,14 @@ void GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::updateLocalMatrices( )
 #endif
 	for( Index i = 0 ; i <  n ; ++i )
 	{
-		m_localMatrices[i] = m_matrix->diagonal( i ) ;
+		const typename BlockMatrixType::BlockPtr ptr = m_matrix->diagonalBlockPtr( i ) ;
+
+		if( ptr == BlockMatrixType::InvalidBlockPtr ) {
+			resize( m_localMatrices[i], m_matrix->blockRows(i), m_matrix->blockCols(i) ) ;
+			set_zero( m_localMatrices[i] ) ;
+		} else {
+			m_localMatrices[i] = m_matrix->block( ptr ) ;
+		}
 
 		if( m_autoRegularization > 0. )
 		{

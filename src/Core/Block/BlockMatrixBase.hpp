@@ -24,11 +24,15 @@ class BlockMatrixBase : public BlockObjectBase< Derived >
 public:
 	typedef BlockMatrixTraits< Derived > Traits ;
 	typedef typename Traits::BlockType BlockType ;
-	typedef typename Traits::Index Index ;
-	typedef typename Traits::Scalar Scalar ;
+	typedef typename Traits::Index     Index ;
+	typedef typename Traits::Scalar    Scalar ;
+	typedef typename Traits::BlockPtr  BlockPtr ;
 
 	typedef BlockObjectBase< Derived > Base;
 	using Base::derived ;
+
+	//! Return value of blockPtr( Index, Index ) for non-existing block
+	static const BlockPtr InvalidBlockPtr ;
 
 	BlockMatrixBase() : m_rows(0), m_cols(0)
 	{}
@@ -58,12 +62,41 @@ public:
 		derived().splitRowMultiply( row, rhs, res ) ;
 	}
 
-	//! Returns a reference to the content of the digonal block of row \param row
-	/*! \warning If this block does not exist, the behavior of this function is undefined */
-	const BlockType& diagonal( const Index row ) const
+	//! Return a BlockPtr to the block a (row, col) or InvalidBlockPtr if it does not exist
+	BlockPtr blockPtr( Index row, Index col ) const
 	{
-		return derived().diagonal( row );
+		return derived().blockPtr( row, col ) ;
 	}
+	//! Return a BlockPtr to the block a (row, row) or InvalidBlockPtr if it does not exist
+	BlockPtr diagonalBlockPtr( Index row  ) const
+	{
+		return derived().diagonalBlockPtr( row ) ;
+	}
+
+	//! Returns a reference to a block using the result from blockPtr() or diagonalBlockPtr()
+	const BlockType& block( BlockPtr ptr ) const
+	{
+		return derived().block(ptr) ;
+	}
+	//! Returns a reference to a block using the result from blockPtr() or diagonalBlockPtr()
+	BlockType& block( BlockPtr ptr )
+	{
+		return derived().block(ptr) ;
+	}
+
+	//! \warning block has to exist
+	BlockType& diagonal( const Index row )
+	{ return block( diagonalBlockPtr( row ) ) ; }
+	//! \warning block has to exist
+	const BlockType& diagonal( const Index row ) const
+	{ return block( diagonalBlockPtr( row ) ) ; }
+
+	//! \warning block has to exist
+	BlockType& block( Index row, Index col )
+	{ return block( blockPtr( row, col ) ) ; }
+	//! \warning block has to exist
+	const BlockType& block( Index row, Index col ) const
+	{ return block( blockPtr( row, col ) ) ; }
 
 	//! Returns the total number of rows of the matrix ( expanding blocks )
 	Index rows() const { return m_rows ; }

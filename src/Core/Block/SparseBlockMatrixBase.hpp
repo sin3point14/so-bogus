@@ -85,10 +85,9 @@ public:
 	using Base::cols ;
 	using Base::blocks ;
 	using Base::derived ;
-
-	//! Return value of blockPtr( Index, Index ) for non-existing block
-	static const BlockPtr InvalidBlockPtr ;
-
+	using Base::block ;
+	using Base::diagonal ;
+	using Base::InvalidBlockPtr ;
 
 	// Public API
 
@@ -235,20 +234,6 @@ public:
 	BlockPtr blockPtr( Index row, Index col ) const ;
 	//! Return a BlockPtr to the block a (row, row) or InvalidBlockPtr if it does not exist
 	BlockPtr diagonalBlockPtr( Index row  ) const ;
-
-	//! \warning block has to exist
-	BlockType& diagonal( const Index row )
-	{ return block( diagonalBlockPtr( row ) ) ; }
-	//! \warning block has to exist
-	const BlockType& diagonal( const Index row ) const
-	{ return block( diagonalBlockPtr( row ) ) ; }
-
-	//! \warning block has to exist
-	BlockType& block( Index row, Index col )
-	{ return block( blockPtr( row, col ) ) ; }
-	//! \warning block has to exist
-	const BlockType& block( Index row, Index col ) const
-	{ return block( blockPtr( row, col ) ) ; }
 
 	///@}
 

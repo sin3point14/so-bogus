@@ -39,7 +39,7 @@ struct SparseBlockMatrixFinalizer<  true >
 
 // Sparse Block Matrix
 template < typename Derived >
-const typename SparseBlockMatrixBase< Derived >::BlockPtr SparseBlockMatrixBase< Derived >::InvalidBlockPtr( -1 );
+const typename BlockMatrixBase< Derived >::BlockPtr BlockMatrixBase< Derived >::InvalidBlockPtr( -1 );
 
 template < typename Derived >
 typename SparseBlockMatrixBase< Derived >::RowIndexType &SparseBlockMatrixBase< Derived >::rowMajorIndex( )

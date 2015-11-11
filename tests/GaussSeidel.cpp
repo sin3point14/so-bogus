@@ -21,11 +21,11 @@ static void ackCurrentGSResidual( unsigned GSIter, double err )
 	std::cout << "GS: " << GSIter << " ==> " << err << std::endl ;
 }
 
+/*
 static void ackCurrentPGResidual( unsigned GSIter, double err )
 {
 	std::cout << "PG: " << GSIter << " ==> " << err << std::endl ;
 }
-
 TEST( GaussSeidel, Small )
 {
 
@@ -170,6 +170,8 @@ TEST( ProjectedGradient, Projection )
 	EXPECT_TRUE( x.isZero() ) ;
 }
 
+*/
+
 TEST( GaussSeidel, LCP )
 {
 	typedef Eigen::Matrix< double, 1, 3 > GradBlockT ;
@@ -189,22 +191,22 @@ TEST( GaussSeidel, LCP )
 
 	typedef Eigen::Matrix< double, 1, 1 > WBlockT ;
 	typedef bogus::SparseBlockMatrix< WBlockT, bogus::SYMMETRIC > WType ;
-	
+
 	WType W = H * H.transpose() ;
 
 	Eigen::VectorXd b = H * k ;
 
 	bogus::GaussSeidel< WType > gs( W ) ;
+	gs.callback().connect( &ackCurrentGSResidual );
 
 	Eigen::VectorXd x ;
 	x.setZero( b.rows() ) ;
 
 	gs.setTol(1.e-16) ;
-	gs.callback().connect( &ackCurrentGSResidual );
 	double res = gs.solve( bogus::LCPLaw< double >(), b, x ) ;
-	
+
 	Eigen::VectorXd y = W*x + b ;
-	
+
 	ASSERT_GT(1.e-16, res) ;
 	ASSERT_GT(1.e-8, (x.array()*y.array()).matrix().squaredNorm() ) ;
 	ASSERT_LT(-1.e-8, x.minCoeff() ) ;

@@ -98,7 +98,12 @@ void ConstrainedSolverBase< SolverType,BlockMatrixType >::updateScalings()
 #endif
 	for( Index i = 0 ; i <  n ; ++i )
 	{
-		m_scaling[i] = std::max( 1., m_matrix->diagonal(i).trace() ) ;
+		const typename BlockMatrixType::BlockPtr ptr = m_matrix->diagonalBlockPtr( i ) ;
+		if( ptr == BlockMatrixType::InvalidBlockPtr ) {
+			m_scaling[i] = 1. ;
+		} else {
+			m_scaling[i] = std::max( 1., m_matrix->block(ptr).trace() ) ;
+		}
 	}
 
 }
