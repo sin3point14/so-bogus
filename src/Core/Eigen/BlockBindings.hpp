@@ -215,6 +215,10 @@ struct EigenBlockWrapper : public Eigen::EigenBase< EigenBlockWrapper< Derived >
 };
 
 //! SparseBlockMatrix / Dense producty expression
+
+template< typename Lhs, typename Rhs >
+struct block_product_impl;
+
 #if BOGUS_EIGEN_NEW_EXPRESSIONS
 template < typename Lhs, typename Rhs >
 struct BlockEigenProduct
@@ -227,9 +231,6 @@ struct BlockEigenProduct
 	{}
 } ;
 #else
-
-template< typename Lhs, typename Rhs >
-struct block_product_impl;
 
 template < typename Lhs, typename Rhs >
 struct BlockEigenProduct
@@ -271,30 +272,8 @@ BlockEigenProduct< EigenDerived, EigenBlockWrapper< Derived > >  eigen_block_pro
 	return BlockEigenProduct< EigenDerived, EigenBlockWrapper< Derived > > ( vector, EigenBlockWrapper< Derived >(matrix, scaling) ) ;
 }
 
-} //namespace mv_impl
-} //namespace bogus
-
-
-#if BOGUS_EIGEN_NEW_EXPRESSIONS
-namespace Eigen {
-namespace internal {
-#else
-namespace bogus {
-namespace mv_impl {
-#endif
-
-// Eigen evaluators implementation
-
-#if BOGUS_EIGEN_NEW_EXPRESSIONS
-template<typename Derived, typename EigenDerived, int ProductType >
-struct generic_product_impl< bogus::mv_impl::EigenBlockWrapper<Derived>, EigenDerived, SparseShape, DenseShape, ProductType>
-		: public generic_product_impl_base <
-			bogus::mv_impl::EigenBlockWrapper<Derived>, EigenDerived,
-			generic_product_impl< bogus::mv_impl::EigenBlockWrapper<Derived>, EigenDerived, SparseShape, DenseShape, ProductType > >
-#else
 template<typename Derived, typename EigenDerived >
 struct block_product_impl< bogus::mv_impl::EigenBlockWrapper<Derived>, EigenDerived >
-#endif
 {
 	typedef bogus::mv_impl::EigenBlockWrapper<Derived> Lhs ;
 	typedef EigenDerived Rhs ;
@@ -312,16 +291,8 @@ struct block_product_impl< bogus::mv_impl::EigenBlockWrapper<Derived>, EigenDeri
 	}
 };
 
-#if BOGUS_EIGEN_NEW_EXPRESSIONS
-template<typename Derived, typename EigenDerived, int ProductType >
-struct generic_product_impl< EigenDerived, bogus::mv_impl::EigenBlockWrapper<Derived>, DenseShape, SparseShape, ProductType >
-		: public generic_product_impl_base <
-			EigenDerived, bogus::mv_impl::EigenBlockWrapper<Derived>,
-			generic_product_impl< EigenDerived, bogus::mv_impl::EigenBlockWrapper<Derived>, DenseShape, SparseShape, ProductType > >
-#else
 template<typename Derived, typename EigenDerived >
 		struct block_product_impl< EigenDerived, bogus::mv_impl::EigenBlockWrapper<Derived> >
-#endif
 {
 	typedef EigenDerived Lhs ;
 	typedef bogus::mv_impl::EigenBlockWrapper<Derived> Rhs ;
@@ -341,7 +312,68 @@ template<typename Derived, typename EigenDerived >
 	}
 };
 
+} //namespace mv_impl
+} //namespace bogus
+
+
 #if BOGUS_EIGEN_NEW_EXPRESSIONS
+namespace Eigen {
+namespace internal {
+
+template<typename Derived, typename EigenDerived, int ProductType >
+struct generic_product_impl< bogus::mv_impl::EigenBlockWrapper<Derived>, EigenDerived, SparseShape, DenseShape, ProductType>
+		: public generic_product_impl_base <
+			bogus::mv_impl::EigenBlockWrapper<Derived>, EigenDerived,
+			generic_product_impl< bogus::mv_impl::EigenBlockWrapper<Derived>, EigenDerived, SparseShape, DenseShape, ProductType > >
+{
+	typedef bogus::mv_impl::EigenBlockWrapper<Derived> Lhs ;
+	typedef EigenDerived Rhs ;
+	typedef typename Derived::Scalar Scalar;
+
+	typedef typename nested_eval<Rhs,Dynamic>::type RhsNested;
+	typedef bogus::mv_impl::block_product_impl< Lhs, RhsNested > product_impl ;
+
+	template<typename Dst>
+	static void evalTo(Dst& dst, const Lhs& lhs, const Rhs& rhs)
+	{
+		RhsNested rhsNested( rhs ) ;
+		product_impl::evalTo( dst, lhs, rhsNested ) ;
+	}
+	template<typename Dst>
+	static void scaleAndAddTo(Dst& dst, const Lhs& lhs, const Rhs& rhs, Scalar alpha)
+	{
+		RhsNested rhsNested( rhs ) ;
+		product_impl::scaleAndAddTo( dst, lhs, rhsNested, alpha ) ;
+	}
+};
+
+template<typename Derived, typename EigenDerived, int ProductType >
+struct generic_product_impl< EigenDerived, bogus::mv_impl::EigenBlockWrapper<Derived>, DenseShape, SparseShape, ProductType >
+		: public generic_product_impl_base <
+			EigenDerived, bogus::mv_impl::EigenBlockWrapper<Derived>,
+			generic_product_impl< EigenDerived, bogus::mv_impl::EigenBlockWrapper<Derived>, DenseShape, SparseShape, ProductType > >
+{
+	typedef EigenDerived Lhs ;
+	typedef bogus::mv_impl::EigenBlockWrapper<Derived> Rhs ;
+	typedef typename Derived::Scalar Scalar;
+
+	typedef typename nested_eval<Lhs,Dynamic>::type LhsNested;
+	typedef bogus::mv_impl::block_product_impl< LhsNested, Rhs > product_impl ;
+
+	template<typename Dst>
+	static void evalTo(Dst& dst, const Lhs& lhs, const Rhs& rhs)
+	{
+		LhsNested lhsNested(lhs);
+		product_impl::evalTo( dst, lhsNested, rhs) ;
+	}
+	template<typename Dst>
+	static void scaleAndAddTo(Dst& dst, const Lhs& lhs, const Rhs& rhs, const Scalar& alpha)
+	{
+		LhsNested lhsNested(lhs);
+		product_impl::scaleAndAddTo( dst, lhsNested, rhs, alpha ) ;
+	}
+};
+
 // (A * B * s ) -> ( (s*A) * B )
 template<typename Derived, typename Rhs, typename Scalar>
 struct evaluator<CwiseUnaryOp<internal::scalar_multiple_op<Scalar>, const Product<bogus::mv_impl::EigenBlockWrapper<Derived>, Rhs, DefaultProduct> > >
@@ -354,10 +386,12 @@ struct evaluator<CwiseUnaryOp<internal::scalar_multiple_op<Scalar>, const Produc
 	: Base( ( xpr.functor().m_other * xpr.nestedExpression().lhs() ) * xpr.nestedExpression().rhs() )
   {}
 };
+
+} //internal
+} //Eigen
 #endif
 
-} // ns mv_impl/internal
-} // ns Eigen/bogus
+
 
 // Eigen traits for our new structs
 namespace Eigen{

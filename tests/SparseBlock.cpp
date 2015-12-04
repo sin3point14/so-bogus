@@ -53,7 +53,7 @@ TEST( SparseBlock, MatrixVector )
 
 	rhs.setOnes() ;
 	res.setZero() ;
-	sbm.multiply< false >( rhs, res ) ;
+	sbm.multiply< false >( rhs,res ) ;
 
 	EXPECT_EQ( expected_1, res ) ;
 
@@ -394,9 +394,9 @@ TEST( SparseBlock, MMult )
 		EXPECT_EQ( expected_1, mm_t_mt*rhs ) ;
 		EXPECT_EQ( expected_1, mm_t * ( sbm.transpose() * rhs )  ) ;
 		mm_t_mt -= mm_t  * sbm.transpose() ;
-                Eigen::VectorXd one_minus_one = (mm_t_mt*rhs) ;
+				Eigen::VectorXd one_minus_one = (mm_t_mt*rhs) ;
 		EXPECT_TRUE( one_minus_one.isZero() ) ;
-		
+
 		bogus::SparseBlockMatrix< Eigen::MatrixXd > mm_t_mt_chk = sbm.transpose() * mm;
 		EXPECT_EQ( expected_1, mm_t_mt_chk*rhs );
 		mm_t_mt.setFromProduct< false > ( mm_t  * sbm.transpose() ) ;
@@ -810,10 +810,10 @@ TEST(SparseBlock, FixedSize)
 	sbm.insertBack(0,0) << 1,2,3,4,5,6,7,8 ;
 	sbm.finalize() ;
 
-	
+
 	bogus::SparseBlockMatrix< Eigen::Matrix< double, 2, 4 > > copy = sbm ;
 	ASSERT_EQ( sbm.block(0), copy.block(0) ) ;
-	
+
 	bogus::SparseBlockMatrix< Eigen::Matrix< double, 4, 2 > > tsbm = sbm.transpose() ;
 	ASSERT_EQ( sbm.block(0), tsbm.block(0).transpose() ) ;
 
