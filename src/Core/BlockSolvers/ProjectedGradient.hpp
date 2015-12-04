@@ -95,7 +95,7 @@ protected:
 		m_tol = 1.e-6 ;
 		m_maxIters = 300 ;
 		m_lsIters = 8 ;
-		m_lsOptimisticFactor = 1.25 ;
+		m_lsOptimisticFactor = 1. ;
 		m_lsPessimisticFactor = .5 ;
 		m_defaultVariant = projected_gradient::APGD ;
 	}

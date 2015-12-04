@@ -166,6 +166,8 @@ ProjectedGradient< BlockMatrixType >::solve(
 
 			if(variant  == projected_gradient::Conjugated) {
 				prev_dir = (xs - x) / alpha ;
+			} else {
+				prev_proj = xs ;
 			}
 
 			x = xs ;
@@ -173,8 +175,6 @@ ProjectedGradient< BlockMatrixType >::solve(
 
 			theta_prev = 1. ; //APGD
 		}
-
-		alpha = std::max(1.e-4, alpha) ;
 
 	}
 
