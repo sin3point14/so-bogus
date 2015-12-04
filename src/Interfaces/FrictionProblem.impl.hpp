@@ -19,10 +19,9 @@
 */
 
 #include "FrictionProblem.hpp"
+#include "Cadoux.hpp"
 
 #include "../Core/Block.impl.hpp"
-#include "../Extra/SecondOrder.impl.hpp"
-
 #include "../Extra/SecondOrder.impl.hpp"
 
 namespace bogus {
@@ -69,11 +68,11 @@ static double eval( const DualFrictionProblem< Dimension >& dual,
 		const double *r_data, const bool staticProblem  )
 {
 	Eigen::VectorXd r = Eigen::VectorXd::Map( r_data, dual.W.rows() ) ;
-	Eigen::VectorXd u = dual.W*r + dual.b ;
 
 	if( dual.permuted())
 		applyPermutation< Dimension >( dual.permutation(), r, dual.W.majorIndex().innerOffsetsData() ) ;
 
+	const Eigen::VectorXd u = dual.W*r + dual.b ;
 
 	double res = staticProblem
 			? gs.eval( typename DualFrictionProblem< Dimension >::SOCLawType
@@ -86,51 +85,16 @@ static double eval( const DualFrictionProblem< Dimension >& dual,
 
 template< unsigned Dimension, template <typename> class Method >
 static double solveCadoux( const DualFrictionProblem< Dimension >& dual,
-		const ConstrainedSolverBase< Method, typename DualFrictionProblem< Dimension >::WType > &gs,
+		ConstrainedSolverBase< Method, typename DualFrictionProblem< Dimension >::WType > &gs,
 		double *r, const unsigned cadouxIterations, const Signal<unsigned, double> *callback )
 {
-	const std::ptrdiff_t n = dual.W.rowsOfBlocks() ;
-
-	typename DualFrictionProblem< Dimension >::CoulombLawType coulombLaw( n, dual.mu.data() ) ;
-	typename DualFrictionProblem< Dimension >::SOCLawType         socLaw( n, dual.mu.data() ) ;
-
-	gs.setMatrix( dual.W );
 	Eigen::Map< Eigen::VectorXd > r_map ( r, dual.W.rows() ) ;
 
 	if( dual.permuted() )
 		applyPermutation< Dimension >( dual.permutation(), r_map, dual.W.majorIndex().innerOffsetsData() ) ;
 
-	Eigen::VectorXd s( dual.W.rows() ) ;
-
-	double res = -1 ;
-	const double tol = gs.tol() ;
-	gs.setTol( 1.e-1 * tol ) ;	//dual.We might experience slow convergence is GS not precise enough
-
-	for( unsigned cdxIter = 0 ; cdxIter < cadouxIterations ; ++cdxIter )
-	{
-		s = dual.W * r_map + dual.b ;
-
-		res = gs.eval( coulombLaw, s, r_map ) ;
-
-		if( callback ) callback->trigger( cdxIter, res ) ;
-		if( cdxIter > 0 && res < tol ) break ;
-
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp parallel for
-#endif
-		for( std::ptrdiff_t i = 0 ; i < n ; ++i )
-		{
-			s[ Dimension*i ] = s.segment< Dimension-1 >( Dimension*i+1 ).norm() * dual.mu[i] ;
-			s.segment< Dimension-1  >( Dimension*i+1 ).setZero() ;
-		}
-
-		s += dual.b ;
-
-		gs.solve( socLaw, s, r_map ) ;
-
-	}
-
-	gs.setTol( tol ) ;
+	const double res = solveCadoux< Dimension >( dual.W, dual.b.data(), dual.mu.data(),
+									gs, r, cadouxIterations, callback ) ;
 
 	if( dual.permuted() )
 		applyPermutation< Dimension >( dual.invPermutation(), r_map, dual.W.majorIndex().innerOffsetsData() ) ;

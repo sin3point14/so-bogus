@@ -258,10 +258,11 @@ double MecheFrictionProblem::solve(
 		gs.setAutoRegularization( regularization ) ;
 		gs.useInfinityNorm( useInfinityNorm ) ;
 
+		m_dual->undoPermutation() ;
+
 		const bool useColoring = maxThreads > 1 ;
 		gs.coloring().update( useColoring, m_dual->W );
 
-		m_dual->undoPermutation() ;
 		if( useColoring )
 		{
 			m_dual->applyPermutation( gs.coloring().permutation ) ;

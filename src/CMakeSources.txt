@@ -77,6 +77,7 @@ Extra/SOC/SOCLaw.impl.hpp
 Extra/SecondOrder.fwd.hpp
 Extra/SecondOrder.hpp
 Extra/SecondOrder.impl.hpp
+Interfaces/Cadoux.hpp
 Interfaces/FrictionProblem.cpp
 Interfaces/FrictionProblem.hpp
 Interfaces/FrictionProblem.impl.hpp
