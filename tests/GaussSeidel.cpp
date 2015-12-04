@@ -211,7 +211,7 @@ TEST( GaussSeidel, LCP )
 		ASSERT_LT(-1.e-8, x.minCoeff() ) ;
 		ASSERT_LT(-1.e-16, y.minCoeff() ) ;
 	}
-	
+
 	{
 		typedef double WBlockT ;
 		typedef bogus::SparseBlockMatrix< WBlockT, bogus::SYMMETRIC > WType ;
