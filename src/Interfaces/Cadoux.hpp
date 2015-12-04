@@ -78,7 +78,7 @@ template< unsigned Dimension, typename WType, template <typename> class Method >
 static double solveCadouxVel(
 		const WType& W,
 		const typename WType::Scalar* b, const typename WType::Scalar* mu,
-		ConstrainedSolverBase< Method, typename DualFrictionProblem< Dimension >::WType > &minimizer,
+		ConstrainedSolverBase< Method, WType > &minimizer,
 		double *u, const unsigned cadouxIterations, const Signal<unsigned, double> *callback )
 {
 	// Wu + b = r
@@ -103,14 +103,14 @@ static double solveCadouxVel(
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-		for( std::ptrdiff_t i = 0 ; i < n ; ++i )
-		{
-		  s[ Dimension*i ] = u_map.segment< Dimension-1 >( Dimension*i+1 ).norm() * std::max(0., 1./mu[i]) ;
-		  s.segment< Dimension-1  >( Dimension*i+1 ).setZero() ;
-		}
-		ustar = u_map + s ;
+	for( std::ptrdiff_t i = 0 ; i < n ; ++i )
+	{
+		s[ Dimension*i ] = u_map.segment< Dimension-1 >( Dimension*i+1 ).norm() * std::max(0., 1./mu[i]) ;
+		s.segment< Dimension-1  >( Dimension*i+1 ).setZero() ;
+	}
+	ustar = u_map + s ;
 
-		for( unsigned cdxIter = 0 ; cdxIter < cadouxIterations ; ++cdxIter )
+	for( unsigned cdxIter = 0 ; cdxIter < cadouxIterations ; ++cdxIter )
 	{
 		r = W * u_map + b_map ;
 
@@ -119,11 +119,11 @@ static double solveCadouxVel(
 		if( callback ) callback->trigger( cdxIter, res ) ;
 		if( cdxIter > 0 && res < tol ) break ;
 
-				Wsb = b_map - W * s  ;
+		Wsb = b_map - W * s  ;
 
 		minimizer.solve( socLaw, Wsb, ustar ) ;
 
-				u_map = ustar - s ;
+		u_map = ustar - s ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
@@ -134,7 +134,7 @@ static double solveCadouxVel(
 			s.segment< Dimension-1  >( Dimension*i+1 ).setZero() ;
 		}
 
-				ustar = u_map + s ;
+		ustar = u_map + s ;
 	}
 
 	minimizer.setTol( tol ) ;
