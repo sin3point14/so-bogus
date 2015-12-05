@@ -7,7 +7,7 @@ GIT_CMD =  'git ls-files "*.cpp" "*.hpp" "*.h" '
 EXCLUDE = []
 
 COPYRIGHT_LINES = [
-  'Copyright 2013 Gilles Daviet <gdaviet@gmail.com>'
+  'Copyright 2015 Gilles Daviet <gdaviet@gmail.com>'
 ]
 
 MPL_TEXT = <<eol
