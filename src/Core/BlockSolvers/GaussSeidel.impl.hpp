@@ -24,16 +24,18 @@ namespace bogus
 {
 
 template < typename BlockMatrixType >
-void GaussSeidel< BlockMatrixType >::setMatrix( const BlockMatrixBase< BlockMatrixType > & M )
+GaussSeidel< BlockMatrixType >& GaussSeidel< BlockMatrixType >::setMatrix( const BlockObjectBase< BlockMatrixType > & M )
 {
 	if( m_matrix != &M && ( m_matrix != NULL ||
 							m_coloring.size() != (std::size_t) M.rowsOfBlocks() )) {
-		m_coloring.update( false, M );
+		m_coloring.update( false, M.derived() );
 	}
 
 	m_matrix = &M ;
 
 	Base::updateLocalMatrices() ;
+
+	return *this ;
 }
 
 template < typename BlockMatrixType >
@@ -117,7 +119,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 
 					lx = xSegmenter[ i ] ;
 					lb = bSegmenter[ i ] - m_regularization(i) * lx ;
-					m_matrix->splitRowMultiply( i, x, lb ) ;
+					Base::explicitMatrix().splitRowMultiply( i, x, lb ) ;
 					ldx = -lx ;
 
 					const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ i ] ) ;

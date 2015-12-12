@@ -82,6 +82,28 @@ ConstrainedSolverBase< SolverType,BlockMatrixType >::eval( const NSLaw &law,
 	}
 }
 
+template< typename Derived >
+typename BlockObjectBase< Derived >::Scalar estimate_row_scaling( const BlockObjectBase< Derived >& ,
+					 typename BlockObjectBase< Derived >::Index )
+{
+	return 1. ;
+}
+
+template< typename Derived >
+typename Derived::BlockMatrixType::Scalar estimate_row_scaling( const typename Derived::BlockMatrixType& mat,
+					 typename Derived::BlockMatrixType::Index row )
+{
+	typedef typename BlockMatrixTraits< Derived >::BlockType LocalMatrixType ;
+	typedef ProblemTraits< LocalMatrixType > GlobalProblemTraits ;
+
+	const typename Derived::BlockPtr ptr = mat.diagonalBlockPtr( row ) ;
+	if( ptr == Derived::InvalidBlockPtr ) {
+		return 1. ;
+	} else {
+		return std::max( 1., GlobalProblemTraits::asConstMatrix( mat.block( ptr ) ).trace() ) ;
+	}
+}
+
 template < template <typename> class SolverType, typename BlockMatrixType >
 void ConstrainedSolverBase< SolverType,BlockMatrixType >::updateScalings()
 {
@@ -98,12 +120,7 @@ void ConstrainedSolverBase< SolverType,BlockMatrixType >::updateScalings()
 #endif
 	for( Index i = 0 ; i <  n ; ++i )
 	{
-		const typename BlockMatrixType::BlockPtr ptr = m_matrix->diagonalBlockPtr( i ) ;
-		if( ptr == BlockMatrixType::InvalidBlockPtr ) {
-			m_scaling[i] = 1. ;
-		} else {
-			m_scaling[i] = std::max( 1., GlobalProblemTraits::asConstMatrix( m_matrix->block( i ) ).trace() ) ;
-		}
+		m_scaling[i] = estimate_row_scaling( m_matrix->derived(), i ) ;
 	}
 
 }

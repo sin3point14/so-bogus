@@ -45,7 +45,7 @@ public:
 	//! Default constructor -- you will have to call setMatrix() before using the solve() function
 	ProjectedGradient( ) : Base() { init() ; }
 	//! Constructor with the system matrix
-	explicit ProjectedGradient( const BlockMatrixBase< BlockMatrixType > & matrix ) : Base()
+	explicit ProjectedGradient( const BlockObjectBase< BlockMatrixType > & matrix ) : Base()
 	{ init() ; Base::setMatrix( matrix ) ; }
 
 	//! Finds an approximate solution for a constrained linear problem
@@ -58,10 +58,11 @@ public:
 	template < projected_gradient::Variant variant, typename NSLaw, typename RhsT, typename ResT >
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const ;
 
-	void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix )
+	ProjectedGradient& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix )
 	{
 		m_matrix = &matrix ;
 		Base::updateScalings() ;
+		return *this ;
 	}
 
 	//! Sets the maximum number of line-search iterations

@@ -48,15 +48,15 @@ public:
 	}
 
 	//! Sets the system matrix and initializes internal structures
-    /*! \note Derived classes should re-implement this function and call updateScalings() */
-    void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix )
-    {
-        return static_cast< Derived& >( *this ).setMatrix( matrix ) ;
-    }
+	/*! \note Derived classes should re-implement this function and call updateScalings() */
+	Derived& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix )
+	{
+		return static_cast< Derived& >( *this ).setMatrix( matrix ) ;
+	}
 
 protected:
 
-    void updateScalings( ) ;
+	void updateScalings( ) ;
 
 	ConstrainedSolverBase() : Base(), m_useInfinityNorm( false ) {}
 	using Base::m_matrix ;
@@ -65,6 +65,7 @@ protected:
 
 	//! See useInfinityNorm(). Defaults to false.
 	bool m_useInfinityNorm ;
+
 };
 
 } //namespace bogus

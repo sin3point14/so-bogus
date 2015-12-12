@@ -28,6 +28,7 @@ public:
 	typedef typename Traits::Scalar    Scalar ;
 	typedef typename Traits::BlockPtr  BlockPtr ;
 
+	typedef BlockMatrixBase BlockMatrixType ;
 	typedef BlockObjectBase< Derived > Base;
 	using Base::derived ;
 
@@ -96,16 +97,6 @@ public:
 	//! Returns the total number of blocks of the matrix
 	Index size() const ;
 
-	//! Returns the number of rows of a given block row
-	Index blockRows( Index row ) const { return derived().blockRows( row ) ; }
-	//! Returns the number of columns of a given block columns
-	Index blockCols( Index col ) const { return derived().blockCols( col ) ; }
-
-	//! Returns the number of block rows of the matrix
-	Index rowsOfBlocks() const { return derived().rowsOfBlocks() ; }
-	//! Returns the number of block columns of the matrix
-	Index colsOfBlocks() const { return derived().colsOfBlocks() ; }
-
 	//! Access to blocks data
 	const typename Traits::BlocksArrayType& blocks() const { return  m_blocks ; }
 	//! Access to blocks data as a raw pointer
@@ -115,29 +106,6 @@ public:
 
 	const Derived* eval() const { return &derived() ; }
 
-	//! Returns an array containing the first index of each row
-	const Index *rowOffsets( ) const { return derived().rowOffsets( ) ; }
-	//! Returns an array containing the first index of each column
-	const Index *colOffsets( ) const { return derived().colOffsets( ) ; }
-
-	//! Returns an array containing the first index of a given row
-	Index rowOffset( Index row ) const { return rowOffsets()[ row ] ; }
-	//! Returns an array containing the first index of a given columns
-	Index colOffset( Index col ) const { return colOffsets()[ col ] ; }
-
-
-	//! Compile-time block properties
-	enum CompileTimeProperties
-	{
-		RowsPerBlock = BlockTraits< BlockType >::RowsAtCompileTime,
-		ColsPerBlock = BlockTraits< BlockType >::ColsAtCompileTime,
-
-		has_row_major_blocks = BlockTraits< BlockType >::is_row_major,
-		has_square_or_dynamic_blocks = ColsPerBlock == RowsPerBlock,
-		has_fixed_size_blocks =
-				((int) ColsPerBlock != internal::DYNAMIC ) &&
-				((int) RowsPerBlock != internal::DYNAMIC )
-	} ;
 
 protected:
 	Index m_rows ;

@@ -30,7 +30,8 @@ TEST( GaussSeidel, Small )
 {
 
 	bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::UNCOMPRESSED > MassMat ;
-	bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::UNCOMPRESSED > InvMassMat ;
+	typedef bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::UNCOMPRESSED > MType ;
+	MType InvMassMat ;
 
 	const unsigned dofs[2] = { 4, 2 } ;
 
@@ -50,7 +51,8 @@ TEST( GaussSeidel, Small )
 
 
 	typedef Eigen::Matrix< double, 3, Eigen::Dynamic > GradBlockT ;
-	bogus::SparseBlockMatrix< GradBlockT > H ;
+	typedef bogus::SparseBlockMatrix< GradBlockT > HType ;
+	HType H ;
 
 	H.setCols( 2, dofs ) ;
 	H.setRows( 2 ) ;
@@ -141,6 +143,19 @@ TEST( GaussSeidel, Small )
 	x.setOnes() ;
 	res = pg.solve< bogus::projected_gradient::APGD >( bogus::SOC3D( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
+
+	// Without assembling W
+	typedef bogus::Product< bogus::Product< HType, MType >, bogus::Transpose< HType > > Prod ;
+	Prod prod = H * InvMassMat * H.transpose() ;
+	
+	x.setOnes() ;
+	bogus::ProjectedGradient< Prod > pgProd( prod ) ;
+	pgProd.callback().connect( &ackCurrentPGResidual );
+	pgProd.setTol( 1.e-8 );
+	
+	res = pgProd.solve( bogus::SOC3D( 2, mu ), b, x ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
+
 }
 
 TEST( ProjectedGradient, Projection )

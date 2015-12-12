@@ -45,6 +45,13 @@ struct Transpose : public BlockObjectBase< Transpose< MatrixT > >
 
 	Index rows() const { return matrix.cols() ; }
 	Index cols() const { return matrix.rows() ; }
+
+	Index rowsOfBlocks() const { return matrix.colsOfBlocks() ; }
+	Index colsOfBlocks() const { return matrix.rowsOfBlocks() ; }
+	Index blockRows( Index row ) const { return matrix.blockCols( row ) ; }
+	Index blockCols( Index col ) const { return matrix.blockRows( col ) ; }
+	const Index *rowOffsets( ) const { return matrix.colOffsets( ) ; }
+	const Index *colOffsets( ) const { return matrix.rowOffsets( ) ; }
 } ;
 
 
@@ -133,6 +140,7 @@ struct Product : public BinaryBlockOp< Product, LhsMatrixT, RhsMatrixT >
 {
 	typedef BinaryBlockOp< bogus::Product, LhsMatrixT, RhsMatrixT > Base ;
 	typedef typename Base::Scalar Scalar ;
+	typedef typename Base::Index Index ;
 
 	Product( const LhsMatrixT& l, const RhsMatrixT &r,
 			  typename Base::Lhs::Scalar lscaling = 1, typename Base::Lhs::Scalar rscaling = 1 )
@@ -149,8 +157,15 @@ struct Product : public BinaryBlockOp< Product, LhsMatrixT, RhsMatrixT >
 	template < bool DoTranspose, typename RhsT, typename ResT >
 	void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const ;
 
-	typename Base::Index rows() const { return Base::lhs.object.rows() ; }
-	typename Base::Index cols() const { return Base::rhs.object.cols() ; }
+	Index rows() const { return Base::lhs.object.rows() ; }
+	Index cols() const { return Base::rhs.object.cols() ; }
+
+	Index rowsOfBlocks() const { return Base::lhs.object.rowsOfBlocks() ; }
+	Index colsOfBlocks() const { return Base::rhs.object.colsOfBlocks() ; }
+	Index blockRows( Index row ) const { return Base::lhs.object.blockRows( row ) ; }
+	Index blockCols( Index col ) const { return Base::rhs.object.blockCols( col ) ; }
+	const Index *rowOffsets( ) const { return Base::lhs.object.rowOffsets( ) ; }
+	const Index *colOffsets( ) const { return Base::rhs.object.colOffsets( ) ; }
 } ;
 
 template <typename LhsMatrixT, typename RhsMatrixT>
@@ -189,6 +204,7 @@ struct Addition : public BinaryBlockOp< Addition, LhsMatrixT, RhsMatrixT >
 {
 	typedef BinaryBlockOp< bogus::Addition, LhsMatrixT, RhsMatrixT > Base ;
 	typedef typename Base::Scalar Scalar ;
+	typedef typename Base::Index Index ;
 
 	Addition( const LhsMatrixT& l, const RhsMatrixT &r,
 			  typename Base::Lhs::Scalar lscaling = 1, typename Base::Lhs::Scalar rscaling = 1 )
@@ -209,8 +225,15 @@ struct Addition : public BinaryBlockOp< Addition, LhsMatrixT, RhsMatrixT >
 		Base::rhs.object.multiply< DoTranspose >( rhs, res, alpha*Base::rhs.scaling, 1 ) ;
 	}
 
-	typename Base::Index rows() const { return Base::lhs.object.rows() ; }
-	typename Base::Index cols() const { return Base::lhs.object.cols() ; }
+	Index rows() const { return Base::lhs.object.rows() ; }
+	Index cols() const { return Base::lhs.object.cols() ; }
+
+	Index rowsOfBlocks() const { return Base::lhs.object.rowsOfBlocks() ; }
+	Index colsOfBlocks() const { return Base::lhs.object.colsOfBlocks() ; }
+	Index blockRows( Index row ) const { return Base::lhs.object.blockRows( row ) ; }
+	Index blockCols( Index col ) const { return Base::lhs.object.blockCols( col ) ; }
+	const Index *rowOffsets( ) const { return Base::lhs.object.rowOffsets( ) ; }
+	const Index *colOffsets( ) const { return Base::lhs.object.colOffsets( ) ; }
 } ;
 
 template <typename LhsMatrixT, typename RhsMatrixT>
@@ -250,6 +273,7 @@ struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
 
 	typedef typename Base::EvalType EvalType;
 	typedef typename Base::Scalar Scalar ;
+	typedef typename Base::Index Index ;
 
 	Scaling( const MatrixT &object, const typename MatrixT::Scalar scaling )
 		: operand( object, scaling )
@@ -275,6 +299,13 @@ struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
 		*res = *this ;
 		return EvalType( res )  ;
 	}
+
+	Index rowsOfBlocks() const { return operand.object.rowsOfBlocks() ; }
+	Index colsOfBlocks() const { return operand.object.colsOfBlocks() ; }
+	Index blockRows( Index row ) const { return operand.object.blockRows( row ) ; }
+	Index blockCols( Index col ) const { return operand.object.blockCols( col ) ; }
+	const Index *rowOffsets( ) const { return operand.object.rowOffsets( ) ; }
+	const Index *colOffsets( ) const { return operand.object.colOffsets( ) ; }
 } ;
 
 template <typename MatrixT>

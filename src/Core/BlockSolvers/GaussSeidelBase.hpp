@@ -93,6 +93,13 @@ protected:
 		m_skipTol  = 1.e-6 ;
 	}
 
+	const BlockMatrixBase< BlockMatrixType >& explicitMatrix() const
+	{
+		// Will cause a compile error if BlockMatrixType does not derive from BlockMatrixBase
+		// This is voluntary, this GaussSeidel implementation does not handle arbitrary expressions yet
+		return m_matrix->derived() ;
+	}
+
 	void updateLocalMatrices() ;
 
 	using Base::m_matrix ;

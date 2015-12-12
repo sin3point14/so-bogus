@@ -51,11 +51,11 @@ public:
 	//! Default constructor -- you will have to call setMatrix() before using the solve() function
 	GaussSeidel( ) : Base() { }
 	//! Constructor with the system matrix
-	explicit GaussSeidel( const BlockMatrixBase< BlockMatrixType > & matrix ) : Base()
+	explicit GaussSeidel( const BlockObjectBase< BlockMatrixType > & matrix ) : Base()
 	{  setMatrix( matrix ) ; }
 
 	//! Sets the system matrix and initializes internal structures
-	void setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
+	GaussSeidel& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix ) ;
 
 	//! Finds an approximate solution for a constrained linear problem
 	/*!

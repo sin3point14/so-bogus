@@ -40,6 +40,7 @@ struct BlockObjectBase
 	typedef typename Traits::TransposeObjectType TransposeObjectType ;
 
 	typedef typename Traits::PlainObjectType PlainObjectType ;
+	typedef typename BlockMatrixTraits< PlainObjectType >::BlockType BlockType ;
 	typedef typename Traits::EvalType EvalType ;
 	enum { is_transposed = Traits::is_transposed } ;
 
@@ -47,6 +48,26 @@ struct BlockObjectBase
 	Index rows() const { return derived().rows() ; }
 	//! Returns the total number of columns of the matrix ( expanding blocks )
 	Index cols() const { return derived().cols() ; }
+
+	//! Returns the number of rows of a given block row
+	Index blockRows( Index row ) const { return derived().blockRows( row ) ; }
+	//! Returns the number of columns of a given block columns
+	Index blockCols( Index col ) const { return derived().blockCols( col ) ; }
+
+	//! Returns the number of block rows of the matrix
+	Index rowsOfBlocks() const { return derived().rowsOfBlocks() ; }
+	//! Returns the number of block columns of the matrix
+	Index colsOfBlocks() const { return derived().colsOfBlocks() ; }
+
+	//! Returns an array containing the first index of each row
+	const Index *rowOffsets( ) const { return derived().rowOffsets( ) ; }
+	//! Returns an array containing the first index of each column
+	const Index *colOffsets( ) const { return derived().colOffsets( ) ; }
+
+	//! Returns an array containing the first index of a given row
+	Index rowOffset( Index row ) const { return rowOffsets()[ row ] ; }
+	//! Returns an array containing the first index of a given columns
+	Index colOffset( Index col ) const { return colOffsets()[ col ] ; }
 
 	//! Return a const transposed view of this object
 	ConstTransposeReturnType transpose() const { return derived().transpose() ; }
@@ -65,10 +86,21 @@ struct BlockObjectBase
 	//! Eval this object in a temporary. For internal use, not part of the public API
 	EvalType eval() const { return derived().eval() ; }
 
-	// Block traits
-	enum {
+
+	//! Compile-time block properties
+	enum CompileTimeProperties
+	{
 		RowsAtCompileTime = internal::DYNAMIC,
-		ColsAtCompileTime = internal::DYNAMIC
+		ColsAtCompileTime = internal::DYNAMIC,
+		RowsPerBlock = BlockTraits< BlockType >::RowsAtCompileTime,
+		ColsPerBlock = BlockTraits< BlockType >::ColsAtCompileTime,
+
+		has_row_major_blocks = BlockTraits< BlockType >::is_row_major,
+		has_square_or_dynamic_blocks = ColsPerBlock == RowsPerBlock,
+		has_fixed_size_blocks =
+				((int) ColsPerBlock != internal::DYNAMIC ) &&
+				((int) RowsPerBlock != internal::DYNAMIC )
+
 	} ;
 };
 
