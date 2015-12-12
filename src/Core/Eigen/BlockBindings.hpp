@@ -282,12 +282,12 @@ struct block_product_impl< bogus::mv_impl::EigenBlockWrapper<Derived>, EigenDeri
 	template<typename Dst>
 	static void evalTo(Dst& dst, const Lhs& lhs, const Rhs& rhs)
 	{
-		lhs.obj.eval()->template multiply< Derived::is_transposed >( rhs.derived(), dst, lhs.scaling, 0 ) ;
+		lhs.obj.template multiply< false >( rhs.derived(), dst, lhs.scaling, 0 ) ;
 	}
 	template<typename Dst>
 	static void scaleAndAddTo(Dst& dst, const Lhs& lhs, const Rhs& rhs, const Scalar& alpha)
 	{
-		lhs.obj.eval()->template multiply< Derived::is_transposed >( rhs.derived(), dst, alpha*lhs.scaling, 1 ) ;
+		lhs.obj.template multiply< false >( rhs.derived(), dst, alpha*lhs.scaling, 1 ) ;
 	}
 };
 
@@ -302,13 +302,13 @@ template<typename Derived, typename EigenDerived >
 	static void evalTo(Dst& dst, const Lhs& lhs, const Rhs& rhs)
 	{
 		Eigen::Transpose< Dst > transposed( dst.transpose() ) ;
-		rhs.obj.eval()->template multiply< !Derived::is_transposed >( lhs.transpose(), transposed, rhs.scaling, 0 ) ;
+		rhs.obj.template multiply< true >( lhs.transpose(), transposed, rhs.scaling, 0 ) ;
 	}
 	template<typename Dst>
 	static void scaleAndAddTo(Dst& dst, const Lhs& lhs, const Rhs& rhs, const Scalar& alpha)
 	{
 		Eigen::Transpose< Dst > transposed( dst.transpose() ) ;
-		rhs.obj.eval()->template multiply< !Derived::is_transposed >( lhs.transpose(), transposed, alpha * rhs.scaling, 1 ) ;
+		rhs.obj.template multiply< true >( lhs.transpose(), transposed, alpha * rhs.scaling, 1 ) ;
 	}
 };
 

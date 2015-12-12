@@ -318,6 +318,41 @@ struct SparseBlockSplitRowMultiplier< true, NativeOrder >
 	}
 } ;
 
+template< bool Transposed >
+struct ProductVector {
+
+	template < typename LhsDerived, typename RhsDerived,
+			   typename VecT, typename ResT, typename LocalResT, typename ScalarT >
+	static void multiply( const BlockObjectBase< LhsDerived >& prodLhs,
+						  const BlockObjectBase< RhsDerived >& prodRhs,
+						  const VecT &rhs, ResT &res, const LocalResT&,
+						  const ScalarT alpha, const ScalarT beta
+						  )
+	{
+		LocalResT buf( prodRhs.rows(), rhs.cols() ) ;
+		prodRhs.multiply< false >( rhs, buf, alpha, 0 ) ;
+		prodLhs.multiply< false >( buf, res, 1, beta ) ;
+	}
+
+} ;
+template< >
+struct ProductVector< true > {
+
+	template < typename LhsDerived, typename RhsDerived,
+			   typename VecT, typename ResT, typename LocalResT, typename ScalarT >
+	static void multiply( const BlockObjectBase< LhsDerived >& prodLhs,
+						  const BlockObjectBase< RhsDerived >& prodRhs,
+						  const VecT &rhs, ResT &res, const LocalResT&,
+						  const ScalarT alpha, const ScalarT beta
+						  )
+	{
+		LocalResT buf( prodLhs.cols(), rhs.cols() ) ;
+		prodLhs.multiply< true >( rhs, buf, alpha, 0 ) ;
+		prodRhs.multiply< true >( buf, res, 1, beta ) ;
+	}
+
+} ;
+
 } //namespace mv_impl
 
 // Proxy -- can be specialized to use external libraries
@@ -376,6 +411,16 @@ void SparseBlockMatrixBase< Derived >::splitRowMultiply( const Index row, const 
 			::splitRowMultiply( *this, row, rhs, res ) ;
 }
 
+template <typename LhsMatrixT, typename RhsMatrixT>
+template < bool DoTranspose, typename RhsT, typename ResT >
+void Product< LhsMatrixT, RhsMatrixT>::multiply( const RhsT& rhs, ResT& res, Scalar alpha, Scalar beta ) const
+{
+	mv_impl::ProductVector< DoTranspose >::multiply(
+				Base::lhs.object, Base::rhs.object,
+				rhs, res, get_mutable_vector( res ),
+				alpha * Base::lhs.scaling * Base::rhs.scaling,
+				beta ) ;
+}
 
 }
 

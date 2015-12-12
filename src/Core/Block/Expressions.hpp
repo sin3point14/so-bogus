@@ -27,12 +27,20 @@ struct Transpose : public BlockObjectBase< Transpose< MatrixT > >
 	typedef BlockMatrixTraits< Transpose< MatrixT > > Traits ;
 	typedef typename Traits::PlainObjectType PlainObjectType ;
 	typedef typename Traits::Index Index ;
+	typedef typename Base::Scalar Scalar ;
 
 	const PlainObjectType &matrix ;
 
 	Transpose( const PlainObjectType &m ) : matrix( m.derived() ) {}
 
 	typename Base::ConstTransposeReturnType transpose() const { return matrix ; }
+
+	template < bool DoTranspose, typename RhsT, typename ResT >
+	void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const
+	{
+		matrix.multiply< !DoTranspose >( rhs, res, alpha, beta ) ;
+	}
+
 	typename Traits::EvalType eval() const { return matrix.eval() ; }
 
 	Index rows() const { return matrix.cols() ; }
@@ -124,6 +132,7 @@ template <typename LhsMatrixT, typename RhsMatrixT>
 struct Product : public BinaryBlockOp< Product, LhsMatrixT, RhsMatrixT >
 {
 	typedef BinaryBlockOp< bogus::Product, LhsMatrixT, RhsMatrixT > Base ;
+	typedef typename Base::Scalar Scalar ;
 
 	Product( const LhsMatrixT& l, const RhsMatrixT &r,
 			  typename Base::Lhs::Scalar lscaling = 1, typename Base::Lhs::Scalar rscaling = 1 )
@@ -136,6 +145,9 @@ struct Product : public BinaryBlockOp< Product, LhsMatrixT, RhsMatrixT >
 					Base::rhs.object.transpose(), Base::lhs.object.transpose(),
 					Base::rhs.scaling, Base::lhs.scaling ) ;
 	}
+
+	template < bool DoTranspose, typename RhsT, typename ResT >
+	void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const ;
 
 	typename Base::Index rows() const { return Base::lhs.object.rows() ; }
 	typename Base::Index cols() const { return Base::rhs.object.cols() ; }
@@ -176,6 +188,8 @@ template <typename LhsMatrixT, typename RhsMatrixT>
 struct Addition : public BinaryBlockOp< Addition, LhsMatrixT, RhsMatrixT >
 {
 	typedef BinaryBlockOp< bogus::Addition, LhsMatrixT, RhsMatrixT > Base ;
+	typedef typename Base::Scalar Scalar ;
+
 	Addition( const LhsMatrixT& l, const RhsMatrixT &r,
 			  typename Base::Lhs::Scalar lscaling = 1, typename Base::Lhs::Scalar rscaling = 1 )
 		: Base( l, r, lscaling, rscaling )
@@ -186,6 +200,13 @@ struct Addition : public BinaryBlockOp< Addition, LhsMatrixT, RhsMatrixT >
 		return typename Base::ConstTransposeReturnType (
 					Base::lhs.object.transpose(), Base::rhs.object.transpose(),
 					Base::lhs.scaling, Base::rhs.scaling ) ;
+	}
+
+	template < bool DoTranspose, typename RhsT, typename ResT >
+	void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const
+	{
+		Base::lhs.object.multiply< DoTranspose >( rhs, res, alpha*Base::lhs.scaling, beta ) ;
+		Base::rhs.object.multiply< DoTranspose >( rhs, res, alpha*Base::rhs.scaling, 1 ) ;
 	}
 
 	typename Base::Index rows() const { return Base::lhs.object.rows() ; }
@@ -228,6 +249,7 @@ struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
 	typedef BlockObjectBase< Scaling > Base ;
 
 	typedef typename Base::EvalType EvalType;
+	typedef typename Base::Scalar Scalar ;
 
 	Scaling( const MatrixT &object, const typename MatrixT::Scalar scaling )
 		: operand( object, scaling )
@@ -237,6 +259,12 @@ struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
 	{
 		return typename Base::ConstTransposeReturnType (
 					operand.object.transpose(), operand.scaling ) ;
+	}
+
+	template < bool DoTranspose, typename RhsT, typename ResT >
+	void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const
+	{
+		operand.object.multiply< DoTranspose >( rhs, res, alpha*operand.scaling, beta ) ;
 	}
 
 	typename Base::Index rows() const { return operand.object.rows() ; }

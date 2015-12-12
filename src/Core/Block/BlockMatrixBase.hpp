@@ -40,16 +40,6 @@ public:
 	virtual ~BlockMatrixBase()
 	{}
 
-	//! Performs a matrix vector multiplication
-	/*! \tparam Transpose If true, performs \c res = \c alpha * \c M' * \c rhs + beta * res,
-						  otherwise \c res = \c alpha * M * \c rhs + beta * res
-	  */
-	template < bool DoTranspose, typename RhsT, typename ResT >
-	void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const
-	{
-		derived().template multiply< DoTranspose >( rhs, res, alpha, beta ) ;
-	}
-
 	//! Multiplies a given block-row of the matrix with \p rhs, omitting the diagonal block
 	/*! I.e. res = [ M( row, 0 ) ... M( row, row-1 ) 0 M( row, row+1 ) ... M( row, colsOfBlocks()-1 ) ] * rhs
 

@@ -145,6 +145,65 @@ TEST( SparseBlock, MatrixVector )
 	EXPECT_TRUE( mres.isZero() ) ;
 }
 
+TEST( SparseBlock, ExprVector )
+{
+	Eigen::VectorXd expected_1(15), expected_2(8), expected_3(15) ;
+	expected_1 << 4, 4, 4, 0, 0, 0, 0, 0, 0, 20, 20, 20, 0, 0, 0 ;
+	expected_2 << 120, 120, 120, 120, 192, 192, 192, 192 ;
+	expected_3 << 768, 768, 768, 0, 0, 0, 0, 0, 0, 3264, 3264, 3264, 0, 0, 0 ;
+
+	typedef Eigen::MatrixXd BlockT ;
+	EXPECT_TRUE( bogus::IsTransposable< BlockT >::Value ) ;
+	bogus::SparseBlockMatrix< BlockT, bogus::flags::UNCOMPRESSED > sbm ;
+	sbm.setRows( 5, 3 ) ;
+	sbm.setCols( 2, 4 ) ;
+
+	sbm.insertBack( 0, 1 ) = BlockT::Ones( 3,4 ) ;
+	sbm.insertBack( 3, 0 ) = 2 * BlockT::Ones( 3,4 ) ;
+	sbm.insertBack( 3, 1 ) = 3 * BlockT::Ones( 3,4 ) ;
+
+	sbm.finalize();
+	bogus::SparseBlockMatrix< BlockT > sbm_2 = sbm/2 ;
+
+	Eigen::VectorXd rhs ( sbm.cols() ) ;
+	Eigen::VectorXd res ( sbm.rows() ) ;
+
+	rhs.setOnes() ;
+	res.setZero() ;
+
+	(2*sbm_2).multiply< false >( rhs,res ) ;
+	EXPECT_EQ( expected_1, res ) ;
+
+	res.setZero() ;
+
+	(3*sbm + 10*sbm_2).multiply< false >( rhs, res ) ;
+	res /= 8;
+
+	EXPECT_EQ( expected_1, res ) ;
+
+	res.noalias() += sbm*rhs ;
+	res -= sbm*rhs ;
+	EXPECT_EQ( expected_1, sbm*rhs ) ;
+	rhs.setZero() ;
+
+	sbm.transpose().multiply< false >( res, rhs ) ;
+	EXPECT_EQ( expected_2, rhs ) ;
+	
+	bogus::SparseBlockMatrix< BlockT > sbm3 = sbm + sbm_2 ;
+
+	Eigen::VectorXd mmv = sbm.transpose() * ( sbm3 * rhs ) ;
+	Eigen::VectorXd res2( mmv.rows() ) ;
+
+	(sbm.transpose() * sbm3).multiply< false >( rhs, res2 ) ;
+	EXPECT_EQ( res2, mmv ) ;
+	
+	mmv += 6*sbm3.transpose() * ( sbm * rhs ) ;
+	
+	( (3*sbm).transpose() * (2*sbm3)).multiply< true >( rhs, res2, 1, 1 ) ;
+	EXPECT_EQ( res2, mmv ) ;
+
+}
+
 TEST( SparseBlock, Symmetric )
 {
 	Eigen::VectorXd expected_1(9), expected_2(9) ;
@@ -818,5 +877,4 @@ TEST(SparseBlock, FixedSize)
 	ASSERT_EQ( sbm.block(0), tsbm.block(0).transpose() ) ;
 
 }
-
 
