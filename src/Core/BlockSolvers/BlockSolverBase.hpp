@@ -30,7 +30,7 @@ class BlockSolverBase
 {
 public:
 
-	typedef typename BlockMatrixTraits< BlockMatrixType >::BlockType LocalMatrixType ;
+	typedef typename BlockMatrixTraits< typename BlockMatrixType::PlainObjectType >::BlockType LocalMatrixType ;
 	typedef ProblemTraits< LocalMatrixType > GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 	typedef Signal< unsigned, Scalar > CallBackType ;
@@ -54,13 +54,13 @@ public:
 
 protected:
 
-	BlockSolverBase( const BlockMatrixBase< BlockMatrixType > * matrix = 0,
+	BlockSolverBase( const BlockObjectBase< BlockMatrixType > * matrix = 0,
 					 unsigned maxIters = 0, Scalar tol = 0 )
-	    : m_matrix( matrix ), m_maxIters( maxIters ), m_tol( tol )
+		: m_matrix( matrix ), m_maxIters( maxIters ), m_tol( tol )
 	{}
 
 	//! Pointer to the matrix of the system
-	const BlockMatrixBase< BlockMatrixType > * m_matrix ;
+	const BlockObjectBase< BlockMatrixType > * m_matrix ;
 
 	//! See setMaxIters()
 	unsigned m_maxIters;

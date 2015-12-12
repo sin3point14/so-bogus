@@ -17,17 +17,16 @@
 namespace bogus {
 
 template < typename BlockMatrixType >
-class DiagonalPreconditioner< BlockMatrixBase< BlockMatrixType > >
+class DiagonalPreconditioner< BlockObjectBase< BlockMatrixType > >
 {
 public:
-	typedef typename BlockMatrixTraits< BlockMatrixType >::BlockType LocalMatrixType ;
-	typedef ProblemTraits< LocalMatrixType > GlobalProblemTraits ;
+	typedef BlockMatrixTraits< typename BlockMatrixType::PlainObjectType > Traits ;
+	typedef typename Traits::BlockType BlockType ;
+	typedef ProblemTraits< BlockType > GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::DynVector Vector ;
 
 	void setMatrix( const BlockMatrixBase< BlockMatrixType > &matrix )
 	{
-		typedef BlockMatrixTraits< BlockMatrixType > Traits ;
-		typedef typename Traits::BlockType BlockType ;
 		typedef typename Traits::Index Index ;
 		typedef typename MatrixTraits< BlockType >::Scalar Scalar ;
 
@@ -60,8 +59,8 @@ template < typename BlockMatrixType, typename FactorizationType >
 class DiagonalFactorizationPreconditioner
 {
 public:
-	typedef typename BlockMatrixTraits< BlockMatrixType >::BlockType BlockType ;
-	typedef typename BlockMatrixTraits< BlockMatrixType >::Index Index ;
+	typedef typename BlockMatrixTraits< typename BlockMatrixType::PlainObjectType >::BlockType BlockType ;
+	typedef typename BlockMatrixTraits< typename BlockMatrixType::PlainObjectType >::Index Index ;
 
 	template < bool transpose, typename ResT, typename RhsT >
 	void apply( const RhsT& rhs, ResT &res ) const
@@ -89,14 +88,14 @@ private:
 } ;
 
 template < typename BlockMatrixType >
-class DiagonalLUPreconditioner< BlockMatrixBase< BlockMatrixType > >
+class DiagonalLUPreconditioner< BlockObjectBase< BlockMatrixType > >
 		: public DiagonalFactorizationPreconditioner< BlockMatrixType ,
 		typename MatrixTraits< typename BlockMatrixTraits< BlockMatrixType >::BlockType >::LUType >
 {
 } ;
 
 template < typename BlockMatrixType >
-class DiagonalLDLTPreconditioner< BlockMatrixBase< BlockMatrixType > >
+class DiagonalLDLTPreconditioner< BlockObjectBase< BlockMatrixType > >
 		: public DiagonalFactorizationPreconditioner< BlockMatrixType ,
 		typename MatrixTraits< typename BlockMatrixTraits< BlockMatrixType >::BlockType >::LDLTType >
 {

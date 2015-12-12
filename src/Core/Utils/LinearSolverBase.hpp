@@ -54,9 +54,8 @@ struct LinearSolverBase
 	typedef BlockTraits< typename LinearSolverTraits< Derived >::MatrixType > UnderlyingBlockTraits ;
 	typedef typename UnderlyingBlockTraits::Scalar Scalar ;
 	enum {
-		RowsAtCompileTime = UnderlyingBlockTraits::RowsAtCompileTime,
-		ColsAtCompileTime = UnderlyingBlockTraits::ColsAtCompileTime,
-		IsRowMajor = UnderlyingBlockTraits::is_row_major
+		RowsAtCompileTime = UnderlyingBlockTraits::ColsAtCompileTime,
+		ColsAtCompileTime = UnderlyingBlockTraits::RowsAtCompileTime,
 	} ;
 
 } ;

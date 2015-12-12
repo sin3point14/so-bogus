@@ -41,7 +41,7 @@ struct BlockTraits
 	   //! Can be set to true if "const Scalar* data_pointer( const BlockType& )" exist.
 	   uses_plain_array_storage = 0,
 	   //! Ordering inside the block ; only useful uses_plain_array_storage is true
-	   is_row_major = BlockType::IsRowMajor,
+	   is_row_major = false,
 	   //! Whether this block is equal to its transpose
 	   is_self_transpose = 0
 	}  ;

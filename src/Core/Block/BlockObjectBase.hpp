@@ -64,6 +64,12 @@ struct BlockObjectBase
 
 	//! Eval this object in a temporary. For internal use, not part of the public API
 	EvalType eval() const { return derived().eval() ; }
+
+	// Block traits
+	enum {
+		RowsAtCompileTime = internal::DYNAMIC,
+		ColsAtCompileTime = internal::DYNAMIC
+	} ;
 };
 
 //! Default specialization of traits for BlockMatrices

@@ -23,7 +23,7 @@ namespace bogus
 
 //! Preconditionned Krylov Solvers
 /*!
-  \tparam BlockMatrixT The type of system matrix, which should be a subclass of BlockMatrixBase
+  \tparam BlockMatrixT The type of system matrix, which should be a subclass of BlockObjectBase
   \tparam PreconditionerType The preconditioner type. It should accept BlockMatrixT as a template parameter.
 	The default value, TrivialPreconditioner, means that no preconditioning will be done.
 	\sa TrivialPreconditioner, DiagonalPreconditioner, DiagonalLUPreconditioner, DiagonalLDLTPreconditioner
@@ -36,7 +36,7 @@ class Krylov : public BlockSolverBase< BlockMatrixType >
 {
 public:
 	typedef BlockSolverBase< BlockMatrixType > Base ;
-        typedef PreconditionerType< BlockMatrixBase< BlockMatrixType > > PreconditionerImplType ;
+		typedef PreconditionerType< BlockObjectBase< BlockMatrixType > > PreconditionerImplType ;
 
 	typedef typename Base::LocalMatrixType LocalMatrixType ;
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
@@ -45,16 +45,16 @@ public:
 	//! Default constructor -- you will have to call setMatrix() before using any of the solve() functions
 	Krylov( ) ;
 	//! Constructor with the system matrix -- initializes preconditioner
-	explicit Krylov( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
+	explicit Krylov( const BlockObjectBase< BlockMatrixType > & matrix ) ;
 
 	//! Sets the system matrix and initializes the preconditioner
-	Krylov& setMatrix( const BlockMatrixBase< BlockMatrixType > & matrix ) ;
+	Krylov& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix ) ;
 
 	// For each value of the krylov::Method enum, create a MethodNameType typedef
 	// and the asMethodName() -> MethodNameType and solve_MethodName -> Scalar methods
 #define BOGUS_PROCESS_KRYLOV_METHOD( MethodName )\
 	typedef krylov::solvers::MethodName<  \
-		BlockMatrixType, PreconditionerType< BlockMatrixBase< BlockMatrixType > >, \
+		BlockMatrixType, PreconditionerType< BlockObjectBase< BlockMatrixType > >, \
 		GlobalProblemTraits > MethodName##Type ; \
 	\
 	MethodName##Type as##MethodName() const { \
@@ -77,8 +77,8 @@ BOGUS_KRYLOV_METHODS
 	Scalar solve(  const RhsT &b, ResT &x,
 				   krylov::Method method = krylov::CG ) const ;
 
-        const PreconditionerImplType& preconditioner() const {return m_preconditioner ; }
-        PreconditionerImplType& preconditioner() { return m_preconditioner ; }
+		const PreconditionerImplType& preconditioner() const {return m_preconditioner ; }
+		PreconditionerImplType& preconditioner() { return m_preconditioner ; }
 
 protected:
 

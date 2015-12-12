@@ -1,7 +1,7 @@
 
 /*
  * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ 
+ * http://creativecommons.org/publicdomain/zero/1.0/
 */
 
 #include <iostream>
@@ -309,5 +309,39 @@ TEST( Krylov, MultipleRhs )
 
 }
 
+TEST( Krylov, ProductLhs )
+{
 
+
+	typedef Eigen::Matrix< double, 5, 5 > Block ;
+	Block M_L ;
+	M_L <<  1.72194,           0 ,            0,            0,            0,
+		   0.027804,      1.78422,            0,            0,            0,
+			0.26607,     0.097189,            0,            0,            0,
+			0.96157,      0.71437,      0.98738,      1.66828,            0,
+		   0.024571,     0.046486,      0.94515,      0.38009,     1.087634 ;
+
+
+	typedef bogus::SparseBlockMatrix< Block > Mat ;
+	Mat sbm ;
+	sbm.setRows( 1, 5 ) ;
+	sbm.setCols( 1, 5 ) ;
+	sbm.insertBack(0,0) = .5 * ( M_L + 2*M_L.transpose() ) ;
+	sbm.finalize() ;
+
+	typedef bogus::Product< Mat, bogus::Transpose< Mat > > Prod ;
+	Prod prod = sbm * sbm.transpose() ;
+
+	Eigen::Matrix< double, 5, 1 > rhs, res ;
+	rhs.setOnes() ;
+	double err ;
+
+	res.setZero() ;
+	bogus::Krylov< Prod > cg( prod ) ;
+	cg.callback().connect( &ackCurrentResidual );
+	g_meth = "CG" ;
+	err = cg.solve_CG( rhs, res ) ;
+	EXPECT_GT( 1.e-16, err ) ;
+	EXPECT_GT( 1.e-8, (prod * res - rhs).lpNorm<Eigen::Infinity>() ) ;
+}
 

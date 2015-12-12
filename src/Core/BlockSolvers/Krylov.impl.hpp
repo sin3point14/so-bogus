@@ -22,7 +22,7 @@ namespace bogus {
 
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 Krylov< BlockMatrixType, PreconditionerType >::Krylov(
-		const BlockMatrixBase< BlockMatrixType > & matrix )
+		const BlockObjectBase< BlockMatrixType > & matrix )
 	: Base( &matrix, matrix.rows(), NumTraits< Scalar >::epsilon() )
 {
 	setMatrix( matrix ) ;
@@ -37,10 +37,10 @@ Krylov< BlockMatrixType, PreconditionerType >::Krylov()
 template < typename BlockMatrixType, template< typename BlockMatrixT > class PreconditionerType >
 Krylov< BlockMatrixType, PreconditionerType >&
 Krylov< BlockMatrixType, PreconditionerType >::setMatrix(
-		const BlockMatrixBase< BlockMatrixType > & matrix )
+		const BlockObjectBase< BlockMatrixType > & matrix )
 {
 	Base::m_matrix = &matrix ;
-	m_preconditioner.setMatrix( matrix ) ;
+	m_preconditioner.setMatrix( matrix.derived() ) ;
 
 	return *this ;
 }
