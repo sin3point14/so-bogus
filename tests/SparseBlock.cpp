@@ -769,6 +769,53 @@ TEST( SparseBlock, Add )
 		EXPECT_EQ( sym_res, sbm_ter*rhs ) ;
 	}
 
+	{
+		const unsigned N = 3 ;
+
+		typedef bogus::SparseBlockMatrix< BlockT > SBM ;
+		SBM sbm[3] ;
+
+		for( unsigned i = 0 ; i < N ; ++i ) {
+			sbm[i].setRows( 1, 3 ) ;
+			sbm[i].setCols( 2, 4 ) ;
+
+			sbm[i].insertBack( 0, 0 ) = BlockT::Ones() ;
+			sbm[i].insertBack( 0, 1 ) = i*sample ;
+
+			sbm[i].finalize() ;
+		}
+
+		Eigen::VectorXd rhs1( sbm[0].rows() ) ;
+		rhs1.setOnes() ;
+
+		Eigen::VectorXd res1( rhs1.rows() ) ;
+
+		typedef bogus::Product< SBM, bogus::Transpose<SBM> > Prod ;
+		bogus::NarySum< Prod > sum( sbm[0].rows(), sbm[0].rows() )  ;
+		
+		sum.multiply< false >( rhs1, res1, 1, 0) ;
+		ASSERT_EQ( 0, res1.norm() ) ;
+
+		for( unsigned i = 0 ; i < N ; ++i ) {
+			sum += i * ( sbm[i] * sbm[i].transpose() ) ;
+			res1 += i * ( sbm[i] * sbm[i].transpose() ) * rhs1 ;
+		}
+
+		ASSERT_TRUE( res1.isApprox( sum * rhs1 ) ) ;
+		ASSERT_TRUE( res1.isApprox( sum.transpose() * rhs1 ) ) ;
+
+		
+		bogus::NarySum< Prod > sum2 ( sbm[0] * sbm[0].transpose() )  ;
+		sum2 += sum ;
+		sum2 -= sbm[0] * sbm[0].transpose() ;
+		ASSERT_TRUE( res1.isApprox( sum2 * rhs1 ) ) ;
+
+		sum2 -= sum ;
+		bogus::SparseBlockMatrix< Eigen::Matrix3d > sumBM = sum2 + sum.transpose() ;
+		ASSERT_TRUE( res1.isApprox( sumBM * rhs1 ) ) ;
+
+	}
+
 }
 
 TEST( SparseBlock, YoDawg )
@@ -877,4 +924,6 @@ TEST(SparseBlock, FixedSize)
 	ASSERT_EQ( sbm.block(0), tsbm.block(0).transpose() ) ;
 
 }
+
+
 

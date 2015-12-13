@@ -14,12 +14,8 @@
 
 #include "BlockObjectBase.hpp"
 
-#include <memory>
-
 namespace bogus
 {
-
-
 
 //! Base class for Transpose views of a BlockObjectBase
 template <typename MatrixT>
@@ -139,7 +135,7 @@ struct Product : public BinaryBlockOp< Product, LhsMatrixT, RhsMatrixT >
 		: Base( l, r, lscaling, rscaling )
 	{}
 
-	typename Base::ConstTransposeReturnType transpose()
+	typename Base::ConstTransposeReturnType transpose() const
 	{
 		return typename Base::ConstTransposeReturnType (
 					Base::rhs.object.transpose(), Base::lhs.object.transpose(),
@@ -202,7 +198,7 @@ struct Addition : public BinaryBlockOp< Addition, LhsMatrixT, RhsMatrixT >
 		: Base( l, r, lscaling, rscaling )
 	{}
 
-	typename Base::ConstTransposeReturnType transpose()
+	typename Base::ConstTransposeReturnType transpose() const
 	{
 		return typename Base::ConstTransposeReturnType (
 					Base::lhs.object.transpose(), Base::rhs.object.transpose(),
@@ -268,7 +264,7 @@ struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
 		: operand( object, scaling )
 	{}
 
-	typename Base::ConstTransposeReturnType transpose()
+	typename Base::ConstTransposeReturnType transpose() const
 	{
 		return typename Base::ConstTransposeReturnType (
 					operand.object.transpose(), operand.scaling ) ;

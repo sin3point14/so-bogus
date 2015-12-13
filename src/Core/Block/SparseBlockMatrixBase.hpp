@@ -14,6 +14,7 @@
 
 #include "BlockMatrixBase.hpp"
 #include "Expressions.hpp"
+#include "DynamicExpressions.hpp"
 
 #include "SparseBlockIndex.hpp"
 #include "CompressedSparseBlockIndex.hpp"
@@ -307,7 +308,10 @@ public:
 	Derived& operator= ( const Product< LhsT, RhsT > &prod ) ;
 
 	template < typename LhsT, typename RhsT >
-	Derived& operator= ( const Addition< LhsT, RhsT > &prod ) ;
+	Derived& operator= ( const Addition< LhsT, RhsT > &add ) ;
+
+	template < typename Expression >
+	Derived& operator= ( const NarySum< Expression > &sum ) ;
 
 	template < typename OtherDerived >
 	Derived& operator= ( const Scaling< OtherDerived > &scaling )

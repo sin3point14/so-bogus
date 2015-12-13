@@ -187,6 +187,27 @@ Derived& SparseBlockMatrixBase<Derived>::operator=( const Addition< LhsT, RhsT >
 	return add< Add::transposeRhs >( *rhs, addition.rhs.scaling ) ;
 }
 
+template < typename Derived >
+template < typename Expression >
+Derived& SparseBlockMatrixBase<Derived>::operator=( const NarySum< Expression > &sum )
+{
+
+	if( !sum.empty() ) {
+
+		// WARNING -- Not safe w.r.t aliasing
+		typedef typename NarySum< Expression >::Sum::const_iterator Iterator ;
+		Iterator it = sum.members.begin() ;
+
+		*this = *it ;
+		for( ; it != sum.members.end() ; ++it ) {
+			*this += *it ;
+		}
+	}
+
+	return derived();
+
+}
+
 } //namespace bogus
 
 
