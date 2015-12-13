@@ -25,10 +25,14 @@ namespace projected_gradient {
 	enum Variant {
 		//! Standard projected gradient
 		Standard,
+		//! Projected gradient descent
+		Descent,
 		//! Projected gradient with conjugation of search direction
 		Conjugated,
 		//! Accelerated Projected Gradient Descent based on \cite Nesterov1983 and developed in \cite Heyn13
-		APGD
+		APGD,
+		//! Spectral Projected Gradient, loosely adapted from \cite Tasora13
+		SPG
 	} ;
 }
 
@@ -66,7 +70,7 @@ public:
 	}
 
 	//! Sets the maximum number of line-search iterations
-	void setLineSearchIterations( const Scalar lsIterations )
+	void setLineSearchIterations( const unsigned lsIterations )
 	{ m_lsIters = lsIterations ; }
 
 	//! Sets the amount by which the step size will be multiplied at the beginninf of each PG iteration.
@@ -78,17 +82,27 @@ public:
 	//! Should be in ]0,1[
 	void setLineSearchPessimisticFactor( const Scalar lsPessimisticFactor )
 	{ m_lsPessimisticFactor = lsPessimisticFactor ; }
+	
+	//! Sets the objective decrease coefficient for linesearchs that use an Armijo exit criterion
+	//! Should be in ]0,1[
+	void setLineSearchArmijoCoefficient( const Scalar lsArmijoCoefficient )
+	{ m_lsArmijoCoefficient = lsArmijoCoefficient ; }
 
 	//! Sets the variant that will be used when calling solve() without template arguments
 	void setDefaultVariant( projected_gradient::Variant variant )
 	{ m_defaultVariant = variant ; }
 
-protected:
-
-	typedef typename Base::Index Index ;
+	unsigned lineSearchIterations() const { return m_lsIters ; }
+	Scalar lineSearchOptimisticFactor() const { return m_lsOptimisticFactor ; }
+	Scalar lineSearchPessimisticFactor() const { return m_lsPessimisticFactor ; }
+	Scalar lineSearchArmijoCoefficient() const { return m_lsArmijoCoefficient ; }
 
 	template < typename NSLaw, typename VectorT >
 	void projectOnConstraints( const NSLaw &projector, VectorT &x ) const ;
+
+protected:
+
+	typedef typename Base::Index Index ;
 
 	//! Sets up the default values for all parameters
 	void init()
@@ -98,6 +112,7 @@ protected:
 		m_lsIters = 8 ;
 		m_lsOptimisticFactor = 1.25 ;
 		m_lsPessimisticFactor = .5 ;
+		m_lsArmijoCoefficient = .5 ;
 		m_defaultVariant = projected_gradient::APGD ;
 	}
 
@@ -105,9 +120,10 @@ protected:
 	using Base::m_maxIters ;
 	using Base::m_tol ;
 
-	Scalar m_lsIters ;
+	unsigned m_lsIters ;
 	Scalar m_lsOptimisticFactor ;
 	Scalar m_lsPessimisticFactor ;
+	Scalar m_lsArmijoCoefficient ;
 
 	projected_gradient::Variant m_defaultVariant ;
 

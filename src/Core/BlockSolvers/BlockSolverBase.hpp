@@ -51,6 +51,9 @@ public:
 		the current iteration number, and the second the current residual.
 		\sa Signal< unsigned, Scalar > */
 	CallBackType &callback() { return m_callback ; }
+	const CallBackType &callback() const { return m_callback ; }
+	
+	const BlockObjectBase< BlockMatrixType > &matrix() const { return *m_matrix ; }
 
 protected:
 
