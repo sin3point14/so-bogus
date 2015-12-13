@@ -459,8 +459,8 @@ void SparseBlockMatrixBase<Derived>::setFromProduct( const Product< LhsT, RhsT >
 {
 	typedef Product< LhsT, RhsT> Prod ;
 
-	typename Prod::Lhs::EvalType lhs = prod.lhs.object.eval() ;
-	typename Prod::Rhs::EvalType rhs = prod.rhs.object.eval() ;
+	Evaluator< typename Prod::Lhs::ObjectType > lhs( prod.lhs.object ) ;
+	Evaluator< typename Prod::Rhs::ObjectType > rhs( prod.rhs.object ) ;
 	typedef BlockMatrixTraits< typename Prod::PlainLhsMatrixType > LhsTraits ;
 	typedef BlockMatrixTraits< typename Prod::PlainRhsMatrixType > RhsTraits ;
 

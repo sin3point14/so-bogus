@@ -38,11 +38,11 @@ struct BlockObjectBase
 	typedef typename Traits::Scalar Scalar ;
 	typedef typename Traits::ConstTransposeReturnType ConstTransposeReturnType ;
 	typedef typename Traits::TransposeObjectType TransposeObjectType ;
+	enum { is_transposed = Traits::is_transposed } ;
 
 	typedef typename Traits::PlainObjectType PlainObjectType ;
+
 	typedef typename BlockMatrixTraits< PlainObjectType >::BlockType BlockType ;
-	typedef typename Traits::EvalType EvalType ;
-	enum { is_transposed = Traits::is_transposed } ;
 
 	//! Returns the total number of rows of the matrix ( expanding blocks )
 	Index rows() const { return derived().rows() ; }
@@ -82,11 +82,6 @@ struct BlockObjectBase
 		derived().template multiply< DoTranspose >( rhs, res, alpha, beta ) ;
 	}
 
-
-	//! Eval this object in a temporary. For internal use, not part of the public API
-	EvalType eval() const { return derived().eval() ; }
-
-
 	//! Compile-time block properties
 	enum CompileTimeProperties
 	{
@@ -113,7 +108,6 @@ struct BlockMatrixTraits< BlockObjectBase< Derived > > {
 	typedef BOGUS_DEFAULT_BLOCK_PTR_TYPE BlockPtr ;
 
 	typedef Derived PlainObjectType ;
-	typedef const PlainObjectType* EvalType ;
 
 	typedef Transpose< Derived > ConstTransposeReturnType ;
 	typedef ConstTransposeReturnType TransposeObjectType ;

@@ -297,7 +297,7 @@ public:
 	template < typename OtherDerived >
 	Derived& operator= ( const BlockObjectBase< OtherDerived > &source )
 	{
-		typename OtherDerived::EvalType rhs ( source.eval() ) ;
+		Evaluator< OtherDerived > rhs ( source.derived() ) ;
 		return assign< OtherDerived::is_transposed >( *rhs ) ;
 	}
 
@@ -312,8 +312,8 @@ public:
 	template < typename OtherDerived >
 	Derived& operator= ( const Scaling< OtherDerived > &scaling )
 	{
-		typename Scaling< OtherDerived >::Operand::EvalType operand( scaling.operand.object.eval() ) ;
-		return assign< Scaling< OtherDerived >::transposeOperand >( *operand, scaling.operand.scaling ) ;
+		Evaluator< typename Scaling< OtherDerived >::Operand::ObjectType > rhs ( scaling.operand.object ) ;
+		return assign< Scaling< OtherDerived >::transposeOperand >( *rhs, scaling.operand.scaling ) ;
 	}
 
 	//! Clones the dimensions ( number of rows/cols blocks and rows/cols per block ) of \p source
@@ -364,7 +364,7 @@ public:
 	template < typename OtherDerived >
 	Derived& operator+= ( const BlockObjectBase< OtherDerived > &source )
 	{
-		typename OtherDerived::EvalType rhs ( source.eval() ) ;
+		Evaluator< OtherDerived > rhs ( source.derived() ) ;
 		return add< OtherDerived::is_transposed >( *rhs ) ;
 	}
 
@@ -372,7 +372,7 @@ public:
 	template < typename OtherDerived >
 	Derived& operator-= ( const BlockObjectBase< OtherDerived > &source )
 	{
-		typename OtherDerived::EvalType rhs ( source.eval() ) ;
+		Evaluator< OtherDerived > rhs ( source.derived() ) ;
 		return add< OtherDerived::is_transposed >( *rhs, -1 ) ;
 	}
 

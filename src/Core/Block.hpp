@@ -23,6 +23,8 @@
 #include "Eigen/BlockBindings.hpp"
 #endif
 
+#include "Block/Evaluators.hpp"
+
 #include "Block/SparseBlockMatrix.hpp"
 #include "Block/MappedSparseBlockMatrix.hpp"
 #include "Block/Operators.hpp"

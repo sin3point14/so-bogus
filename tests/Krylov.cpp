@@ -304,8 +304,9 @@ TEST( Krylov, MultipleRhs )
 	bogus::SparseBlockMatrix< Block > mrhs ;
 	mrhs.cloneStructure( sbm ) ;
 	mrhs.block( 0 ) = rhs ;
-
-	EXPECT_TRUE ( ( A * ( sbm*mrhs ).eval()->block( 0 ) ).isApprox( rhs ) ) ;
+	
+	bogus::SparseBlockMatrix< Block > mres =  sbm*mrhs ;
+	EXPECT_TRUE ( ( A * mres.block( 0 ) ).isApprox( rhs ) ) ;
 
 }
 

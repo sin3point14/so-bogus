@@ -104,9 +104,6 @@ public:
 	//! Access to blocks data as a raw pointer
 	BlockType* data() { return &m_blocks[0] ; }
 
-	const Derived* eval() const { return &derived() ; }
-
-
 protected:
 	Index m_rows ;
 	Index m_cols ;

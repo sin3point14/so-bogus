@@ -19,6 +19,8 @@
 namespace bogus
 {
 
+
+
 //! Base class for Transpose views of a BlockObjectBase
 template <typename MatrixT>
 struct Transpose : public BlockObjectBase< Transpose< MatrixT > >
@@ -40,8 +42,6 @@ struct Transpose : public BlockObjectBase< Transpose< MatrixT > >
 	{
 		matrix.multiply< !DoTranspose >( rhs, res, alpha, beta ) ;
 	}
-
-	typename Traits::EvalType eval() const { return matrix.eval() ; }
 
 	Index rows() const { return matrix.cols() ; }
 	Index cols() const { return matrix.rows() ; }
@@ -65,7 +65,6 @@ struct BlockMatrixTraits< Transpose< MatrixT > >
 	typedef typename OrigTraits::Index Index ;
 	typedef typename OrigTraits::BlockPtr BlockPtr ;
 	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
-	typedef typename OrigTraits::EvalType EvalType ;
 	typedef typename OrigTraits::Scalar Scalar ;
 
 	typedef const PlainObjectType& ConstTransposeReturnType ;
@@ -89,7 +88,6 @@ struct BlockOperand
 {
 	typedef ObjectT ObjectType ;
 	typedef typename ObjectT::PlainObjectType PlainObjectType ;
-	typedef typename ObjectT::EvalType EvalType ;
 
 	typedef BlockMatrixTraits< ObjectT > Traits ;
 	enum { do_transpose = Traits::is_transposed } ;
@@ -109,7 +107,6 @@ struct BinaryBlockOp : public BlockObjectBase< BlockOp< LhsMatrixT, RhsMatrixT >
 
 	typedef BlockObjectBase< BlockOp< LhsMatrixT, RhsMatrixT > > Base ;
 	typedef typename Base::PlainObjectType  PlainObjectType ;
-	typedef typename Base::EvalType         EvalType ;
 
 	typedef BlockOperand< LhsMatrixT > Lhs ;
 	typedef BlockOperand< RhsMatrixT > Rhs ;
@@ -127,11 +124,6 @@ struct BinaryBlockOp : public BlockObjectBase< BlockOp< LhsMatrixT, RhsMatrixT >
 		: lhs( l, lscaling ), rhs ( r, rscaling )
 	{}
 
-	EvalType eval() const {
-		PlainObjectType *res = new PlainObjectType() ;
-		*res = *this ;
-		return EvalType( res )  ;
-	}
 } ;
 
 
@@ -189,7 +181,6 @@ struct BlockMatrixTraits< Product< LhsMatrixT, RhsMatrixT > >
 
 	typedef typename LhsTraits::PlainObjectType
 		::template MutableImpl< ResBlockType, false >::Type PlainObjectType ;
-	typedef std::auto_ptr< const PlainObjectType > EvalType ;
 
 	typedef typename LhsTraits::Scalar Scalar ;
 
@@ -250,7 +241,6 @@ struct BlockMatrixTraits< Addition< LhsMatrixT, RhsMatrixT > >
 
 	typedef typename OrigTraits::PlainObjectType
 		::template MutableImpl< ResBlockType, false >::Type PlainObjectType ;
-	typedef std::auto_ptr< const PlainObjectType > EvalType ;
 
 	typedef typename OrigTraits::Scalar Scalar ;
 
@@ -271,7 +261,6 @@ struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
 
 	typedef BlockObjectBase< Scaling > Base ;
 
-	typedef typename Base::EvalType EvalType;
 	typedef typename Base::Scalar Scalar ;
 	typedef typename Base::Index Index ;
 
@@ -294,12 +283,6 @@ struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
 	typename Base::Index rows() const { return operand.object.rows() ; }
 	typename Base::Index cols() const { return operand.object.cols() ; }
 
-	EvalType eval() const {
-		PlainOperandMatrixType *res = new PlainOperandMatrixType() ;
-		*res = *this ;
-		return EvalType( res )  ;
-	}
-
 	Index rowsOfBlocks() const { return operand.object.rowsOfBlocks() ; }
 	Index colsOfBlocks() const { return operand.object.colsOfBlocks() ; }
 	Index blockRows( Index row ) const { return operand.object.blockRows( row ) ; }
@@ -318,7 +301,6 @@ struct BlockMatrixTraits< Scaling< MatrixT > >
 	typedef typename OrigTraits::Index Index ;
 	typedef typename OrigTraits::BlockPtr BlockPtr ;
 	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
-	typedef std::auto_ptr< const PlainObjectType > EvalType ;
 	typedef typename OrigTraits::Scalar Scalar ;
 
 	typedef Scaling< typename BlockOperand< MatrixT >::ObjectType::TransposeObjectType >
