@@ -40,7 +40,7 @@ struct Transpose : public BlockObjectBase< Transpose< MatrixT > >
 	template < bool DoTranspose, typename RhsT, typename ResT >
 	void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const
 	{
-		matrix.multiply< !DoTranspose >( rhs, res, alpha, beta ) ;
+		matrix.template multiply< !DoTranspose >( rhs, res, alpha, beta ) ;
 	}
 
 	Index rows() const { return matrix.cols() ; }
@@ -212,8 +212,8 @@ struct Addition : public BinaryBlockOp< Addition, LhsMatrixT, RhsMatrixT >
 	template < bool DoTranspose, typename RhsT, typename ResT >
 	void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const
 	{
-		Base::lhs.object.multiply< DoTranspose >( rhs, res, alpha*Base::lhs.scaling, beta ) ;
-		Base::rhs.object.multiply< DoTranspose >( rhs, res, alpha*Base::rhs.scaling, 1 ) ;
+		Base::lhs.object.template multiply< DoTranspose >( rhs, res, alpha*Base::lhs.scaling, beta ) ;
+		Base::rhs.object.template multiply< DoTranspose >( rhs, res, alpha*Base::rhs.scaling, 1 ) ;
 	}
 
 	Index rows() const { return Base::lhs.object.rows() ; }
@@ -277,7 +277,7 @@ struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
 	template < bool DoTranspose, typename RhsT, typename ResT >
 	void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const
 	{
-		operand.object.multiply< DoTranspose >( rhs, res, alpha*operand.scaling, beta ) ;
+		operand.object.template multiply< DoTranspose >( rhs, res, alpha*operand.scaling, beta ) ;
 	}
 
 	typename Base::Index rows() const { return operand.object.rows() ; }

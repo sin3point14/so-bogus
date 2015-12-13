@@ -330,8 +330,8 @@ struct ProductVector {
 						  )
 	{
 		LocalResT buf( prodRhs.rows(), rhs.cols() ) ;
-		prodRhs.multiply< false >( rhs, buf, alpha, 0 ) ;
-		prodLhs.multiply< false >( buf, res, 1, beta ) ;
+		prodRhs.template multiply< false >( rhs, buf, alpha, 0 ) ;
+		prodLhs.template multiply< false >( buf, res, 1, beta ) ;
 	}
 
 } ;
@@ -347,8 +347,8 @@ struct ProductVector< true > {
 						  )
 	{
 		LocalResT buf( prodLhs.cols(), rhs.cols() ) ;
-		prodLhs.multiply< true >( rhs, buf, alpha, 0 ) ;
-		prodRhs.multiply< true >( buf, res, 1, beta ) ;
+		prodLhs.template multiply< true >( rhs, buf, alpha, 0 ) ;
+		prodRhs.template multiply< true >( buf, res, 1, beta ) ;
 	}
 
 } ;
