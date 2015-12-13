@@ -85,8 +85,6 @@ struct BlockObjectBase
 	//! Compile-time block properties
 	enum CompileTimeProperties
 	{
-		RowsAtCompileTime = internal::DYNAMIC,
-		ColsAtCompileTime = internal::DYNAMIC,
 		RowsPerBlock = BlockTraits< BlockType >::RowsAtCompileTime,
 		ColsPerBlock = BlockTraits< BlockType >::ColsAtCompileTime,
 
@@ -95,7 +93,12 @@ struct BlockObjectBase
 		has_fixed_size_blocks =
 				((int) ColsPerBlock != internal::DYNAMIC ) &&
 				((int) RowsPerBlock != internal::DYNAMIC )
-
+	} ;
+	// To use as block type
+	enum {
+		RowsAtCompileTime = internal::DYNAMIC,
+		ColsAtCompileTime = internal::DYNAMIC,
+		is_self_transpose = Traits::is_symmetric
 	} ;
 };
 
@@ -111,6 +114,8 @@ struct BlockMatrixTraits< BlockObjectBase< Derived > > {
 
 	typedef Transpose< Derived > ConstTransposeReturnType ;
 	typedef ConstTransposeReturnType TransposeObjectType ;
+
+	enum { is_symmetric = 0 } ;
 } ;
 
 }

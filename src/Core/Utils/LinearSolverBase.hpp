@@ -56,6 +56,7 @@ struct LinearSolverBase
 	enum {
 		RowsAtCompileTime = UnderlyingBlockTraits::ColsAtCompileTime,
 		ColsAtCompileTime = UnderlyingBlockTraits::RowsAtCompileTime,
+		is_self_transpose = UnderlyingBlockTraits::is_self_transpose
 	} ;
 
 } ;

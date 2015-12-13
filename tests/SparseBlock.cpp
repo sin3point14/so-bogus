@@ -863,6 +863,11 @@ TEST( SparseBlock, YoDawg )
 	bogus::SparseBlockMatrix< BlockType, bogus::SYMMETRIC > sbm3 = sbm * sbm.transpose() ;
 	EXPECT_EQ( res1 + res2, sbm2 * rhs ) ;
 	EXPECT_EQ( sbm*res2, sbm3 * rhs ) ;
+
+	typedef bogus::SparseBlockMatrix< BlockType, bogus::SYMMETRIC >	SymSBM ;
+	ASSERT_TRUE( (bogus::Addition< SymSBM, bogus::Transpose< SymSBM > >::is_self_transpose) ) ; 
+	ASSERT_FALSE( (bogus::Product< SymSBM, bogus::Transpose< SymSBM > >::is_self_transpose) ) ; 
+
 }
 
 TEST( SparseBlock, Permutation)
