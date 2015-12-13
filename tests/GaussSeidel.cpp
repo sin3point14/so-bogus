@@ -95,7 +95,7 @@ TEST( GaussSeidel, Small )
 
 	Eigen::VectorXd x( W.rows() ) ;
 	double res = -1 ; 
-/*
+
 	bogus::GaussSeidel< WType > gs( W ) ;
 	gs.callback().connect( &ackCurrentGSResidual );
 
@@ -124,7 +124,7 @@ TEST( GaussSeidel, Small )
 	gs.setTol( 1.e-8 );
 	res = gs.solve( bogus::SOC3D( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
-*/
+
 	bogus::ProjectedGradient< WType > pg( W ) ;
 	pg.callback().connect( &ackCurrentPGResidual );
 	pg.setTol( 1.e-8 );
@@ -193,7 +193,7 @@ TEST( ProjectedGradient, Projection )
 	law.projectOnConstraint( 1, x );
 	EXPECT_TRUE( x.isZero() ) ;
 }
-/*
+
 TEST( GaussSeidel, LCP )
 {
 	typedef Eigen::Matrix< double, 1, 3 > GradBlockT ;
@@ -259,4 +259,3 @@ TEST( GaussSeidel, LCP )
 		ASSERT_LT(-1.e-16, y.minCoeff() ) ;
 	}
 }
-*/

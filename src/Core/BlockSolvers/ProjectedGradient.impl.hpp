@@ -348,13 +348,12 @@ struct PgMethod< projected_gradient::SPG > {
 		pg.projectOnConstraints( law, x ) ;
 		prev_proj = x ;
 
-		// Unconstrained objective function
 		Mx = pg.matrix()*x ;
-		Scalar J = x.dot( .5 * Mx + b ) ;
 
 		Scalar theta_prev = 1, q = 0 ;
-		Scalar alpha = 1, lambda = 1 ;
 		Scalar a_min = 1.e-6, a_max = 1.e6 ;
+		
+		Scalar alpha = 1 ;
 		
 		// Eval optimal alpha
 		xs.setOnes() ;
