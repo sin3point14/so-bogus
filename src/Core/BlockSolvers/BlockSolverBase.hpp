@@ -52,12 +52,12 @@ public:
 		\sa Signal< unsigned, Scalar > */
 	CallBackType &callback() { return m_callback ; }
 	const CallBackType &callback() const { return m_callback ; }
-	
+
 	const BlockObjectBase< BlockMatrixType > &matrix() const { return *m_matrix ; }
 
 protected:
 
-	BlockSolverBase( const BlockObjectBase< BlockMatrixType > * matrix = 0,
+	BlockSolverBase( const BlockObjectBase< BlockMatrixType > * matrix = BOGUS_NULL_PTR(const BlockObjectBase< BlockMatrixType >),
 					 unsigned maxIters = 0, Scalar tol = 0 )
 		: m_matrix( matrix ), m_maxIters( maxIters ), m_tol( tol )
 	{}

@@ -16,6 +16,17 @@
 namespace bogus
 {
 
+#ifndef BOGUS_HAS_CPP11
+#define BOGUS_HAS_CPP11 (__cplusplus >= 201103L)
+#endif
+
+// NULLPTR
+#if BOGUS_HAS_CPP11
+#define BOGUS_NULL_PTR( Type ) nullptr
+#else
+#define BOGUS_NULL_PTR( Type ) (static_cast<Type*>(0))
+#endif
+
 // Swap template parameters if DoSwap is true
 
 template < bool DoSwap, typename First_, typename Second_ >

@@ -61,7 +61,7 @@ public:
 	template< bool DoLock = true >
 	struct Guard {
 		explicit Guard( Lock& ) {}
-		~Guard() {} ;
+		~Guard() {} 
 	} ;
 };
 #else

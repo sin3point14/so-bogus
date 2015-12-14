@@ -73,7 +73,7 @@ struct BlockObjectBase
 	ConstTransposeReturnType transpose() const { return derived().transpose() ; }
 
 	//! Performs a matrix vector multiplication
-	/*! \tparam Transpose If true, performs \c res = \c alpha * \c M' * \c rhs + beta * res,
+	/*! \tparam DoTranspose If true, performs \c res = \c alpha * \c M' * \c rhs + beta * res,
 						  otherwise \c res = \c alpha * M * \c rhs + beta * res
 	  */
 	template < bool DoTranspose, typename RhsT, typename ResT >

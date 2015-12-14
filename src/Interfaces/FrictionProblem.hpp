@@ -71,6 +71,8 @@ struct DualFrictionProblem
 	typedef SOCLaw< Dimension, double, true  > CoulombLawType	;
 	typedef SOCLaw< Dimension, double, false > SOCLawType	;
 
+	typedef Signal< unsigned, double > SignalType ;
+
 	//! W -- Delassus operator
 	WType W ;
 
@@ -114,15 +116,15 @@ struct DualFrictionProblem
 	  \returns the error as returned by the GaussSeidel::solve() function
 	  */
 	double solveCadoux( GaussSeidelType &gs, double * r, const unsigned fpIterations,
-		   const Signal< unsigned, double >* callback = 0 ) const ;
+		   const SignalType* callback = BOGUS_NULL_PTR(const SignalType) ) const ;
 	double solveCadoux( ProjectedGradientType &pg, double * r, const unsigned fpIterations,
-		   const Signal< unsigned, double >* callback = 0 ) const ;
+		   const SignalType* callback = BOGUS_NULL_PTR(const SignalType) ) const ;
 
 	//! Idem as solveCadoux, but interpreting the problem as r = Wu + b
 	double solveCadouxVel( GaussSeidelType &gs, double * u, const unsigned fpIterations,
-		   const Signal< unsigned, double >* callback = 0 ) const ;
+		   const SignalType* callback = BOGUS_NULL_PTR(const SignalType) ) const ;
 	double solveCadouxVel( ProjectedGradientType &pg, double * u, const unsigned fpIterations,
-		   const Signal< unsigned, double >* callback = 0 ) const ;
+		   const SignalType* callback = BOGUS_NULL_PTR(const SignalType) ) const ;
 
 
 	//! \warning To use the permutation releated functions, all the blocks have to have the same size

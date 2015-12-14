@@ -26,7 +26,7 @@ namespace bogus
 template < typename BlockMatrixType >
 GaussSeidel< BlockMatrixType >& GaussSeidel< BlockMatrixType >::setMatrix( const BlockObjectBase< BlockMatrixType > & M )
 {
-	if( m_matrix != &M && ( m_matrix != NULL ||
+	if( m_matrix != &M && ( m_matrix != BOGUS_NULL_PTR( const BlockObjectBase< BlockMatrixType >) ||
 							m_coloring.size() != (std::size_t) M.rowsOfBlocks() )) {
 		m_coloring.update( false, M.derived() );
 	}
@@ -56,7 +56,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	typename GlobalProblemTraits::DynVector x_best( GlobalProblemTraits::DynVector::Zero( x.rows() ) ) ;
 
 	const Scalar err_init = Base::eval( law, y, x      ) ;
-	Scalar err_zero, err_best ;
+	Scalar err_zero, err_best = err_init ;
 
 	bool useZero = false ;
 
@@ -73,7 +73,6 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	}
 
 	if( !useZero ) {
-		err_best = err_init ;
 		x_best = x ;
 	}
 	this->m_callback.trigger( 0, err_best ) ;

@@ -13,7 +13,7 @@
 
 #include <gtest/gtest.h>
 
-const char* g_meth  ;
+static const char* g_meth  ;
 
 static void ackCurrentResidual( unsigned GSIter, double err )
 {

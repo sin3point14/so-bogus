@@ -24,6 +24,7 @@
 #include "../Core/BlockSolvers/ConstrainedSolverBase.impl.hpp"
 
 #include "../Extra/SecondOrder.impl.hpp"
+#include "../Core/Utils/CppTools.hpp"
 
 namespace bogus {
 
@@ -36,7 +37,7 @@ namespace bogus {
 	  \param minimizer The minimizer to use for each inner SOCQP problem
 	  \param r  Both the initial guess and the result
 	  \param cadouxIterations Number of fixed-point iterations
-	  \param callback 0, or a pointer to a user-defined function that takes ( unsigned iteration, double residual ) as arguments
+	  \param callback NULL, or a pointer to a user-defined function that takes ( unsigned iteration, double residual ) as arguments
 	  \param tolTighten How much should the tolerance of the inner solver be tightened
 	  \returns the error as returned by the minimizer eval() function
 	  */
@@ -46,7 +47,7 @@ static typename WType::Scalar solveCadoux(
 		const typename WType::Scalar* b, const typename WType::Scalar* mu,
 		ConstrainedSolverBase< Method, WType > &minimizer,
 		typename WType::Scalar *r, const unsigned cadouxIterations,
-		const Signal<unsigned, typename WType::Scalar> *callback = 0,
+		const Signal<unsigned, typename WType::Scalar> *callback = BOGUS_NULL_PTR(const void),
 		const typename WType::Scalar tolTighten = 1.e-1
 		)
 {
@@ -109,7 +110,8 @@ static double solveCadouxVel(
 		const WType& W,
 		const typename WType::Scalar* b, const typename WType::Scalar* mu,
 		ConstrainedSolverBase< Method, WType > &minimizer,
-		double *u, const unsigned cadouxIterations, const Signal<unsigned, double> *callback = 0,
+		typename WType::Scalar* u, const unsigned cadouxIterations,
+		const Signal<unsigned, typename WType::Scalar> *callback = BOGUS_NULL_PTR(const void),
 		const typename WType::Scalar tolTighten = 1.e-1
 		)
 {

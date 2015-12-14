@@ -17,6 +17,8 @@
 #include "SparseBlockMatrixBase.hpp"
 #include "SparseBlockIndexComputer.hpp"
 
+#include "../Utils/CppTools.hpp"
+
 #include <algorithm>
 
 namespace bogus {
@@ -67,8 +69,8 @@ SparseBlockMatrixBase< Derived >::SparseBlockMatrixBase()
 	: Base()
 {
 	//Resize to zero
-	setRows( 0, (const unsigned*) 0 ) ;
-	setCols( 0, (const unsigned*) 0 ) ;
+	setRows( 0, BOGUS_NULL_PTR(const unsigned) ) ;
+	setCols( 0, BOGUS_NULL_PTR(const unsigned) ) ;
 	m_transposeIndex.resizeOuter(0) ;
 	m_transposeIndex.valid = false ;
 }

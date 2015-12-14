@@ -13,6 +13,7 @@
 #define COMPRESSED_SPARSE_BLOCK_INDEX_HPP
 
 #include "SparseBlockIndex.hpp"
+#include "../Utils/CppTools.hpp"
 
 namespace bogus
 {
@@ -196,7 +197,7 @@ struct SparseBlockIndexTraits<  SparseBlockIndex< true, Index_, BlockPtr_, Array
 		typedef const Index*                    pointer;
 		typedef const Index&                    reference;
 
-		InnerIterator( ) : m_inner( NULL ) { }
+		InnerIterator( ) : m_inner( BOGUS_NULL_PTR(const Index) ) { }
 
 		InnerIterator( const SparseBlockIndexType& index, Index outer )
 			: m_it( index.outer[ outer ] ), m_end( index.outer[ outer + 1] ),

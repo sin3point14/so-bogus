@@ -16,6 +16,7 @@
 #include "../Utils/LinearSolverBase.hpp"
 #include "../Utils/Signal.hpp"
 #include "../Utils/NumTraits.hpp"
+#include "../Utils/CppTools.hpp"
 
 #define BOGUS_KRYLOV_METHODS \
 	BOGUS_PROCESS_KRYLOV_METHOD(CG      )\
@@ -45,10 +46,11 @@ struct KrylovSolverBase
 	typedef Method< Matrix, Preconditioner, Traits > Derived ;
 	typedef LinearSolverBase< Derived > Base ;
 	typedef typename Traits::Scalar Scalar ;
+	typedef Signal< unsigned, Scalar > SignalType ;
 
 	const Matrix *m_A ;
 	const Preconditioner *m_P;
-	const Signal< unsigned, Scalar >  *m_callback ;
+	const SignalType *m_callback ;
 
 	Scalar m_tol ;
 	unsigned m_maxIters;
@@ -56,7 +58,7 @@ struct KrylovSolverBase
 	KrylovSolverBase( const Matrix &A,
 					  unsigned maxIters, Scalar tol,
 					  const Preconditioner *P,
-					  const Signal< unsigned, Scalar > *callback
+					  const SignalType *callback
 			)
 		: m_A( &A ), m_P( P ), m_callback( callback ),
 		  m_tol( tol ), m_maxIters( maxIters ),
@@ -64,7 +66,9 @@ struct KrylovSolverBase
 	{}
 
 	KrylovSolverBase( )
-		: m_A( 0 ), m_P( 0 ), m_callback( 0 ),
+		: m_A( BOGUS_NULL_PTR(const Matrix) ),
+		  m_P( BOGUS_NULL_PTR(const Preconditioner) ),
+		  m_callback( BOGUS_NULL_PTR(const SignalType) ),
 		  m_tol( 0 ), m_maxIters( 0 ), m_parallelizeRhs( false )
 	{}
 
@@ -128,8 +132,8 @@ namespace solvers {
 	MethodName( const Matrix &A, 						\
 	unsigned maxIters,									\
 	Scalar tol = NumTraits< Scalar >::epsilon(),		\
-	const Preconditioner *P = 0, 						\
-	const Signal< unsigned, Scalar > *callback = 0) 	\
+	const Preconditioner *P = BOGUS_NULL_PTR(const Preconditioner), \
+	const typename Base::SignalType *callback = BOGUS_NULL_PTR(const typename Base::SignalType ) )\
 	: Base( A, maxIters, tol, P, callback ) 			\
 		{}												\
 														\
@@ -244,8 +248,8 @@ struct GMRES : public KrylovSolverBase< GMRES, Matrix, Preconditioner, Traits>
 	GMRES( const Matrix &A,
 		   unsigned maxIters,
 		   Scalar tol = NumTraits< Scalar >::epsilon(),
-		   const Preconditioner *P = 0,
-		   const Signal< unsigned, Scalar > *callback = 0,
+		   const Preconditioner *P = BOGUS_NULL_PTR( const Preconditioner),
+		   const typename Base::SignalType *callback = BOGUS_NULL_PTR(const typename Base::SignalType),
 		   unsigned restart = 0 )
 		: Base( A, maxIters, tol, P, callback ),
 		  m_restart( restart )

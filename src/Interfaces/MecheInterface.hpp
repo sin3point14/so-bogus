@@ -22,6 +22,7 @@
 
 #include "../Core/Utils/Signal.hpp"
 #include "../Core/Utils/Timer.hpp"
+#include "../Core/Utils/CppTools.hpp"
 
 #ifndef BOGUS_MECHE_INTERFACE_HPP
 #define BOGUS_MECHE_INTERFACE_HPP
@@ -88,7 +89,7 @@ public:
 
 	//! Dumps the current primal() to \p fileName
 	/*! \param r0 The initial guess that shouls be saved with the problem, or NULL */
-	bool dumpToFile( const char* fileName, const double *r0 = 0 ) const ;
+	bool dumpToFile( const char* fileName, const double *r0 = BOGUS_NULL_PTR(const double) ) const ;
 	//! Loads the primal from a previously saved problem file
 	/*! \param r0 Will be set to ploint to a newly allocated array containing the initial
 		guess, if such one was saved with the problem. Will have to be manually freed

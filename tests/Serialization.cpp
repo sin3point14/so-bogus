@@ -12,26 +12,28 @@
 #include <boost/archive/text_iarchive.hpp>
 
 #include <fstream>
+#include <sstream>
 #include <cstdlib>
 #include <cstdio>
 
 #include <gtest/gtest.h>
 
-const char* temp_file_name()
+static std::string temp_file_name()
 {
 	static const char* s_tmpdir  = std::getenv("TMP")     ;
 	if( 0 == s_tmpdir ) s_tmpdir = std::getenv("TEMP")    ;
 	if( 0 == s_tmpdir ) s_tmpdir = std::getenv("TMPDIR")  ;
 	if( 0 == s_tmpdir ) s_tmpdir = "/tmp" ;
 
-	static std::string s_filename = std::string( s_tmpdir ) +
-		#ifdef WIN32
-			'\\'
-		#else
-			'/'
-		#endif
-			+ "bogus_serialization_test" ;
-	return s_filename.c_str() ;
+	std::ostringstream filename ;
+	filename << s_tmpdir ;
+	#ifdef WIN32
+		filename << '\\' ;
+	#else
+		filename << '/' ;
+	#endif
+	filename << "bogus_serialization_test" ;
+	return filename.str() ;
 }
 
 TEST( Serialization, Eigen )
@@ -47,7 +49,7 @@ TEST( Serialization, Eigen )
 	rv << 1, 2, 3 ;
 
 	{
-		std::ofstream ofs( temp_file_name() );
+		std::ofstream ofs( temp_file_name().c_str() );
 		boost::archive::text_oarchive oa(ofs);
 		oa << m << m33 << v << rv;
 	}
@@ -57,7 +59,7 @@ TEST( Serialization, Eigen )
 	Eigen::VectorXd v_;
 	Eigen::RowVectorXd rv_;
 	{
-		std::ifstream ifs( temp_file_name() );
+		std::ifstream ifs( temp_file_name().c_str() );
 		boost::archive::text_iarchive ia(ifs);
 		ia >> m_ >> m33_ >> v_ >> rv_ ;
 	}
@@ -80,14 +82,14 @@ TEST( Serialization, EigenSparse )
 	sm.makeCompressed() ;
 
 	{
-		std::ofstream ofs(temp_file_name());
+		std::ofstream ofs(temp_file_name().c_str());
 		boost::archive::text_oarchive oa(ofs);
 		oa << sm;
 	}
 
 	Eigen::SparseMatrix< double > sm_;
 	{
-		std::ifstream ifs(temp_file_name());
+		std::ifstream ifs(temp_file_name().c_str());
 		boost::archive::text_iarchive ia(ifs);
 		ia >> sm_ ;
 	}
@@ -113,7 +115,7 @@ TEST( Serialization, SparseBlockMatrix )
 	bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::UNCOMPRESSED > sbmc( sbm ) ;
 
 	{
-		std::ofstream ofs(temp_file_name());
+		std::ofstream ofs(temp_file_name().c_str());
 		boost::archive::text_oarchive oa(ofs);
 		oa << sbm << sbmc ;
 	}
@@ -122,7 +124,7 @@ TEST( Serialization, SparseBlockMatrix )
 	bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::UNCOMPRESSED > sbmc_ ;
 
 	{
-		std::ifstream ifs(temp_file_name());
+		std::ifstream ifs(temp_file_name().c_str());
 		boost::archive::text_iarchive ia(ifs);
 		ia >> sbm_ >> sbmc_ ;
 	}
@@ -133,7 +135,7 @@ TEST( Serialization, SparseBlockMatrix )
 
 TEST( Serialization, CleanUp )
 {
-	std::remove( temp_file_name() ) ;
+	std::remove( temp_file_name().c_str() ) ;
 }
 
 #endif // BOGUS_BOOST_SERIALIZATION

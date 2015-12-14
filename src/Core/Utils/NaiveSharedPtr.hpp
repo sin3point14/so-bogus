@@ -8,6 +8,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "CppTools.hpp"
+
+#if BOGUS_HAS_CPP11 && !defined(BOGUS_SHARED_PTR_NS)
+#define BOGUS_SHARED_PTR_NS std
+#endif
+
 // Standard shared_ptr -- BOGUS_SHARED_PTR_NS should be set to std, std::tr1 or boost
 #ifdef BOGUS_SHARED_PTR_NS
 #ifndef BOGUS_SHARED_PTR
@@ -47,7 +53,7 @@ private:
 
 public:
 
-	explicit NaiveSharedPtr( T * instance = 0 )
+	explicit NaiveSharedPtr( T * instance = BOGUS_NULL_PTR(T) )
 	{
 		acquire( instance ) ;
 	}
@@ -72,7 +78,7 @@ public:
 		release() ;
 	}
 
-	void reset( T * instance = 0 )
+	void reset( T * instance = BOGUS_NULL_PTR(T) )
 	{
 		release() ;
 		acquire( instance ) ;
@@ -80,7 +86,7 @@ public:
 
 	void release()
 	{
-		T* instance = 0 ;
+		T* instance = BOGUS_NULL_PTR(T) ;
 		std::swap( m_instance, instance ) ;
 
 
@@ -111,7 +117,7 @@ public:
 	}
 
 	operator bool() const {
-		return 0 != m_instance ;
+		return BOGUS_NULL_PTR(T) != m_instance ;
 	}
 
 private:
@@ -125,7 +131,7 @@ private:
 			// Here m_refCount may already been deleted if another thread is simultaneously releasing
 			// this object. We hope that the memory location is still accessible and check for destruction
 			// But as I said previously, this class is *NOT* thread-safe
-			instance = 0 ;
+			instance = BOGUS_NULL_PTR(T) ;
 		}
 
 		return instance ;

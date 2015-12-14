@@ -25,7 +25,7 @@ int main( int argc, const char* argv[] )
 
 	bogus::MecheFrictionProblem mfp ;
 
-	double * r = NULL ;
+	double * r = BOGUS_NULL_PTR(double) ;
 	if( mfp.fromFile( argv[1], r ) )
 	{
 

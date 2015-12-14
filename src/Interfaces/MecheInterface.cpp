@@ -44,9 +44,11 @@ namespace bogus
 {
 
 MecheFrictionProblem::MecheFrictionProblem()
-	: m_primal( 0 ), m_dual( 0 ),
+	: m_primal( BOGUS_NULL_PTR(PrimalFrictionProblem<3u>) ),
+	  m_dual( BOGUS_NULL_PTR(DualFrictionProblem<3u>) ),
 		m_lastSolveTime( 0 ),
-		m_f( 0 ), m_w( 0 ), m_mu( 0 ),
+		m_f( BOGUS_NULL_PTR(double) ), m_w( BOGUS_NULL_PTR(double) ),
+		m_mu( BOGUS_NULL_PTR(double) ),
 		m_out( &std::cout )
 {
 }
@@ -60,15 +62,15 @@ MecheFrictionProblem::~MecheFrictionProblem()
 void MecheFrictionProblem::destroy()
 {
 	delete[] m_f ;
-	m_f = 0 ;
+	m_f = BOGUS_NULL_PTR(double) ;
 	delete[] m_w ;
-	m_w = 0 ;
+	m_w = BOGUS_NULL_PTR(double) ;
 	delete[] m_mu ;
-	m_mu = 0 ;
+	m_mu = BOGUS_NULL_PTR(double) ;
 	delete m_primal ;
-	m_primal = 0 ;
+	m_primal = BOGUS_NULL_PTR(PrimalFrictionProblem<3u>) ;
 	delete m_dual ;
-	m_dual = 0 ;
+	m_dual =  BOGUS_NULL_PTR(DualFrictionProblem<3u>) ;
 }
 
 void MecheFrictionProblem::ackCurrentResidual( unsigned GSIter, double err )

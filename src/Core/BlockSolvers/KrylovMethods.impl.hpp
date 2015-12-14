@@ -232,7 +232,8 @@ CGS< Mat, Prec, Traits >::vectorSolve( const RhsT &b, ResT x ) const
 	const Vector r0h = r ;
 
 	Vector u = r, p = r, q ;
-	Scalar rho1, rho0, alpha, beta ;
+	Scalar rho1, rho0 = 1, 
+	       alpha, beta ;
 
 	Vector y  ( m_A->rows() ),
 			nu ( m_A->rows() ) ;
