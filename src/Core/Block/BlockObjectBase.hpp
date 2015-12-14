@@ -90,9 +90,9 @@ struct BlockObjectBase
 
 		has_row_major_blocks = BlockTraits< BlockType >::is_row_major,
 		has_square_or_dynamic_blocks = ColsPerBlock == RowsPerBlock,
-		has_fixed_size_blocks =
-				((int) ColsPerBlock != internal::DYNAMIC ) &&
-				((int) RowsPerBlock != internal::DYNAMIC )
+		has_fixed_rows_blocks = ((int) RowsPerBlock != internal::DYNAMIC ),
+		has_fixed_cols_blocks = ((int) ColsPerBlock != internal::DYNAMIC ),
+		has_fixed_size_blocks = has_fixed_cols_blocks && has_fixed_rows_blocks
 	} ;
 	// To use as block type
 	enum {

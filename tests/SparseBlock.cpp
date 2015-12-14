@@ -188,7 +188,7 @@ TEST( SparseBlock, ExprVector )
 
 	sbm.transpose().multiply< false >( res, rhs ) ;
 	EXPECT_EQ( expected_2, rhs ) ;
-	
+
 	bogus::SparseBlockMatrix< BlockT > sbm3 = sbm + sbm_2 ;
 
 	Eigen::VectorXd mmv = sbm.transpose() * ( sbm3 * rhs ) ;
@@ -196,9 +196,9 @@ TEST( SparseBlock, ExprVector )
 
 	(sbm.transpose() * sbm3).multiply< false >( rhs, res2 ) ;
 	EXPECT_EQ( res2, mmv ) ;
-	
+
 	mmv += 6*sbm3.transpose() * ( sbm * rhs ) ;
-	
+
 	( (3*sbm).transpose() * (2*sbm3)).multiply< true >( rhs, res2, 1, 1 ) ;
 	EXPECT_EQ( res2, mmv ) ;
 
@@ -792,7 +792,7 @@ TEST( SparseBlock, Add )
 
 		typedef bogus::Product< SBM, bogus::Transpose<SBM> > Prod ;
 		bogus::NarySum< Prod > sum( sbm[0].rows(), sbm[0].rows() )  ;
-		
+
 		sum.multiply< false >( rhs1, res1, 1, 0) ;
 		ASSERT_EQ( 0, res1.norm() ) ;
 
@@ -804,7 +804,7 @@ TEST( SparseBlock, Add )
 		ASSERT_TRUE( res1.isApprox( sum * rhs1 ) ) ;
 		ASSERT_TRUE( res1.isApprox( sum.transpose() * rhs1 ) ) ;
 
-		
+
 		bogus::NarySum< Prod > sum2 ( sbm[0] * sbm[0].transpose() )  ;
 		sum2 += sum ;
 		sum2 -= sbm[0] * sbm[0].transpose() ;
@@ -865,8 +865,8 @@ TEST( SparseBlock, YoDawg )
 	EXPECT_EQ( sbm*res2, sbm3 * rhs ) ;
 
 	typedef bogus::SparseBlockMatrix< BlockType, bogus::SYMMETRIC >	SymSBM ;
-	ASSERT_TRUE( (bogus::Addition< SymSBM, bogus::Transpose< SymSBM > >::is_self_transpose) ) ; 
-	ASSERT_FALSE( (bogus::Product< SymSBM, bogus::Transpose< SymSBM > >::is_self_transpose) ) ; 
+	ASSERT_TRUE( (bogus::Addition< SymSBM, bogus::Transpose< SymSBM > >::is_self_transpose) ) ;
+	ASSERT_FALSE( (bogus::Product< SymSBM, bogus::Transpose< SymSBM > >::is_self_transpose) ) ;
 
 }
 
@@ -915,9 +915,13 @@ TEST( SparseBlock, Permutation)
 
 TEST(SparseBlock, FixedSize)
 {
-	bogus::SparseBlockMatrix< Eigen::Matrix< double, 2, 4 > > sbm ;
-	sbm.setRows(1) ;
-	sbm.setCols(1) ;
+	bogus::SparseBlockMatrix< Eigen::Matrix< double, 2, 4 > > sbm(1,1) ;
+
+	ASSERT_EQ( 1, sbm.rowsOfBlocks() ) ;
+	ASSERT_EQ( 1, sbm.colsOfBlocks() ) ;
+	ASSERT_EQ( 2, sbm.rows() ) ;
+	ASSERT_EQ( 4, sbm.cols() ) ;
+
 	sbm.insertBack(0,0) << 1,2,3,4,5,6,7,8 ;
 	sbm.finalize() ;
 

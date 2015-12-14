@@ -60,6 +60,17 @@ public:
 	{
 	}
 
+	template < typename Index >
+	SparseBlockMatrix( Index rowsOfBlocks, Index colsOfBlocks  )
+		: Base()
+	{
+		BOGUS_STATIC_ASSERT( Base::has_fixed_size_blocks,
+							 BLOCKS_MUST_HAVE_FIXED_DIMENSIONS
+							 ) ;
+		Base::setRows( rowsOfBlocks ) ;
+		Base::setCols( colsOfBlocks ) ;
+	}
+
 	template < typename RhsT >
 	SparseBlockMatrix( const BlockObjectBase< RhsT >& rhs ) : Base()
 	{

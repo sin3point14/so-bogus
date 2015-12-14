@@ -113,6 +113,7 @@ public:
 	//! Same, deducing the (constant) number of rows per block from the BlockType
 	void setRows( const Index nBlocks )
 	{
+		assert( Base::has_fixed_rows_blocks ) ;
 		setRows( nBlocks, BlockType::RowsAtCompileTime ) ;
 	}
 
@@ -134,6 +135,7 @@ public:
 	//! Same, deducing the (constant) number of rows per block from the BlockType
 	void setCols( const Index nBlocks )
 	{
+		assert( Base::has_fixed_cols_blocks ) ;
 		setCols( nBlocks, BlockType::ColsAtCompileTime ) ;
 	}
 
