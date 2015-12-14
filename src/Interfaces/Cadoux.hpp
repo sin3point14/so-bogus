@@ -37,6 +37,7 @@ namespace bogus {
 	  \param r  Both the initial guess and the result
 	  \param cadouxIterations Number of fixed-point iterations
 	  \param callback 0, or a pointer to a user-defined function that takes ( unsigned iteration, double residual ) as arguments
+	  \param tolTighten How much should the tolerance of the inner solver be tightened
 	  \returns the error as returned by the minimizer eval() function
 	  */
 template< unsigned Dimension, typename WType, template <typename> class Method >
@@ -45,8 +46,12 @@ static typename WType::Scalar solveCadoux(
 		const typename WType::Scalar* b, const typename WType::Scalar* mu,
 		ConstrainedSolverBase< Method, WType > &minimizer,
 		typename WType::Scalar *r, const unsigned cadouxIterations,
-		const Signal<unsigned, typename WType::Scalar> *callback )
+		const Signal<unsigned, typename WType::Scalar> *callback = 0,
+		const typename WType::Scalar tolTighten = 1.e-1
+		)
 {
+	//We might experience slow convergence is inner solve not precise enough
+
 	typedef typename WType::Scalar Scalar ;
 	const std::ptrdiff_t n = W.rowsOfBlocks() ;
 
@@ -61,16 +66,15 @@ static typename WType::Scalar solveCadoux(
 
 	Scalar res = -1 ;
 	const Scalar tol = minimizer.tol() ;
-	minimizer.setTol( 1.e-1 * tol ) ;	//We might experience slow convergence is GS not precise enough
+
+	// Evaluate initial error
+	s = W * r_map + b_map ;
+	res = minimizer.eval( coulombLaw, s, r_map ) ;
+	if( callback ) callback->trigger( 0, res ) ;
 
 	for( unsigned cdxIter = 0 ; cdxIter < cadouxIterations ; ++cdxIter )
 	{
-		s = W * r_map + b_map ;
-
-		res = minimizer.eval( coulombLaw, s, r_map ) ;
-
-		if( callback ) callback->trigger( cdxIter, res ) ;
-		if( cdxIter > 0 && res < tol ) break ;
+		minimizer.setTol( tolTighten * std::max( tol, std::min( res, 1. ) ) ) ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
@@ -82,8 +86,14 @@ static typename WType::Scalar solveCadoux(
 		}
 
 		s += b_map ;
-
 		minimizer.solve( socLaw, s, r_map ) ;
+
+		// Evaluate current error
+		s = W * r_map + b_map ;
+		res = minimizer.eval( coulombLaw, s, r_map ) ;
+
+		if( callback ) callback->trigger( cdxIter+1, res ) ;
+		if( res < tol ) break ;
 
 	}
 
@@ -99,7 +109,9 @@ static double solveCadouxVel(
 		const WType& W,
 		const typename WType::Scalar* b, const typename WType::Scalar* mu,
 		ConstrainedSolverBase< Method, WType > &minimizer,
-		double *u, const unsigned cadouxIterations, const Signal<unsigned, double> *callback )
+		double *u, const unsigned cadouxIterations, const Signal<unsigned, double> *callback = 0,
+		const typename WType::Scalar tolTighten = 1.e-1
+		)
 {
 	// Wu + b = r
 	// u* = u + s n
@@ -118,7 +130,6 @@ static double solveCadouxVel(
 
 	double res = -1 ;
 	const double tol = minimizer.tol() ;
-	minimizer.setTol( 1.e-1 * tol ) ;	//We might experience slow convergence is GS not precise enough
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
@@ -130,14 +141,14 @@ static double solveCadouxVel(
 	}
 	ustar = u_map + s ;
 
+	//Evaluate intial error
+	r = W * u_map + b_map ;
+	res = minimizer.eval( socLaw, r, ustar ) ;
+	if( callback ) callback->trigger( 0, res ) ;
+
 	for( unsigned cdxIter = 0 ; cdxIter < cadouxIterations ; ++cdxIter )
 	{
-		r = W * u_map + b_map ;
-
-		res = minimizer.eval( socLaw, r, ustar ) ;
-
-		if( callback ) callback->trigger( cdxIter, res ) ;
-		if( cdxIter > 0 && res < tol ) break ;
+		minimizer.setTol( tolTighten * std::max( tol, std::min( res, 1. ) ) ) ;
 
 		Wsb = b_map - W * s  ;
 
@@ -155,6 +166,14 @@ static double solveCadouxVel(
 		}
 
 		ustar = u_map + s ;
+
+		// Evaluate current error
+		r = W * u_map + b_map ;
+		res = minimizer.eval( socLaw, r, ustar ) ;
+
+		if( callback ) callback->trigger( cdxIter+1, res ) ;
+		if( cdxIter > 0 && res < tol ) break ;
+
 	}
 
 	minimizer.setTol( tol ) ;
