@@ -15,17 +15,16 @@
 
 #include <gtest/gtest.h>
 
-static void ackCurrentGSResidual( unsigned GSIter, double err )
-{
-	EXPECT_TRUE( 0 == ( GSIter % 25 ) ) ;
-	std::cout << "GS: " << GSIter << " ==> " << err << std::endl ;
-}
+struct ResidualInfo {
 
+	static const char* s_meth ;
 
-static void ackCurrentPGResidual( unsigned GSIter, double err )
-{
-	std::cout << "PG: " << GSIter << " ==> " << err << std::endl ;
-}
+	static void ack( unsigned iter, double err ) {
+		std::cout << s_meth << ": " << iter << " ==> " << err << std::endl ;
+	}
+};
+const char* ResidualInfo::s_meth = "" ;
+
 TEST( GaussSeidel, Small )
 {
 
@@ -94,27 +93,31 @@ TEST( GaussSeidel, Small )
 	sol << 0.0152695, 0.0073010, 0.0022325, 0.0, 0.0, 0.0 ;
 
 	Eigen::VectorXd x( W.rows() ) ;
-	double res = -1 ; 
+	double res = -1 ;
 
 	bogus::GaussSeidel< WType > gs( W ) ;
-	gs.callback().connect( &ackCurrentGSResidual );
+	gs.callback().connect( &ResidualInfo::ack );
 
 	x.setOnes() ;
+	ResidualInfo::s_meth = "GS_Hyb" ;
 	res = gs.solve( bogus::SOCLaw< 3u, double, true, bogus::local_soc_solver::Hybrid >( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 
 	x.setOnes() ;
+	ResidualInfo::s_meth = "GS_PureN" ;
 	res = gs.solve( bogus::SOCLaw< 3u, double, true, bogus::local_soc_solver::PureNewton >( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 
 	x.setOnes() ;
+	ResidualInfo::s_meth = "GS_PureE" ;
 	res = gs.solve( bogus::SOCLaw< 3u, double, true, bogus::local_soc_solver::PureEnumerative >( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 
 	x.setOnes() ;
+	ResidualInfo::s_meth = "GS_RevHyb" ;
 	res = gs.solve( bogus::SOCLaw< 3u, double, true, bogus::local_soc_solver::RevHybrid >( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
@@ -126,42 +129,49 @@ TEST( GaussSeidel, Small )
 	ASSERT_LT( res, 1.e-8 ) ;
 
 	bogus::ProjectedGradient< WType > pg( W ) ;
-	pg.callback().connect( &ackCurrentPGResidual );
+	pg.callback().connect( &ResidualInfo::ack );
 	pg.setTol( 1.e-8 );
 
 	x.setOnes() ;
+	ResidualInfo::s_meth = "PG_DEF" ;
 	res = pg.solve( bogus::SOC3D( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
-	
+
 	x.setOnes() ;
+	ResidualInfo::s_meth = "PG_DESC" ;
 	res = pg.solve< bogus::projected_gradient::Descent >( bogus::SOC3D( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 
 	x.setOnes() ;
+	ResidualInfo::s_meth = "PG_STD" ;
 	res = pg.solve< bogus::projected_gradient::Standard >( bogus::SOC3D( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 
 	x.setOnes() ;
+	ResidualInfo::s_meth = "PG_CONJ" ;
 	res = pg.solve< bogus::projected_gradient::Conjugated >( bogus::SOC3D( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 
 	x.setOnes() ;
+	ResidualInfo::s_meth = "PG_APGD" ;
 	res = pg.solve< bogus::projected_gradient::APGD >( bogus::SOC3D( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 
 	x.setOnes() ;
+	ResidualInfo::s_meth = "PG_SPG" ;
 	res = pg.solve< bogus::projected_gradient::SPG >( bogus::SOC3D( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 
 	// Without assembling W
 	typedef bogus::Product< bogus::Product< HType, MType >, bogus::Transpose< HType > > Prod ;
 	Prod prod = H * InvMassMat * H.transpose() ;
-	
+
 	x.setOnes() ;
 	bogus::ProjectedGradient< Prod > pgProd( prod ) ;
-	pgProd.callback().connect( &ackCurrentPGResidual );
+	ResidualInfo::s_meth = "PG_PROD" ;
+	pgProd.callback().connect( &ResidualInfo::ack );
 	pgProd.setTol( 1.e-8 );
-	
+
 	res = pgProd.solve( bogus::SOC3D( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 
@@ -211,6 +221,8 @@ TEST( GaussSeidel, LCP )
 	Eigen::VectorXd k ( H.cols() ) ;
 	k << -1, -2, 3, 4, -5, 3, -6, 7, -8 ;
 
+	ResidualInfo::s_meth = "LCP_GS" ;
+
 	Eigen::VectorXd b = H * k ;
 
 	{
@@ -220,7 +232,7 @@ TEST( GaussSeidel, LCP )
 		WType W = H * H.transpose() ;
 
 		bogus::GaussSeidel< WType > gs( W ) ;
-		gs.callback().connect( &ackCurrentGSResidual );
+		gs.callback().connect( &ResidualInfo::ack );
 
 		Eigen::VectorXd x ;
 		x.setZero( b.rows() ) ;
@@ -243,7 +255,7 @@ TEST( GaussSeidel, LCP )
 		WType W = H * H.transpose() ;
 
 		bogus::GaussSeidel< WType > gs( W ) ;
-		gs.callback().connect( &ackCurrentGSResidual );
+		gs.callback().connect( &ResidualInfo::ack );
 
 		Eigen::VectorXd x ;
 		x.setZero( b.rows() ) ;

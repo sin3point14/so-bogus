@@ -19,18 +19,80 @@ namespace bogus
 {
 
 
-namespace pg_impl 
+namespace pg_impl
 {
+
+template< typename Scalar, typename Mat, typename Vec1, typename Vec2 >
+void guess_alpha( const Mat&M , const Vec1& x, Scalar& alpha, Vec2& tmp )
+{
+	// Eval optimal alpha (step size )
+	tmp.setOnes() ;
+	const Scalar nMx = ( M*(x-tmp) ).squaredNorm() ;
+	if( nMx > 1.e-16 ) //Don't try too big alphas
+		alpha = std::min( 1., (x-tmp).squaredNorm() / nMx ) ;
+}
+
+template< typename Scalar >
+Scalar nesterov_inertia( Scalar& theta, const Scalar q = 0 )
+{
+	const Scalar theta_prev = theta ;
+	const Scalar theta_p2 = theta_prev * theta_prev ;
+	const Scalar bb = theta_p2 - q ;
+	const Scalar delta = std::sqrt( bb*bb + 4*theta_p2 ) ;
+	theta = .5 * ( delta - bb )  ;
+
+	return ( theta_prev - theta_p2 ) / (theta_p2 + theta ) ;
+}
+
+template< typename BlockMatrixType, typename NSLaw, typename VecX, typename VecY, typename VecRes, typename Scalar >
+bool test_residual( const ProjectedGradient< BlockMatrixType >& pg, const NSLaw &law, const unsigned pgIter,
+					const VecX &x, const VecY &y, VecRes& x_best, Scalar &min_res )
+{
+	const Scalar res = pg.eval( law, y, x ) ;
+
+	pg.callback().trigger( pgIter, res );
+	if( 0 == pgIter || res < min_res ) {
+		x_best = x ;
+		min_res = res ;
+	}
+	return ( res < pg.tol() ) ;
+}
+
+template< typename BlockMatrixType, typename NSLaw, typename VecX, typename VecB,
+		  typename VecBuf, typename Scalar >
+void armijo_ls( const ProjectedGradient< BlockMatrixType >& pg, const NSLaw& law,
+				const VecX &x, const VecB& b, const VecBuf &dir, VecBuf &grad, const Scalar J,
+				Scalar &alpha, VecBuf &xs, Scalar &Js, VecBuf &Mx )
+{
+	Js = J ;
+	for( unsigned lsIter = 0 ;
+		 lsIter < pg.lineSearchIterations() ;
+		 ++ lsIter, alpha *= pg.lineSearchPessimisticFactor() )
+	{
+		xs = x + alpha * dir ;
+
+		pg.projectOnConstraints( law, xs ) ;
+
+		Mx = pg.matrix() * xs ;
+		Js = xs.dot( .5 * Mx + b ) ;
+
+		const Scalar decr = grad.dot( xs - x ) ;
+
+		if( Js < J + pg.lineSearchArmijoCoefficient()*decr )
+			break ;
+	}
+}
 
 template<projected_gradient::Variant variant>
 struct PgMethod {
+
 
 	// variant = Descent, APGD
 
 	template < typename BlockMatrixType, typename NSLaw, typename RhsT, typename ResT >
 	static typename ProjectedGradient< BlockMatrixType >::Scalar
-	solve( const ProjectedGradient< BlockMatrixType >& pg, 
-			const NSLaw &law, const RhsT &b, ResT &x ) 
+	solve( const ProjectedGradient< BlockMatrixType >& pg,
+			const NSLaw &law, const RhsT &b, ResT &x )
 	{
 		typedef ProjectedGradient< BlockMatrixType > PgType ;
 		typedef typename PgType::Scalar Scalar ;
@@ -41,28 +103,23 @@ struct PgMethod {
 			prev_proj,
 			x_best
 			;
-		
+
 		pg.projectOnConstraints( law, x ) ;
 
 		// Unconstrained objective function
 		Mx = pg.matrix()*x ;
 		Scalar J = x.dot( .5 * Mx + b ) ;
 
-		//APGD
-		Scalar theta_prev = 1. ;
+		//Nesterov inertia
+		Scalar theta_prev = 1., q = 0 ;
 
 		prev_proj = x ;
 
-		// Eval optimal alpha (step size )
 		Scalar alpha = 1. ;
-		xs.setOnes() ;
-		const Scalar nMx = ( pg.matrix()*(x-xs) ).squaredNorm() ;
-		if( nMx > 1.e-16 ) //Don't try too big alphas
-			alpha = std::min( 1., (x-xs).squaredNorm() / nMx ) ;
-		
+		guess_alpha( pg.matrix(), x, alpha, xs) ;
 
 		// Best iterate storage
-		Scalar res, min_res = -1 ;
+		Scalar min_res = -1 ;
 
 		for( unsigned pgIter = 0 ; pgIter < pg.maxIters() ; ++pgIter )
 			{
@@ -70,15 +127,8 @@ struct PgMethod {
 			// The residual should be evaluated in prev_proj instead of x
 			// However this would been one more matrix product per iterations
 			y = Mx + b ;
-			res = pg.eval( law, y, x ) ;
-
-			pg.callback().trigger( pgIter, res );
-			if( 0 == pgIter || res < min_res ) {
-				x_best = x ;
-				min_res = res ;
-			}
-			if( res < pg.tol() ) break ;
-
+			if( test_residual(pg, law, pgIter, x, y, x_best, min_res) )
+				break ;
 
 			Scalar Js = J ;
 			alpha *= pg.lineSearchOptimisticFactor() ;
@@ -106,14 +156,8 @@ struct PgMethod {
 
 			if( variant == projected_gradient::APGD && decr < 0 )
 			{
-				const Scalar theta_p2 = theta_prev * theta_prev ;
-				const Scalar delta = std::sqrt( theta_p2 + 4 ) ;
-				Scalar theta = .5 * ( theta_prev * delta - theta_p2 ) ;
-
-				const Scalar beta = ( theta_prev - theta_p2 ) / (theta_p2 + theta ) ;
+				const Scalar beta = nesterov_inertia( theta_prev ) ;
 				x = xs + beta * (xs - prev_proj) ;
-
-				theta_prev = theta ;
 
 				Mx = pg.matrix() * x ;
 				J = x.dot( .5 * Mx + b ) ;
@@ -142,8 +186,8 @@ struct PgMethod< projected_gradient::Standard > {
 
 	template < typename BlockMatrixType, typename NSLaw, typename RhsT, typename ResT >
 	static typename ProjectedGradient< BlockMatrixType >::Scalar
-	solve( const ProjectedGradient< BlockMatrixType >& pg, 
-			const NSLaw &law, const RhsT &b, ResT &x ) 
+	solve( const ProjectedGradient< BlockMatrixType >& pg,
+			const NSLaw &law, const RhsT &b, ResT &x )
 	{
 		typedef ProjectedGradient< BlockMatrixType > PgType ;
 		typedef typename PgType::Scalar Scalar ;
@@ -154,7 +198,7 @@ struct PgMethod< projected_gradient::Standard > {
 			proj_grad( b.rows() ),
 			x_best
 			;
-		
+
 		pg.projectOnConstraints( law, x ) ;
 
 		// Unconstrained objective function
@@ -162,47 +206,30 @@ struct PgMethod< projected_gradient::Standard > {
 		Scalar J = x.dot( .5 * Mx + b ) ;
 
 		Scalar alpha = 1 ;
-		
+
 		// Best iterate storage
-		Scalar res, min_res = -1 ;
+		Scalar min_res = -1 ;
 
 		for( unsigned pgIter = 0 ; pgIter < pg.maxIters() ; ++pgIter )
 		{
 			y = Mx + b ;
-			res = pg.eval( law, y, x ) ;
+			if( test_residual(pg, law, pgIter, x, y, x_best, min_res) )
+				break ;
 
-			pg.callback().trigger( pgIter, res );
-			if( 0 == pgIter || res < min_res ) {
-				x_best = x ;
-				min_res = res ;
-			}
-			if( res < pg.tol() ) break ;
-			
-			xs = x - y ; 
+			xs = x - y ;
 			pg.projectOnConstraints( law, xs ) ;
 
+			// proj_grad ~ projection of gradient on tangent cone
 			proj_grad = (x - xs) ;
 			const Scalar beta = - y.dot(proj_grad)
 					/ ( proj_grad.dot( pg.matrix()*proj_grad ) );
 
+			proj_grad *= beta ;
+
 			// Line-search
-			Scalar Js = J ;
+			Scalar Js ;
 			alpha = std::min(1., alpha*pg.lineSearchOptimisticFactor() ) ;
-			for( unsigned lsIter = 0 ;
-				 lsIter < pg.lineSearchIterations() ;
-				 ++ lsIter, alpha *= pg.lineSearchPessimisticFactor() )
-			{
-				xs = x + alpha * beta * proj_grad ;
-				pg.projectOnConstraints( law, xs ) ;
-
-				Mx = pg.matrix() * xs ;
-				Js = xs.dot( .5 * Mx + b ) ;
-
-				const Scalar decr = y.dot(xs - x) ;
-
-				if( Js < J + pg.lineSearchArmijoCoefficient() *decr)
-					break ;
-			}
+			armijo_ls( pg, law, x, b, proj_grad, y, J, alpha, xs, Js, Mx ) ;
 
 			x = xs ;
 			J = Js ;
@@ -219,8 +246,8 @@ struct PgMethod< projected_gradient::Conjugated > {
 
 	template < typename BlockMatrixType, typename NSLaw, typename RhsT, typename ResT >
 	static typename ProjectedGradient< BlockMatrixType >::Scalar
-	solve( const ProjectedGradient< BlockMatrixType >& pg, 
-			const NSLaw &law, const RhsT &b, ResT &x ) 
+	solve( const ProjectedGradient< BlockMatrixType >& pg,
+			const NSLaw &law, const RhsT &b, ResT &x )
 	{
 		typedef ProjectedGradient< BlockMatrixType > PgType ;
 		typedef typename PgType::Scalar Scalar ;
@@ -228,39 +255,33 @@ struct PgMethod< projected_gradient::Conjugated > {
 			Mx ( b.rows() ),
 			y  ( b.rows() ), // = Mx +b  (gradient)
 			xs ( x.rows() ), // tentative new value for x
-			dir, prev_dir, prev_proj,
+			dir, prev_dir, prev_proj_grad,
 			x_best
 			;
-		
+
 		pg.projectOnConstraints( law, x ) ;
 
 		// Unconstrained objective function
 		Mx = pg.matrix()*x ;
 		Scalar J = x.dot( .5 * Mx + b ) ;
 
-		prev_proj = x ;
+		prev_proj_grad = x ;
 
 		Scalar prev_n2 = 0 ;
 		Scalar alpha = 1. ;
 
 		// Best iterate storage
-		Scalar res, min_res = -1 ;
+		Scalar min_res = -1 ;
 
 		for( unsigned pgIter = 0 ; pgIter < pg.maxIters() ; ++pgIter )
 		{
 			// y = grad J = Mx+b
 			y = Mx + b ;
-			res = pg.eval( law, y, x ) ;
-
-			pg.callback().trigger( pgIter, res );
-			if( 0 == pgIter || res < min_res ) {
-				x_best = x ;
-				min_res = res ;
-			}
-			if( res < pg.tol() ) break ;
+			if( test_residual(pg, law, pgIter, x, y, x_best, min_res) )
+				break ;
 
 			{
-
+				// xs ~ projection of gradient on tangent cone
 				xs = x - y ;
 				pg.projectOnConstraints( law, xs ) ;
 				xs = x - xs ;
@@ -270,12 +291,12 @@ struct PgMethod< projected_gradient::Conjugated > {
 				if( prev_n2 == 0. ) {
 					dir = -y ;
 				} else {
-					const Scalar den = prev_dir.dot( xs - prev_proj ) ;
+					const Scalar den = prev_dir.dot( xs - prev_proj_grad ) ;
 					const Scalar beta = ( den < 1.e-12 )
 							// Polak-Ribiere
-							? std::max( 0., (ng2 - xs.dot(prev_proj))) / prev_n2
+							? std::max( 0., (ng2 - xs.dot(prev_proj_grad))) / prev_n2
 							// Hestness-Stiefel
-							: std::max( 0., (ng2 - xs.dot(prev_proj))) / den  ;
+							: std::max( 0., (ng2 - xs.dot(prev_proj_grad))) / den  ;
 
 
 					dir = beta * prev_dir - y;
@@ -284,31 +305,14 @@ struct PgMethod< projected_gradient::Conjugated > {
 						dir = -y ;
 				}
 
-				prev_proj = xs ;
+				prev_proj_grad = xs ;
 				prev_n2 = ng2 ;
 
 			}
 
-			Scalar Js = J ;
-			alpha *= pg.lineSearchOptimisticFactor() ;
-
-			// Line-search
-			for( unsigned lsIter = 0 ;
-				 lsIter < pg.lineSearchIterations() ;
-				 ++ lsIter, alpha *= pg.lineSearchPessimisticFactor() )
-			{
-				xs = x + alpha * dir ;
-
-				pg.projectOnConstraints( law, xs ) ;
-
-				Mx = pg.matrix() * xs ;
-				Js = xs.dot( .5 * Mx + b ) ;
-
-				const Scalar decr = y.dot( xs - x ) ;
-
-				if( Js < J + pg.lineSearchArmijoCoefficient()*decr ) 
-					break ;
-			}
+			Scalar Js ;
+			alpha = alpha*pg.lineSearchOptimisticFactor() ;
+			armijo_ls( pg, law, x, b, dir, y, J, alpha, xs, Js, Mx ) ;
 
 
 			prev_dir = (xs - x) / alpha ;
@@ -330,8 +334,8 @@ struct PgMethod< projected_gradient::SPG > {
 
 	template < typename BlockMatrixType, typename NSLaw, typename RhsT, typename ResT >
 	static typename ProjectedGradient< BlockMatrixType >::Scalar
-	solve( const ProjectedGradient< BlockMatrixType >& pg, 
-			const NSLaw &law, const RhsT &b, ResT &x ) 
+	solve( const ProjectedGradient< BlockMatrixType >& pg,
+			const NSLaw &law, const RhsT &b, ResT &x )
 	{
 		typedef ProjectedGradient< BlockMatrixType > PgType ;
 		typedef typename PgType::Scalar Scalar ;
@@ -339,12 +343,12 @@ struct PgMethod< projected_gradient::SPG > {
 			Mx ( b.rows() ),
 			y  ( b.rows() ), // = Mx +b  (gradient)
 			xs ( x.rows() ), // tentative new value for x
-			z ( x.rows() ), 
-			s ( x.rows() ), 
+			z ( x.rows() ),
+			s ( x.rows() ),
 			prev_proj,
 			x_best
 			;
-		
+
 		pg.projectOnConstraints( law, x ) ;
 		prev_proj = x ;
 
@@ -352,46 +356,28 @@ struct PgMethod< projected_gradient::SPG > {
 
 		Scalar theta_prev = 1, q = 0 ;
 		Scalar a_min = 1.e-6, a_max = 1.e6 ;
-		
+
 		Scalar alpha = 1 ;
-		
-		// Eval optimal alpha
-		xs.setOnes() ;
-		const Scalar nMx = ( pg.matrix()*(x-xs) ).squaredNorm() ;
-		if( nMx > 1.e-16 ) //Don't try too big alphas
-			alpha = std::min( 1., (x-xs).squaredNorm() / nMx ) ;
-		
+		guess_alpha( pg.matrix(), x, alpha, xs) ;
+
 		// Best iterate storage
-		Scalar res, min_res = -1 ;
+		Scalar min_res = -1 ;
 
 		for( unsigned pgIter = 0 ; pgIter < pg.maxIters() ; ++pgIter )
 		{
 			y = Mx + b ;
-			res = pg.eval( law, y, x ) ;
+			if( test_residual(pg, law, pgIter, x, y, x_best, min_res) )
+				break ;
 
-			pg.callback().trigger( pgIter, res );
-			if( 0 == pgIter || res < min_res ) {
-				x_best = x ;
-				min_res = res ;
-			}
-			if( res < pg.tol() ) break ;
-			
-			xs = x - alpha * y ; 
+			xs = x - alpha * y ;
 			pg.projectOnConstraints( law, xs ) ;
 
 			if( (xs - prev_proj).dot( y ) < 0. )
 			{
-				const Scalar theta_p2 = theta_prev * theta_prev ;
-				const Scalar bb = theta_p2 - q ;
-				const Scalar delta = std::sqrt( bb*bb + 4*theta_p2 ) ;
-				Scalar theta = .5 * ( delta - bb )  ;
-
-				const Scalar beta = ( theta_prev - theta_p2 ) / (theta_p2 + theta ) ;
+				const Scalar beta = nesterov_inertia( theta_prev, q ) ;
 
 				s = ( xs + beta * (xs - prev_proj) ) - x ;
 				x += s ;
-
-				theta_prev = theta ;
 
 			} else {
 				s = xs - x ;
