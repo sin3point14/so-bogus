@@ -33,7 +33,7 @@ void guess_alpha( const Mat&M , const Vec1& x, Scalar& alpha, Vec2& tmp )
 }
 
 template< typename Scalar >
-Scalar nesterov_inertia( Scalar& theta, const Scalar q = 0 )
+Scalar nesterov_inertia( Scalar& theta, const Scalar q )
 {
 	const Scalar theta_prev = theta ;
 	const Scalar theta_p2 = theta_prev * theta_prev ;
@@ -156,7 +156,7 @@ struct PgMethod {
 
 			if( variant == projected_gradient::APGD && decr < 0 )
 			{
-				const Scalar beta = nesterov_inertia( theta_prev ) ;
+				const Scalar beta = nesterov_inertia( theta_prev, q ) ;
 				x = xs + beta * (xs - prev_proj) ;
 
 				Mx = pg.matrix() * x ;
