@@ -272,7 +272,7 @@ Addition< Scaling<AType>, Product< BType, Transpose<CType> > > expr = 3*A + B*C.
 
 In certain situations, one may not know at compile time the number of
 operations that define an expression. For such scenarios, bogus defines the \ref NarySum expression. For instance, if we want to use to use the expression
-\f$ H H^\T + \Sum_i{ a_i J_i M_I J_i^T } \f$ as a system matrix, we can do
+\f$ H H^T + \sum_i{ a_i J_i M_i J_i^T } \f$ as a system matrix, we can do
 \code
 // Common type for each of the sum's operands
 typedef bogus::Product< JType,
