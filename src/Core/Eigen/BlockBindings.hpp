@@ -74,10 +74,24 @@ inline const typename EigenDerived::Scalar* data_pointer ( const Eigen::MatrixBa
 }
 
 #ifndef BOGUS_BLOCK_WITHOUT_EIGEN_SPARSE
+
+#if !BOGUS_EIGEN_NEW_EXPRESSIONS
 template < typename BlockT >
 struct BlockTransposeTraits< Eigen::SparseMatrixBase < BlockT > > {
 	typedef const Eigen::Transpose< const BlockT > ReturnType ;
 } ;
+template<typename _Scalar, int _Flags, typename _Index>
+struct BlockTransposeTraits< Eigen::SparseMatrix < _Scalar, _Flags, _Index > >
+		: public BlockTransposeTraits< Eigen::SparseMatrixBase< Eigen::SparseMatrix < _Scalar, _Flags, _Index > > >
+{} ;
+template<typename _Scalar, int _Flags, typename _Index>
+struct BlockTransposeTraits< Eigen::SparseVector < _Scalar, _Flags, _Index > >
+		: public BlockTransposeTraits< Eigen::SparseMatrixBase< Eigen::SparseVector < _Scalar, _Flags, _Index > > >
+{} ;
+template<typename _Scalar, int _Flags, typename _Index>
+struct BlockTransposeTraits< Eigen::MappedSparseMatrix < _Scalar, _Flags, _Index > >
+		: public BlockTransposeTraits< Eigen::SparseMatrixBase< Eigen::MappedSparseMatrix < _Scalar, _Flags, _Index > > >
+{} ;
 
 template< typename EigenDerived >
 inline const Eigen::Transpose< const EigenDerived >
@@ -85,6 +99,7 @@ transpose_block( const Eigen::SparseMatrixBase< EigenDerived >& block )
 {
 	return block.transpose() ;
 }
+#endif
 
 template< typename EigenDerived >
 inline bool is_zero ( const Eigen::SparseMatrixBase< EigenDerived >& block,

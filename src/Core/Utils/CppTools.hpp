@@ -89,9 +89,10 @@ struct DisableIf< false, ReturnType_ >
 		enum { True = 1, False = 2 } ;    \
 		typedef char  TrueType[  True ] ; \
 		typedef char FalseType[ False ] ; \
+		template <typename T > struct Some { typedef int Type ; } ;  \
 										  \
 		template< typename T >			  \
-		static const  TrueType& check( const typename T::TypeName* ) ; \
+		static const  TrueType& check( typename Some<typename T::TypeName>::Type ) ; \
 		template< typename >			  \
 		static const FalseType& check( ... ) ; \
 	public:								  \

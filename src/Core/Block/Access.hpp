@@ -42,35 +42,29 @@ transpose_block ( const BlockType& block )
 template< typename BlockType,
 		  bool IsSelfTranspose = BlockTraits< BlockType >::is_self_transpose,
 		  bool DefinesConstTranspose = HasConstTransposeReturnType< BlockType >::Value,
-		  bool DefinesTransposeTraits = HasReturnType< BlockTransposeTraits< BlockType > >::Value,
-		  bool DefinesBase = HasBase< BlockType >::Value >
+		  bool DefinesTransposeTraits = HasReturnType< BlockTransposeTraits< BlockType > >::Value >
 struct BlockTranspose {
 	enum { is_defined= 0 } ;
 } ;
 
 // Self-transpose
-template< typename BlockType, bool DCT, bool DTT, bool DB >
-struct BlockTranspose< BlockType, true, DCT, DTT, DB > {
+template< typename BlockType, bool DCT, bool DTT >
+struct BlockTranspose< BlockType, true, DCT, DTT > {
 	typedef const BlockType& ReturnType ;
 	enum { is_defined = 1 } ;
 } ;
 // ConstTransposeReturnType
-template< typename BlockType, bool DTT, bool DB >
-struct BlockTranspose< BlockType, false, true, DTT, DB > {
+template< typename BlockType, bool DTT >
+struct BlockTranspose< BlockType, false, true, DTT > {
 	typedef typename BlockType::ConstTransposeReturnType ReturnType ;
 	enum { is_defined = 1 } ;
 } ;
 // BlockTransposeTraits
-template< typename BlockType, bool DB >
-struct BlockTranspose< BlockType, false, false, true, DB > {
+template< typename BlockType >
+struct BlockTranspose< BlockType, false, false, true > {
 	typedef typename BlockTransposeTraits< BlockType >::ReturnType ReturnType ;
 	enum { is_defined = 1 } ;
 } ;
-// Base
-template< typename BlockType >
-struct BlockTranspose< BlockType, false, false, false, true >
-		: public BlockTranspose< typename BlockType::Base >
-{} ;
 
 template < typename BlockType >
 struct IsTransposable
