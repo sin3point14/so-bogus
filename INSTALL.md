@@ -5,7 +5,7 @@ Obviously, no compilation is required if you only plan to use the header-only pa
 Using the CMake build script can still be helpful for copying all the header files to a target
 install directory, as detailed in the next section.
 
-A `bogus -> src` symlink exist for convenience, so you can `#include <bogus/Core/Block.impl.hpp>`
+A `bogus -> src` symlink is provided for convenience, so you can `#include <bogus/Core/Block.impl.hpp>`
 on both local and `make install`ed copies of bogus.
 
 ### CMake build script
@@ -33,7 +33,7 @@ The script will attempt to find the following libraries:
  This can be overriden with the `-DOPENMP=off` cmake flag.
  - [boost\_serialization](http://www.boost.org/) (optional)
 
-  The `boost_serialization` library is required for writing and reading bogus structures from files.  This can be disabled with the `-DOPENMP=off` cmake flag.
+  The `boost_serialization` library is required for writing and reading bogus structures from files.  This can be disabled with the `-DBOOST_SERIALIZATION=off` cmake flag.
  - __Intel® MKL__ (optional)
 
    Sparse block matrices that follow the Block Sparse Row (BSR) format may use MKL
@@ -57,6 +57,12 @@ the following CMake options are available. The can be defined using the  command
  - __WITH_3D__=(__on__|off) Compile support for 3D problems support in the So-bogus library
  - __WITH_DYNAMIC__=(on|__off__) Compile support for dynamically-sized problems in the So-bogus library
  
+A few compiler flags (`gcc` and `clang`) can be set using the following options:
+
+ - __CPP11__=(on|__off__) Compile with `-std=c++11` 
+ - __STRICT__=(on|__off__) Enable more warnings and treat them as errors
+ - __FAST_MATH__=(__on__|off) Enable optimizations that break IEEE 754 compliance (`-ffast-math`) 
+
 You may also find the following standard CMake variables useful:
 
  - __CMAKE\_BUILD\_TYPE__=(__Release__|Debug) The Release mode enables compiler optimizations and disables runtime assertions.

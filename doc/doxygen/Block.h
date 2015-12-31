@@ -238,8 +238,8 @@ sbm.multiply< true >( res2, res, -1, 1 ) ; // res -= sbm.transpose() * res2
 \note When using the \c * operator, the result of the operation will
 be evaluated lazily, that is not until it is assigned to another vector or
 evaluated as part of a larger expression. However, for aliasing safety reasons and
-consistency with the Egen library, the matrix-vector product may sometimes
-be unessecarily be evaluated inside a temporary. You can change this behavior
+consistency with the Eigen library, the matrix-vector product may sometimes
+be unecessarily be evaluated inside a temporary. You can change this behavior
 using the noalias() operator of Eigen lvalues:
 \code
 Eigen::VectorXd rhs, res ;
@@ -261,6 +261,43 @@ bogus::SparseBlockMatrix< GradBlockT > H ;
 bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::SYMMETRIC > W = H * H.transpose() ;
 \endcode
 
+\subsection block_expressions Expressions
+bogus uses lazy evaluation, and as such does not evaluate operations between matrices immediately, but stores them inside expression templates.
+While these expressions are transparently resolved at assignment time, and therefore should not generally matter to the end-user, they may be useful for the definition of matrix-free iterative solvers (see e.g. \ref block_solvers_is).
+
+bogus defines two unary operations, \ref Transpose and \ref Scaling, and two binary operations, \ref Product and \ref Addition. For instance,
+\code 
+Addition< Scaling<AType>, Product< BType, Transpose<CType> > > expr = 3*A + B*C.transpose() ;
+\endcode
+
+In certain situations, one may not know at compile time the number of
+operations that define an expression. For such scenarios, bogus defines the \ref NarySum expression. For instance, if we want to use to use the expression
+\f$ H H^\T + \Sum_i{ a_i J_i M_I J_i^T } \f$ as a system matrix, we can do
+\code
+// Common type for each of the sum's operands
+typedef bogus::Product< JType,
+                  bogus::Product< MType, bogus::Transpose< JType > > >
+                  JMJtProd ;
+
+// Construct n-ary sum expression
+// The (common) number of rows and columns of the operands has to be provided beforehand, in order to allow empty sum expressions
+bogus::NarySum< JMJtProd > sum( nRows, nCols ) ;
+for( unsigned i = 0 ; i < Jmatrices.size() ; ++i ) {
+    const JType &J = Jmatrices[i] ;
+    sum += a[i] * ( J * ( Mmatrices[i] * J.transpose() ) );
+}
+  
+// Construct global expression
+typedef bogus::Product< HType, bogus::Transpose< HType > > HHtProd ;
+typedef bogus::Addition< HHtProd, bogus::NarySum< JMJtProd > > Expr ;
+  
+const Expr W = H * H.transpose() + sum ;
+
+// Use the expression inside a linear solver
+bogus::Krylov<Expr>(W).solve(b,x) ;
+
+\endcode
+
 \subsection block_limitations Limitations
 
 As a rule of thumb, these limitations can be circumvented by explicitely assigning the result of each operation to a temporary object.
@@ -277,12 +314,13 @@ This can happen for matrix-matrix products that have to be evaluated as a part o
 and which involve "unusual" block types. If such an error occurs, just assign the offending product to a temporary SparseBlockMatrix.
 
 \subsubsection block_limit_performance Performance
-bogus will not necessarily chose the most optimized type for the evaluation of temporary expressions. For example,
+bogus will not necessarily choose the most optimized type for the evaluation of temporary expressions. For example,
 it might choose a row-major matrix when a column-major one would be more approriate, or fail to notice that
 \c H \c * \c H.transpose() should use symmetric storage.
 
-Explicit parenthesisation will also help performance. Otherwise, bogus may for instance perform a matrix-matrix product operation before a matrix-vector product, while the same result could be computed using only two matrix-vector operations.
-
+Explicit parenthesisation will also help performance. Otherwise, bogus may 
+perform matrix-matrix products in an inefficient order, or allocate
+unnecessary temporary matrices.
 */
 
 

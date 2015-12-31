@@ -82,6 +82,18 @@ If we wanted to use a preconditioner
 
 \endcode
 
+Iterative linear solvers may also be used in a matrix-free version -- that is, 
+without explictely computing the system matrix. Suppose that we want to solve
+\f$ J J^T x = b \f$, this can be done as
+
+\code
+  typedef bogus::SparseBlockMatrix< BlockType > JType ;
+  typedef bogus::Product< JType, bogus::Transpose< JType > > Prod ; // Or use c++11 to infer the correct type
+  Prod W = J * J.transpose() ; 
+  
+  bogus::Krylov< Prod >( W ).solve( b, x ) ;
+\endcode
+
 Alternatively, a Krylov object may be converted to a particular method-object which
 inherits from LinearSolverBase.
 This means it can be used as a BlockType of a SparseBlockMatrix, and can offer
@@ -103,7 +115,7 @@ krylov::GMRES method.
   gmResmat.block( 0 ) = krylov.asGMRES() ;
   // [..]
   //
-  // This performs no convergence check, and is proably a very bad idea
+  // This performs no convergence check, and is probably a very bad idea
   res = gmresMat * rhs ;
 
 \endcode
@@ -146,11 +158,21 @@ res = pg.solve( bogus::SOC3D( n, mu ), b, x ) ;
 
 // ... or explicitely chose a variant
 
-res = pg.solve< bogus::projected_gradient::Standard >( bogus::SOC3D( n, mu ), b, x ) ;
+res = pg.solve< bogus::projected_gradient::APGD >( bogus::SOC3D( n, mu ), b, x ) ;
 \endcode
 
 \note This algorithm can only be used to solve constrained quadratic optimization problems.
-Coulomb friction does not belong to this class, but Cone Complementarity problems do.
+Coulomb friction does not belong to this class, but Linear and Cone Complementarity problems do.
+
+Once again, this algrithms can be used in a matrix-free fashion
+\code
+  typedef bogus::SparseBlockMatrix< BlockType > JType ;
+  typedef bogus::Product< JType, bogus::Transpose< JType > > Prod ; // Or use c++11 to infer the correct type
+  Prod W = J * J.transpose() ; 
+  
+  bogus::ProjectedGradient< Prod > pg( W ) ;
+  res = pg.solve( bogus::SOC3D( n, mu ), b, x ) ;
+\endcode
 */
 
 }
