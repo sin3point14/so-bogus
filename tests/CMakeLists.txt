@@ -27,13 +27,15 @@ endif()
 
 # Add gtest
 ExternalProject_Add(
-	googletest
-	URL https://googletest.googlecode.com/files/gtest-1.7.0.zip
-	CMAKE_ARGS ${GTEST_CMAKE_ARGS}
-	UPDATE_COMMAND ""
-	PATCH_COMMAND ${GTEST_PATCH_COMMAND}
-	INSTALL_COMMAND ""
-	)
+  googletest
+  URL https://github.com/google/googletest/archive/release-1.7.0.tar.gz
+  URL_HASH MD5=4ff6353b2560df0afecfbda3b2763847
+
+  CMAKE_ARGS ${GTEST_CMAKE_ARGS}
+  UPDATE_COMMAND ""
+  PATCH_COMMAND ${GTEST_PATCH_COMMAND}
+  INSTALL_COMMAND ""
+  )
 
 SET( GTEST_LINK_LIBRARIES gtest gtest_main )
 if(UNIX)
