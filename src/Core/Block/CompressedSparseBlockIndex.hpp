@@ -169,12 +169,12 @@ struct SparseBlockIndex< true, Index_, BlockPtr_, ArrayType > : public SparseBlo
 
 
 	// MKL BSR
-	const Index* rowIndex() const { return &outer[0] ; }
-	const Index* columns() const { return &inner[0] ; }
+	const Index* rowIndex() const { return data_pointer(outer) ; }
+	const Index* columns()  const { return data_pointer(inner) ; }
 
 	// Same with nicer names
-	const Index* outerIndexPtr() const { return &outer[0] ; }
-	const Index* innerIndexPtr() const { return &inner[0] ; }
+	const Index* outerIndexPtr() const { return data_pointer(outer) ; }
+	const Index* innerIndexPtr() const { return data_pointer(inner) ; }
 
 } ;
 
@@ -201,7 +201,7 @@ struct SparseBlockIndexTraits<  SparseBlockIndex< true, Index_, BlockPtr_, Array
 
 		InnerIterator( const SparseBlockIndexType& index, Index outer )
 			: m_it( index.outer[ outer ] ), m_end( index.outer[ outer + 1] ),
-			  m_inner( &index.inner[0] )
+			  m_inner( data_pointer( index.inner ) )
 		{
 		}
 

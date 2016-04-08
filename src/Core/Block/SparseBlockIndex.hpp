@@ -65,6 +65,7 @@ struct SparseBlockIndexBase
 	const Index* innerOffsetsData() const
 	{
 		assert( hasInnerOffsets() ) ;
+		// innerOffsetsArray() guaranteed to not be empty, we can dereference its first elt
 		return & innerOffsetsArray()[0] ;
 	}
 

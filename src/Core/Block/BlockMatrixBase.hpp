@@ -13,6 +13,7 @@
 #define BOGUS_BLOCKMATRIX_HPP
 
 #include "BlockObjectBase.hpp"
+#include "../Utils/CppTools.hpp"
 
 namespace bogus
 {
@@ -100,9 +101,9 @@ public:
 	//! Access to blocks data
 	const typename Traits::BlocksArrayType& blocks() const { return  m_blocks ; }
 	//! Access to blocks data as a raw pointer
-	const BlockType* data() const { return  &m_blocks[0] ; }
+	const BlockType* data() const { return  data_pointer(m_blocks) ; }
 	//! Access to blocks data as a raw pointer
-	BlockType* data() { return &m_blocks[0] ; }
+	BlockType* data() { return data_pointer(m_blocks) ; }
 
 protected:
 	Index m_rows ;

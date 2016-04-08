@@ -453,7 +453,7 @@ Derived& SparseBlockMatrixBase< Derived >::applyPermutation( const std::size_t* 
 	m_majorIndex = destIndex ;
 	assert( m_majorIndex.valid ) ;
 
-	bogus::applyPermutation( nBlocks(), &blocksPermutation[0], m_blocks ) ;
+	bogus::applyPermutation( nBlocks(), data_pointer(blocksPermutation), m_blocks ) ;
 
 	m_minorIndex.valid = empty() ;
 

@@ -124,9 +124,9 @@ void DualFrictionProblem< Dimension >::applyPermutation(
 	for( std::size_t i = 0 ; i < m_permutation.size() ; ++i )
 		m_invPermutation[ m_permutation[i] ] = i ;
 
-	W.applyPermutation( &m_permutation[0] ) ;
+	W.applyPermutation( data_pointer(m_permutation) ) ;
 	friction_problem::applyPermutation< Dimension >( m_permutation, b, W.colOffsets() ) ;
-	bogus::applyPermutation( m_permutation.size(), &m_permutation[0], mu ) ;
+	bogus::applyPermutation( m_permutation.size(), data_pointer(m_permutation), mu ) ;
 }
 
 template< unsigned Dimension >
@@ -135,9 +135,9 @@ void DualFrictionProblem< Dimension >::undoPermutation()
 	if( !permuted() )
 		return ;
 
-	W.applyPermutation( &m_invPermutation[0] ) ;
+	W.applyPermutation( data_pointer(m_invPermutation) ) ;
 	friction_problem::applyPermutation< Dimension >( m_invPermutation, b, W.colOffsets() ) ;
-	bogus::applyPermutation( m_invPermutation.size(), &m_invPermutation[0], mu ) ;
+	bogus::applyPermutation( m_invPermutation.size(), data_pointer(m_invPermutation), mu ) ;
 
 	m_permutation.clear() ;
 }

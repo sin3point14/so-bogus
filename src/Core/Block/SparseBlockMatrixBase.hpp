@@ -445,7 +445,7 @@ public:
 
 	//! Returns the blocks that have been created by cacheTranspose(), as a raw pointer
 	const TransposeBlockType* transposeData() const
-	{ return &m_transposeBlocks[0] ; }
+	{ return data_pointer(m_transposeBlocks) ; }
 
 	//! Returns an array containing the first index of each row
 	const Index* rowOffsets() const { return colMajorIndex().innerOffsetsData() ; }
@@ -492,7 +492,7 @@ protected:
 	void setInnerOffets( IndexT& index, const Index nBlocks, const unsigned* blockSizes ) const ;
 
 	TransposeBlockType* transposeData()
-	{ return &m_transposeBlocks[0] ; }
+	{ return data_pointer(m_transposeBlocks) ; }
 
 
 	TransposeArrayType m_transposeBlocks ;
