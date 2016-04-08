@@ -50,6 +50,8 @@ Core/BlockSolvers/Preconditioners.hpp
 Core/BlockSolvers/Preconditioners.impl.hpp
 Core/BlockSolvers/ProjectedGradient.hpp
 Core/BlockSolvers/ProjectedGradient.impl.hpp
+Core/BlockSolvers/PyramidLaw.hpp
+Core/BlockSolvers/PyramidLaw.impl.hpp
 Core/Eigen/BlockBindings.hpp
 Core/Eigen/EigenBlockContainers.hpp
 Core/Eigen/EigenLinearSolvers.hpp

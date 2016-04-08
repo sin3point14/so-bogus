@@ -9,6 +9,7 @@
 #include "Core/BlockSolvers/ProjectedGradient.impl.hpp"
 #include "Extra/SecondOrder.impl.hpp"
 #include "Core/BlockSolvers/LCPLaw.impl.hpp"
+#include "Core/BlockSolvers/PyramidLaw.impl.hpp"
 
 #include <Eigen/LU>
 #include <Eigen/Cholesky>
@@ -24,7 +25,7 @@ struct ResidualInfo {
 	}
 };
 const char* ResidualInfo::s_meth = "" ;
-
+/*
 TEST( GaussSeidel, Small )
 {
 
@@ -270,4 +271,63 @@ TEST( GaussSeidel, LCP )
 		ASSERT_LT(-1.e-8, x.minCoeff() ) ;
 		ASSERT_LT(-1.e-16, y.minCoeff() ) ;
 	}
+}
+*/
+TEST( GaussSeidel, Pyramid )
+{
+	double mu = 0.4 ;
+
+	bogus::PyramidLaw< 3u, double > Plaw( 1, &mu ) ;
+
+	Eigen::Vector3d r  ;
+	r.setOnes() ;
+	Eigen::Vector3d u  ;
+	u.setZero() ;
+
+	ASSERT_LT( 1, Plaw.eval( 0, r, u) ) ;
+	Plaw.projectOnConstraint(0,r);
+	ASSERT_NEAR( 0, Plaw.eval( 0, r, u), 1.e-16 ) ;
+
+	Eigen::Vector3d r2 = r ;
+	Plaw.projectOnConstraint(0,r2);
+	ASSERT_TRUE( r2.isApprox(r) ) ;
+
+	Eigen::Vector3d rperp  ;
+	rperp[0] = 0 ;
+	rperp.tail<2>() = -r.tail<2>() ;
+
+	ASSERT_NEAR( 0, Plaw.eval( 0, r, rperp), 1.e-16 ) ;
+	r2 *= -1 ;
+
+	r = r2 ;
+	r[0] = 0 ;
+	ASSERT_NEAR( 0, Plaw.eval( 0, u, r), 1.e-16 ) ;
+
+	Plaw.projectOnConstraint(0,r2);
+	ASSERT_TRUE( r2.isZero() ) ;
+
+	r2[0] = 1 ;
+	r = r2 ;
+	Plaw.projectOnConstraint(0,r2);
+	ASSERT_TRUE( r2.isApprox(r) ) ;
+
+	Eigen::Matrix3d A ;
+	A << 3,1,1,1,2,1,1,1,3 ;
+
+	Eigen::Vector3d b ;
+
+	b.setOnes() ;
+	Plaw.solveLocal(0,A,b,r,1) ;
+	u = A*r + b ;
+	ASSERT_NEAR( 0, Plaw.eval( 0, r, u), 1.e-16 ) ;
+
+	b.setConstant(-1) ;
+	Plaw.solveLocal(0,A,b,r,1) ;
+	u = A*r + b ;
+	ASSERT_NEAR( 0, Plaw.eval( 0, r, u), 1.e-6 ) ;
+
+	b[1] = 1 ;
+	Plaw.solveLocal(0,A,b,r,1) ;
+	u = A*r + b ;
+	ASSERT_NEAR( 0, Plaw.eval( 0, r, u), 1.e-6 ) ;
 }

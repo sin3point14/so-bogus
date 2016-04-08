@@ -48,6 +48,7 @@ struct LocalProblemTraits : public ProblemTraits< Eigen::Matrix< Scalar, Dimensi
 {
 
 	typedef Eigen::Matrix< Scalar, Dimension, 1 > Vector ;
+	typedef Eigen::Array< Scalar, Dimension, 1 > Array  ;
 	typedef Eigen::Matrix< Scalar, Dimension, Dimension > Matrix ;
 
 	typedef Eigen::Matrix< Scalar, Dimension-1, Dimension-1 > TgMatrix ;
