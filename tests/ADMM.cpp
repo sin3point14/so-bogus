@@ -14,6 +14,7 @@ static void ack( unsigned iter, double err ) {
 
 
 #define AMA
+#define ACC
 
 TEST( ADMM, Small )
 {
@@ -150,6 +151,11 @@ TEST( ADMM, Small )
 //		ut = H*v+w +s ;
 //		z = ut ;
 
+		Eigen::VectorXd lbda = r, lbdap = r, zp = z;
+		double thetap = 1 ;
+
+		double gp = 0 ;
+
 		for( unsigned k = 0 ; k < 1000 ; ++ k ) {
 
 #ifdef AMA
@@ -171,7 +177,7 @@ TEST( ADMM, Small )
 
 			ut = H*v + w ;
 			for( unsigned i = 0 ; i < n ; ++ i ) {
-				s[3*i] = (1 - rho) * s[3*i] + rho * mu[i] * ut.segment<2>(3*i+1).norm() ;
+//				s[3*i] = (1 - rho) * s[3*i] + rho * mu[i] * ut.segment<2>(3*i+1).norm() ;
 			}
 			ut += s ;
 
@@ -179,14 +185,34 @@ TEST( ADMM, Small )
 			z =  ut + r ;
 			ppg.projectOnConstraints( Pkimu, z ) ;
 
+			const double g = std::max( (ut-z).squaredNorm(),
+									   (gamma/(lambda*lambda)*H.transpose()*( z - zp)).squaredNorm() )  ;
+			if( g < 1.e-24 ) break ;
+
+			zp = z ;
+
+#ifdef ACC
+			if( gp < g ) thetap = 1 ;
+			gp = g ;
+
+			lbda = r + ut - z ;
+			const double beta = bogus::pg_impl::nesterov_inertia( thetap, 0. ) ;
+//			double thetan =  (1 + std::sqrt(1 + 4*thetap*thetap))/2 ;
+			r = lbda  + beta * ( lbda - lbdap )  ;
+
+			lbdap = lbda ;
+//			thetap = theta ;
+//			theta  = thetan ;
+#else
 			// u += Hv - z
 			r += ut - z ;
+#endif
 
-			const double g =  (ut-z).squaredNorm() ;
-			if( g < 1.e-12 ) break ;
+
+
 
 	//		std::cout << k << " " << u.transpose() << std::endl ;
-			std::cout << k << " g " << g << std::endl ;
+			std::cout << k << " g " << g << " \t" << thetap << std::endl ;
 	//		std::cout << " J = " << v.transpose() * ( .5 * MassMat * v + f ) << std::endl ;
 	//		x = MassMat*v + f ;
 	//		double err = ppg.eval( Pkimu, z, x) ;
