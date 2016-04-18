@@ -15,6 +15,8 @@ static void ack( unsigned iter, double err ) {
 
 #define AMA
 #define ACC
+//#define CB
+
 
 TEST( ADMM, Small )
 {
@@ -111,8 +113,9 @@ TEST( ADMM, Small )
 	// g = I(C)(v), C = (Hv \in Kimu)
 
 	const double lambda = 1.e-1 ;
-	const double gamma  = 1.e-4 ;
-	const double rho    = 1. ;
+		  double gamma  = 1.e-4 ;
+		  double rho    = 1.    ;
+		  double tau    = 1.    ;
 
 	v.setZero() ;
 	Eigen::VectorXd r = Eigen::VectorXd::Zero( 6 ) ;
@@ -122,6 +125,7 @@ TEST( ADMM, Small )
 
 	Eigen::VectorXd tmp ;
 	Eigen::ArrayXd imu = 1./Eigen::ArrayXd::Map( mu, 2 ) ;
+	bogus::SOC3D Pkmu ( imu.size(), mu ) ;
 	bogus::SOC3D Pkimu( imu.size(), imu.data() ) ;
 
 	bogus::ProjectedGradient< MType > ppg( MassMat ) ;
@@ -151,12 +155,23 @@ TEST( ADMM, Small )
 //		ut = H*v+w +s ;
 //		z = ut ;
 
-		Eigen::VectorXd lbda = r, lbdap = r, zp = z;
+		Eigen::VectorXd lbda = r, lbdap = r, zp = z,
+				vh = v, vp = v;
 		double thetap = 1 ;
 
 		double gp = 0 ;
 
 		for( unsigned k = 0 ; k < 1000 ; ++ k ) {
+
+#ifdef CB
+			z = -r - tau * ( ut + H*(vh-v) ) ;
+			pg.projectOnConstraints( Pkmu, z ) ;
+
+			const double g = (z+r).squaredNorm() ;
+
+			r = -z ;
+
+#endif
 
 #ifdef AMA
 			//AMA ( = ADMM w/ lambda = 0)
@@ -174,12 +189,25 @@ TEST( ADMM, Small )
 			v = InvMLambda * ( tmp - lambda * f ) ;
 #endif
 
+#ifdef CB
+#ifdef ACC
+			thetap = 1./sqrt( 1 + 2 * 1.e-8 * gamma ) ;
+			gamma = thetap * gamma ;
+			tau = tau / thetap ;
 
+			vh = v + thetap * ( v - vp ) ;
+			vp = v ;
+#else
+			vh = v ;
+#endif
+#endif
 			ut = H*v + w ;
 			for( unsigned i = 0 ; i < n ; ++ i ) {
 //				s[3*i] = (1 - rho) * s[3*i] + rho * mu[i] * ut.segment<2>(3*i+1).norm() ;
 			}
 			ut += s ;
+
+#ifndef CB
 
 			// z =  P_{Kimu}( H v + u )
 			z =  ut + r ;
@@ -207,7 +235,7 @@ TEST( ADMM, Small )
 			// u += Hv - z
 			r += ut - z ;
 #endif
-
+#endif
 
 
 
