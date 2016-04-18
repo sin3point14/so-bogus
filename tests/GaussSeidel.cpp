@@ -25,7 +25,7 @@ struct ResidualInfo {
 	}
 };
 const char* ResidualInfo::s_meth = "" ;
-/*
+
 TEST( GaussSeidel, Small )
 {
 
@@ -71,15 +71,15 @@ TEST( GaussSeidel, Small )
 	H.finalize() ;
 
 	//std::cout << MassMat << std::endl ;
-//	std::cout << InvMassMat << std::endl ;
-//	std::cout << H << std::endl ;
+	//	std::cout << InvMassMat << std::endl ;
+	//	std::cout << H << std::endl ;
 
 	typedef bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC > WType ;
 	WType W ;
 	W = H * InvMassMat * H.transpose() ;
 
-//	std::cout << W << std::endl ;
-//	W.cacheTranspose();
+	//	std::cout << W << std::endl ;
+	//	W.cacheTranspose();
 
 	Eigen::VectorXd f( 6 ) ;
 	f << 1, 2, 3, 4, 5, 6 ;
@@ -272,7 +272,7 @@ TEST( GaussSeidel, LCP )
 		ASSERT_LT(-1.e-16, y.minCoeff() ) ;
 	}
 }
-*/
+
 TEST( GaussSeidel, Pyramid )
 {
 	double mu = 0.4 ;
