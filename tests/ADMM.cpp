@@ -3,6 +3,8 @@
 #include "Core/BlockSolvers/GaussSeidel.impl.hpp"
 #include "Core/BlockSolvers/ProjectedGradient.impl.hpp"
 
+#include "Core/BlockSolvers/ADMM.impl.hpp"
+
 #include "Extra/SecondOrder.impl.hpp"
 
 #include <Eigen/Cholesky>
@@ -13,8 +15,8 @@ static void ack( unsigned iter, double err ) {
 }
 
 
-#define AMA
-#define ACC
+//#define AMA
+//#define ACC
 //#define CB
 
 
@@ -128,130 +130,29 @@ TEST( ADMM, Small )
 	bogus::SOC3D Pkmu ( imu.size(), mu ) ;
 	bogus::SOC3D Pkimu( imu.size(), imu.data() ) ;
 
-	bogus::ProjectedGradient< MType > ppg( MassMat ) ;
-
-
 	MType InvMLambda ;
 	InvMLambda.cloneStructure( MassMat ) ;
 	for( unsigned i = 0 ; i < MassMat.nBlocks() ; ++i )
 	{
 		Eigen::MatrixXd Mi =
-				lambda * MassMat.block( i ) + Eigen::MatrixXd::Identity( dofs[i], dofs[i] ) ;
+				MassMat.block( i ) + 1./lambda * Eigen::MatrixXd::Identity( dofs[i], dofs[i] ) ;
 
 		InvMLambda.block( i ) = Mi.inverse() ;
 	}
 
-	for( unsigned fp = 0 ; fp < 1 ; ++fp )
-	{
+	std::cout << " ============= " << std::endl ;
 
-//		ut = H*v + w ;
-//		for( unsigned i = 0 ; i < n ; ++ i ) {
-//			s[3*i] = (1 - rho) * s[3*i] + rho * mu[i] * ut.segment<2>(3*i+1).norm() ;
-//		}
-//		std::cout << "s  " << s.transpose() << std::endl;
+	r.setOnes() ;
+	v = InvMassMat * ( H.transpose() * r - f ) ;
 
-//		v.setZero() ;
-//		r.setZero() ;
-//		ut = H*v+w +s ;
-//		z = ut ;
+//	bogus::QuadraticProxOp< MType > prox( InvMassMat, 0, f ) ;
+	bogus::QuadraticProxOp< MType > prox( InvMLambda, 1.e-1, f ) ;
+	bogus::ADMM< HType > admm( H ) ;
 
-		Eigen::VectorXd lbda = r, lbdap = r, zp = z,
-				vh = v, vp = v;
-		double thetap = 1 ;
+	admm.setMaxIters(1000);
+	admm.setStepSize(1.e-2);
+	admm.callback().connect( &ack );
 
-		double gp = 0 ;
-
-		for( unsigned k = 0 ; k < 1000 ; ++ k ) {
-
-#ifdef CB
-			z = -r - tau * ( ut + H*(vh-v) ) ;
-			pg.projectOnConstraints( Pkmu, z ) ;
-
-			const double g = (z+r).squaredNorm() ;
-
-			r = -z ;
-
-#endif
-
-#ifdef AMA
-			//AMA ( = ADMM w/ lambda = 0)
-			// v = argmin ( J(v) - < Hv, r > )
-			// v = M^{-1}( H^T r - f )
-			v = - InvMassMat * ( gamma/(lambda*lambda)*H.transpose()*r + f ) ;
-#else
-			// ADMM
-			// v = prox_{lambda J }( v - 1/\lambda H^T( Hv - z + u )  )
-			tmp = v - gamma/lambda * H.transpose()  * ( ut - z + r  ) ;
-			// v = prox_{lambda J }( tmp )
-			//   = arginf_( .5 vMv + vf + 1./(2 \lambda) (v-tmp)(v-tmp) )
-			//   = arginf_( .5 v(M + 1./(2 lambda) I )v + v'(f - 1/lambda tmp)
-			//   = [ M + I/(2lambda) ]^{-1} (tmp/lambda - f)
-			v = InvMLambda * ( tmp - lambda * f ) ;
-#endif
-
-#ifdef CB
-#ifdef ACC
-			thetap = 1./sqrt( 1 + 2 * 1.e-8 * gamma ) ;
-			gamma = thetap * gamma ;
-			tau = tau / thetap ;
-
-			vh = v + thetap * ( v - vp ) ;
-			vp = v ;
-#else
-			vh = v ;
-#endif
-#endif
-			ut = H*v + w ;
-			for( unsigned i = 0 ; i < n ; ++ i ) {
-//				s[3*i] = (1 - rho) * s[3*i] + rho * mu[i] * ut.segment<2>(3*i+1).norm() ;
-			}
-			ut += s ;
-
-#ifndef CB
-
-			// z =  P_{Kimu}( H v + u )
-			z =  ut + r ;
-			ppg.projectOnConstraints( Pkimu, z ) ;
-
-			const double g = std::max( (ut-z).squaredNorm(),
-									   (gamma/(lambda*lambda)*H.transpose()*( z - zp)).squaredNorm() )  ;
-			if( g < 1.e-24 ) break ;
-
-			zp = z ;
-
-#ifdef ACC
-			if( gp < g ) thetap = 1 ;
-			gp = g ;
-
-			lbda = r + ut - z ;
-			const double beta = bogus::pg_impl::nesterov_inertia( thetap, 0. ) ;
-//			double thetan =  (1 + std::sqrt(1 + 4*thetap*thetap))/2 ;
-			r = lbda  + beta * ( lbda - lbdap )  ;
-
-			lbdap = lbda ;
-//			thetap = theta ;
-//			theta  = thetan ;
-#else
-			// u += Hv - z
-			r += ut - z ;
-#endif
-#endif
-
-
-
-	//		std::cout << k << " " << u.transpose() << std::endl ;
-			std::cout << k << " g " << g << " \t" << thetap << std::endl ;
-	//		std::cout << " J = " << v.transpose() * ( .5 * MassMat * v + f ) << std::endl ;
-	//		x = MassMat*v + f ;
-	//		double err = ppg.eval( Pkimu, z, x) ;
-	//		std::cout << " err " << err << std::endl ;
-		}
-
-	std::cout << " g " << (H*v+w+s-z).squaredNorm() << std::endl ;
-	std::cout << "Optimal v " << v.transpose() << std::endl ;
-	std::cout << "Optimal r " << (-r.transpose() * gamma/lambda/lambda ) << std::endl ;
-	std::cout << " J = " << v.transpose() * ( .5 * MassMat * v + f ) << std::endl ;
-
-	}
+	admm.solve< bogus::admm::Accelerated >( Pkimu, prox, w, v, r ) ;
 
 }

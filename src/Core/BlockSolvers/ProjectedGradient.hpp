@@ -52,13 +52,11 @@ public:
 	explicit ProjectedGradient( const BlockObjectBase< BlockMatrixType > & matrix ) : Base()
 	{ init() ; Base::setMatrix( matrix ) ; }
 
-	//! Finds an approximate solution for a constrained linear problem
-	//! using classical Projected gradient algorithm
+	//! Finds an approximate minimum for a constrained quadratic problem
 	template < typename NSLaw, typename RhsT, typename ResT >
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const ;
 
-	//! Finds an approximate solution for a constrained linear problem,
-	//! with optional conjugation of search directions
+	//! Finds an approximate minimum for a constrained quadratic problem
 	template < projected_gradient::Variant variant, typename NSLaw, typename RhsT, typename ResT >
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const ;
 
@@ -82,7 +80,7 @@ public:
 	//! Should be in ]0,1[
 	void setLineSearchPessimisticFactor( const Scalar lsPessimisticFactor )
 	{ m_lsPessimisticFactor = lsPessimisticFactor ; }
-	
+
 	//! Sets the objective decrease coefficient for linesearchs that use an Armijo exit criterion
 	//! Should be in ]0,1[
 	void setLineSearchArmijoCoefficient( const Scalar lsArmijoCoefficient )
@@ -96,9 +94,6 @@ public:
 	Scalar lineSearchOptimisticFactor() const { return m_lsOptimisticFactor ; }
 	Scalar lineSearchPessimisticFactor() const { return m_lsPessimisticFactor ; }
 	Scalar lineSearchArmijoCoefficient() const { return m_lsArmijoCoefficient ; }
-
-	template < typename NSLaw, typename VectorT >
-	void projectOnConstraints( const NSLaw &projector, VectorT &x ) const ;
 
 protected:
 

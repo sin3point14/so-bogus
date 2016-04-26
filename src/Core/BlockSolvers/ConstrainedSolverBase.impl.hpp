@@ -125,6 +125,29 @@ void ConstrainedSolverBase< SolverType,BlockMatrixType >::updateScalings()
 
 }
 
+template < template <typename> class SolverType, typename BlockMatrixType >
+template < typename NSLaw, typename VectorT >
+void ConstrainedSolverBase<  SolverType,BlockMatrixType >::projectOnConstraints(
+		const NSLaw &law, VectorT &x ) const
+{
+	Segmenter< NSLaw::dimension, VectorT, typename BlockMatrixType::Index >
+			xSegmenter( x, m_matrix->rowOffsets() ) ;
+
+	const Index n = m_matrix->rowsOfBlocks() ;
+	typename NSLaw::Traits::Vector lx ;
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for private( lx )
+#endif
+	for( Index i = 0 ; i < n ; ++ i )
+	{
+		lx = xSegmenter[ i ] ;
+		law.projectOnConstraint( i, lx ) ;
+		xSegmenter[ i ] = lx ;
+	}
+
+}
+
 
 } // namespace bogus
 

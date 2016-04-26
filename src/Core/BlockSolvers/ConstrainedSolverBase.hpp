@@ -41,6 +41,10 @@ public:
 	template < typename NSLaw, typename RhsT, typename ResT >
 	Scalar eval ( const NSLaw &law, const ResT &y, const RhsT &x ) const ;
 
+	//! Projects the variable \p x on the constraints defined by \p projector
+	template < typename NSLaw, typename VectorT >
+	void projectOnConstraints( const NSLaw &projector, VectorT &x ) const ;
+
 	template < typename NSLaw, typename RhsT, typename ResT >
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const
 	{
