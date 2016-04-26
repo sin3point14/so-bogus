@@ -114,10 +114,10 @@ TEST( ADMM, Small )
 	// J = .5 * vMv + f'v
 	// g = I(C)(v), C = (Hv \in Kimu)
 
-	const double lambda = 1.e-1 ;
+		  double lambda = 1.e-1 ;
 		  double gamma  = 1.e-4 ;
-		  double rho    = 1.    ;
-		  double tau    = 1.    ;
+//		  double rho    = 1.    ;
+//		  double tau    = 1.    ;
 
 	v.setZero() ;
 	Eigen::VectorXd r = Eigen::VectorXd::Zero( 6 ) ;
@@ -155,4 +155,100 @@ TEST( ADMM, Small )
 
 	admm.solve< bogus::admm::Accelerated >( Pkimu, prox, w, v, r ) ;
 
+	std::cout << " ============= " << std::endl ;
+	std::cout << " TEST DUAL " << std::endl ;
+
+	// Rationale
+	/*
+	 * min J(r) + IKmu(r)
+	 *
+	 * J(r) =.5  r W r + ( w - HM^{-1} f ) ' r
+	 *
+	 * J_0 = .5 r' H M^-1 H' r - r' H M^{-1} f = .5 x' M^-1 x - x' M^-1 f
+	 * G   = w'r + IKmu(r)
+	 *
+	 * min J(x) + G(r)  with x = H'r
+	 *
+	 * prox_{l, G}( y ) = argmin_r  I_c(r) + r'w + 1/2l || r - y ||^2
+	 *                  = argmin_r  I_c(r) + 1/2l r^2 - 1/l r'( y - l w )
+	 *                  = argmin_r  I_c(r) + 1/2l || r - ( y - l w ) || ^2
+	 *                  = prox_{l, I_c} ( y - l w )
+	 *
+	 * AMA -- Goldstein
+	 * H = J_0  ; G = G ; A = Id ; B = -H'
+	 *
+	 * x = argmin J_0(x) + <v, -x>  = argmin .5 x' M^-1 x - x'(M^-1 f + v) = f + M v
+	 * r
+	 *   = argmin  G(r) + <v, H'r> + gamma/2 || H'r - x  ||
+	 *   = argmin Ic(r) + <H v + w, r> + gamma/2 || H'r - x  ||
+	 *   = argmin Ic(r) + <H v + w, r> + gamma/2 < H H'r^k - H x, r > + 1/2l || r - r^k ||
+	 *   = argmin Ic(r) + <H v + w, r> + gamma/2 < H H'r^k - H x, r > + 1/2l || r - r^k ||
+	 *   = prox_{Ic,l}(  r^k - l (H v + w) - l gamma/2 ( H H'r^k - H x ) )
+	 *   = Pi_Kmu (  r - l H ( H'r - x ) - l gamma/2 ( Hv + w ) )
+	 *
+	 * v = v + gamma ( H' r - x )
+	 *
+	 * ADMM -- Boyd
+	 * min G(r) + J_0( H'r )
+	 * f = G ; g = J ; A = H'
+	 *
+	 * r = prox_g,G ( r - g/l H ( H'r - z + u ) )
+	 *   = Pi_Kmu (  r - g/l H ( H'r - z + u ) - g w )
+	 * z = prox_{l,J_0} ( u - H'r )
+	 *   = argmin .5 z M^-1 z - z' M^-1 f + 1/2l || z - (u - H'r) ||^2
+	 *   = argmin .5 z ( M^-1 +I/2l ) z - z' ( M^-1 f + (u - H'r) )
+	 *   = ( M^-1 + 1/2l )^-1  ( M^-1 f + 1/l (u - H'r) )
+	 * u = u + H'r - z
+	 *
+	 * avec u/l = v, u = l v
+	 *
+	 * r = prox_g,G ( r - g H ( (H'r - z)/l + v ) )
+	 *   = Pi_Kmu (  r - 1/l H ( H'r - z ) - g( Hv + w ) )
+	 *
+	 * z = ( M^-1 + 1/2l )^-1  ( M^-1 f + v - H'r/l ) )
+	 *   = f + Mv ( pour 1/lambda = 0 )
+	 *
+	 * v = v + 1/l ( H'r - z )
+	 *
+	 * Chambolle Pock
+	 * min F(H'r) + G(r)
+	 * F = J_0 ; G = G ; K = H'
+	 *
+	 * v = prox_F*,s ( v + s H' r_ )
+	 * r = prox_G,l  ( r - l H v ) = prox_Ic,l ( r - l H v - l w )
+	 *   = PKmu ( r - (Hv + w) )
+	 * r_ = r + t ( r - r_{k-1} )
+	 *
+	 *
+	 * prox_F*,s = v - s prox_{F, 1/s}( v/s )
+	 *           = v - s argmin( J_0(x) + s/2 || x - v/s  || )
+	 *           = v - s argmin( .5 x'M^-1 x - x'(M^-1 f) + s/2 || x - v/s  || )
+	 *           = v - s argmin( .5 x' ( M^-1 + s I ) x - x'(M^-1 f + v) )
+	 *           = v - s ( M^-1 + s I )^-1 ( x'(M^-1 f + v) )
+	 *
+	 */
+
+	 std::cout << v.transpose() << std::endl ;
+
+	 r.setZero() ;
+	 v.setZero() ;
+
+	 lambda = 1.e-1 ;
+	 gamma  = 5.e-2 ;
+
+	 for( unsigned k = 0 ; k < 100 ; ++k ) {
+		 x = MassMat * v + f ;
+		 ut = H*v + w ;
+
+		 r = r - gamma * H * ( H.transpose() * r - x ) - .5 * lambda * ut ;
+		 pg.projectOnConstraints( Pkmu, r ) ;
+
+//		 std::cout << (H.transpose() * r -x).squaredNorm() << std::endl ;
+		 std::cout << k << "   " << pg.eval( Pkmu, ut, r ) << std::endl;
+
+		 v += lambda * ( H.transpose() * r - x ) ;
+
+	 }
+
+	 std::cout << v.transpose() << std::endl ;
 }

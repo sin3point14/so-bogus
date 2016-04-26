@@ -41,7 +41,7 @@ struct QuadraticProxOp
 					 const AffineVec& affinePart )
 		: m_coefficient( lambda ), m_linearOp( linearExpr ), m_affinePart( affinePart )
 	{
-		assert( ( m_coefficient > 0 ) ^ ( ForAMA ) ) ;
+		//assert( ( m_coefficient > 0 ) ^ ( ForAMA ) ) ;
 	}
 
 	//! Evaluates prox_{J, 1/coeff}( rhs/coeff )
