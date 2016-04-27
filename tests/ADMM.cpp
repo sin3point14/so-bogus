@@ -15,9 +15,9 @@ static void ack( unsigned iter, double err ) {
 }
 
 
-//#define AMA
-//#define ACC
-//#define CB
+//#define TEST_PG
+#define TEST_PRIMAL
+#define TEST_DUAL
 
 
 TEST( ADMM, Small )
@@ -85,8 +85,10 @@ TEST( ADMM, Small )
 	Eigen::VectorXd sol( 6 ) ;
 	sol << 0.0152695, 0.0073010, 0.0022325, 0.0, 0.0, 0.0 ;
 
-	Eigen::VectorXd x( W.rows() ) ;
+	Eigen::VectorXd x( W.rows() ), v (MassMat.rows()) ;
 	double res = -1 ;
+
+#ifdef TEST_PG
 
 //	bogus::GaussSeidel< WType > gs( W ) ;
 //	gs.callback().connect( &ack );
@@ -104,11 +106,11 @@ TEST( ADMM, Small )
 	res = pg.solve( bogus::SOC3D( 2, mu ), b, x ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 
-	Eigen::VectorXd v = InvMassMat * ( H.transpose() * x - f ) ;
+	v = InvMassMat * ( H.transpose() * x - f ) ;
 	std::cout << "Optimal v " << v.transpose() << std::endl ;
 	std::cout << "Optimal r " << x.transpose() << std::endl ;
 	std::cout << " J = " << v.transpose() * ( .5 * MassMat * v + f ) << std::endl ;
-
+#endif
 	// Test ADMM
 
 	// J = .5 * vMv + f'v
@@ -129,6 +131,8 @@ TEST( ADMM, Small )
 	Eigen::ArrayXd imu = 1./Eigen::ArrayXd::Map( mu, 2 ) ;
 	bogus::SOC3D Pkmu ( imu.size(), mu ) ;
 	bogus::SOC3D Pkimu( imu.size(), imu.data() ) ;
+
+#ifdef TEST_PRIMAL
 
 	MType InvMLambda ;
 	InvMLambda.cloneStructure( MassMat ) ;
@@ -156,7 +160,9 @@ TEST( ADMM, Small )
 
 	res = admm.solve< bogus::admm::Accelerated >( Pkimu, prox, w, v, r ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
+#endif
 
+#ifdef TEST_DUAL
 	std::cout << " ============= " << std::endl ;
 	std::cout << " TEST DUAL " << std::endl ;
 
@@ -230,31 +236,7 @@ TEST( ADMM, Small )
 	 *
 	 */
 
-	 std::cout << v.transpose() << std::endl ;
-#ifdef TEST_INLINE
-	 r.setZero() ;
-	v = InvMassMat * ( H.transpose() * r - f ) ;
-
-	 lambda = 1.e-1 ;
-	 gamma  = 2.e-1 ;
-
-	 for( unsigned k = 0 ; k < 300 ; ++k ) {
-		 x = MassMat * v + f ;
-		 ut = H*v + w ;
-
-		 r = r - lambda * ( gamma * H * ( H.transpose() * r - x ) + ut ) ;
-		 pg.projectOnConstraints( Pkmu, r ) ;
-
-		 std::cout << (H.transpose() * r -x).squaredNorm() << std::endl ;
-//		 std::cout << k << "   " << pg.eval( Pkmu, ut, r ) << std::endl;
-
-		 v += gamma * ( H.transpose() * r - x ) ;
-
-	 }
-
-	 std::cout << " ============= " << std::endl ;
-#endif
-	r.setOnes() ;
+	r.setZero() ;
 	v = InvMassMat * ( H.transpose() * r - f ) ;
 
 	bogus::DualAMA< HType > dama( H ) ;
@@ -264,8 +246,12 @@ TEST( ADMM, Small )
 	dama.setProjStepSize(1.e-1);
 	dama.setTol(1.e-8);
 
+	dama.setLineSearchIterations(0);
+	dama.setLineSearchOptimisticFactor(1.25);
+
 	res = dama.solve< bogus::admm::Accelerated >( Pkmu, MassMat, f, w, v, r ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 
 	 std::cout << v.transpose() << std::endl ;
+#endif
 }

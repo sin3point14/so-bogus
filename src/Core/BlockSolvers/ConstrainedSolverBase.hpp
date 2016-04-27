@@ -30,6 +30,7 @@ public:
 
 	//! Sets whether the solver will use the infinity norm instead of the l1 one to compute the global residual from the local ones
 	void useInfinityNorm( bool useInfNorm ) { m_useInfinityNorm = useInfNorm ; }
+	bool usesInfinityNorm( ) const { return m_useInfinityNorm ; }
 
 	//! Eval the current global residual as a function of the local ones
 	/*! \p y should be such that \p y = \ref m_matrix * \p x + rhs

@@ -159,6 +159,26 @@ public:
 	Scalar fpStepSize() const { return m_fpStepSize ; }
 	Scalar projStepSize() const { return m_projStepSize ; }
 
+	// LS
+
+	//! Sets the maximum number of line-search iterations
+	void setLineSearchIterations( const unsigned lsIterations )
+	{ m_lsIters = lsIterations ; }
+
+	//! Sets the amount by which the step size will be multiplied at the beginninf of each PG iteration.
+	//! Should be greater than 1
+	void setLineSearchOptimisticFactor( const Scalar lsOptimisticFactor )
+	{ m_lsOptimisticFactor = lsOptimisticFactor ; }
+
+	//! Sets the amount by which the step size will be multiplied at the end of each line-search iterations.
+	//! Should be in ]0,1[
+	void setLineSearchPessimisticFactor( const Scalar lsPessimisticFactor )
+	{ m_lsPessimisticFactor = lsPessimisticFactor ; }
+
+	unsigned lineSearchIterations() const { return m_lsIters ; }
+	Scalar lineSearchOptimisticFactor() const { return m_lsOptimisticFactor ; }
+	Scalar lineSearchPessimisticFactor() const { return m_lsPessimisticFactor ; }
+
 protected:
 
 	typedef typename Base::Index Index ;
@@ -172,6 +192,10 @@ protected:
 		m_fpStepSize = 1.e-1 ;
 		m_projStepSize = 1.e-1 ;
 
+		m_lsIters = 6 ;
+		m_lsOptimisticFactor = 1.25 ;
+		m_lsPessimisticFactor = .5 ;
+
 		m_defaultVariant = admm::Accelerated ;
 	}
 
@@ -183,6 +207,10 @@ protected:
 	Scalar m_projStepSize ;
 
 	admm::Variant m_defaultVariant ;
+
+	unsigned m_lsIters ;
+	Scalar m_lsOptimisticFactor ;
+	Scalar m_lsPessimisticFactor ;
 
 } ;
 

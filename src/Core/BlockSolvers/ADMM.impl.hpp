@@ -132,8 +132,11 @@ ADMM< BlockMatrixType >::solve(
 		ut = b ;
 		m_matrix->template multiply<false>( x, ut, 1, 1 ) ;
 
-
-		res = this->eval( law, r, ut ) ;
+		res = this->eval( law, r, ut )
+				+ (	this->usesInfinityNorm()
+					? (ut-z).template lpNorm< Eigen::Infinity >()
+					: (ut-z).squaredNorm() / (1 + ut.rows() ) ) ;
+				;
 		this->callback().trigger( adIter, res );
 
 		if( res < this->tol() )
@@ -143,9 +146,7 @@ ADMM< BlockMatrixType >::solve(
 		z  = ut - inv_gamma * r ;
 		this->projectOnConstraints( law, z ) ;
 
-		if( variant == admm::Accelerated ) {
-
-			if( res_prev < res ) theta_prev = 1 ; //Restart
+		if( variant == admm::Accelerated && res < res_prev ) {
 
 			y = ut - z - inv_gamma * r ;
 			const Scalar beta = bogus::pg_impl::nesterov_inertia( theta_prev, 0. ) ;
@@ -158,6 +159,10 @@ ADMM< BlockMatrixType >::solve(
 
 		} else {
 			r += gamma * ( z - ut) ;
+
+			zacc = z ; z_prev = z ;
+			y_prev = - inv_gamma * r ;
+			theta_prev = 1 ;
 		}
 
 //		const Scalar g = (ut - z).squaredNorm() ;
@@ -179,53 +184,108 @@ DualAMA< BlockMatrixType >::solve(
 		const RhsT &f, const RhsT &w, ResT &v, ResT &r ) const
 {
 
-	const Scalar lambda = projStepSize() ;
+	Scalar lambda = projStepSize() ;
 	const Scalar gamma  = fpStepSize() ;
 
 	Scalar res = -1 ;
 
-	typename GlobalProblemTraits::DynVector x, ut ;
+	typename GlobalProblemTraits::DynVector x, ut, gap, Hr ( v.rows() ), g ;
 
 	// Nesterov acceleration
 	typename GlobalProblemTraits::DynVector y, y_prev = v ;
 	Scalar theta_prev = 1. ; // Previous Nesterov acceleration
 	Scalar res_prev = -1 ;
 
-	for( unsigned adIter = 0 ; adIter < m_maxIters ; ++ adIter ) {
+	// Line search
+	typename GlobalProblemTraits::DynVector rs ;
 
-		// AMA
+	m_matrix->template multiply< true >( r, Hr, 1, 0 ) ;
 
-		x = A * v + f ;
+	for( unsigned adIter = 0 ; adIter < m_maxIters ; ++ adIter )
+	{
+
+		x  = f ;
+		A.template multiply< false >( v, x, 1, 1 ) ;
+		gap = Hr - x ;
+
 		ut = w ;
 		m_matrix->template multiply<false>( v, ut, 1, 1 ) ;
 
-//		std::cout << (m_matrix->transpose() * r -x).squaredNorm() << std::endl ;
-		res = this->eval( law, ut, r ) ;
+
+		// Eval current reisual,  exit if small enough
+		res = this->eval( law, ut, r ) +
+				( this->usesInfinityNorm()
+				  ? gap.template lpNorm< Eigen::Infinity >()
+				  : gap.squaredNorm() / (1 + gap.rows() ) ) ;
+
 		this->callback().trigger( adIter, res );
 
 		if( res < this->tol() )
 			break ;
 
-		r = r - lambda * ( gamma * m_matrix->derived() * ( m_matrix->transpose() * r - x ) + ut ) ;
-		this->projectOnConstraints( law, r ) ;
 
-
-		if( variant == admm::Accelerated ) {
-
-			if( res_prev < res ) theta_prev = 1 ; //Restart
-
-			y = v + gamma * ( m_matrix->transpose() * r - x ) ;
-			const Scalar beta = bogus::pg_impl::nesterov_inertia( theta_prev, 0. ) ;
-
-			v = y + beta * ( y - y_prev ) ; // Over-relaxation
-			y_prev = y ;
-
+		// Acceleration
+		Scalar beta = 0 ;
+		if ( variant == admm::Accelerated && res < res_prev ) {
+			beta =  bogus::pg_impl::nesterov_inertia( theta_prev, 0. ) ;
 		} else {
-			v += gamma * ( m_matrix->transpose() * r - x ) ;
+			theta_prev = 1 ;
 		}
 
 
+		g = ut ;
+		m_matrix->template multiply< false >( gap, g, gamma, 1 ) ;
+
+		// (Optional) Line search
+		if( lineSearchIterations() == 0 ) {
+			r -= lambda * g ;
+			this->projectOnConstraints( law, r ) ;
+
+			m_matrix->template multiply< true >( r, Hr, 1, 0 ) ;
+
+		} else {
+
+			// TODO avoid performing extra A multiplication by keeping LS results
+
+			const Scalar h0 = gap.squaredNorm() ;
+
+
+			lambda *= lineSearchOptimisticFactor() ;
+			for( unsigned lsIter = 0 ; lsIter < lineSearchIterations() ; ++lsIter ) {
+
+				rs = r - lambda * g ;
+				this->projectOnConstraints( law, rs ) ;
+				m_matrix->template multiply< true >( rs, Hr, 1, 0 ) ;
+
+				y = v + gamma * ( Hr - x ) ;
+				y += beta * ( y - y_prev ) ;
+
+				gap = Hr - f ;
+				A.template multiply< false >( y, gap, -1, 1 ) ;
+
+				Scalar h = gap.squaredNorm() ;
+
+				if( h < h0 ) {
+//					std::cout << lsIter << " [ "  << lambda<< " ] " << " \t " << h << " vs " << h0 << std::endl ;
+					break ;
+				}
+
+				lambda *= lineSearchPessimisticFactor() ;
+			}
+
+			r = rs ;
+
+		}
+
+		// (end line-search)
+
+
+		y = v + gamma * ( Hr - x ) ;
+		v = y +  beta * ( y  - y_prev ) ;
+
+		y_prev   = y ;
 		res_prev = res ;
+
 
 	}
 
