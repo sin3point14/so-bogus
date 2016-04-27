@@ -235,15 +235,10 @@ double MecheFrictionProblem::solve(
 		if( maxIters != 0 ) pg.setMaxIters( maxIters );
 		pg.useInfinityNorm( useInfinityNorm ) ;
 
+		pg.setDefaultVariant( projected_gradient::Conjugated );
+
 		if( staticProblem || cadouxIters == 0 )
 		{
-			if( !staticProblem )
-			{
-				if( m_out )
-					*m_out << "Cannot solve a friction problem with a ProjectedGradient!" << std::endl ;
-				return -1 ;
-			}
-
 			pg.callback().connect( callback );
 			res = m_dual->solveWith( pg, r_loc.data() ) ;
 		} else {
