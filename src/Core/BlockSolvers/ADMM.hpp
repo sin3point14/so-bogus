@@ -102,6 +102,90 @@ protected:
 
 } ;
 
+
+//! Dual AMA iterative solver.
+/*!
+	Minimizes .5 r' M A^-1 M' r + r' ( w - M A^-1 f ) + Ic( r )
+
+	as min H(x) + G(r)  , x = M' r
+	with H(x) = .5 x' A^-1 x - x' A^-1 f
+		 G(r) = Ic(r) + r'w
+
+	thanks to the identities
+	 prox_{l,G} (y) = prox_{l,Ic}( y - lw ) = Pi_C ( y - lw )
+
+	 inf_x  H(x) - < v, x > = A v + f
+
+*/
+template < typename BlockMatrixType >
+class DualAMA : public ConstrainedSolverBase< DualAMA, BlockMatrixType >
+{
+public:
+	typedef ConstrainedSolverBase< bogus::DualAMA, BlockMatrixType > Base ;
+
+	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
+	typedef typename GlobalProblemTraits::Scalar Scalar ;
+
+	//! Default constructor -- you will have to call setMatrix() before using the solve() function
+	DualAMA( ) : Base() { init() ; }
+	//! Constructor with the system matrix
+	explicit DualAMA( const BlockObjectBase< BlockMatrixType > & matrix ) : Base()
+	{ init() ; Base::setMatrix( matrix ) ; }
+
+	template < admm::Variant variant, typename NSLaw, typename MatrixT, typename RhsT, typename ResT >
+	Scalar solve(
+			const NSLaw &law, const BlockObjectBase< MatrixT >& A,
+			const RhsT &f, const RhsT &b,
+			ResT &x, ResT &r ) const ;
+
+	DualAMA& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix )
+	{
+		m_matrix = &matrix ;
+		Base::updateScalings() ;
+		return *this ;
+	}
+
+	//! Sets the step size for updating the dual variable (forces).
+	void setFpStepSize( const Scalar size )
+	{ m_fpStepSize = size ; }
+
+	void setProjStepSize( const Scalar size )
+	{ m_projStepSize = size ; }
+
+	//! Sets the variant that will be used when calling solve() without template arguments
+	void setDefaultVariant( admm::Variant variant )
+	{ m_defaultVariant = variant ; }
+
+	Scalar fpStepSize() const { return m_fpStepSize ; }
+	Scalar projStepSize() const { return m_projStepSize ; }
+
+protected:
+
+	typedef typename Base::Index Index ;
+
+	//! Sets up the default values for all parameters
+	void init()
+	{
+		m_tol = 1.e-6 ;
+		m_maxIters = 300 ;
+
+		m_fpStepSize = 1.e-1 ;
+		m_projStepSize = 1.e-1 ;
+
+		m_defaultVariant = admm::Accelerated ;
+	}
+
+	using Base::m_matrix ;
+	using Base::m_maxIters ;
+	using Base::m_tol ;
+
+	Scalar m_fpStepSize ;
+	Scalar m_projStepSize ;
+
+	admm::Variant m_defaultVariant ;
+
+} ;
+
 } //namespace bogus
 
 

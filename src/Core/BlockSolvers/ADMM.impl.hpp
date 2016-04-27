@@ -112,6 +112,7 @@ ADMM< BlockMatrixType >::solve(
 
 	// Nesterov acceleration
 	typename GlobalProblemTraits::DynVector y, y_prev = - inv_gamma * r ;
+	typename GlobalProblemTraits::DynVector zacc = z, z_prev = z ;
 	Scalar theta_prev = 1. ; // Previous Nesterov acceleration
 	Scalar res_prev = -1 ;
 
@@ -123,7 +124,7 @@ ADMM< BlockMatrixType >::solve(
 		} else {
 			// ADMM
 			prox_arg = x ;
-			ut = r + gamma*(z - ut) ; //Re-use ut as we no-longer need its current value
+			ut = r + gamma*(zacc - ut) ; //Re-use ut as we no-longer need its current value
 			m_matrix->template multiply<true>( ut, prox_arg, 1, 1./lambda ) ;
 		}
 		op.eval( prox_arg, x ) ;
@@ -152,6 +153,9 @@ ADMM< BlockMatrixType >::solve(
 			r = - gamma * ( y + beta * ( y - y_prev ) ) ; // Over-relaxation
 			y_prev = y ;
 
+			zacc   = z + beta * (z - z_prev) ;
+			z_prev = z ;
+
 		} else {
 			r += gamma * ( z - ut) ;
 		}
@@ -166,6 +170,69 @@ ADMM< BlockMatrixType >::solve(
 	return res ;
 
 }
+
+template < typename BlockMatrixType >
+template < admm::Variant variant, typename NSLaw, typename MatrixT, typename RhsT, typename ResT >
+typename DualAMA< BlockMatrixType >::Scalar
+DualAMA< BlockMatrixType >::solve(
+		const NSLaw &law, const BlockObjectBase< MatrixT >& A,
+		const RhsT &f, const RhsT &w, ResT &v, ResT &r ) const
+{
+
+	const Scalar lambda = projStepSize() ;
+	const Scalar gamma  = fpStepSize() ;
+
+	Scalar res = -1 ;
+
+	typename GlobalProblemTraits::DynVector x, ut ;
+
+	// Nesterov acceleration
+	typename GlobalProblemTraits::DynVector y, y_prev = v ;
+	Scalar theta_prev = 1. ; // Previous Nesterov acceleration
+	Scalar res_prev = -1 ;
+
+	for( unsigned adIter = 0 ; adIter < m_maxIters ; ++ adIter ) {
+
+		// AMA
+
+		x = A * v + f ;
+		ut = w ;
+		m_matrix->template multiply<false>( v, ut, 1, 1 ) ;
+
+//		std::cout << (m_matrix->transpose() * r -x).squaredNorm() << std::endl ;
+		res = this->eval( law, ut, r ) ;
+		this->callback().trigger( adIter, res );
+
+		if( res < this->tol() )
+			break ;
+
+		r = r - lambda * ( gamma * m_matrix->derived() * ( m_matrix->transpose() * r - x ) + ut ) ;
+		this->projectOnConstraints( law, r ) ;
+
+
+		if( variant == admm::Accelerated ) {
+
+			if( res_prev < res ) theta_prev = 1 ; //Restart
+
+			y = v + gamma * ( m_matrix->transpose() * r - x ) ;
+			const Scalar beta = bogus::pg_impl::nesterov_inertia( theta_prev, 0. ) ;
+
+			v = y + beta * ( y - y_prev ) ; // Over-relaxation
+			y_prev = y ;
+
+		} else {
+			v += gamma * ( m_matrix->transpose() * r - x ) ;
+		}
+
+
+		res_prev = res ;
+
+	}
+
+	return res ;
+
+}
+
 
 } //namespace bogus
 

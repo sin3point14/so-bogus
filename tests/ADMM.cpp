@@ -151,9 +151,11 @@ TEST( ADMM, Small )
 
 	admm.setMaxIters(1000);
 	admm.setStepSize(1.e-2);
+	admm.setTol(1.e-8);
 	admm.callback().connect( &ack );
 
-	admm.solve< bogus::admm::Accelerated >( Pkimu, prox, w, v, r ) ;
+	res = admm.solve< bogus::admm::Accelerated >( Pkimu, prox, w, v, r ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
 
 	std::cout << " ============= " << std::endl ;
 	std::cout << " TEST DUAL " << std::endl ;
@@ -229,7 +231,7 @@ TEST( ADMM, Small )
 	 */
 
 	 std::cout << v.transpose() << std::endl ;
-
+#ifdef TEST_INLINE
 	 r.setZero() ;
 	v = InvMassMat * ( H.transpose() * r - f ) ;
 
@@ -240,15 +242,30 @@ TEST( ADMM, Small )
 		 x = MassMat * v + f ;
 		 ut = H*v + w ;
 
-		 r = r - lambda * gamma * H * ( H.transpose() * r - x ) - lambda * ut ;
+		 r = r - lambda * ( gamma * H * ( H.transpose() * r - x ) + ut ) ;
 		 pg.projectOnConstraints( Pkmu, r ) ;
 
-//		 std::cout << (H.transpose() * r -x).squaredNorm() << std::endl ;
-		 std::cout << k << "   " << pg.eval( Pkmu, ut, r ) << std::endl;
+		 std::cout << (H.transpose() * r -x).squaredNorm() << std::endl ;
+//		 std::cout << k << "   " << pg.eval( Pkmu, ut, r ) << std::endl;
 
 		 v += gamma * ( H.transpose() * r - x ) ;
 
 	 }
+
+	 std::cout << " ============= " << std::endl ;
+#endif
+	r.setOnes() ;
+	v = InvMassMat * ( H.transpose() * r - f ) ;
+
+	bogus::DualAMA< HType > dama( H ) ;
+	dama.callback().connect( &ack );
+
+	dama.setFpStepSize(1.e-1);
+	dama.setProjStepSize(1.e-1);
+	dama.setTol(1.e-8);
+
+	res = dama.solve< bogus::admm::Accelerated >( Pkmu, MassMat, f, w, v, r ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
 
 	 std::cout << v.transpose() << std::endl ;
 }
