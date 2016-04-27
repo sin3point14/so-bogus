@@ -100,6 +100,7 @@ struct PgMethod {
 			Mx ( b.rows() ),
 			y  ( b.rows() ), // = Mx +b  (gradient)
 			xs ( x.rows() ), // tentative new value for x
+			s  ( b.rows() ), // Duality COV
 			prev_proj,
 			x_best
 			;
@@ -108,7 +109,6 @@ struct PgMethod {
 
 		// Unconstrained objective function
 		Mx = pg.matrix()*x ;
-		Scalar J = x.dot( .5 * Mx + b ) ;
 
 		//Nesterov inertia
 		Scalar theta_prev = 1., q = 0 ;
@@ -130,6 +130,10 @@ struct PgMethod {
 			if( test_residual(pg, law, pgIter, x, y, x_best, min_res) )
 				break ;
 
+			pg.dualityCOV( law, y, s ) ;
+			y += s ;
+			const Scalar J = x.dot( .5 * Mx + b + s ) ;
+
 			Scalar Js = J ;
 			alpha *= pg.lineSearchOptimisticFactor() ;
 
@@ -143,7 +147,7 @@ struct PgMethod {
 				pg.projectOnConstraints( law, xs ) ;
 
 				Mx = pg.matrix() * xs ;
-				Js = xs.dot( .5 * Mx + b ) ;
+				Js = xs.dot( .5 * Mx + b + s ) ;
 
 				const Scalar decr = y.dot(xs - x) ;
 
@@ -160,12 +164,10 @@ struct PgMethod {
 				x = xs + beta * (xs - prev_proj) ;
 
 				Mx = pg.matrix() * x ;
-				J = x.dot( .5 * Mx + b ) ;
 
 			} else {
 
 				x = xs ;
-				J = Js ;
 
 				theta_prev = 1. ; //APGD
 			}
@@ -195,6 +197,7 @@ struct PgMethod< projected_gradient::Standard > {
 			Mx ( b.rows() ),
 			y  ( b.rows() ), // = Mx +b  (gradient)
 			xs ( x.rows() ), // tentative new value for x
+			s  ( b.rows() ), // Duality COV
 			proj_grad( b.rows() ),
 			x_best
 			;
@@ -203,7 +206,6 @@ struct PgMethod< projected_gradient::Standard > {
 
 		// Unconstrained objective function
 		Mx = pg.matrix()*x ;
-		Scalar J = x.dot( .5 * Mx + b ) ;
 
 		Scalar alpha = 1 ;
 
@@ -215,6 +217,10 @@ struct PgMethod< projected_gradient::Standard > {
 			y = Mx + b ;
 			if( test_residual(pg, law, pgIter, x, y, x_best, min_res) )
 				break ;
+
+			pg.dualityCOV( law, y, s ) ;
+			y += s ;
+			const Scalar J = x.dot( .5 * Mx + b + s ) ;
 
 			xs = x - y ;
 			pg.projectOnConstraints( law, xs ) ;
@@ -229,10 +235,9 @@ struct PgMethod< projected_gradient::Standard > {
 			// Line-search
 			Scalar Js ;
 			alpha = std::min(1., alpha*pg.lineSearchOptimisticFactor() ) ;
-			armijo_ls( pg, law, x, b, proj_grad, y, J, alpha, xs, Js, Mx ) ;
+			armijo_ls( pg, law, x, b+s, proj_grad, y, J, alpha, xs, Js, Mx ) ;
 
 			x = xs ;
-			J = Js ;
 		}
 
 		x = x_best ;
@@ -255,6 +260,7 @@ struct PgMethod< projected_gradient::Conjugated > {
 			Mx ( b.rows() ),
 			y  ( b.rows() ), // = Mx +b  (gradient)
 			xs ( x.rows() ), // tentative new value for x
+			s  ( b.rows() ), // Duality COV
 			dir, prev_dir, prev_proj_grad,
 			x_best
 			;
@@ -279,6 +285,10 @@ struct PgMethod< projected_gradient::Conjugated > {
 			y = Mx + b ;
 			if( test_residual(pg, law, pgIter, x, y, x_best, min_res) )
 				break ;
+
+			pg.dualityCOV( law, y, s ) ;
+			y += s ;
+			const Scalar J = x.dot( .5 * Mx + b + s ) ;
 
 			{
 				// xs ~ projection of gradient on tangent cone
@@ -312,13 +322,12 @@ struct PgMethod< projected_gradient::Conjugated > {
 
 			Scalar Js ;
 			alpha = alpha*pg.lineSearchOptimisticFactor() ;
-			armijo_ls( pg, law, x, b, dir, y, J, alpha, xs, Js, Mx ) ;
+			armijo_ls( pg, law, x, b+s, dir, y, J, alpha, xs, Js, Mx ) ;
 
 
 			prev_dir = (xs - x) / alpha ;
 
 			x = xs ;
-			J = Js ;
 
 		}
 
@@ -343,8 +352,9 @@ struct PgMethod< projected_gradient::SPG > {
 			Mx ( b.rows() ),
 			y  ( b.rows() ), // = Mx +b  (gradient)
 			xs ( x.rows() ), // tentative new value for x
+			s  ( b.rows() ), // Duality COV
 			z ( x.rows() ),
-			s ( x.rows() ),
+			w ( x.rows() ),
 			prev_proj,
 			x_best
 			;
@@ -369,6 +379,9 @@ struct PgMethod< projected_gradient::SPG > {
 			if( test_residual(pg, law, pgIter, x, y, x_best, min_res) )
 				break ;
 
+			pg.dualityCOV( law, y, s ) ;
+			y += s ;
+
 			xs = x - alpha * y ;
 			pg.projectOnConstraints( law, xs ) ;
 
@@ -376,21 +389,22 @@ struct PgMethod< projected_gradient::SPG > {
 			{
 				const Scalar beta = nesterov_inertia( theta_prev, q ) ;
 
-				s = ( xs + beta * (xs - prev_proj) ) - x ;
-				x += s ;
+				w = ( xs + beta * (xs - prev_proj) ) - x ;
+				x += w ;
 
 			} else {
-				s = xs - x ;
+				w = xs - x ;
 				x = xs ;
 
 				theta_prev = 1. ;
 			}
 
+			z = -Mx ;
 			Mx = pg.matrix() * x ;
 			prev_proj = xs ;
 
-			z = Mx + b - y ;
-			alpha = s.dot(z) / z.squaredNorm() ;
+			z += Mx ;
+			alpha = w.dot(z) / z.squaredNorm() ;
 			alpha = std::min( a_max, std::max(a_min, alpha ) );
 
 		}

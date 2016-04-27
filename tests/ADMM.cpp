@@ -88,23 +88,30 @@ TEST( ADMM, Small )
 	Eigen::VectorXd x( W.rows() ), v (MassMat.rows()) ;
 	double res = -1 ;
 
+	Eigen::ArrayXd imu = 1./Eigen::ArrayXd::Map( mu, 2 ) ;
+
+	bogus::SOC3D Pkmu ( imu.size(), mu ) ;
+	bogus::Coulomb3D Cmu ( imu.size(), mu ) ;
+	bogus::SOC3D Pkimu( imu.size(), imu.data() ) ;
+
 #ifdef TEST_PG
 
-	bogus::GaussSeidel< WType > gs( W ) ;
-	gs.callback().connect( &ack );
+//	bogus::GaussSeidel< WType > gs( W ) ;
+//	gs.callback().connect( &ack );
 
-	x.setOnes() ;
-	res = gs.solve( bogus::SOCLaw< 3u, double, true, bogus::local_soc_solver::Hybrid >( 2, mu ), b, x ) ;
-	ASSERT_LT( res, 1.e-8 ) ;
-	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
+//	x.setOnes() ;
+//	res = gs.solve( bogus::SOCLaw< 3u, double, true, bogus::local_soc_solver::Hybrid >( 2, mu ), b, x ) ;
+//	ASSERT_LT( res, 1.e-8 ) ;
+//	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 
 	bogus::ProjectedGradient< WType > pg( W ) ;
 	pg.callback().connect( &ack );
 	pg.setTol( 1.e-8 );
 
-//	x.setOnes() ;
-//	res = pg.solve( bogus::SOC3D( 2, mu ), b, x ) ;
-//	ASSERT_LT( res, 1.e-8 ) ;
+	x.setOnes() ;
+	pg.setDefaultVariant( bogus::projected_gradient::SPG );
+	res = pg.solve( Cmu, b, x ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
 
 	v = InvMassMat * ( H.transpose() * x - f ) ;
 	std::cout << "Optimal v " << v.transpose() << std::endl ;
@@ -128,11 +135,6 @@ TEST( ADMM, Small )
 	Eigen::VectorXd z  = ut ;
 
 	Eigen::VectorXd tmp ;
-	Eigen::ArrayXd imu = 1./Eigen::ArrayXd::Map( mu, 2 ) ;
-
-	bogus::SOC3D Pkmu ( imu.size(), mu ) ;
-	bogus::Coulomb3D Cmu ( imu.size(), mu ) ;
-	bogus::SOC3D Pkimu( imu.size(), imu.data() ) ;
 
 #ifdef TEST_PRIMAL
 

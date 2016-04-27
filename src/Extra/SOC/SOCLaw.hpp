@@ -60,7 +60,7 @@ public:
 	{
 		typedef FischerBurmeister< Traits::dimension, typename Traits::Scalar, DeSaxceCOV > FBFunction ;
 
-				if(m_mu[problemIndex] < 0) return y.squaredNorm() ;
+		if(m_mu[problemIndex] < 0) return y.squaredNorm() ;
 
 		typename Traits::Vector fb( x.rows() ) ;
 		FBFunction::compute( m_mu[problemIndex], x, y, fb ) ;
