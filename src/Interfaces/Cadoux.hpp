@@ -77,14 +77,7 @@ static typename WType::Scalar solveCadoux(
 	{
 		minimizer.setTol( tolTighten * std::max( tol, std::min( res, 1. ) ) ) ;
 
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp parallel for
-#endif
-		for( std::ptrdiff_t i = 0 ; i < n ; ++i )
-		{
-			s[ Dimension*i ] = s.segment< Dimension-1 >( Dimension*i+1 ).norm() * mu[i] ;
-			s.segment< Dimension-1  >( Dimension*i+1 ).setZero() ;
-		}
+		minimizer.dualityCOV( coulombLaw, s, s ) ;
 
 		s += b_map ;
 		minimizer.solve( socLaw, s, r_map ) ;

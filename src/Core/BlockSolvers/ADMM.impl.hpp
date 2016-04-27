@@ -183,21 +183,27 @@ DualAMA< BlockMatrixType >::solve(
 		const NSLaw &law, const BlockObjectBase< MatrixT >& A,
 		const RhsT &f, const RhsT &w, ResT &v, ResT &r ) const
 {
+	typedef typename GlobalProblemTraits::DynVector DynVec ;
 
 	Scalar lambda = projStepSize() ;
 	const Scalar gamma  = fpStepSize() ;
 
 	Scalar res = -1 ;
 
-	typename GlobalProblemTraits::DynVector x, ut, gap, Hr ( v.rows() ), g ;
+	typename GlobalProblemTraits::DynVector x, ut, gap, Hr ( v.rows() ), g, s( r.rows() ) ;
+
+	const Segmenter< NSLaw::dimension, const DynVec, typename BlockMatrixType::Index >
+			 utSegmenter( ut, m_matrix->rowOffsets() ) ;
+	Segmenter< NSLaw::dimension, DynVec, typename BlockMatrixType::Index >
+			 sSegmenter( s, m_matrix->rowOffsets() ) ;
 
 	// Nesterov acceleration
-	typename GlobalProblemTraits::DynVector y, y_prev = v ;
+	DynVec y, y_prev = v ;
 	Scalar theta_prev = 1. ; // Previous Nesterov acceleration
 	Scalar res_prev = -1 ;
 
 	// Line search
-	typename GlobalProblemTraits::DynVector rs ;
+	DynVec rs ;
 
 	m_matrix->template multiply< true >( r, Hr, 1, 0 ) ;
 
@@ -210,7 +216,6 @@ DualAMA< BlockMatrixType >::solve(
 
 		ut = w ;
 		m_matrix->template multiply<false>( v, ut, 1, 1 ) ;
-
 
 		// Eval current reisual,  exit if small enough
 		res = this->eval( law, ut, r ) +
@@ -233,7 +238,8 @@ DualAMA< BlockMatrixType >::solve(
 		}
 
 
-		g = ut ;
+		this->dualityCOV( law, ut, s ) ;
+		g = ut + s ;
 		m_matrix->template multiply< false >( gap, g, gamma, 1 ) ;
 
 		// (Optional) Line search
@@ -258,7 +264,8 @@ DualAMA< BlockMatrixType >::solve(
 				m_matrix->template multiply< true >( rs, Hr, 1, 0 ) ;
 
 				y = v + gamma * ( Hr - x ) ;
-				y += beta * ( y - y_prev ) ;
+				y += beta * ( y - y_prev ) ; //Over Relaxation
+
 
 				gap = Hr - f ;
 				A.template multiply< false >( y, gap, -1, 1 ) ;
@@ -281,7 +288,7 @@ DualAMA< BlockMatrixType >::solve(
 
 
 		y = v + gamma * ( Hr - x ) ;
-		v = y +  beta * ( y  - y_prev ) ;
+		v = y +  beta * ( y  - y_prev ) ;  //Over Relaxation
 
 		y_prev   = y ;
 		res_prev = res ;

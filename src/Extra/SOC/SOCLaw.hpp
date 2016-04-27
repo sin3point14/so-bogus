@@ -60,7 +60,7 @@ public:
 	{
 		typedef FischerBurmeister< Traits::dimension, typename Traits::Scalar, DeSaxceCOV > FBFunction ;
 
-                if(m_mu[problemIndex] < 0) return y.squaredNorm() ;
+				if(m_mu[problemIndex] < 0) return y.squaredNorm() ;
 
 		typename Traits::Vector fb( x.rows() ) ;
 		FBFunction::compute( m_mu[problemIndex], x, y, fb ) ;
@@ -94,6 +94,17 @@ public:
 
 	//! Projects x on \f$ K_{ \mu } \f$
 	void projectOnConstraint( const unsigned problemIndex, typename Traits::Vector &x ) const ;
+
+	//! Computes the change of variable \p s so that (u + s) obey an associated rule
+	template< typename Segment >
+	void dualityCOV( const unsigned problemIndex, const Segment& u,
+					 typename Traits::Vector& s ) const
+	{
+		if( DeSaxceCOV ) {
+			Traits::np( s ) = m_mu[problemIndex] * Traits::tp(u).norm() ;
+			Traits::tp( s ).setZero() ;
+		} else	s.setZero() ;
+	}
 
 private:
 

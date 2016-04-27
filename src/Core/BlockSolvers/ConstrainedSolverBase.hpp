@@ -46,6 +46,10 @@ public:
 	template < typename NSLaw, typename VectorT >
 	void projectOnConstraints( const NSLaw &projector, VectorT &x ) const ;
 
+	//! Compute associated change of variable (see NSLaw)
+	template < typename NSLaw, typename RhsT, typename ResT >
+	void dualityCOV( const NSLaw &law, const RhsT &b, ResT &x ) const ;
+
 	template < typename NSLaw, typename RhsT, typename ResT >
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const
 	{

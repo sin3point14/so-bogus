@@ -15,8 +15,8 @@ static void ack( unsigned iter, double err ) {
 }
 
 
-//#define TEST_PG
-#define TEST_PRIMAL
+#define TEST_PG
+//#define TEST_PRIMAL
 #define TEST_DUAL
 
 
@@ -90,21 +90,21 @@ TEST( ADMM, Small )
 
 #ifdef TEST_PG
 
-//	bogus::GaussSeidel< WType > gs( W ) ;
-//	gs.callback().connect( &ack );
+	bogus::GaussSeidel< WType > gs( W ) ;
+	gs.callback().connect( &ack );
 
-//	x.setOnes() ;
-//	res = gs.solve( bogus::SOCLaw< 3u, double, true, bogus::local_soc_solver::Hybrid >( 2, mu ), b, x ) ;
-//	ASSERT_LT( res, 1.e-8 ) ;
-//	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
+	x.setOnes() ;
+	res = gs.solve( bogus::SOCLaw< 3u, double, true, bogus::local_soc_solver::Hybrid >( 2, mu ), b, x ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
+	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 
 	bogus::ProjectedGradient< WType > pg( W ) ;
 	pg.callback().connect( &ack );
 	pg.setTol( 1.e-8 );
 
-	x.setOnes() ;
-	res = pg.solve( bogus::SOC3D( 2, mu ), b, x ) ;
-	ASSERT_LT( res, 1.e-8 ) ;
+//	x.setOnes() ;
+//	res = pg.solve( bogus::SOC3D( 2, mu ), b, x ) ;
+//	ASSERT_LT( res, 1.e-8 ) ;
 
 	v = InvMassMat * ( H.transpose() * x - f ) ;
 	std::cout << "Optimal v " << v.transpose() << std::endl ;
@@ -129,7 +129,9 @@ TEST( ADMM, Small )
 
 	Eigen::VectorXd tmp ;
 	Eigen::ArrayXd imu = 1./Eigen::ArrayXd::Map( mu, 2 ) ;
+
 	bogus::SOC3D Pkmu ( imu.size(), mu ) ;
+	bogus::Coulomb3D Cmu ( imu.size(), mu ) ;
 	bogus::SOC3D Pkimu( imu.size(), imu.data() ) ;
 
 #ifdef TEST_PRIMAL
@@ -243,15 +245,17 @@ TEST( ADMM, Small )
 	dama.callback().connect( &ack );
 
 	dama.setFpStepSize(1.e-1);
-	dama.setProjStepSize(1.e-1);
-	dama.setTol(1.e-8);
+	dama.setProjStepSize(1.e0);
+	dama.setTol(1.e-16);
 
-	dama.setLineSearchIterations(0);
+	dama.setLineSearchIterations(4);
 	dama.setLineSearchOptimisticFactor(1.25);
 
-	res = dama.solve< bogus::admm::Accelerated >( Pkmu, MassMat, f, w, v, r ) ;
+//	res = dama.solve< bogus::admm::Standard >( Pkmu, MassMat, f, w, v, r ) ;
+	res = dama.solve< bogus::admm::Standard >( Cmu, MassMat, f, w, v, r ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 
 	 std::cout << v.transpose() << std::endl ;
+	 std::cout << r.transpose() << std::endl ;
 #endif
 }

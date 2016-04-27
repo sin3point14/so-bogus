@@ -96,8 +96,14 @@ typename Derived::BlockMatrixType::Scalar estimate_row_scaling( const typename D
 	typedef typename BlockMatrixTraits< Derived >::BlockType LocalMatrixType ;
 	typedef ProblemTraits< LocalMatrixType > GlobalProblemTraits ;
 
+	if ( mat.rows() != mat.cols() || mat.rowsOfBlocks() != mat.colsOfBlocks() ) {
+		// Non-square matrix
+		return 1. ;
+	}
+
 	const typename Derived::BlockPtr ptr = mat.diagonalBlockPtr( row ) ;
 	if( ptr == Derived::InvalidBlockPtr ) {
+		// Empty diagonal block
 		return 1. ;
 	} else {
 		return std::max( 1., GlobalProblemTraits::asConstMatrix( mat.block( ptr ) ).trace() ) ;
@@ -144,6 +150,30 @@ void ConstrainedSolverBase<  SolverType,BlockMatrixType >::projectOnConstraints(
 		lx = xSegmenter[ i ] ;
 		law.projectOnConstraint( i, lx ) ;
 		xSegmenter[ i ] = lx ;
+	}
+
+}
+
+template < template <typename> class SolverType, typename BlockMatrixType >
+template < typename NSLaw, typename RhsT, typename ResT >
+void ConstrainedSolverBase<  SolverType,BlockMatrixType >::dualityCOV(
+		const NSLaw &law, const RhsT &u, ResT &s ) const
+{
+	const Segmenter< NSLaw::dimension, const RhsT, typename BlockMatrixType::Index >
+			uSegmenter( u, m_matrix->rowOffsets() ) ;
+	Segmenter< NSLaw::dimension, ResT, typename BlockMatrixType::Index >
+			sSegmenter( s, m_matrix->rowOffsets() ) ;
+
+	const Index n = m_matrix->rowsOfBlocks() ;
+	typename NSLaw::Traits::Vector ls ;
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for private( ls )
+#endif
+	for( Index i = 0 ; i < n ; ++ i )
+	{
+		law.dualityCOV( i, uSegmenter[i], ls ) ;
+		sSegmenter[ i ] = ls ;
 	}
 
 }
