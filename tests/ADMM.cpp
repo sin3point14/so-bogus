@@ -181,10 +181,10 @@ TEST( ADMM, Small )
 	 * r
 	 *   = argmin  G(r) + <v, H'r> + gamma/2 || H'r - x  ||
 	 *   = argmin Ic(r) + <H v + w, r> + gamma/2 || H'r - x  ||
-	 *   = argmin Ic(r) + <H v + w, r> + gamma/2 < H H'r^k - H x, r > + 1/2l || r - r^k ||
-	 *   = argmin Ic(r) + <H v + w, r> + gamma/2 < H H'r^k - H x, r > + 1/2l || r - r^k ||
-	 *   = prox_{Ic,l}(  r^k - l (H v + w) - l gamma/2 ( H H'r^k - H x ) )
-	 *   = Pi_Kmu (  r - l H ( H'r - x ) - l gamma/2 ( Hv + w ) )
+	 *   = argmin Ic(r) + <H v + w, r> + gamma < H H'r^k - H x, r > + 1/2l || r - r^k ||
+	 *   = argmin Ic(r) + <H v + w + gamma ( H H'r^k - H x ), r > + 1/2l || r - r^k ||
+	 *   = prox_{Ic,l}(  r^k - l (H v + w) - l gamma ( H H'r^k - H x ) )
+	 *   = Pi_Kmu (  r - l gamma H ( H'r - x ) - l ( Hv + w ) )
 	 *
 	 * v = v + gamma ( H' r - x )
 	 *
@@ -231,22 +231,22 @@ TEST( ADMM, Small )
 	 std::cout << v.transpose() << std::endl ;
 
 	 r.setZero() ;
-	 v.setZero() ;
+	v = InvMassMat * ( H.transpose() * r - f ) ;
 
 	 lambda = 1.e-1 ;
-	 gamma  = 5.e-2 ;
+	 gamma  = 2.e-1 ;
 
-	 for( unsigned k = 0 ; k < 100 ; ++k ) {
+	 for( unsigned k = 0 ; k < 300 ; ++k ) {
 		 x = MassMat * v + f ;
 		 ut = H*v + w ;
 
-		 r = r - gamma * H * ( H.transpose() * r - x ) - .5 * lambda * ut ;
+		 r = r - lambda * gamma * H * ( H.transpose() * r - x ) - lambda * ut ;
 		 pg.projectOnConstraints( Pkmu, r ) ;
 
 //		 std::cout << (H.transpose() * r -x).squaredNorm() << std::endl ;
 		 std::cout << k << "   " << pg.eval( Pkmu, ut, r ) << std::endl;
 
-		 v += lambda * ( H.transpose() * r - x ) ;
+		 v += gamma * ( H.transpose() * r - x ) ;
 
 	 }
 
