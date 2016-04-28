@@ -32,7 +32,7 @@ enum Method
 template < typename MatrixType >
 struct ProblemTraits ;
 
-template < template <typename> class Method, typename BlockMatrixType >
+template < typename Derived, typename BlockMatrixType >
 class ConstrainedSolverBase ;
 
 template < typename BlockMatrixType >
@@ -40,6 +40,12 @@ class GaussSeidel ;
 
 template < typename BlockMatrixType >
 class ProjectedGradient ;
+
+template < typename BlockMatrixType >
+class ADMM ;
+
+template < typename BlockMatrixType >
+class DualAMA ;
 
 template < typename MatrixType >
 class TrivialPreconditioner ;

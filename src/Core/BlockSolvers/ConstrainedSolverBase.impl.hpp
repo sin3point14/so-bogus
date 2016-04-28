@@ -19,10 +19,10 @@
 namespace bogus {
 
 
-template < template <typename> class SolverType, typename BlockMatrixType >
+template < typename Derived, typename BlockMatrixType >
 template < typename NSLaw, typename RhsT, typename ResT >
-typename ConstrainedSolverBase< SolverType,BlockMatrixType >::Scalar
-ConstrainedSolverBase< SolverType,BlockMatrixType >::eval( const NSLaw &law,
+typename ConstrainedSolverBase< Derived, BlockMatrixType >::Scalar
+ConstrainedSolverBase< Derived, BlockMatrixType >::eval( const NSLaw &law,
 							const ResT &y, const RhsT &x ) const
 {
 	const Segmenter< NSLaw::dimension, const RhsT, typename BlockMatrixType::Index >
@@ -110,8 +110,8 @@ typename Derived::BlockMatrixType::Scalar estimate_row_scaling( const typename D
 	}
 }
 
-template < template <typename> class SolverType, typename BlockMatrixType >
-void ConstrainedSolverBase< SolverType,BlockMatrixType >::updateScalings()
+template < typename Derived, typename BlockMatrixType >
+void ConstrainedSolverBase< Derived,BlockMatrixType >::updateScalings()
 {
 	if( !m_matrix )
 	{
@@ -131,9 +131,9 @@ void ConstrainedSolverBase< SolverType,BlockMatrixType >::updateScalings()
 
 }
 
-template < template <typename> class SolverType, typename BlockMatrixType >
+template < typename Derived, typename BlockMatrixType >
 template < typename NSLaw, typename VectorT >
-void ConstrainedSolverBase<  SolverType,BlockMatrixType >::projectOnConstraints(
+void ConstrainedSolverBase<  Derived,BlockMatrixType >::projectOnConstraints(
 		const NSLaw &law, VectorT &x ) const
 {
 	Segmenter< NSLaw::dimension, VectorT, typename BlockMatrixType::Index >
@@ -154,9 +154,9 @@ void ConstrainedSolverBase<  SolverType,BlockMatrixType >::projectOnConstraints(
 
 }
 
-template < template <typename> class SolverType, typename BlockMatrixType >
+template < typename Derived, typename BlockMatrixType >
 template < typename NSLaw, typename RhsT, typename ResT >
-void ConstrainedSolverBase<  SolverType,BlockMatrixType >::dualityCOV(
+void ConstrainedSolverBase<  Derived,BlockMatrixType >::dualityCOV(
 		const NSLaw &law, const RhsT &u, ResT &s ) const
 {
 	const Segmenter< NSLaw::dimension, const RhsT, typename BlockMatrixType::Index >

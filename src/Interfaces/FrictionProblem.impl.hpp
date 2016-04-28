@@ -40,9 +40,9 @@ void applyPermutation(
 }
 
 
-template< unsigned Dimension, template <typename> class Method >
+template< unsigned Dimension, typename Method, typename MatrixT >
 static double solve( const DualFrictionProblem< Dimension >& dual,
-		const ConstrainedSolverBase< Method, typename DualFrictionProblem< Dimension >::WType > &gs,
+		const ConstrainedSolverBase< Method, MatrixT > &gs,
 		double *r, const bool staticProblem )
 {
 	typename Eigen::VectorXd::MapType r_map ( r, dual.W.rows() ) ;
@@ -62,9 +62,9 @@ static double solve( const DualFrictionProblem< Dimension >& dual,
 	return res ;
 }
 
-template< unsigned Dimension, template <typename> class Method >
+template< unsigned Dimension, typename Method, typename MatrixT >
 static double eval( const DualFrictionProblem< Dimension >& dual,
-		const ConstrainedSolverBase< Method, typename DualFrictionProblem< Dimension >::WType > &gs,
+		const ConstrainedSolverBase< Method, MatrixT > &gs,
 		const double *r_data, const bool staticProblem  )
 {
 	Eigen::VectorXd r = Eigen::VectorXd::Map( r_data, dual.W.rows() ) ;
@@ -83,9 +83,9 @@ static double eval( const DualFrictionProblem< Dimension >& dual,
 	return res ;
 }
 
-template< unsigned Dimension, template <typename> class Method >
+template< unsigned Dimension, typename Method, typename MatrixT >
 static double solveCadoux( const DualFrictionProblem< Dimension >& problem,
-		ConstrainedSolverBase< Method, typename DualFrictionProblem< Dimension >::WType > &minimizer,
+		ConstrainedSolverBase< Method, MatrixT > &minimizer,
 		double *r, const unsigned cadouxIterations, const Signal<unsigned, double> *callback )
 {
 	Eigen::Map< Eigen::VectorXd > r_map ( r, problem.W.rows() ) ;
@@ -102,9 +102,9 @@ static double solveCadoux( const DualFrictionProblem< Dimension >& problem,
 	return res ;
 }
 
-template< unsigned Dimension, template <typename> class Method >
+template< unsigned Dimension, typename Method, typename MatrixT >
 static double solveCadouxVel( const DualFrictionProblem< Dimension >& problem,
-		ConstrainedSolverBase< Method, typename DualFrictionProblem< Dimension >::WType > &minimizer,
+		ConstrainedSolverBase< Method, MatrixT > &minimizer,
 		double *u, const unsigned cadouxIterations, const Signal<unsigned, double> *callback )
 {
 	Eigen::Map< Eigen::VectorXd > u_map ( u, problem.W.rows() ) ;

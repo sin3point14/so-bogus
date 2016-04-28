@@ -22,23 +22,77 @@
 
 #include "../Core/BlockSolvers/GaussSeidel.impl.hpp"
 #include "../Core/BlockSolvers/ProjectedGradient.impl.hpp"
+#include "../Core/BlockSolvers/ADMM.impl.hpp"
 
 
 namespace bogus {
 
-template< unsigned Dimension >
-void DualFrictionProblem< Dimension >::computeFrom(PrimalFrictionProblem<Dimension> &primal )
-{
+// PrimalFrictionProblem
 
+template< unsigned Dimension >
+void PrimalFrictionProblem< Dimension >::computeMInv( )
+{
 	// M^-1
-	primal.MInv.cloneStructure( primal.M ) ;
+	MInv.cloneStructure( M ) ;
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-	for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) primal.M.nBlocks()  ; ++ i )
+	for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) M.nBlocks()  ; ++ i )
 	{
-		primal.MInv.block(i).compute( primal.M.block(i) ) ;
+		MInv.block(i).compute( M.block(i) ) ;
 	}
+}
+
+
+template< unsigned Dimension >
+double PrimalFrictionProblem< Dimension >::solveWith( ADMMType &admm, double lambda, double* v, double * r ) const
+{
+	const Eigen::VectorXd f = Eigen::VectorXd::Map( this->f, M.rows() ) ;
+	const Eigen::VectorXd w = E.transpose() * Eigen::VectorXd::Map( this->w, H.rows() ) ;
+
+	Eigen::VectorXd::MapType r_map( r, H.rows() ) ;
+	Eigen::VectorXd::MapType v_map( v, H.cols() ) ;
+
+	bogus::QuadraticProxOp< MInvType > prox( MInv, lambda, f ) ;
+
+	Eigen::ArrayXd inv_mu = 1./Eigen::ArrayXd::Map( mu, H.rowsOfBlocks()  );
+	bogus::SOCLaw< Dimension, double, false > law( inv_mu.rows(), inv_mu.data() ) ;
+
+	admm.setMatrix( H ) ;
+	return admm.solve( law, prox, w, v_map, r_map ) ;
+}
+
+
+template< unsigned Dimension >
+double PrimalFrictionProblem< Dimension >::solveWith( DualAMAType &dama, double* v, double * r, const bool staticProblem ) const
+{
+	const Eigen::VectorXd f = Eigen::VectorXd::Map( this->f, M.rows() ) ;
+	const Eigen::VectorXd w = E.transpose() * Eigen::VectorXd::Map( this->w, H.rows() ) ;
+
+	Eigen::VectorXd::MapType r_map( r, H.rows() ) ;
+	Eigen::VectorXd::MapType v_map( v, H.cols() ) ;
+
+	Eigen::ArrayXd inv_mu = 1./Eigen::ArrayXd::Map( mu, H.rowsOfBlocks()  );
+	bogus::SOCLaw< Dimension, double, false > law( inv_mu.rows(), inv_mu.data() ) ;
+
+	dama.setMatrix( H ) ;
+
+	if( staticProblem ) {
+		bogus::SOCLaw< Dimension, double, false > law( H.rowsOfBlocks(), mu ) ;
+		return dama.solve( law, M, f, w, v_map, r_map ) ;
+	} else {
+		bogus::SOCLaw< Dimension, double, true  > law( H.rowsOfBlocks(), mu ) ;
+		return dama.solve( law, M, f, w, v_map, r_map ) ;
+	}
+
+}
+
+
+// DualFrictionProblem
+
+template< unsigned Dimension >
+void DualFrictionProblem< Dimension >::computeFrom(const PrimalFrictionProblem<Dimension> &primal )
+{
 
 	//W
 	W = primal.H * ( primal.MInv * primal.H.transpose() ) ;
@@ -88,6 +142,8 @@ template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::solveCadoux(GaussSeidelType &gs, double *r, const unsigned cadouxIterations,
 		const Signal<unsigned, double> *callback ) const
 {
+	gs.setMatrix( W );
+
 	return friction_problem::solveCadoux( *this, gs, r, cadouxIterations, callback ) ;
 }
 
@@ -95,6 +151,8 @@ template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::solveCadoux(ProjectedGradientType &pg, double *r, const unsigned cadouxIterations,
 		const Signal<unsigned, double> *callback ) const
 {
+	pg.setMatrix( W );
+
 	return friction_problem::solveCadoux( *this, pg, r, cadouxIterations, callback ) ;
 }
 
@@ -102,6 +160,8 @@ template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::solveCadouxVel(GaussSeidelType &gs, double *u, const unsigned cadouxIterations,
 		const Signal<unsigned, double> *callback ) const
 {
+	gs.setMatrix( W );
+
 	return friction_problem::solveCadouxVel( *this, gs, u, cadouxIterations, callback ) ;
 }
 
@@ -109,6 +169,8 @@ template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::solveCadouxVel(ProjectedGradientType &pg, double *u, const unsigned cadouxIterations,
 		const Signal<unsigned, double> *callback ) const
 {
+	pg.setMatrix( W );
+
 	return friction_problem::solveCadouxVel( *this, pg, u, cadouxIterations, callback ) ;
 }
 

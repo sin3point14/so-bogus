@@ -32,15 +32,15 @@ namespace admm {
 
 //! ADMM iterative solver.
 /*!
-	Minimizes J(x) with ( M x + b ) in C
+	Minimizes J(v) with ( M v + w ) in C
 
 	Requires ability to evaluate prox_J( x )
 */
 template < typename BlockMatrixType >
-class ADMM : public ConstrainedSolverBase< ADMM, BlockMatrixType >
+class ADMM : public ConstrainedSolverBase< ADMM<BlockMatrixType >, BlockMatrixType >
 {
 public:
-	typedef ConstrainedSolverBase< bogus::ADMM, BlockMatrixType > Base ;
+	typedef ConstrainedSolverBase< ADMM, BlockMatrixType > Base ;
 
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
@@ -52,14 +52,22 @@ public:
 	{ init() ; Base::setMatrix( matrix ) ; }
 
 	/*!
-	 *  Solve J(x),  ( Mx + b \in C )
+	 *  Find the minimizer of J(v),  ( Mv + w \in C )
+	 *  with J(v) defined through its proximal operator, \p op
 	 *
 	 */
 	template < admm::Variant variant, typename NSLaw, typename ProxOp, typename RhsT, typename ResT >
 	Scalar solve(
 			const NSLaw &law, const ProxOp& op,
-			const RhsT &b, ResT &x, ResT &r ) const ;
+			const RhsT &w, ResT &v, ResT &r ) const ;
 
+	//! Solve function using default variant
+	template < typename NSLaw, typename ProxOp, typename RhsT, typename ResT >
+	Scalar solve(
+			const NSLaw &law, const ProxOp& op,
+			const RhsT &w, ResT &v, ResT &r ) const ;
+
+	//! Sets the problem matrix -- the one defining the constraints
 	ADMM& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix )
 	{
 		m_matrix = &matrix ;
@@ -118,10 +126,10 @@ protected:
 
 */
 template < typename BlockMatrixType >
-class DualAMA : public ConstrainedSolverBase< DualAMA, BlockMatrixType >
+class DualAMA : public ConstrainedSolverBase< DualAMA<BlockMatrixType>, BlockMatrixType >
 {
 public:
-	typedef ConstrainedSolverBase< bogus::DualAMA, BlockMatrixType > Base ;
+	typedef ConstrainedSolverBase< DualAMA, BlockMatrixType > Base ;
 
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
@@ -132,12 +140,22 @@ public:
 	explicit DualAMA( const BlockObjectBase< BlockMatrixType > & matrix ) : Base()
 	{ init() ; Base::setMatrix( matrix ) ; }
 
-	template < admm::Variant variant, typename NSLaw, typename MatrixT, typename RhsT, typename ResT >
+	//! Solve function using default variant
+	template < typename NSLaw, typename MatrixT, typename RhsT, typename ResT >
 	Scalar solve(
 			const NSLaw &law, const BlockObjectBase< MatrixT >& A,
-			const RhsT &f, const RhsT &b,
-			ResT &x, ResT &r ) const ;
+			const RhsT &f, const RhsT &w,
+			ResT &v, ResT &r ) const ;
 
+	//! Solve function with variant as template argument
+	template < admm::Variant variant, typename NSLaw, typename MatrixT,
+			   typename RhsT, typename ResT >
+	Scalar solve(
+			const NSLaw &law, const BlockObjectBase< MatrixT >& A,
+			const RhsT &f, const RhsT &w,
+			ResT &v, ResT &r ) const ;
+
+	//! Sets the problem matrix -- the one defining the constraints
 	DualAMA& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix )
 	{
 		m_matrix = &matrix ;

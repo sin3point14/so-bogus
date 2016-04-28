@@ -38,10 +38,10 @@ namespace projected_gradient {
 
 //! Projected Gradient iterative solver.
 template < typename BlockMatrixType >
-class ProjectedGradient : public ConstrainedSolverBase< ProjectedGradient, BlockMatrixType >
+class ProjectedGradient : public ConstrainedSolverBase< ProjectedGradient<BlockMatrixType >, BlockMatrixType >
 {
 public:
-	typedef ConstrainedSolverBase< bogus::ProjectedGradient, BlockMatrixType > Base ;
+	typedef ConstrainedSolverBase< ProjectedGradient, BlockMatrixType > Base ;
 
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;

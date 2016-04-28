@@ -66,35 +66,30 @@ private:
 	const AffineVec& m_affinePart ;
 };
 
-//template < typename BlockMatrixType >
-//template < typename NSLaw, typename ProxOp, typename RhsT, typename ResT >
-//typename ADMM< BlockMatrixType >::Scalar
-//ADMM< BlockMatrixType >::solve(
-//		const NSLaw &law, const ProxOp& op,
-//		const RhsT &b, const RhsT &f,
-//		ResT &x, ResT &r ) const
-//{
-//	switch ( m_defaultVariant )
-//	{
-//	case admm::Standard:
-//		return solve< admm::Standard, NSLaw, RhsT, ResT >( law, b, x ) ;
-//	case admm::Fast_ADMM:
-//		return solve< admm::Fast_ADMM, NSLaw, RhsT, ResT >( law, b, x ) ;
-//	case admm::AMA:
-//		return solve< admm::AMA, NSLaw, RhsT, ResT >( law, b, x ) ;
-//	case admm::Fast_AMA:
-//		return solve< admm::Fast_AMA, NSLaw, RhsT, ResT >( law, b, x ) ;
-//	}
+template < typename BlockMatrixType >
+template < typename NSLaw, typename ProxOp, typename RhsT, typename ResT >
+typename ADMM< BlockMatrixType >::Scalar
+ADMM< BlockMatrixType >::solve(
+		const NSLaw &law, const ProxOp& op,
+		const RhsT &w, ResT &v, ResT &r ) const
+{
+	switch ( m_defaultVariant )
+	{
+	case admm::Standard:
+		return solve< admm::Standard, NSLaw, ProxOp, RhsT, ResT >( law, op, w, v, r ) ;
+	case admm::Accelerated:
+		return solve< admm::Accelerated, NSLaw, ProxOp, RhsT, ResT >( law, op, w, v, r ) ;
+	}
 
-//	return -1 ;
-//}
+	return -1 ;
+}
 
 template < typename BlockMatrixType >
 template < admm::Variant variant, typename NSLaw, typename ProxOp, typename RhsT, typename ResT >
 typename ADMM< BlockMatrixType >::Scalar
 ADMM< BlockMatrixType >::solve(
 		const NSLaw &law, const ProxOp& op,
-		const RhsT &b, ResT &x, ResT &r ) const
+		const RhsT &w, ResT &x, ResT &r ) const
 {
 
 	const Scalar lambda = op.coefficient() ;
@@ -105,7 +100,7 @@ ADMM< BlockMatrixType >::solve(
 
 	typename GlobalProblemTraits::DynVector ut, prox_arg( x.rows() ), z ;
 
-	ut = b ;
+	ut = w ;
 	m_matrix->template multiply<false>( x, ut, 1, 1 ) ;
 	z  = ut - inv_gamma * r ;
 	this->projectOnConstraints( law, z ) ;
@@ -129,7 +124,7 @@ ADMM< BlockMatrixType >::solve(
 		}
 		op.eval( prox_arg, x ) ;
 
-		ut = b ;
+		ut = w ;
 		m_matrix->template multiply<false>( x, ut, 1, 1 ) ;
 
 		res = this->eval( law, r, ut )
@@ -177,9 +172,26 @@ ADMM< BlockMatrixType >::solve(
 }
 
 template < typename BlockMatrixType >
+template < typename NSLaw, typename MatrixT, typename RhsT, typename ResT >
+typename DualAMA< BlockMatrixType >::Scalar
+DualAMA< BlockMatrixType>::solve(
+		const NSLaw &law, const BlockObjectBase< MatrixT >& A,
+		const RhsT &f, const RhsT &w, ResT &v, ResT &r ) const
+{
+	switch( m_defaultVariant ) {
+		case admm::Accelerated:
+			return solve<admm::Accelerated>( law, A, f, w, v, r) ;
+		case admm::Standard:
+			return solve<admm::Standard>( law, A, f, w, v, r) ;
+	}
+
+	return -1 ;
+}
+
+template < typename BlockMatrixType >
 template < admm::Variant variant, typename NSLaw, typename MatrixT, typename RhsT, typename ResT >
 typename DualAMA< BlockMatrixType >::Scalar
-DualAMA< BlockMatrixType >::solve(
+DualAMA< BlockMatrixType>::solve(
 		const NSLaw &law, const BlockObjectBase< MatrixT >& A,
 		const RhsT &f, const RhsT &w, ResT &v, ResT &r ) const
 {
@@ -236,7 +248,6 @@ DualAMA< BlockMatrixType >::solve(
 		} else {
 			theta_prev = 1 ;
 		}
-
 
 		this->dualityCOV( law, ut, s ) ;
 		g = ut + s ;

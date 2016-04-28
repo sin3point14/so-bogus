@@ -35,14 +35,17 @@ template< unsigned Dimension >
 struct PrimalFrictionProblem
 {
 	// Primal Data
+
+	typedef SparseBlockMatrix< Eigen::MatrixXd > MType ;
 	//! M -- mass matrix
-	SparseBlockMatrix< Eigen::MatrixXd > M ;
+	MType M ;
 	//! E -- local rotation matrix ( world <-> contact basis )
 	bogus::SparseBlockMatrix< Eigen::Matrix< double, Dimension, Dimension > > E ;
 
 	typedef Eigen::Matrix< double, Dimension, Eigen::Dynamic > HBlock ;
+	typedef SparseBlockMatrix< HBlock, UNCOMPRESSED > HType ;
 	//! H -- deformation gradient ( generalized coordinates <-> 3D world )
-	SparseBlockMatrix< HBlock, UNCOMPRESSED > H;
+	HType H;
 
 	//! External forces
 	const double *f ;
@@ -54,8 +57,22 @@ struct PrimalFrictionProblem
 	// Cached data
 
 	//! M^-1
-	SparseBlockMatrix< LU< Eigen::MatrixBase< Eigen::MatrixXd > > > MInv ;
+	typedef SparseBlockMatrix< LU< Eigen::MatrixBase< Eigen::MatrixXd > > > MInvType ;
+	MInvType MInv ;
 
+	//! Computes MInv from M. Required to build a DualFrictionProblem for the PrimalFrictionProblem
+	void computeMInv () ;
+
+
+	// Primal-dual solve functions
+
+	typedef ADMM   < HType >    ADMMType ;
+	typedef DualAMA< HType > DualAMAType ;
+	//! ADMM on the primal objective function. Requires MInv.
+	/*! \param lambda proximal coefficient of the quadratic part (lambda = 0 means AMA) */
+	double solveWith( ADMMType    &admm, double lambda, double* v, double * r ) const ;
+	//! AMA on the dual objective function. Requires only M.
+	double solveWith( DualAMAType &dama, double* v, double * r, const bool staticProblem = false ) const ;
 } ;
 
 
@@ -83,7 +100,8 @@ struct DualFrictionProblem
 	Eigen::VectorXd mu ;
 
 	//! Computes this DualFrictionProblem from the given \p primal
-	void computeFrom( PrimalFrictionProblem< Dimension >& primal ) ;
+	/*! \warning Assumes MInv has been computed */
+	void computeFrom( const PrimalFrictionProblem< Dimension >& primal ) ;
 
 	//! Solves this problem
 	/*!

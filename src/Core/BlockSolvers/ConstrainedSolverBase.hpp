@@ -16,11 +16,10 @@
 namespace bogus
 {
 
-template< template <typename> class SolverType, typename BlockMatrixType >
+template< typename Derived, typename BlockMatrixType >
 class ConstrainedSolverBase : public BlockSolverBase< BlockMatrixType >
 {
 	typedef BlockSolverBase< BlockMatrixType > Base ;
-	typedef SolverType< BlockMatrixType > Derived ;
 
 public:
 

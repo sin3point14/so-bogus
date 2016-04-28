@@ -41,11 +41,11 @@ namespace bogus {
 	  \param tolTighten How much should the tolerance of the inner solver be tightened
 	  \returns the error as returned by the minimizer eval() function
 	  */
-template< unsigned Dimension, typename WType, template <typename> class Method >
+template< unsigned Dimension, typename WType, typename Method, typename MatrixT >
 static typename WType::Scalar solveCadoux(
 		const WType& W,
 		const typename WType::Scalar* b, const typename WType::Scalar* mu,
-		ConstrainedSolverBase< Method, WType > &minimizer,
+		ConstrainedSolverBase< Method, MatrixT > &minimizer,
 		typename WType::Scalar *r, const unsigned cadouxIterations,
 		const Signal<unsigned, typename WType::Scalar> *callback = BOGUS_NULL_PTR(const void),
 		const typename WType::Scalar tolTighten = 1.e-1
@@ -59,7 +59,6 @@ static typename WType::Scalar solveCadoux(
 	SOCLaw< Dimension, Scalar, true  > coulombLaw ( n, mu )	;
 	SOCLaw< Dimension, Scalar, false > socLaw	  ( n, mu ) ;
 
-	minimizer.setMatrix( W );
 	Eigen::Map< Eigen::VectorXd > r_map ( r, W.rows() ) ;
 	Eigen::Map< const Eigen::VectorXd > b_map ( b, W.rows() ) ;
 
@@ -98,11 +97,11 @@ static typename WType::Scalar solveCadoux(
 
 //! Same as solveCadoux, with r = W*u +b
 /*! \warning requires mu > 0 */
-template< unsigned Dimension, typename WType, template <typename> class Method >
+template< unsigned Dimension, typename WType, typename Method, typename MatrixT >
 static double solveCadouxVel(
 		const WType& W,
 		const typename WType::Scalar* b, const typename WType::Scalar* mu,
-		ConstrainedSolverBase< Method, WType > &minimizer,
+		ConstrainedSolverBase< Method, MatrixT > &minimizer,
 		typename WType::Scalar* u, const unsigned cadouxIterations,
 		const Signal<unsigned, typename WType::Scalar> *callback = BOGUS_NULL_PTR(const void),
 		const typename WType::Scalar tolTighten = 1.e-1
@@ -117,7 +116,6 @@ static double solveCadouxVel(
 
 	SOCLaw< Dimension, Scalar, false > socLaw	  ( n, mu ) ;
 
-	minimizer.setMatrix( W );
 	Eigen::Map< Eigen::VectorXd > u_map ( u, W.rows() ) ;
 	Eigen::Map< const Eigen::VectorXd > b_map ( b, W.rows() ) ;
 

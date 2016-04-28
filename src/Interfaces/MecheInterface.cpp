@@ -29,6 +29,9 @@
 #include "../Core/BlockSolvers/ProjectedGradient.hpp"
 #include "../Core/BlockSolvers/Coloring.impl.hpp"
 
+#include "../Core/BlockSolvers/ADMM.hpp"
+#include "../Extra/SecondOrder.impl.hpp"
+
 #include "../Core/Utils/Timer.hpp"
 
 #include <algorithm>
@@ -168,6 +171,8 @@ void MecheFrictionProblem::fromPrimal (
 	m_primal->f = f_in ;
 	m_primal->w = w_in ;
 	m_primal->mu = mu_in ;
+
+	m_primal->computeMInv();
 }
 
 unsigned MecheFrictionProblem::nDegreesOfFreedom() const
@@ -210,81 +215,128 @@ double MecheFrictionProblem::solve(
 	const unsigned m = m_primal->H.cols() ;
 	const unsigned n = m_primal->H.rowsOfBlocks() ;
 
-	// If dual has not been computed yet
-	if( !m_dual )
-	{
-		computeDual( staticProblem ? regularization : 0. );
-	}
-
 	// r to local coords
 	Eigen::VectorXd r_loc = m_primal->E.transpose() * Eigen::VectorXd::Map( r, 3*n ) ;
 
 
-	Signal< unsigned, double > callback ;
-	callback.connect( *this, &MecheFrictionProblem::ackCurrentResidual );
-
 	double res ;
 
-	// Proper solving
 
-	m_timer.reset();
-	if( useProjectedGradient ) {
-
-		DualFrictionProblem< 3u >::ProjectedGradientType pg ;
-		if( tol != 0. ) pg.setTol( tol );
-		if( maxIters != 0 ) pg.setMaxIters( maxIters );
-		pg.useInfinityNorm( useInfinityNorm ) ;
-
-		pg.setDefaultVariant( projected_gradient::Conjugated );
-
-		if( staticProblem || cadouxIters == 0 )
-		{
-			pg.callback().connect( callback );
-			res = m_dual->solveWith( pg, r_loc.data() ) ;
-		} else {
-			res = m_dual->solveCadoux( pg, r_loc.data(), cadouxIters, &callback ) ;
-		}
-	} else {
-		// Setup GS parameters
-		bogus::DualFrictionProblem<3u>::GaussSeidelType gs ;
-
-		if( tol != 0. ) gs.setTol( tol );
-		if( maxIters != 0 ) gs.setMaxIters( maxIters );
-
-		gs.setMaxThreads( maxThreads );
-		gs.setAutoRegularization( regularization ) ;
-		gs.useInfinityNorm( useInfinityNorm ) ;
-
-		m_dual->undoPermutation() ;
-
-		const bool useColoring = maxThreads > 1 ;
-		gs.coloring().update( useColoring, m_dual->W );
-
-		if( useColoring )
-		{
-			m_dual->applyPermutation( gs.coloring().permutation ) ;
-			gs.coloring().resetPermutation();
-		}
-		m_dual->W.cacheTranspose() ;
-
-		if( staticProblem || cadouxIters == 0 )
-		{
-			gs.callback().connect( callback );
-			res = m_dual->solveWith( gs, r_loc.data(), staticProblem ) ;
-		} else {
-			res = m_dual->solveCadoux( gs, r_loc.data(), cadouxIters, &callback ) ;
-		}
-
-	}
-	m_lastSolveTime = m_timer.elapsed() ;
-
-	// compute v
-	if( v )
+	if( maxThreads < 0 ) //FIXME make proper interface
 	{
-		Eigen::VectorXd::Map( v, m ) = m_primal->MInv * (
-					m_primal->H.transpose() * r_loc -
-					Eigen::VectorXd::Map( m_primal->f, m_primal->H.cols() ) ) ;
+
+		// Primal-dual solve
+
+		Eigen::VectorXd v_data  ;
+		if( !v ) {
+			v_data = m_primal->MInv * ( m_primal->H.transpose() * r_loc -
+										Eigen::VectorXd::Map( m_primal->f, m_primal->H.cols() ) ) ;
+			v = v_data.data() ;
+		}
+
+		m_timer.reset();
+
+		if( maxThreads < -1 ) //FIXME make proper interface
+		{
+
+			bogus::DualAMA< bogus::PrimalFrictionProblem<3u>::HType > dama ;
+			dama.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual ) ;
+
+			dama.setLineSearchIterations( 0 );
+			dama.setFpStepSize(1.e-3);
+			dama.setProjStepSize(10.);
+			dama.setTol( tol );
+			dama.setMaxIters( maxIters );
+			dama.useInfinityNorm( useInfinityNorm );
+
+			res = m_primal->solveWith( dama, v, r_loc.data(), staticProblem ) ;
+		} else {
+			bogus::ADMM< bogus::PrimalFrictionProblem<3u>::HType > admm ;
+			admm.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual ) ;
+
+			admm.setStepSize(1.);
+
+			admm.setTol( tol );
+			admm.setMaxIters( maxIters );
+			admm.useInfinityNorm( useInfinityNorm );
+
+			res = m_primal->solveWith( admm, 1.e-1, v, r_loc.data() ) ;
+		}
+
+	} else {
+
+
+		// If dual has not been computed yet
+		if( !m_dual )
+		{
+			computeDual( staticProblem ? regularization : 0. );
+		}
+
+		Signal< unsigned, double > callback ;
+		callback.connect( *this, &MecheFrictionProblem::ackCurrentResidual );
+
+		// Proper solving
+
+		m_timer.reset();
+		if( useProjectedGradient ) {
+
+			DualFrictionProblem< 3u >::ProjectedGradientType pg ;
+			if( tol != 0. ) pg.setTol( tol );
+			if( maxIters != 0 ) pg.setMaxIters( maxIters );
+			pg.useInfinityNorm( useInfinityNorm ) ;
+
+			pg.setDefaultVariant( projected_gradient::Conjugated );
+
+			if( staticProblem || cadouxIters == 0 )
+			{
+				pg.callback().connect( callback );
+				res = m_dual->solveWith( pg, r_loc.data() ) ;
+			} else {
+				res = m_dual->solveCadoux( pg, r_loc.data(), cadouxIters, &callback ) ;
+			}
+		} else {
+			// Setup GS parameters
+			bogus::DualFrictionProblem<3u>::GaussSeidelType gs ;
+
+			if( tol != 0. ) gs.setTol( tol );
+			if( maxIters != 0 ) gs.setMaxIters( maxIters );
+
+			gs.setMaxThreads( maxThreads );
+			gs.setAutoRegularization( regularization ) ;
+			gs.useInfinityNorm( useInfinityNorm ) ;
+
+			m_dual->undoPermutation() ;
+
+			const bool useColoring = maxThreads > 1 ;
+			gs.coloring().update( useColoring, m_dual->W );
+
+			if( useColoring )
+			{
+				m_dual->applyPermutation( gs.coloring().permutation ) ;
+				gs.coloring().resetPermutation();
+			}
+			m_dual->W.cacheTranspose() ;
+
+			if( staticProblem || cadouxIters == 0 )
+			{
+				gs.callback().connect( callback );
+				res = m_dual->solveWith( gs, r_loc.data(), staticProblem ) ;
+			} else {
+				res = m_dual->solveCadoux( gs, r_loc.data(), cadouxIters, &callback ) ;
+			}
+
+		}
+
+		// compute v
+		if( v )
+		{
+			Eigen::VectorXd::Map( v, m ) = m_primal->MInv * (
+						m_primal->H.transpose() * r_loc -
+						Eigen::VectorXd::Map( m_primal->f, m_primal->H.cols() ) ) ;
+		}
 	}
+
+	m_lastSolveTime = m_timer.elapsed() ;
 
 	if( m_out && n != 0 )
 	{
@@ -357,6 +409,8 @@ bool MecheFrictionProblem::fromFile( const char* fileName, double *& r0 )
 	} else {
 		Eigen::VectorXd::Map( r0, 3*nContacts() ).setZero() ;
 	}
+
+	m_primal->computeMInv();
 
 	return true ;
 }
