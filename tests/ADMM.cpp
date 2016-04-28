@@ -1,7 +1,5 @@
 
 #include "Core/Block.impl.hpp"
-#include "Core/BlockSolvers/GaussSeidel.impl.hpp"
-#include "Core/BlockSolvers/ProjectedGradient.impl.hpp"
 
 #include "Core/BlockSolvers/ADMM.impl.hpp"
 
@@ -10,13 +8,12 @@
 #include <Eigen/Cholesky>
 #include <gtest/gtest.h>
 
-static void ack( unsigned iter, double err ) {
-	std::cout << "A : " << iter << " ==> " << err << std::endl ;
+void admm_ack( unsigned iter, double err ) {
+	std::cout << "ADMM : " << iter << " ==> " << err << std::endl ;
 }
 
 
-#define TEST_PG
-//#define TEST_PRIMAL
+#define TEST_PRIMAL
 #define TEST_DUAL
 
 
@@ -26,7 +23,6 @@ TEST( ADMM, Small )
 	typedef bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::SYMMETRIC > MType ;
 	MType MassMat, InvMassMat ;
 
-	const unsigned n = 2 ;
 	const unsigned dofs[2] = { 4, 2 } ;
 
 	MassMat.setRows( 2, dofs ) ;
@@ -85,7 +81,7 @@ TEST( ADMM, Small )
 	Eigen::VectorXd sol( 6 ) ;
 	sol << 0.0152695, 0.0073010, 0.0022325, 0.0, 0.0, 0.0 ;
 
-	Eigen::VectorXd x( W.rows() ), v (MassMat.rows()) ;
+	Eigen::VectorXd r( W.rows() ), v (MassMat.rows()) ;
 	double res = -1 ;
 
 	Eigen::ArrayXd imu = 1./Eigen::ArrayXd::Map( mu, 2 ) ;
@@ -94,49 +90,14 @@ TEST( ADMM, Small )
 	bogus::Coulomb3D Cmu ( imu.size(), mu ) ;
 	bogus::SOC3D Pkimu( imu.size(), imu.data() ) ;
 
-#ifdef TEST_PG
 
-//	bogus::GaussSeidel< WType > gs( W ) ;
-//	gs.callback().connect( &ack );
-
-//	x.setOnes() ;
-//	res = gs.solve( bogus::SOCLaw< 3u, double, true, bogus::local_soc_solver::Hybrid >( 2, mu ), b, x ) ;
-//	ASSERT_LT( res, 1.e-8 ) ;
-//	ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
-
-	bogus::ProjectedGradient< WType > pg( W ) ;
-	pg.callback().connect( &ack );
-	pg.setTol( 1.e-8 );
-
-	x.setOnes() ;
-	pg.setDefaultVariant( bogus::projected_gradient::SPG );
-	res = pg.solve( Cmu, b, x ) ;
-	ASSERT_LT( res, 1.e-8 ) ;
-
-	v = InvMassMat * ( H.transpose() * x - f ) ;
-	std::cout << "Optimal v " << v.transpose() << std::endl ;
-	std::cout << "Optimal r " << x.transpose() << std::endl ;
-	std::cout << " J = " << v.transpose() * ( .5 * MassMat * v + f ) << std::endl ;
-#endif
 	// Test ADMM
 
 	// J = .5 * vMv + f'v
 	// g = I(C)(v), C = (Hv \in Kimu)
 
-		  double lambda = 1.e-1 ;
-		  double gamma  = 1.e-4 ;
-//		  double rho    = 1.    ;
-//		  double tau    = 1.    ;
-
-	v.setZero() ;
-	Eigen::VectorXd r = Eigen::VectorXd::Zero( 6 ) ;
-	Eigen::VectorXd s = Eigen::VectorXd::Zero( 6 ) ;
-	Eigen::VectorXd ut = H*v + w ;
-	Eigen::VectorXd z  = ut ;
-
-	Eigen::VectorXd tmp ;
-
 #ifdef TEST_PRIMAL
+	double lambda = 1.e-1 ;
 
 	MType InvMLambda ;
 	InvMLambda.cloneStructure( MassMat ) ;
@@ -148,27 +109,29 @@ TEST( ADMM, Small )
 		InvMLambda.block( i ) = Mi.inverse() ;
 	}
 
-	std::cout << " ============= " << std::endl ;
+	bogus::ADMM< HType > admm( H ) ;
+	admm.setMaxIters(1000);
+	admm.setStepSize(1.e-2);
+	admm.setTol(1.e-8);
+
+//	admm.callback().connect( &ack );
 
 	r.setOnes() ;
 	v = InvMassMat * ( H.transpose() * r - f ) ;
 
-//	bogus::QuadraticProxOp< MType > prox( InvMassMat, 0, f ) ;
+	bogus::QuadraticProxOp< MType > prox0( InvMassMat, 0, f ) ;
+	res = admm.solve< bogus::admm::Accelerated >( Pkimu, prox0, w, v, r ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
+
+	r.setOnes() ;
+	v = InvMassMat * ( H.transpose() * r - f ) ;
+
 	bogus::QuadraticProxOp< MType > prox( InvMLambda, 1.e-1, f ) ;
-	bogus::ADMM< HType > admm( H ) ;
-
-	admm.setMaxIters(1000);
-	admm.setStepSize(1.e-2);
-	admm.setTol(1.e-8);
-	admm.callback().connect( &ack );
-
 	res = admm.solve< bogus::admm::Accelerated >( Pkimu, prox, w, v, r ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 #endif
 
 #ifdef TEST_DUAL
-	std::cout << " ============= " << std::endl ;
-	std::cout << " TEST DUAL " << std::endl ;
 
 	// Rationale
 	/*
@@ -240,11 +203,8 @@ TEST( ADMM, Small )
 	 *
 	 */
 
-	r.setZero() ;
-	v = InvMassMat * ( H.transpose() * r - f ) ;
-
 	bogus::DualAMA< HType > dama( H ) ;
-	dama.callback().connect( &ack );
+//	dama.callback().connect( &ack );
 
 	dama.setFpStepSize(1.e-1);
 	dama.setProjStepSize(1.e0);
@@ -253,11 +213,38 @@ TEST( ADMM, Small )
 	dama.setLineSearchIterations(4);
 	dama.setLineSearchOptimisticFactor(1.25);
 
-//	res = dama.solve< bogus::admm::Standard >( Pkmu, MassMat, f, w, v, r ) ;
-	res = dama.solve< bogus::admm::Standard >( Cmu, MassMat, f, w, v, r ) ;
+
+	r.setZero() ;
+	v = InvMassMat * ( H.transpose() * r - f ) ;
+	res = dama.solve< bogus::admm::Standard >( Pkmu, MassMat, f, w, v, r ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 
-	 std::cout << v.transpose() << std::endl ;
-	 std::cout << r.transpose() << std::endl ;
+
+	r.setZero() ;
+	v = InvMassMat * ( H.transpose() * r - f ) ;
+	res = dama.solve< bogus::admm::Standard >( Cmu, MassMat, f, w, v, r ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
+	ASSERT_TRUE( sol.isApprox( r, 1.e-4 ) ) ;
+
+	dama.setLineSearchIterations(0);
+	dama.setProjStepSize(1.e-1);
+
+	r.setZero() ;
+	v = InvMassMat * ( H.transpose() * r - f ) ;
+	res = dama.solve< bogus::admm::Accelerated >( Pkmu, MassMat, f, w, v, r ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
+
+
+	dama.setProjStepSize(1.e-2);
+//	dama.callback().connect( &admm_ack );
+
+	r.setZero() ;
+	v = InvMassMat * ( H.transpose() * r - f ) ;
+	res = dama.solve< bogus::admm::Accelerated >( Cmu, MassMat, f, w, v, r ) ;
+	ASSERT_LT( res, 1.e-8 ) ;
+	ASSERT_TRUE( sol.isApprox( r, 1.e-4 ) ) ;
+
+//	 std::cout << v.transpose() << std::endl ;
+//	 std::cout << r.transpose() << std::endl ;
 #endif
 }

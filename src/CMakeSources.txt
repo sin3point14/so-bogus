@@ -31,6 +31,8 @@ Core/Block/Traits.hpp
 Core/BlockSolvers.fwd.hpp
 Core/BlockSolvers.hpp
 Core/BlockSolvers.impl.hpp
+Core/BlockSolvers/ADMM.hpp
+Core/BlockSolvers/ADMM.impl.hpp
 Core/BlockSolvers/BlockSolverBase.hpp
 Core/BlockSolvers/Coloring.hpp
 Core/BlockSolvers/Coloring.impl.hpp
