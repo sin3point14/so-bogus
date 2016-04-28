@@ -18,7 +18,7 @@ int main( int argc, const char* argv[] )
 	{
 		std::cerr << " Please provide a problem data file " << std::endl ;
 		std::cerr << " Syntax: " << argv[0] << " dataFile "
-				  << " [ deterministic ] [ tol ] [ maxIters ] [ staticPb ] [ regul ] [ useInfNorm ] [useProjectGradient] [cadouxIterations]"
+				  << " [ deterministic ] [ tol ] [ maxIters ] [ staticPb ] [ regul ] [ useInfNorm ] [algorithm] [cadouxIterations]"
 				  << std::endl ;
 		return 1 ;
 	}
@@ -38,7 +38,8 @@ int main( int argc, const char* argv[] )
 		const int usePG         = argc > 8 ? std::atoi( argv[8] ) : 0 ;
 		const int cadoux        = argc > 9 ? std::atoi( argv[9] ) : 0 ;
 
-		mfp.solve( r, NULL, maxThreads, tol, maxIters, staticPb, regul, useInfNorm, usePG, cadoux ) ;
+		mfp.solve( r, NULL, maxThreads, tol, maxIters, staticPb, regul, useInfNorm,
+				   (bogus::MecheFrictionProblem::Algorithm) usePG, cadoux ) ;
 		std::cout << "Solver timer: " << mfp.lastSolveTime() << " seconds" << std::endl ;
 
 

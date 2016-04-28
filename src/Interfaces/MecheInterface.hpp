@@ -37,6 +37,14 @@ class MecheFrictionProblem
 {
 public:
 
+	enum Algorithm {
+		GaussSeidel = 0,
+		ProjectedGradient = 1,
+		ADMM,
+		DualAMA
+	};
+
+
 	MecheFrictionProblem() ;
 	~MecheFrictionProblem() ;
 
@@ -68,7 +76,7 @@ public:
 			bool staticProblem = false,       //!< If true, do not use DeSaxce change of variable
 			double regularization = 0.,  //!< Coefficient to add to the diagonal of static problems / GS regularization coefficient for friction problems
 			bool useInfinityNorm = false, //!< Whether to use the infinity norm to evaluate the residual of the friction problem,
-			bool useProjectedGradient = false, //!< If true, use projected gradient algorithm instead of GS.
+			Algorithm algorithm = GaussSeidel,  //!< 0 = GS, 1 = PG, 2 = ADMM, 3 = DualAMA.
 			unsigned cadouxIters = 0 //!< If staticProblem is false and cadouxIters is greater than zero, use the Cadoux algorithm to solve the friction problem.
 				 );
 

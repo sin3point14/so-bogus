@@ -50,7 +50,8 @@ MecheFrictionProblem::MecheFrictionProblem()
 	: m_primal( BOGUS_NULL_PTR(PrimalFrictionProblem<3u>) ),
 	  m_dual( BOGUS_NULL_PTR(DualFrictionProblem<3u>) ),
 		m_lastSolveTime( 0 ),
-		m_f( BOGUS_NULL_PTR(double) ), m_w( BOGUS_NULL_PTR(double) ),
+		m_f( BOGUS_NULL_PTR(double) ),
+		m_w( BOGUS_NULL_PTR(double) ),
 		m_mu( BOGUS_NULL_PTR(double) ),
 		m_out( &std::cout )
 {
@@ -207,7 +208,7 @@ double MecheFrictionProblem::solve(
 		bool staticProblem,
 		double regularization,
 		bool useInfinityNorm,
-		bool useProjectedGradient,
+		Algorithm algorithm,
 		unsigned cadouxIters
 									 )
 {
@@ -222,7 +223,7 @@ double MecheFrictionProblem::solve(
 	double res ;
 
 
-	if( maxThreads < 0 ) //FIXME make proper interface
+	if( algorithm == ADMM || algorithm == DualAMA ) //FIXME make proper interface
 	{
 
 		// Primal-dual solve
@@ -236,7 +237,7 @@ double MecheFrictionProblem::solve(
 
 		m_timer.reset();
 
-		if( maxThreads < -1 ) //FIXME make proper interface
+		if( algorithm == DualAMA ) //FIXME make proper interface
 		{
 
 			bogus::DualAMA< bogus::PrimalFrictionProblem<3u>::HType > dama ;
@@ -278,7 +279,7 @@ double MecheFrictionProblem::solve(
 		// Proper solving
 
 		m_timer.reset();
-		if( useProjectedGradient ) {
+		if( algorithm == ProjectedGradient ) {
 
 			DualFrictionProblem< 3u >::ProjectedGradientType pg ;
 			if( tol != 0. ) pg.setTol( tol );
