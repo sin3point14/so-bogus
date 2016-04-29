@@ -200,8 +200,9 @@ DualAMA< BlockMatrixType>::solve(
 	Scalar lambda = projStepSize() ;
 	const Scalar gamma  = fpStepSize() ;
 
-	Scalar res = -1 ;
+	Scalar res = -1, min_res = -1 ;
 
+	typename GlobalProblemTraits::DynVector r_best( r ), v_best( v ) ;
 	typename GlobalProblemTraits::DynVector x, ut, gap, Hr ( v.rows() ), g, s( r.rows() ) ;
 
 	const Segmenter< NSLaw::dimension, const DynVec, typename BlockMatrixType::Index >
@@ -237,7 +238,13 @@ DualAMA< BlockMatrixType>::solve(
 
 		this->callback().trigger( adIter, res );
 
-		if( res < this->tol() )
+		if( res < min_res || adIter == 0 ) {
+			r_best = r ;
+			v_best = v ;
+			min_res = res ;
+			if( res < this->tol() )
+				break ;
+		} else if (res > 1.e50 )
 			break ;
 
 
@@ -307,7 +314,10 @@ DualAMA< BlockMatrixType>::solve(
 
 	}
 
-	return res ;
+	r = r_best ;
+	v = v_best ;
+
+	return min_res ;
 
 }
 
