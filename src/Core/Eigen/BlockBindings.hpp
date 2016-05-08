@@ -132,11 +132,15 @@ struct BlockTraits < Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _M
 		RowsAtCompileTime = _Rows,
 		ColsAtCompileTime = _Cols,
 		uses_plain_array_storage = 1,
-		is_row_major = !!( _Options & Eigen::RowMajorBit ),
+		is_row_major = !!( _Options & Eigen::RowMajor ),
 		is_self_transpose = ( _Rows == _Cols ) && ( _Rows == 1 )
 	} ;
 
-	typedef Eigen::Matrix< _Scalar, _Cols, _Rows, _Options, _MaxCols, _MaxRows >
+	// Manipulates _Options so that row and column vectorz have the correct RowMajor value
+	// Should we default to _Options ^ Eigen::RowMajor ?
+	typedef Eigen::Matrix< _Scalar, _Cols, _Rows,
+	( _Options | ((_Cols==1&&_Rows!=1)?Eigen::RowMajor:0)) & ~((_Rows==1&&_Cols!=1)?Eigen::RowMajor:0),
+	_MaxCols, _MaxRows >
 	TransposeStorageType ;
 
 } ;

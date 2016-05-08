@@ -1,6 +1,6 @@
 /*
  * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ 
+ * http://creativecommons.org/publicdomain/zero/1.0/
 */
 
 #include <Core/Block.impl.hpp>
@@ -131,6 +131,46 @@ TEST( Serialization, SparseBlockMatrix )
 
 	EXPECT_EQ( expected, sbm_*rhs );
 	EXPECT_EQ( expected, sbmc_*rhs );
+}
+
+TEST( Serialization, Vectors )
+{
+	bogus::SparseBlockMatrix< Eigen::Vector3d > sbm ;
+	sbm.setRows(1) ;
+	sbm.setCols(1) ;
+	sbm.insertBack(0,0) = Eigen::Vector3d(1.,2.,3.) ;
+	sbm.finalize();
+	sbm.cacheTranspose();
+
+	bogus::SparseBlockMatrix< Eigen::RowVector3d > sbmc ;
+	sbmc.setRows(1) ;
+	sbmc.setCols(1) ;
+	sbmc.insertBack(0,0) = Eigen::RowVector3d(1.,2.,3.) ;
+	sbmc.finalize();
+	sbmc.cacheTranspose();
+
+
+	{
+		std::ofstream ofs(temp_file_name().c_str());
+		boost::archive::text_oarchive oa(ofs);
+		oa << sbm << sbmc ;
+	}
+
+	bogus::SparseBlockMatrix< Eigen::Vector3d > sbm_ ;
+	bogus::SparseBlockMatrix< Eigen::RowVector3d > sbmc_ ;
+
+	{
+		std::ifstream ifs(temp_file_name().c_str());
+		boost::archive::text_iarchive ia(ifs);
+		ia >> sbm_ >> sbmc_ ;
+	}
+
+	EXPECT_EQ( sbm.block(0), sbm_.block(0) );
+	EXPECT_EQ( sbm.transposeBlocks()[0], sbm_.transposeBlocks()[0] );
+
+	EXPECT_EQ( sbmc.block(0), sbmc_.block(0) );
+	EXPECT_EQ( sbmc.transposeBlocks()[0], sbmc_.transposeBlocks()[0] );
+
 }
 
 TEST( Serialization, CleanUp )
