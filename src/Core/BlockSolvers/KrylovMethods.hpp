@@ -62,14 +62,15 @@ struct KrylovSolverBase
 			)
 		: m_A( &A ), m_P( P ), m_callback( callback ),
 		  m_tol( tol ), m_maxIters( maxIters ),
-		  m_parallelizeRhs( false )
+		  m_parallelizeRhs( false ), m_enableResCaching( false )
 	{}
 
 	KrylovSolverBase( )
 		: m_A( BOGUS_NULL_PTR(const Matrix) ),
 		  m_P( BOGUS_NULL_PTR(const Preconditioner) ),
 		  m_callback( BOGUS_NULL_PTR(const SignalType) ),
-		  m_tol( 0 ), m_maxIters( 0 ), m_parallelizeRhs( false )
+		  m_tol( 0 ), m_maxIters( 0 ),
+		  m_parallelizeRhs( false ), m_enableResCaching( false )
 	{}
 
 	//! Returns the solution \b x of the linear system \b M \c * \b x \c = \c rhs
@@ -77,11 +78,23 @@ struct KrylovSolverBase
 	typename LinearSolverTraits< Derived >::template Result< RhsT >::Type
 	solve( const RhsT& rhs ) const
 	{
-		typename LinearSolverTraits< Derived >::template Result< RhsT >::Type
-				x( m_A->rows(), rhs.cols() ) ;
-		x.setZero() ;
-		Base::solve( rhs, x ) ;
-		return x ;
+		typedef typename LinearSolverTraits< Derived >::template Result< RhsT >::Type ReturnType ;
+		static ReturnType s_cachedRes ;
+
+		if( !m_enableResCaching ) {
+			ReturnType x( m_A->rows(), rhs.cols() ) ;
+			x.setZero() ;
+			Base::solve( rhs, x ) ;
+			return x ;
+		}
+
+		if( s_cachedRes.rows() != m_A->rows() || s_cachedRes.cols() != rhs.cols() )	{
+			s_cachedRes.resize( m_A->rows(), rhs.cols() ) ;
+			s_cachedRes.setZero() ;
+		}
+
+		Base::solve( rhs, s_cachedRes ) ;
+		return s_cachedRes ;
 	}
 
 	//! Returns the solution \b x of the linear system \b M \c * \b x \c = \c rhs
@@ -107,8 +120,17 @@ struct KrylovSolverBase
 		return Base::derived() ;
 	}
 
+	//! Whether to enable caching of solve(rhs) result for warmstarting purposes
+	/*! \warning Not thread safe for parallel calls to solve(rhs) */
+	Derived& enableResCaching( bool doCache = true )
+	{
+		m_enableResCaching = doCache ;
+		return Base::derived() ;
+	}
+
 protected:
 	bool m_parallelizeRhs ;
+	bool m_enableResCaching ;
 
 } ;
 
