@@ -60,7 +60,10 @@ public:
 	template < bool DoTranspose, typename RhsT, typename ResT >
 	void multiply( const RhsT& , ResT& res, Scalar = 1, Scalar beta = 0 ) const
 	{
-		if( beta != 1) res *= beta ;
+		if( ( Scalar ) 0 == beta )
+			res.setZero() ;
+		if( ( Scalar ) 1 != beta )
+			res *= beta ;
 	}
 
 private:
