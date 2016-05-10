@@ -155,6 +155,18 @@ public:
 			const RhsT &f, const RhsT &w,
 			ResT &v, ResT &r ) const ;
 
+	//! Idem  with constraint  ( B v + k = 0 )
+	template < admm::Variant variant, typename NSLaw,
+			   typename AType, typename BType, typename HType,
+			   typename RhsT, typename ResT >
+	Scalar solveWithLinearConstraints(
+			const NSLaw &law,
+			const BlockObjectBase< AType >& A,
+			const BlockObjectBase< BType >& B,
+			const BlockObjectBase< HType >& H,
+			const RhsT &f, const RhsT &w, const RhsT& k,
+			ResT &v, ResT &r, ResT &p, Scalar stepRatio = 1 ) const ;
+
 	//! Sets the problem matrix -- the one defining the constraints
 	DualAMA& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix )
 	{

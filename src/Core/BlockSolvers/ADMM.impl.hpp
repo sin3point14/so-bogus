@@ -321,6 +321,126 @@ DualAMA< BlockMatrixType>::solve(
 
 }
 
+template < typename BlockMatrixType >
+template < admm::Variant variant, typename NSLaw,
+		   typename AType, typename BType, typename HType,
+		   typename RhsT, typename ResT >
+typename DualAMA< BlockMatrixType >::Scalar
+DualAMA< BlockMatrixType>::solveWithLinearConstraints(
+			const NSLaw &law,
+			const BlockObjectBase< AType >& A,
+			const BlockObjectBase< BType >& B,
+			const BlockObjectBase< HType >& H,
+			const RhsT &f, const RhsT &w, const RhsT& k,
+			ResT &v, ResT &r, ResT &p, Scalar stepRatio ) const
+{
+	typedef typename GlobalProblemTraits::DynVector DynVec ;
+
+	Scalar lambda = projStepSize() ;
+	const Scalar gamma  = fpStepSize() ;
+
+	Scalar res = -1, min_res = -1 ;
+
+	typename GlobalProblemTraits::DynVector r_best( r ), v_best( v ), p_best( p ) ;
+	typename GlobalProblemTraits::DynVector x, ut, gap,
+			HrBp ( v.rows() ),
+			g, g2,
+			s( r.rows() ) ;
+
+	const Segmenter< NSLaw::dimension, const DynVec, typename BlockMatrixType::Index >
+			 utSegmenter( ut, m_matrix->rowOffsets() ) ;
+	Segmenter< NSLaw::dimension, DynVec, typename BlockMatrixType::Index >
+			 sSegmenter( s, m_matrix->rowOffsets() ) ;
+
+	// Nesterov acceleration
+	DynVec y, y_prev = v ;
+	Scalar theta_prev = 1. ; // Previous Nesterov acceleration
+	Scalar res_prev = -1 ;
+
+	// Line search
+	DynVec rs ;
+
+	H.template multiply< true >( r, HrBp, 1, 0 ) ;
+	B.template multiply< true >( p, HrBp, 1, 1 ) ;
+
+	for( unsigned adIter = 0 ; adIter < m_maxIters ; ++ adIter )
+	{
+
+		x  = f ;
+		A.template multiply< false >( v, x, 1, 1 ) ;
+		gap = HrBp - x ;
+
+		ut = w ;
+		H.template multiply<false>( v, ut, 1, 1 ) ;
+
+		g2 = k ;
+		B.template multiply<false>( v + gamma*gap, g2, 1, 1 ) ;
+
+		// Eval current reisual,  exit if small enough
+		res = this->eval( law, ut, r )
+				+ ( this->usesInfinityNorm()
+				  ? gap.template lpNorm< Eigen::Infinity >()
+				  : gap.squaredNorm() / (1 + gap.rows() ) )
+				+ ( this->usesInfinityNorm()
+				  ? g2.template lpNorm< Eigen::Infinity >()
+				  : g2.squaredNorm() / (1 + g2.rows() ) )
+				;
+
+		this->callback().trigger( adIter, res );
+
+		if( res < min_res || adIter == 0 ) {
+			r_best = r ;
+			v_best = v ;
+			p_best = p ;
+			min_res = res ;
+			if( res < this->tol() )
+				break ;
+		} else if (res > 1.e50 )
+			break ;
+
+
+		// Acceleration
+		Scalar beta = 0 ;
+		if ( variant == admm::Accelerated && res < res_prev ) {
+			beta =  bogus::pg_impl::nesterov_inertia( theta_prev, 0. ) ;
+		} else {
+			theta_prev = 1 ;
+		}
+
+		this->dualityCOV( law, ut, s ) ;
+		g = ut + s ;
+		H.template multiply< false >( gap, g, gamma, 1 ) ;
+
+		// No Line search (for now)
+		 {
+			r -= lambda * g ;
+			this->projectOnConstraints( law, r ) ;
+
+			p -= stepRatio * lambda * g2 ;
+
+			H.template multiply< true >( r, HrBp, 1, 0 ) ;
+			B.template multiply< true >( p, HrBp, 1, 1 ) ;
+		}
+
+		// (end line-search)
+
+
+		y = v + gamma * ( HrBp - x ) ;
+		v = y +  beta * ( y - y_prev ) ;  //Over Relaxation
+
+		y_prev   = y ;
+		res_prev = res ;
+
+
+	}
+
+	r = r_best ;
+	v = v_best ;
+	p = p_best ;
+
+	return min_res ;
+
+}
 
 } //namespace bogus
 
