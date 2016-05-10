@@ -148,7 +148,7 @@ GaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &law,
 								   bool tryZeroAsWell, unsigned solveEvery) const
 {
 	assert( m_matrix ) ;
-	assert( 0 == m_evalEvery % solveEvery ) ;
+	assert( solveEvery == 0 || 0 == m_evalEvery % solveEvery ) ;
 
 	typename GlobalProblemTraits::DynVector y, x_best ;
 

@@ -17,6 +17,8 @@
 #include "ConstrainedSolverBase.impl.hpp"
 #include "ProjectedGradient.impl.hpp"
 
+#include "../Block/Zero.hpp"
+
 #include "../Utils/NumTraits.hpp"
 
 namespace bogus
@@ -189,7 +191,8 @@ DualAMA< BlockMatrixType>::solve(
 }
 
 template < typename BlockMatrixType >
-template < admm::Variant variant, typename NSLaw, typename MatrixT, typename RhsT, typename ResT >
+template < admm::Variant variant, typename NSLaw, typename MatrixT,
+		   typename RhsT, typename ResT >
 typename DualAMA< BlockMatrixType >::Scalar
 DualAMA< BlockMatrixType>::solve(
 		const NSLaw &law, const BlockObjectBase< MatrixT >& A,
@@ -197,142 +200,25 @@ DualAMA< BlockMatrixType>::solve(
 {
 	typedef typename GlobalProblemTraits::DynVector DynVec ;
 
-	Scalar lambda = projStepSize() ;
-	const Scalar gamma  = fpStepSize() ;
+	DynVec k(0) ;
+	DynVec p(0) ;
+	Zero< Scalar > zero( 0, 0 ) ;
 
-	Scalar res = -1, min_res = -1 ;
-
-	typename GlobalProblemTraits::DynVector r_best( r ), v_best( v ) ;
-	typename GlobalProblemTraits::DynVector x, ut, gap, Hr ( v.rows() ), g, s( r.rows() ) ;
-
-	const Segmenter< NSLaw::dimension, const DynVec, typename BlockMatrixType::Index >
-			 utSegmenter( ut, m_matrix->rowOffsets() ) ;
-	Segmenter< NSLaw::dimension, DynVec, typename BlockMatrixType::Index >
-			 sSegmenter( s, m_matrix->rowOffsets() ) ;
-
-	// Nesterov acceleration
-	DynVec y, y_prev = v ;
-	Scalar theta_prev = 1. ; // Previous Nesterov acceleration
-	Scalar res_prev = -1 ;
-
-	// Line search
-	DynVec rs ;
-
-	m_matrix->template multiply< true >( r, Hr, 1, 0 ) ;
-
-	for( unsigned adIter = 0 ; adIter < m_maxIters ; ++ adIter )
-	{
-
-		x  = f ;
-		A.template multiply< false >( v, x, 1, 1 ) ;
-		gap = Hr - x ;
-
-		ut = w ;
-		m_matrix->template multiply<false>( v, ut, 1, 1 ) ;
-
-		// Eval current reisual,  exit if small enough
-		res = this->eval( law, ut, r ) +
-				( this->usesInfinityNorm()
-				  ? gap.template lpNorm< Eigen::Infinity >()
-				  : gap.squaredNorm() / (1 + gap.rows() ) ) ;
-
-		this->callback().trigger( adIter, res );
-
-		if( res < min_res || adIter == 0 ) {
-			r_best = r ;
-			v_best = v ;
-			min_res = res ;
-			if( res < this->tol() )
-				break ;
-		} else if (res > 1.e50 )
-			break ;
-
-
-		// Acceleration
-		Scalar beta = 0 ;
-		if ( variant == admm::Accelerated && res < res_prev ) {
-			beta =  bogus::pg_impl::nesterov_inertia( theta_prev, 0. ) ;
-		} else {
-			theta_prev = 1 ;
-		}
-
-		this->dualityCOV( law, ut, s ) ;
-		g = ut + s ;
-		m_matrix->template multiply< false >( gap, g, gamma, 1 ) ;
-
-		// (Optional) Line search
-		if( lineSearchIterations() == 0 ) {
-			r -= lambda * g ;
-			this->projectOnConstraints( law, r ) ;
-
-			m_matrix->template multiply< true >( r, Hr, 1, 0 ) ;
-
-		} else {
-
-			// TODO avoid performing extra A multiplication by keeping LS results
-
-			const Scalar h0 = gap.squaredNorm() ;
-
-
-			lambda *= lineSearchOptimisticFactor() ;
-			for( unsigned lsIter = 0 ; lsIter < lineSearchIterations() ; ++lsIter ) {
-
-				rs = r - lambda * g ;
-				this->projectOnConstraints( law, rs ) ;
-				m_matrix->template multiply< true >( rs, Hr, 1, 0 ) ;
-
-				y = v + gamma * ( Hr - x ) ;
-				y += beta * ( y - y_prev ) ; //Over Relaxation
-
-
-				gap = Hr - f ;
-				A.template multiply< false >( y, gap, -1, 1 ) ;
-
-				Scalar h = gap.squaredNorm() ;
-
-				if( h < h0 ) {
-//					std::cout << lsIter << " [ "  << lambda<< " ] " << " \t " << h << " vs " << h0 << std::endl ;
-					break ;
-				}
-
-				lambda *= lineSearchPessimisticFactor() ;
-			}
-
-			r = rs ;
-
-		}
-
-		// (end line-search)
-
-
-		y = v + gamma * ( Hr - x ) ;
-		v = y +  beta * ( y  - y_prev ) ;  //Over Relaxation
-
-		y_prev   = y ;
-		res_prev = res ;
-
-
-	}
-
-	r = r_best ;
-	v = v_best ;
-
-	return min_res ;
-
+	return solveWithLinearConstraints< variant >( law, A, zero, *m_matrix, f, k, w, v, p, r ) ;
 }
 
 template < typename BlockMatrixType >
 template < admm::Variant variant, typename NSLaw,
 		   typename AType, typename BType, typename HType,
-		   typename RhsT, typename ResT >
+		   typename RhsT, typename ORhsT, typename ResT, typename OResT >
 typename DualAMA< BlockMatrixType >::Scalar
 DualAMA< BlockMatrixType>::solveWithLinearConstraints(
 			const NSLaw &law,
 			const BlockObjectBase< AType >& A,
 			const BlockObjectBase< BType >& B,
 			const BlockObjectBase< HType >& H,
-			const RhsT &f, const RhsT &w, const RhsT& k,
-			ResT &v, ResT &r, ResT &p, Scalar stepRatio ) const
+			const RhsT &f, const ORhsT& k,const RhsT &w,
+			ResT &v, OResT &p, ResT &r, Scalar stepRatio ) const
 {
 	typedef typename GlobalProblemTraits::DynVector DynVec ;
 
@@ -358,7 +244,7 @@ DualAMA< BlockMatrixType>::solveWithLinearConstraints(
 	Scalar res_prev = -1 ;
 
 	// Line search
-	DynVec rs ;
+	DynVec rs, ps ;
 
 	H.template multiply< true >( r, HrBp, 1, 0 ) ;
 	B.template multiply< true >( p, HrBp, 1, 1 ) ;
@@ -411,8 +297,9 @@ DualAMA< BlockMatrixType>::solveWithLinearConstraints(
 		g = ut + s ;
 		H.template multiply< false >( gap, g, gamma, 1 ) ;
 
-		// No Line search (for now)
-		 {
+		// Line search (optional)
+		if( lineSearchIterations() == 0 ) {
+
 			r -= lambda * g ;
 			this->projectOnConstraints( law, r ) ;
 
@@ -420,8 +307,45 @@ DualAMA< BlockMatrixType>::solveWithLinearConstraints(
 
 			H.template multiply< true >( r, HrBp, 1, 0 ) ;
 			B.template multiply< true >( p, HrBp, 1, 1 ) ;
-		}
 
+		} else {
+
+			// TODO avoid performing extra A multiplication by keeping LS results
+
+			const Scalar h0 = gap.squaredNorm() ;
+
+
+			lambda *= lineSearchOptimisticFactor() ;
+			for( unsigned lsIter = 0 ; lsIter < lineSearchIterations() ; ++lsIter ) {
+
+				rs = r - lambda * g ;
+				this->projectOnConstraints( law, rs ) ;
+
+				ps = p - stepRatio * lambda * g2 ;
+
+				H.template multiply< true >( rs, HrBp, 1, 0 ) ;
+				B.template multiply< true >( ps, HrBp, 1, 1 ) ;
+
+				y = v + gamma * ( HrBp - x ) ;
+				y += beta * ( y - y_prev ) ; //Over Relaxation
+
+				gap = HrBp - f ;
+				A.template multiply< false >( y, gap, -1, 1 ) ;
+
+				Scalar h = gap.squaredNorm() ;
+
+				if( h < h0 ) {
+//					std::cout << lsIter << " [ "  << lambda<< " ] " << " \t " << h << " vs " << h0 << std::endl ;
+					break ;
+				}
+
+				lambda *= lineSearchPessimisticFactor() ;
+			}
+
+			r = rs ;
+			p = ps ;
+
+		}
 		// (end line-search)
 
 

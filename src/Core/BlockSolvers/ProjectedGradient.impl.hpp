@@ -58,9 +58,9 @@ bool test_residual( const ProjectedGradient< BlockMatrixType >& pg, const NSLaw 
 	return ( res < pg.tol() ) ;
 }
 
-template< typename BlockMatrixType, typename NSLaw, typename VecX, typename VecB,
+template< typename BlockMatrixType, typename NSLaw, typename MatrixT, typename VecX, typename VecB,
 		  typename VecBuf, typename Scalar >
-void armijo_ls( const ProjectedGradient< BlockMatrixType >& pg, const NSLaw& law,
+void armijo_ls( const ProjectedGradient< BlockMatrixType >& pg, const NSLaw& law, const MatrixT &M,
 				const VecX &x, const VecB& b, const VecBuf &dir, VecBuf &grad, const Scalar J,
 				Scalar &alpha, VecBuf &xs, Scalar &Js, VecBuf &Mx )
 {
@@ -73,7 +73,7 @@ void armijo_ls( const ProjectedGradient< BlockMatrixType >& pg, const NSLaw& law
 
 		pg.projectOnConstraints( law, xs ) ;
 
-		Mx = pg.matrix() * xs ;
+		Mx = M * xs ;
 		Js = xs.dot( .5 * Mx + b ) ;
 
 		const Scalar decr = grad.dot( xs - x ) ;
@@ -89,10 +89,10 @@ struct PgMethod {
 
 	// variant = Descent, APGD
 
-	template < typename BlockMatrixType, typename NSLaw, typename RhsT, typename ResT >
+	template < typename BlockMatrixType, typename NSLaw, typename MatrixT, typename RhsT, typename ResT >
 	static typename ProjectedGradient< BlockMatrixType >::Scalar
 	solve( const ProjectedGradient< BlockMatrixType >& pg,
-			const NSLaw &law, const RhsT &b, ResT &x )
+			const NSLaw &law, const MatrixT &M, const RhsT &b, ResT &x )
 	{
 		typedef ProjectedGradient< BlockMatrixType > PgType ;
 		typedef typename PgType::Scalar Scalar ;
@@ -108,7 +108,7 @@ struct PgMethod {
 		pg.projectOnConstraints( law, x ) ;
 
 		// Unconstrained objective function
-		Mx = pg.matrix()*x ;
+		Mx = M*x ;
 
 		//Nesterov inertia
 		Scalar theta_prev = 1., q = 0 ;
@@ -116,7 +116,7 @@ struct PgMethod {
 		prev_proj = x ;
 
 		Scalar alpha = 1. ;
-		guess_alpha( pg.matrix(), x, alpha, xs) ;
+		guess_alpha( M, x, alpha, xs) ;
 
 		// Best iterate storage
 		Scalar min_res = -1 ;
@@ -146,7 +146,7 @@ struct PgMethod {
 
 				pg.projectOnConstraints( law, xs ) ;
 
-				Mx = pg.matrix() * xs ;
+				Mx = M * xs ;
 				Js = xs.dot( .5 * Mx + b + s ) ;
 
 				const Scalar decr = y.dot(xs - x) ;
@@ -163,7 +163,7 @@ struct PgMethod {
 				const Scalar beta = nesterov_inertia( theta_prev, q ) ;
 				x = xs + beta * (xs - prev_proj) ;
 
-				Mx = pg.matrix() * x ;
+				Mx = M * x ;
 
 			} else {
 
@@ -186,10 +186,10 @@ struct PgMethod {
 template< >
 struct PgMethod< projected_gradient::Standard > {
 
-	template < typename BlockMatrixType, typename NSLaw, typename RhsT, typename ResT >
+	template < typename BlockMatrixType, typename NSLaw, typename MatrixT, typename RhsT, typename ResT >
 	static typename ProjectedGradient< BlockMatrixType >::Scalar
 	solve( const ProjectedGradient< BlockMatrixType >& pg,
-			const NSLaw &law, const RhsT &b, ResT &x )
+			const NSLaw &law, const MatrixT &M, const RhsT &b, ResT &x )
 	{
 		typedef ProjectedGradient< BlockMatrixType > PgType ;
 		typedef typename PgType::Scalar Scalar ;
@@ -205,7 +205,7 @@ struct PgMethod< projected_gradient::Standard > {
 		pg.projectOnConstraints( law, x ) ;
 
 		// Unconstrained objective function
-		Mx = pg.matrix()*x ;
+		Mx = M*x ;
 
 		Scalar alpha = 1 ;
 
@@ -228,14 +228,14 @@ struct PgMethod< projected_gradient::Standard > {
 			// proj_grad ~ projection of gradient on tangent cone
 			proj_grad = (x - xs) ;
 			const Scalar beta = - y.dot(proj_grad)
-					/ ( proj_grad.dot( pg.matrix()*proj_grad ) );
+					/ ( proj_grad.dot( M*proj_grad ) );
 
 			proj_grad *= beta ;
 
 			// Line-search
 			Scalar Js ;
 			alpha = std::min(1., alpha*pg.lineSearchOptimisticFactor() ) ;
-			armijo_ls( pg, law, x, b+s, proj_grad, y, J, alpha, xs, Js, Mx ) ;
+			armijo_ls( pg, law, M, x, b+s, proj_grad, y, J, alpha, xs, Js, Mx ) ;
 
 			x = xs ;
 		}
@@ -249,10 +249,10 @@ struct PgMethod< projected_gradient::Standard > {
 template<>
 struct PgMethod< projected_gradient::Conjugated > {
 
-	template < typename BlockMatrixType, typename NSLaw, typename RhsT, typename ResT >
+	template < typename BlockMatrixType, typename NSLaw, typename MatrixT, typename RhsT, typename ResT >
 	static typename ProjectedGradient< BlockMatrixType >::Scalar
 	solve( const ProjectedGradient< BlockMatrixType >& pg,
-			const NSLaw &law, const RhsT &b, ResT &x )
+			const NSLaw &law, const MatrixT &M, const RhsT &b, ResT &x )
 	{
 		typedef ProjectedGradient< BlockMatrixType > PgType ;
 		typedef typename PgType::Scalar Scalar ;
@@ -268,7 +268,7 @@ struct PgMethod< projected_gradient::Conjugated > {
 		pg.projectOnConstraints( law, x ) ;
 
 		// Unconstrained objective function
-		Mx = pg.matrix()*x ;
+		Mx = M*x ;
 		Scalar J = x.dot( .5 * Mx + b ) ;
 
 		prev_proj_grad = x ;
@@ -322,7 +322,7 @@ struct PgMethod< projected_gradient::Conjugated > {
 
 			Scalar Js ;
 			alpha = alpha*pg.lineSearchOptimisticFactor() ;
-			armijo_ls( pg, law, x, b+s, dir, y, J, alpha, xs, Js, Mx ) ;
+			armijo_ls( pg, law, M, x, b+s, dir, y, J, alpha, xs, Js, Mx ) ;
 
 
 			prev_dir = (xs - x) / alpha ;
@@ -341,10 +341,10 @@ struct PgMethod< projected_gradient::Conjugated > {
 template< >
 struct PgMethod< projected_gradient::SPG > {
 
-	template < typename BlockMatrixType, typename NSLaw, typename RhsT, typename ResT >
+	template < typename BlockMatrixType, typename NSLaw, typename MatrixT, typename RhsT, typename ResT >
 	static typename ProjectedGradient< BlockMatrixType >::Scalar
 	solve( const ProjectedGradient< BlockMatrixType >& pg,
-			const NSLaw &law, const RhsT &b, ResT &x )
+			const NSLaw &law, const MatrixT &M, const RhsT &b, ResT &x )
 	{
 		typedef ProjectedGradient< BlockMatrixType > PgType ;
 		typedef typename PgType::Scalar Scalar ;
@@ -362,13 +362,13 @@ struct PgMethod< projected_gradient::SPG > {
 		pg.projectOnConstraints( law, x ) ;
 		prev_proj = x ;
 
-		Mx = pg.matrix()*x ;
+		Mx = M*x ;
 
 		Scalar theta_prev = 1, q = 0 ;
 		Scalar a_min = 1.e-6, a_max = 1.e6 ;
 
 		Scalar alpha = 1 ;
-		guess_alpha( pg.matrix(), x, alpha, xs) ;
+		guess_alpha( M, x, alpha, xs) ;
 
 		// Best iterate storage
 		Scalar min_res = -1 ;
@@ -400,7 +400,7 @@ struct PgMethod< projected_gradient::SPG > {
 			}
 
 			z = -Mx ;
-			Mx = pg.matrix() * x ;
+			Mx = M * x ;
 			prev_proj = xs ;
 
 			z += Mx ;
@@ -445,12 +445,13 @@ ProjectedGradient< BlockMatrixType >::solve(
 }
 
 template < typename BlockMatrixType >
-template < projected_gradient::Variant variant, typename NSLaw, typename RhsT, typename ResT >
+template < projected_gradient::Variant variant, typename NSLaw,
+		   typename RhsT, typename ResT >
 typename ProjectedGradient< BlockMatrixType >::Scalar
 ProjectedGradient< BlockMatrixType >::solve(
 		const NSLaw &law, const RhsT &b, ResT &x ) const
 {
-	return pg_impl::PgMethod< variant >::solve( *this, law, b, x ) ;
+	return pg_impl::PgMethod< variant >::solve( *this, law, Base::matrix(), b, x ) ;
 }
 
 } //namespace bogus
