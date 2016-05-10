@@ -91,6 +91,12 @@ public:
 
 protected:
 
+	template < typename NSLaw,  typename RhsT, typename ResT >
+	void innerLoop (
+		bool parallelize, const NSLaw &law, const RhsT& b,
+		std::vector< unsigned char > &skip, Scalar &ndxRef,
+		ResT &x	) const ;
+
 	typedef typename Base::Index Index ;
 
 	using Base::m_matrix ;

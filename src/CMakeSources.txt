@@ -73,6 +73,7 @@ Core/Utils/NumTraits.hpp
 Core/Utils/Polynomial.hpp
 Core/Utils/Polynomial.impl.hpp
 Core/Utils/Signal.hpp
+Core/Utils/Threads.hpp
 Core/Utils/Timer.hpp
 Extra/SOC/FischerBurmeister.hpp
 Extra/SOC/FischerBurmeister.impl.hpp

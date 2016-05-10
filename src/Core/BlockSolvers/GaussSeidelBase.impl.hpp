@@ -15,9 +15,7 @@
 #include "GaussSeidelBase.hpp"
 #include "ConstrainedSolverBase.impl.hpp"
 
-#ifndef BOGUS_DONT_PARALLELIZE
-#include <omp.h>
-#endif
+#include "../Utils/Threads.hpp"
 
 namespace bogus
 {
@@ -55,6 +53,46 @@ void GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::updateLocalMatrices( )
 			m_localMatrices[i].diagonal().array() += m_regularization(i) ;
 		} else m_regularization(i) = 0. ;
 
+	}
+}
+
+template < template <typename> class GaussSeidelImpl, typename BlockMatrixType >
+template < typename NSLaw, typename RhsT, typename ResT >
+typename GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::Scalar
+GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::evalAndKeepBest(
+		const NSLaw &law, const RhsT &b, const ResT &x,
+		typename GlobalProblemTraits::DynVector& y,
+		typename GlobalProblemTraits::DynVector& x_best, Scalar &err_best ) const
+{
+
+	y = b ;
+	m_matrix->template multiply< false >( x, y, 1, 1 ) ;
+	const Scalar err = Base::eval( law, y, x ) ;
+
+	if( err < err_best )
+	{
+		x_best = x ;
+		err_best = err ;
+	}
+
+	return err ;
+}
+
+template < template <typename> class GaussSeidelImpl, typename BlockMatrixType >
+template < typename NSLaw, typename RhsT, typename ResT >
+void GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::tryZero(
+		const NSLaw &law, const RhsT &b, ResT &x,
+		typename GlobalProblemTraits::DynVector& x_best, Scalar &err_best ) const
+{
+	x.setZero() ;
+	const Scalar err_zero = Base::eval( law, b, x ) ;
+
+	if( err_zero < err_best )
+	{
+		err_best = err_zero ;
+		x_best.setZero() ;
+	} else {
+		x = x_best ;
 	}
 }
 

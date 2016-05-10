@@ -102,6 +102,18 @@ protected:
 
 	void updateLocalMatrices() ;
 
+	template < typename NSLaw, typename RhsT, typename ResT >
+	Scalar evalAndKeepBest(
+			const NSLaw &law, const RhsT &b, const ResT &x,
+			typename GlobalProblemTraits::DynVector& buffer,
+			typename GlobalProblemTraits::DynVector& x_best, Scalar &err_best ) const ;
+
+	template < typename NSLaw, typename RhsT, typename ResT >
+	void tryZero(
+			const NSLaw &law, const RhsT &b, ResT &x,
+			typename GlobalProblemTraits::DynVector& x_best, Scalar &err_best ) const ;
+
+
 	using Base::m_matrix ;
 	using Base::m_maxIters ;
 	using Base::m_tol ;
