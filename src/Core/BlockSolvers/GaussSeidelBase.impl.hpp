@@ -80,7 +80,7 @@ GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::evalAndKeepBest(
 
 template < template <typename> class GaussSeidelImpl, typename BlockMatrixType >
 template < typename NSLaw, typename RhsT, typename ResT >
-void GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::tryZero(
+bool GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::tryZero(
 		const NSLaw &law, const RhsT &b, ResT &x,
 		typename GlobalProblemTraits::DynVector& x_best, Scalar &err_best ) const
 {
@@ -91,9 +91,11 @@ void GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::tryZero(
 	{
 		err_best = err_zero ;
 		x_best.setZero() ;
-	} else {
-		x = x_best ;
+		return true ;
 	}
+
+	x = x_best ;
+	return false ;
 }
 
 

@@ -82,6 +82,35 @@ public:
 	template < typename NSLaw, typename RhsT, typename ResT >
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x, bool tryZeroAsWell = true ) const ;
 
+	/*!
+	 *  Solves
+	 *   y = M x +         p + b
+	 *   0 = H'x + C/alpha p + c
+	 *   s.t. law(x,y)
+	 *  \warning Requires: m_evalEvery multiple of solveEvery ;
+	 */
+	template < typename NSLaw, typename RhsT, typename ResT, typename LSDerived, typename HDerived >
+	Scalar solveWithLinearConstraints( const NSLaw &law,
+									   const BlockObjectBase< LSDerived >& Cinv,
+									   const BlockObjectBase<  HDerived >& H,
+									   const Scalar alpha,
+									   const RhsT &b, const RhsT &c,
+									   ResT &x,
+									   bool tryZeroAsWell = true, unsigned solveEvery = 1) const ;
+
+	/*!
+	 *  Solves
+	 *   y = M x + W x + b
+	 *   s.t. law(x,y)
+	 *
+	 *  with W arbitrary linear operator ( matrix or expression )
+	 *  \warning Requires: m_evalEvery multiple of solveEvery ;
+	 */
+	template < typename NSLaw, typename RhsT, typename ResT, typename WDerived >
+	Scalar solveWithLinearConstraints( const NSLaw &law,
+									   const BlockObjectBase < WDerived >& W,
+									   const RhsT &b, ResT &x,
+									   bool tryZeroAsWell = true, unsigned solveEvery = 1 ) const ;
 
 	//! Access to the current Coloring. Will be reset whenever the matrix is changed.
 	/*! Determiniticy is achieved through the mean of contact coloring ;

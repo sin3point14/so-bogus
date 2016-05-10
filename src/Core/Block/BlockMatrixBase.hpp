@@ -105,6 +105,20 @@ public:
 	//! Access to blocks data as a raw pointer
 	BlockType* data() { return data_pointer(m_blocks) ; }
 
+
+	//! Compile-time block properties
+	enum CompileTimeProperties
+	{
+		RowsPerBlock = BlockTraits< BlockType >::RowsAtCompileTime,
+		ColsPerBlock = BlockTraits< BlockType >::ColsAtCompileTime,
+
+		has_row_major_blocks = BlockTraits< BlockType >::is_row_major,
+		has_square_or_dynamic_blocks = ColsPerBlock == RowsPerBlock,
+		has_fixed_rows_blocks = ((int) RowsPerBlock != internal::DYNAMIC ),
+		has_fixed_cols_blocks = ((int) ColsPerBlock != internal::DYNAMIC ),
+		has_fixed_size_blocks = has_fixed_cols_blocks && has_fixed_rows_blocks
+	} ;
+
 protected:
 	Index m_rows ;
 	Index m_cols ;

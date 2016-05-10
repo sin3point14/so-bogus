@@ -114,18 +114,53 @@ void GaussSeidel< BlockMatrixType >::innerLoop(
 
 template < typename BlockMatrixType >
 template < typename NSLaw, typename RhsT, typename ResT >
-typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
-																						 const RhsT &b, ResT &x, bool tryZeroAsWell ) const
+typename GaussSeidel< BlockMatrixType >::Scalar
+GaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
+									   const RhsT &b, ResT &x, bool tryZeroAsWell ) const
+{
+	const bogus::Zero< Scalar > zero( x.rows(), x.rows() ) ;
+	return solveWithLinearConstraints( law, zero, b, x, tryZeroAsWell, 0 ) ;
+}
+
+template < typename BlockMatrixType >
+template < typename NSLaw, typename RhsT, typename ResT, typename LSDerived, typename HDerived >
+typename GaussSeidel< BlockMatrixType >::Scalar
+GaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &law,
+								   const BlockObjectBase< LSDerived >& Cinv,
+								   const BlockObjectBase<  HDerived >& H,
+								   const Scalar alpha,
+								   const RhsT &b, const RhsT &c,
+								   ResT &x,
+								   bool tryZeroAsWell, unsigned solveEvery ) const
+{
+	const typename GlobalProblemTraits::DynVector k = b + H * Cinv * c ;
+
+	return solveWithLinearConstraints( law, -alpha * H * Cinv * H.transpose(), k, x, tryZeroAsWell, solveEvery ) ;
+}
+
+
+template < typename BlockMatrixType >
+template < typename NSLaw, typename RhsT, typename ResT, typename WDerived >
+typename GaussSeidel< BlockMatrixType >::Scalar
+GaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &law,
+								   const BlockObjectBase < WDerived >& W,
+								   const RhsT &b, ResT &x,
+								   bool tryZeroAsWell, unsigned solveEvery) const
 {
 	assert( m_matrix ) ;
+	assert( 0 == m_evalEvery % solveEvery ) ;
 
 	typename GlobalProblemTraits::DynVector y, x_best ;
 
-	Scalar err_best = std::numeric_limits< Scalar >::max() ;
-	Base::evalAndKeepBest( law, b, x, y, x_best, err_best ) ;
+	typename GlobalProblemTraits::DynVector w = b;
+	W.template multiply< false >(x, w, 1, 1) ;
 
-	if( tryZeroAsWell )
-		Base::tryZero( law, b, x, x_best, err_best ) ;
+	Scalar err_best = std::numeric_limits< Scalar >::max() ;
+	Base::evalAndKeepBest( law, w, x, y, x_best, err_best ) ;
+
+	if( tryZeroAsWell && Base::tryZero( law, b, x, x_best, err_best ) ) {
+		w = b ;
+	}
 
 	this->m_callback.trigger( 0, err_best ) ;
 
@@ -142,11 +177,17 @@ typename GaussSeidel< BlockMatrixType >::Scalar GaussSeidel< BlockMatrixType >::
 	for( GSIter = 1 ; GSIter <= m_maxIters ; ++GSIter )
 	{
 
-		innerLoop( parallelize, law, b, skip, ndxRef, x ) ;
+		innerLoop( parallelize, law, w, skip, ndxRef, x ) ;
+
+		if( solveEvery > 0 && 0 == ( GSIter % solveEvery ) )
+		{
+			w = b ;
+			W.template multiply< false >(x, w, 1, 1) ;
+		}
 
 		if( 0 == ( GSIter % m_evalEvery ) )
 		{
-			const Scalar err = Base::evalAndKeepBest( law, b, x, y, x_best, err_best ) ;
+			const Scalar err = Base::evalAndKeepBest( law, w, x, y, x_best, err_best ) ;
 
 			this->m_callback.trigger( GSIter, err ) ;
 

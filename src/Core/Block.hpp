@@ -28,5 +28,6 @@
 #include "Block/SparseBlockMatrix.hpp"
 #include "Block/MappedSparseBlockMatrix.hpp"
 #include "Block/Operators.hpp"
+#include "Block/Zero.hpp"
 
 #endif

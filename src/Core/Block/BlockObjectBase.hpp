@@ -42,8 +42,6 @@ struct BlockObjectBase
 
 	typedef typename Traits::PlainObjectType PlainObjectType ;
 
-	typedef typename BlockMatrixTraits< PlainObjectType >::BlockType BlockType ;
-
 	//! Returns the total number of rows of the matrix ( expanding blocks )
 	Index rows() const { return derived().rows() ; }
 	//! Returns the total number of columns of the matrix ( expanding blocks )
@@ -82,18 +80,6 @@ struct BlockObjectBase
 		derived().template multiply< DoTranspose >( rhs, res, alpha, beta ) ;
 	}
 
-	//! Compile-time block properties
-	enum CompileTimeProperties
-	{
-		RowsPerBlock = BlockTraits< BlockType >::RowsAtCompileTime,
-		ColsPerBlock = BlockTraits< BlockType >::ColsAtCompileTime,
-
-		has_row_major_blocks = BlockTraits< BlockType >::is_row_major,
-		has_square_or_dynamic_blocks = ColsPerBlock == RowsPerBlock,
-		has_fixed_rows_blocks = ((int) RowsPerBlock != internal::DYNAMIC ),
-		has_fixed_cols_blocks = ((int) ColsPerBlock != internal::DYNAMIC ),
-		has_fixed_size_blocks = has_fixed_cols_blocks && has_fixed_rows_blocks
-	} ;
 	// To use as block type
 	enum {
 		RowsAtCompileTime = internal::DYNAMIC,
@@ -107,7 +93,7 @@ struct BlockObjectBase
 template< typename Derived  >
 struct BlockMatrixTraits< BlockObjectBase< Derived > > {
 
-	typedef BOGUS_DEFAULT_INDEX_TYPE    Index ;
+	typedef BOGUS_DEFAULT_INDEX_TYPE     Index ;
 	typedef BOGUS_DEFAULT_BLOCK_PTR_TYPE BlockPtr ;
 
 	typedef Derived PlainObjectType ;

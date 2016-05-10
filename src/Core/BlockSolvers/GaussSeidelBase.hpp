@@ -109,7 +109,7 @@ protected:
 			typename GlobalProblemTraits::DynVector& x_best, Scalar &err_best ) const ;
 
 	template < typename NSLaw, typename RhsT, typename ResT >
-	void tryZero(
+	bool tryZero(
 			const NSLaw &law, const RhsT &b, ResT &x,
 			typename GlobalProblemTraits::DynVector& x_best, Scalar &err_best ) const ;
 

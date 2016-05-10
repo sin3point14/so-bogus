@@ -28,6 +28,7 @@ Core/Block/SparseMatrixVectorProduct.impl.hpp
 Core/Block/SparseScaleAdd.impl.hpp
 Core/Block/Streams.hpp
 Core/Block/Traits.hpp
+Core/Block/Zero.hpp
 Core/BlockSolvers.fwd.hpp
 Core/BlockSolvers.hpp
 Core/BlockSolvers.impl.hpp
