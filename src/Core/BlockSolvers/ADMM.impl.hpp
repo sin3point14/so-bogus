@@ -200,8 +200,8 @@ DualAMA< BlockMatrixType>::solve(
 {
 	typedef typename GlobalProblemTraits::DynVector DynVec ;
 
-	DynVec k(0) ;
-	DynVec p(0) ;
+	const typename LocalProblemTraits< 0, Scalar >::Vector k ;
+	typename LocalProblemTraits< 0, Scalar >::Vector p ;
 	Zero< Scalar > zero( 0, 0 ) ;
 
 	return solveWithLinearConstraints< variant >( law, A, zero, *m_matrix, f, k, w, v, p, r ) ;
