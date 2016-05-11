@@ -268,14 +268,15 @@ DualAMA< BlockMatrixType>::solveWithLinearConstraints(
 		B.template multiply<false>( v + gamma*z, g2, 1, 1 ) ;
 
 		// Eval current reisual,  exit if small enough
-		res = this->eval( law, ut, r )
-				+ ( this->usesInfinityNorm()
-				  ? gap.template lpNorm< Eigen::Infinity >()
-				  : gap.squaredNorm() / (1 + gap.rows() ) )
-				+ ( this->usesInfinityNorm()
-				  ? g2.template lpNorm< Eigen::Infinity >()
-				  : g2.squaredNorm() / (1 + g2.rows() ) )
-				;
+		res = this->eval( law, ut, r ) ;      // Complementarity
+		res	+= ( this->usesInfinityNorm()     // Gap
+				  ? z.template lpNorm< Eigen::Infinity >()
+				  : z.squaredNorm() / (1 + z.rows() ) ) ;
+		if( g2.rows() > 0 )
+			res += ( this->usesInfinityNorm() // Linear constraints
+					 ? g2.template lpNorm< Eigen::Infinity >()
+					 : g2.squaredNorm() / (1 + g2.rows() ) )
+					;
 
 		this->callback().trigger( adIter, res );
 
