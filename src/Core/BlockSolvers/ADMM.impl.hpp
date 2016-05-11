@@ -16,6 +16,8 @@
 
 #include "ConstrainedSolverBase.impl.hpp"
 #include "ProjectedGradient.impl.hpp"
+#include "Preconditioners.impl.hpp"
+
 
 #include "../Block/Zero.hpp"
 
@@ -198,18 +200,19 @@ DualAMA< BlockMatrixType>::solve(
 		const NSLaw &law, const BlockObjectBase< MatrixT >& A,
 		const RhsT &f, const RhsT &w, ResT &v, ResT &r ) const
 {
-	typedef typename GlobalProblemTraits::DynVector DynVec ;
-
 	const typename LocalProblemTraits< 0, Scalar >::Vector k ;
 	typename LocalProblemTraits< 0, Scalar >::Vector p ;
 	Zero< Scalar > zero( 0, 0 ) ;
 
-	return solveWithLinearConstraints< variant >( law, A, zero, *m_matrix, f, k, w, v, p, r ) ;
+	TrivialPreconditioner< BlockObjectBase<MatrixT> > precond ;
+	precond.setMatrix( A.derived() ) ;
+
+	return solveWithLinearConstraints< variant >( law, A, zero, *m_matrix, precond, f, k, w, v, p, r ) ;
 }
 
 template < typename BlockMatrixType >
 template < admm::Variant variant, typename NSLaw,
-		   typename AType, typename BType, typename HType,
+		   typename AType, typename BType, typename HType, typename PrecondT,
 		   typename RhsT, typename ORhsT, typename ResT, typename OResT >
 typename DualAMA< BlockMatrixType >::Scalar
 DualAMA< BlockMatrixType>::solveWithLinearConstraints(
@@ -217,6 +220,7 @@ DualAMA< BlockMatrixType>::solveWithLinearConstraints(
 			const BlockObjectBase< AType >& A,
 			const BlockObjectBase< BType >& B,
 			const BlockObjectBase< HType >& H,
+			const PrecondT& preconditioner,
 			const RhsT &f, const ORhsT& k,const RhsT &w,
 			ResT &v, OResT &p, ResT &r, Scalar stepRatio ) const
 {
@@ -228,7 +232,7 @@ DualAMA< BlockMatrixType>::solveWithLinearConstraints(
 	Scalar res = -1, min_res = -1 ;
 
 	typename GlobalProblemTraits::DynVector r_best( r ), v_best( v ), p_best( p ) ;
-	typename GlobalProblemTraits::DynVector x, ut, gap,
+	typename GlobalProblemTraits::DynVector z( v.rows() ), x, ut, gap,
 			HrBp ( v.rows() ),
 			g, g2,
 			s( r.rows() ) ;
@@ -255,12 +259,13 @@ DualAMA< BlockMatrixType>::solveWithLinearConstraints(
 		x  = f ;
 		A.template multiply< false >( v, x, 1, 1 ) ;
 		gap = HrBp - x ;
+		preconditioner.template apply< false >(gap, z);
 
 		ut = w ;
 		H.template multiply<false>( v, ut, 1, 1 ) ;
 
 		g2 = k ;
-		B.template multiply<false>( v + gamma*gap, g2, 1, 1 ) ;
+		B.template multiply<false>( v + gamma*z, g2, 1, 1 ) ;
 
 		// Eval current reisual,  exit if small enough
 		res = this->eval( law, ut, r )
@@ -295,7 +300,7 @@ DualAMA< BlockMatrixType>::solveWithLinearConstraints(
 
 		this->dualityCOV( law, ut, s ) ;
 		g = ut + s ;
-		H.template multiply< false >( gap, g, gamma, 1 ) ;
+		H.template multiply< false >( z, g, gamma, 1 ) ;
 
 		// Line search (optional)
 		if( lineSearchIterations() == 0 ) {
@@ -326,7 +331,10 @@ DualAMA< BlockMatrixType>::solveWithLinearConstraints(
 				H.template multiply< true >( rs, HrBp, 1, 0 ) ;
 				B.template multiply< true >( ps, HrBp, 1, 1 ) ;
 
-				y = v + gamma * ( HrBp - x ) ;
+				gap = HrBp - x ;
+				preconditioner.template apply< false >(gap, z);
+
+				y = v + gamma * z ;
 				y += beta * ( y - y_prev ) ; //Over Relaxation
 
 				gap = HrBp - f ;
@@ -348,8 +356,10 @@ DualAMA< BlockMatrixType>::solveWithLinearConstraints(
 		}
 		// (end line-search)
 
+		gap = HrBp - x ;
+		preconditioner.template apply< false >(gap, z);
 
-		y = v + gamma * ( HrBp - x ) ;
+		y = v + gamma * z ;
 		v = y +  beta * ( y - y_prev ) ;  //Over Relaxation
 
 		y_prev   = y ;

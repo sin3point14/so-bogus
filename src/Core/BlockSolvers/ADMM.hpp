@@ -157,13 +157,14 @@ public:
 
 	//! Idem  with constraint  ( B v + k = 0 )
 	template < admm::Variant variant, typename NSLaw,
-			   typename AType, typename BType, typename HType,
+			   typename AType, typename BType, typename HType, typename PrecondT,
 			   typename RhsT, typename ORhsT, typename ResT, typename OResT >
 	Scalar solveWithLinearConstraints(
 			const NSLaw &law,
 			const BlockObjectBase< AType >& A,
 			const BlockObjectBase< BType >& B,
 			const BlockObjectBase< HType >& H,
+			const PrecondT& preconditioner,
 			const RhsT &f, const ORhsT& k, const RhsT &w,
 			ResT &v, OResT &p, ResT &r, Scalar stepRatio = 1 ) const ;
 
