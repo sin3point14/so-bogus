@@ -346,10 +346,10 @@ public:
 	template < typename RhsT, typename ResT >
 	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
 
-	template < typename RhsT, typename ResT >
+	template < bool DoTranspose, typename RhsT, typename ResT >
 	void rowMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
 
-	template < typename RhsT, typename ResT >
+	template < bool DoTranspose, typename RhsT, typename ResT >
 	void colMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
 
 	template < bool ColWise, typename LhsT, typename RhsT >

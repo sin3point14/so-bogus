@@ -20,24 +20,11 @@
 namespace bogus
 {
 
-//! Projected Gauss-Seidel iterative solver.
+//! Matrix-free version of the GaussSeidel iterative solver.
 /*!
-   Works by taking into account only one block-row of the system at a time, and iterating
-   several times over the whole set of rows several times until convergence has been achieved.
-
-   Each inner iteration of the algorithm will try to solve the local problem
-	  \f[
-		\left\{
-		  \begin{array}{rcl}
-			y_i^{k+1} &=& M_{i,i} x_i^{k+1}  + b_i^{k} \\
-			&s.t.& law (x^{k+1},y^{k+1})
-		  \end{array}
-		\right.
-	  \f]
-	where \b k is the current global iteration, \b i the current row
-	and \f[ b_i^{k} := b_i + \sum_{ j < i }{ M_{i,j}x_j^{k+1} } +  \sum_{ j > i }{ M_{i,j}x_j^{k} } \f]
-
-   See also solve() and \cite JAJ98.
+  Assumes that the system matrix is defines as the product (M M')
+  \warning Parallelization is supported, but dangerous. If in doubt, use setMaxThreads(1)
+  \sa GaussSeidel
   */
 template < typename BlockMatrixType >
 class ProductGaussSeidel : public GaussSeidelBase< ProductGaussSeidel, BlockMatrixType >
@@ -58,27 +45,6 @@ public:
 	ProductGaussSeidel& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix ) ;
 
 	//! Finds an approximate solution for a constrained linear problem
-	/*!
-	  Stops when the residual computed in eval() is below \ref m_tol, of the number
-	  of iterations exceed \ref m_maxIters
-
-	  Implements Algorithm 1. from \cite DBB11 to solve
-	   \f[
-		\left\{
-		  \begin{array}{rcl}
-			y &=& M x + b \\
-			&s.t.& law (x,y)
-		  \end{array}
-		\right.
-	  \f]
-	  \param law The (non-smooth) law that should define:
-		- An error function for the local problem
-		- A local solver for each row of the system ( e.g. 1 contact solver )
-		\sa SOCLaw
-	  \param b the const part of the right hand side
-	  \param x the unknown. Can be warm-started
-	  \param tryZeroAsWell If true, the algorithm will reset r to zero if that would result in a lower residual
-	  */
 	template < typename NSLaw, typename RhsT, typename ResT >
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x, bool tryZeroAsWell = true ) const ;
 

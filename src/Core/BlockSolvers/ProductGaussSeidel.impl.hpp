@@ -77,6 +77,8 @@ void ProductGaussSeidel< BlockMatrixType >::innerLoop(
 	const Scalar absSkipTol = std::min( m_skipTol, m_tol ) ;
 	const Scalar absSkipIters = std::min( m_skipIters, (unsigned) std::sqrt( (Scalar) skip.size() ) ) ;
 
+	const std::ptrdiff_t n = m_matrix->rowsOfBlocks() ;
+
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel if ( parallelize )
 	{
@@ -86,7 +88,7 @@ void ProductGaussSeidel< BlockMatrixType >::innerLoop(
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp for
 #endif
-		for( std::ptrdiff_t i = 0 ; i < m_matrix->rows() ; ++ i )
+		for( std::ptrdiff_t i = 0 ; i < n ; ++ i )
 		{
 
 			if( skip[i] ) {
@@ -168,7 +170,7 @@ ProductGaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &
 	assert( m_matrix ) ;
 	assert( solveEvery == 0 || 0 == m_evalEvery % solveEvery ) ;
 
-	typename GlobalProblemTraits::DynVector Mx, y, x_best ;
+	typename GlobalProblemTraits::DynVector Mx( m_matrix->cols() ), y, x_best ;
 
 	typename GlobalProblemTraits::DynVector w = b;
 	W.template multiply< false >(x, w, 1, 1) ;
@@ -182,6 +184,7 @@ ProductGaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &
 
 	if( tryZeroAsWell && Base::tryZero( law, b, x, x_best, err_best ) ) {
 		w = b ;
+		Mx.setZero() ;
 	}
 
 	this->m_callback.trigger( 0, err_best ) ;
