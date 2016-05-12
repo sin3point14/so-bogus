@@ -22,10 +22,17 @@ namespace bogus {
 
 namespace mv_impl {
 
+
 template < bool DoTranspose, typename Matrix, typename RhsT, typename ResT, typename Scalar >
-inline void mv_add( const Matrix& matrix, const RhsT& rhs, ResT& res, Scalar alpha )
+inline void mv_add_pre( const Matrix& matrix, const RhsT& rhs, ResT& res, Scalar alpha )
 {
 	res.noalias() += TransposeIf< DoTranspose >::get( matrix ) * ( alpha * rhs ) ;
+}
+
+template < bool DoTranspose, typename Matrix, typename RhsT, typename ResT, typename Scalar >
+inline void mv_add_post( const Matrix& matrix, const RhsT& rhs, ResT& res, Scalar alpha )
+{
+	res.noalias() += alpha * ( TransposeIf< DoTranspose >::get( matrix ) * rhs )  ;
 }
 
 template < bool Transpose, typename BlockT, typename IndexT, typename RhsT, typename ResT, typename ScalarT >
@@ -37,7 +44,7 @@ static inline void innerRowMultiply( const BlockT* blocks, const IndexT &index,
 
 	for( typename IndexT::InnerIterator it( index, outerIdx ) ; it ; ++ it )
 	{
-		mv_add< Transpose >( blocks[ it.ptr() ], segmenter[ it.inner() ], res, alpha ) ;
+		mv_add_pre< Transpose >( blocks[ it.ptr() ], segmenter[ it.inner() ], res, alpha.diagonal( it.inner() ) ) ;
 	}
 }
 
@@ -51,7 +58,7 @@ static inline void innerColMultiply( const BlockT* blocks, const IndexT &index,
 	for( typename IndexT::InnerIterator it( index, outerIdx ) ; it ; ++ it )
 	{
 		typename ResSegmenter::ReturnType res_seg(segmenter[ it.inner() ] ) ;
-		mv_add< Transpose >( blocks[ it.ptr() ], rhs, res_seg, alpha ) ;
+		mv_add_post< Transpose >( blocks[ it.ptr() ], rhs, res_seg, alpha.diagonal( it.inner() ) ) ;
 	}
 }
 
@@ -72,7 +79,7 @@ struct SparseBlockMatrixVectorMultiplier
 		for( typename Derived::Index i = 0 ; i < (typename Derived::Index) matrix.majorIndex().outerSize() ; ++i )
 		{
 			typename ResSegmenter::ReturnType seg = resSegmenter[ i ] ;
-			innerRowMultiply< Transpose >( matrix.data(), matrix.majorIndex(), i, rhs, seg, alpha ) ;
+			innerRowMultiply< Transpose >( matrix.data(), matrix.majorIndex(), i, rhs, seg, make_constant_array(alpha) ) ;
 		}
 	}
 
@@ -112,10 +119,10 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 					 it ; ++ it )
 				{
 					const typename Derived::BlockType &b = matrix.block( it.ptr() ) ;
-					mv_add< false >( b, rhsSegmenter[ it.inner() ], res_seg, alpha ) ;
+					mv_add_pre< false >( b, rhsSegmenter[ it.inner() ], res_seg, alpha ) ;
 					if( it.inner() != i ) {
 						typename ResSegmenter::ReturnType inner_res_seg(resSegmenter[ it.inner() ] ) ;
-						mv_add< true >( b, rhs_seg, inner_res_seg, alpha ) ;
+						mv_add_pre< true >( b, rhs_seg, inner_res_seg, alpha ) ;
 					}
 				}
 			}
@@ -147,8 +154,8 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 			for( Index i = 0 ; i < matrix.majorIndex().outerSize() ; ++i )
 			{
 				typename ResSegmenter::ReturnType seg( resSegmenter[ i ] ) ;
-				innerRowMultiply< false >( matrix.data(), matrix.majorIndex(), i, rhs, seg, alpha ) ;
-				innerRowMultiply< false >( matrix.transposeData(), matrix.transposeIndex(), i, rhs, seg, alpha ) ;
+				innerRowMultiply< false >( matrix.data(), matrix.majorIndex(), i, rhs, seg, make_constant_array(alpha) ) ;
+				innerRowMultiply< false >( matrix.transposeData(), matrix.transposeIndex(), i, rhs, seg, make_constant_array(alpha) ) ;
 			}
 		} else {
 #ifdef BOGUS_DONT_PARALLELIZE
@@ -160,11 +167,11 @@ struct SparseBlockMatrixVectorMultiplier< true, NativeOrder, Transpose >
 					 it ; ++ it )
 				{
 					const typename Derived::BlockType &b = matrix.block( it.ptr() ) ;
-					mv_add< false >( b, rhsSegmenter[ it.inner() ], res_seg, alpha ) ;
+					mv_add_pre< false >( b, rhsSegmenter[ it.inner() ], res_seg, alpha ) ;
 					if( it.inner() != i )
 					{
 						typename ResSegmenter::ReturnType inner_res_seg(resSegmenter[ it.inner() ] ) ;
-						mv_add< true >( b, rhs_seg, inner_res_seg, alpha ) ;
+						mv_add_pre< true >( b, rhs_seg, inner_res_seg, alpha ) ;
 					}
 				}
 			}
@@ -200,7 +207,7 @@ struct OutOfOrderSparseBlockMatrixVectorMultiplier
 #pragma omp for
 			for( Index i = 0 ; i < matrix.majorIndex().outerSize() ; ++i )
 			{
-				innerColMultiply< Transpose >( matrix.data(), matrix.majorIndex(), i, rhsSegmenter[i], locRes, alpha ) ;
+				innerColMultiply< Transpose >( matrix.data(), matrix.majorIndex(), i, rhsSegmenter[i], locRes, make_constant_array(alpha) ) ;
 			}
 
 			{
@@ -223,7 +230,7 @@ struct OutOfOrderSparseBlockMatrixVectorMultiplier
 #ifdef BOGUS_DONT_PARALLELIZE
 		for( Index i = 0 ; i < matrix.majorIndex().outerSize() ; ++i )
 		{
-			innerColMultiply< Transpose >( matrix.data(), matrix.majorIndex(), i, rhsSegmenter[i], res, alpha ) ;
+			innerColMultiply< Transpose >( matrix.data(), matrix.majorIndex(), i, rhsSegmenter[i], res, make_constant_array(alpha) ) ;
 		}
 #else
 		multiplyAndReduct( matrix, rhs, res, get_mutable_vector( res ), alpha ) ;
@@ -261,7 +268,7 @@ struct SparseBlockMatrixVectorMultiplier< false, false, true >
 			{
 				typename ResSegmenter::ReturnType seg( resSegmenter[ i ] ) ;
 				innerRowMultiply< false >
-						( matrix.transposeData(), matrix.transposeIndex(), i, rhs, seg, alpha ) ;
+						( matrix.transposeData(), matrix.transposeIndex(), i, rhs, seg, make_constant_array(alpha) ) ;
 			}
 		} else {
 			Base::multiply( matrix, rhs, res, alpha ) ;
@@ -286,26 +293,25 @@ struct SparseBlockRowMultiplier
 
 		IndexCptr cptr( matrix ) ;
 
-		for( typename IndexType::InnerIterator it( cptr.get(), row ) ;
-			 it ; ++ it )
+		for( typename IndexType::InnerIterator it( cptr.get(), row ) ; it ; ++ it )
 		{
 			if( it.inner() != row )
-				mv_add< false > ( matrix.block( it.ptr() ), segmenter[ it.inner() ], res, 1 ) ;
+				mv_add_pre< false > ( matrix.block( it.ptr() ), segmenter[ it.inner() ], res, 1 ) ;
 		}
 	}
 
-	template < bool DoTranspose, typename Derived,  typename RhsT, typename ResT >
-	static void rowMultiply( const SparseBlockMatrixBase< Derived >& matrix, typename Derived::Index row, const RhsT& rhs, ResT& res )
+	template < bool DoTranspose, typename Derived,  typename RhsT, typename ResT, typename PreOp >
+	static void rowMultiply( const SparseBlockMatrixBase< Derived >& matrix, typename Derived::Index row, const RhsT& rhs, ResT& res, const PreOp& preop )
 	{
 		SparseBlockIndexComputer< Derived, false, DoTranspose >  cptr( matrix ) ;
-		innerRowMultiply< DoTranspose >( matrix.data(), cptr.get(), row, rhs, res, 1 ) ;
+		innerRowMultiply< DoTranspose >( matrix.data(), cptr.get(), row, rhs, res, preop ) ;
 	}
 
-	template < bool DoTranspose, typename Derived,  typename RhsT, typename ResT >
-	static void colMultiply( const SparseBlockMatrixBase< Derived >& matrix, typename Derived::Index col, const RhsT& rhs, ResT& res )
+	template < bool DoTranspose, typename Derived,  typename RhsT, typename ResT, typename PostOp >
+	static void colMultiply( const SparseBlockMatrixBase< Derived >& matrix, typename Derived::Index col, const RhsT& rhs, ResT& res, const PostOp& postop )
 	{
 		SparseBlockIndexComputer< Derived, true, DoTranspose >  cptr( matrix ) ;
-		innerColMultiply< DoTranspose >( matrix.data(), cptr.get(), col, rhs, res, 1 ) ;
+		innerColMultiply< DoTranspose >( matrix.data(), cptr.get(), col, rhs, res, postop ) ;
 	}
 } ;
 
@@ -322,47 +328,47 @@ struct SparseBlockRowMultiplier< true, NativeOrder >
 		for( typename SparseBlockMatrixBase< Derived >::MajorIndexType::InnerIterator it( matrix.majorIndex(), row ) ;
 			 it && it.inner() < row ; ++ it )
 		{
-			mv_add< !NativeOrder > ( matrix.block( it.ptr() ), segmenter[ it.inner() ], res, 1 ) ;
+			mv_add_pre< !NativeOrder > ( matrix.block( it.ptr() ), segmenter[ it.inner() ], res, 1 ) ;
 		}
 
 		if( matrix.transposeIndex().valid )
 		{
 			innerRowMultiply< !NativeOrder >
-					( matrix.transposeData(), matrix.transposeIndex(), row, rhs, res, 1 ) ;
+					( matrix.transposeData(), matrix.transposeIndex(), row, rhs, res, make_constant_array(1) ) ;
 		} else {
 			assert( matrix.minorIndex().valid ) ;
-			innerRowMultiply< NativeOrder >( matrix.data(), matrix.minorIndex(), row, rhs, res, 1 ) ;
+			innerRowMultiply< NativeOrder >( matrix.data(), matrix.minorIndex(), row, rhs, res, make_constant_array(1) ) ;
 		}
 
 	}
 
-	template < bool DoTranspose, typename Derived,  typename RhsT, typename ResT >
-	static void rowMultiply( const SparseBlockMatrixBase< Derived >& matrix, typename Derived::Index row, const RhsT& rhs, ResT& res )
+	template < bool DoTranspose, typename Derived,  typename RhsT, typename ResT, typename PreOp >
+	static void rowMultiply( const SparseBlockMatrixBase< Derived >& matrix, typename Derived::Index row, const RhsT& rhs, ResT& res, const PreOp& preop )
 	{
-		innerRowMultiply< !NativeOrder >( matrix.data(), matrix.majorIndex(), row, rhs, res, 1 ) ;
+		innerRowMultiply< !NativeOrder >( matrix.data(), matrix.majorIndex(), row, rhs, res, preop ) ;
 
 		if( matrix.transposeIndex().valid )
 		{
 			innerRowMultiply< !NativeOrder >
-					( matrix.transposeData(), matrix.transposeIndex(), row, rhs, res, 1 ) ;
+					( matrix.transposeData(), matrix.transposeIndex(), row, rhs, res, preop ) ;
 		} else {
 			assert( matrix.minorIndex().valid ) ;
-			innerRowMultiply< NativeOrder >( matrix.data(), matrix.minorIndex(), row, rhs, res, 1 ) ;
+			innerRowMultiply< NativeOrder >( matrix.data(), matrix.minorIndex(), row, rhs, res, preop ) ;
 		}
 	}
 
-	template < bool DoTranspose, typename Derived,  typename RhsT, typename ResT >
-	static void colMultiply( const SparseBlockMatrixBase< Derived >& matrix, typename Derived::Index col, const RhsT& rhs, ResT& res )
+	template < bool DoTranspose, typename Derived,  typename RhsT, typename ResT, typename PostOp >
+	static void colMultiply( const SparseBlockMatrixBase< Derived >& matrix, typename Derived::Index col, const RhsT& rhs, ResT& res, const PostOp& postop )
 	{
-		innerColMultiply< !NativeOrder >( matrix.data(), matrix.majorIndex(), col, rhs, res, 1 ) ;
+		innerColMultiply< !NativeOrder >( matrix.data(), matrix.majorIndex(), col, rhs, res, postop ) ;
 
 		if( matrix.transposeIndex().valid )
 		{
 			innerColMultiply< !NativeOrder >
-					( matrix.transposeData(), matrix.transposeIndex(), col, rhs, res, 1 ) ;
+					( matrix.transposeData(), matrix.transposeIndex(), col, rhs, res, postop ) ;
 		} else {
 			assert( matrix.minorIndex().valid ) ;
-			innerColMultiply< NativeOrder >( matrix.data(), matrix.minorIndex(), col, rhs, res, 1 ) ;
+			innerColMultiply< NativeOrder >( matrix.data(), matrix.minorIndex(), col, rhs, res, postop ) ;
 		}
 	}
 } ;
@@ -435,20 +441,20 @@ struct SparseBlockMatrixOpProxy
 				::splitRowMultiply( matrix, row, rhs, res )  ;
 	}
 
-	template < bool DoTranspose, typename Derived, typename RhsT, typename ResT >
-	static void rowMultiply( const SparseBlockMatrixBase< Derived >& matrix, typename Derived::Index row, const RhsT& rhs, ResT& res  )
+	template < bool DoTranspose, typename Derived, typename RhsT, typename ResT, typename PreOp >
+	static void rowMultiply( const SparseBlockMatrixBase< Derived >& matrix, typename Derived::Index row, const RhsT& rhs, ResT& res, const PreOp &preop  )
 	{
 		typedef BlockMatrixTraits< Derived > Traits ;
 		mv_impl::SparseBlockRowMultiplier< Traits::is_symmetric, DoTranspose == bool(Traits::is_col_major) >
-				::template rowMultiply<DoTranspose>( matrix, row, rhs, res )  ;
+				::template rowMultiply<DoTranspose>( matrix, row, rhs, res, preop )  ;
 	}
 
-	template < bool DoTranspose, typename Derived, typename RhsT, typename ResT >
-	static void colMultiply( const SparseBlockMatrixBase< Derived >& matrix, typename Derived::Index col, const RhsT& rhs, ResT& res  )
+	template < bool DoTranspose, typename Derived, typename RhsT, typename ResT, typename PostOp >
+	static void colMultiply( const SparseBlockMatrixBase< Derived >& matrix, typename Derived::Index col, const RhsT& rhs, ResT& res, const PostOp &postop  )
 	{
 		typedef BlockMatrixTraits< Derived > Traits ;
 		mv_impl::SparseBlockRowMultiplier< Traits::is_symmetric, DoTranspose != bool(Traits::is_col_major) >
-				::template colMultiply<DoTranspose>( matrix, col, rhs, res )  ;
+				::template colMultiply<DoTranspose>( matrix, col, rhs, res, postop )  ;
 	}
 } ;
 
@@ -475,19 +481,19 @@ void SparseBlockMatrixBase< Derived >::splitRowMultiply( const Index row, const 
 }
 
 template < typename Derived >
-template < bool Transpose, typename RhsT, typename ResT >
-void SparseBlockMatrixBase< Derived >::rowMultiply( const Index row, const RhsT& rhs, ResT& res ) const
+template < bool Transpose, typename RhsT, typename ResT, typename PreOp >
+void SparseBlockMatrixBase< Derived >::rowMultiplyPrecompose( const Index row, const RhsT& rhs, ResT& res, const PreOp& preop ) const
 {
 	SparseBlockMatrixOpProxy< is_bsr_compatible, Base::has_row_major_blocks, Scalar, Index >
-			::template rowMultiply< Transpose >( *this, row, rhs, res ) ;
+			::template rowMultiply< Transpose >( *this, row, rhs, res, preop ) ;
 }
 
 template < typename Derived >
-template < bool Transpose, typename RhsT, typename ResT >
-void SparseBlockMatrixBase< Derived >::colMultiply( const Index col, const RhsT& rhs, ResT& res ) const
+template < bool Transpose, typename RhsT, typename ResT, typename PostOp >
+void SparseBlockMatrixBase< Derived >::colMultiplyPostcompose( const Index col, const RhsT& rhs, ResT& res, const PostOp &postop ) const
 {
 	SparseBlockMatrixOpProxy< is_bsr_compatible, Base::has_row_major_blocks, Scalar, Index >
-			::template colMultiply< Transpose >( *this, col, rhs, res ) ;
+			::template colMultiply< Transpose >( *this, col, rhs, res, postop ) ;
 }
 
 template <typename LhsMatrixT, typename RhsMatrixT>

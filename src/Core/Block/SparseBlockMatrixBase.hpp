@@ -353,11 +353,11 @@ public:
 	template < typename RhsT, typename ResT >
 	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
 
-	template < bool DoTranspose, typename RhsT, typename ResT >
-	void rowMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
+	template < bool DoTranspose, typename RhsT, typename ResT, typename PreOp >
+	void rowMultiplyPrecompose( const Index row, const RhsT& rhs, ResT& res, const PreOp &op ) const ;
 
-	template < bool DoTranspose, typename RhsT, typename ResT >
-	void colMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
+	template < bool DoTranspose, typename RhsT, typename ResT, typename PostOp >
+	void colMultiplyPostcompose( const Index row, const RhsT& rhs, ResT& res, const PostOp &op ) const ;
 
 	template < bool ColWise, typename LhsT, typename RhsT >
 	void setFromProduct( const Product< LhsT, RhsT > &prod ) ;

@@ -22,22 +22,31 @@ TEST_F( SmallFrictionPb, ProductGaussSeidel )
 
 	Eigen::VectorXd b = w - H * ( InvMassMat * f );
 
-	bogus::ProductGaussSeidel< HType > pgs( H ) ;
-	ri.bindTo( pgs.callback() );
-
-	bogus::Coulomb3D law( 2, mu.data()  ) ;
-
 	Eigen::VectorXd x( b.rows() ) ;
 	double res = -1 ;
 
-	x.setOnes() ;
-	ri.setMethodName( "Product_GS" );
-	res = pgs.solve( law, b, x ) ;
-	ASSERT_LT( res, 1.e-8 ) ;
+	bogus::Coulomb3D law( 2, mu.data()  ) ;
 
-	Eigen::VectorXd y = H * H.transpose() * x + b ;
-	ASSERT_LT( pgs.eval(law, y, x), 1.e-8 ) ;
+	{
+		bogus::ProductGaussSeidel< HType > pgs( H ) ;
+		ri.bindTo( pgs.callback() );
 
+		x.setOnes() ;
+		ri.setMethodName( "Product_GS" );
+		res = pgs.solve( law, b, x ) ;
+		ASSERT_LT( res, 1.e-8 ) ;
+		Eigen::VectorXd y = H * H.transpose() * x + b ;
+		ASSERT_LT( pgs.eval(law, y, x), 1.e-8 ) ;
+	}
+	{
+		bogus::ProductGaussSeidel< HType, MType > pgs( H, InvMassMat ) ;
+
+		x.setOnes() ;
+		ri.setMethodName( "Product_GS" );
+		res = pgs.solve( law, b, x ) ;
+		ASSERT_LT( res, 1.e-8 ) ;
+		ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
+	}
 	///////////
 
 

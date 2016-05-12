@@ -40,10 +40,10 @@ namespace bogus
    See also solve() and \cite JAJ98.
   */
 template < typename BlockMatrixType >
-class GaussSeidel : public GaussSeidelBase< GaussSeidel, BlockMatrixType >
+class GaussSeidel : public GaussSeidelBase< GaussSeidel<BlockMatrixType>, BlockMatrixType >
 {
 public:
-	typedef GaussSeidelBase< bogus::GaussSeidel, BlockMatrixType > Base ;
+	typedef GaussSeidelBase< GaussSeidel, BlockMatrixType > Base ;
 
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;

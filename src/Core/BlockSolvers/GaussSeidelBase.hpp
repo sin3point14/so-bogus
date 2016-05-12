@@ -21,11 +21,11 @@ namespace bogus
 {
 
 //! Abstract Gauss-Seidel interface . \sa GaussSeidel
-template < template <typename> class GaussSeidelImpl, typename BlockMatrixType >
-class GaussSeidelBase : public ConstrainedSolverBase< GaussSeidelImpl<BlockMatrixType>, BlockMatrixType >
+template < typename GaussSeidelImpl, typename BlockMatrixType >
+class GaussSeidelBase : public ConstrainedSolverBase< GaussSeidelImpl, BlockMatrixType >
 {
 public:
-	typedef ConstrainedSolverBase< GaussSeidelImpl<BlockMatrixType>, BlockMatrixType > Base ;
+	typedef ConstrainedSolverBase< GaussSeidelImpl, BlockMatrixType > Base ;
 
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;

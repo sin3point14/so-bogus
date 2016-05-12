@@ -22,27 +22,38 @@ namespace bogus
 
 //! Matrix-free version of the GaussSeidel iterative solver.
 /*!
-  Assumes that the system matrix is defines as the product (M M')
+  Assumes that the system matrix is defines as the product (M D M')
   \warning Parallelization is supported, but dangerous. If in doubt, use setMaxThreads(1)
   \sa GaussSeidel
   */
-template < typename BlockMatrixType >
-class ProductGaussSeidel : public GaussSeidelBase< ProductGaussSeidel, BlockMatrixType >
+template < typename BlockMatrixType, typename DiagonalType = ConstantArray< typename BlockMatrixType::Scalar> >
+class ProductGaussSeidel : public GaussSeidelBase< ProductGaussSeidel<BlockMatrixType, DiagonalType>, BlockMatrixType >
 {
 public:
-	typedef GaussSeidelBase< bogus::ProductGaussSeidel, BlockMatrixType > Base ;
+	typedef GaussSeidelBase< ProductGaussSeidel, BlockMatrixType > Base ;
 
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 
 	//! Default constructor -- you will have to call setMatrix() before using the solve() function
-	ProductGaussSeidel( ) : Base() { }
+	ProductGaussSeidel( )
+		: Base(), m_diagonal( BOGUS_NULL_PTR(const DiagonalType) )
+	{ }
 	//! Constructor with the system matrix
-	explicit ProductGaussSeidel( const BlockObjectBase< BlockMatrixType > & matrix ) : Base()
+	explicit ProductGaussSeidel( const BlockObjectBase< BlockMatrixType > & matrix )
+		: Base(), m_diagonal( BOGUS_NULL_PTR(const DiagonalType) )
+	{  setMatrix( matrix ) ; }
+	//! Constructor with both
+	ProductGaussSeidel( const BlockObjectBase< BlockMatrixType > & matrix, const DiagonalType& diagonal )
+		: Base(), m_diagonal( &diagonal )
 	{  setMatrix( matrix ) ; }
 
-	//! Sets the system matrix and initializes internal structures
+	//! Sets the system matrix (B) and initializes internal structures
 	ProductGaussSeidel& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix ) ;
+
+	//! Sets the system diagonal (D) and initializes internal structures
+	ProductGaussSeidel& setDiagonal( const DiagonalType &diagonal )
+	{ m_diagonal = &diagonal ; }
 
 	//! Finds an approximate solution for a constrained linear problem
 	template < typename NSLaw, typename RhsT, typename ResT >
@@ -79,6 +90,8 @@ public:
 									   bool tryZeroAsWell = true, unsigned solveEvery = 1 ) const ;
 
 protected:
+
+	const DiagonalType* m_diagonal ;
 
 	void updateLocalMatrices();
 

@@ -4,6 +4,7 @@ Krylov.cpp
 Map.cpp
 Mkl.cpp
 Polynomial.cpp
+ProductGaussSeidel.cpp
 ProjectedGradient.cpp
 Serialization.cpp
 SparseBlock.cpp

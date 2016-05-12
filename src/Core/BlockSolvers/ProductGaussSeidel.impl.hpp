@@ -22,8 +22,9 @@
 namespace bogus
 {
 
-template < typename BlockMatrixType >
-ProductGaussSeidel< BlockMatrixType >& ProductGaussSeidel< BlockMatrixType >::setMatrix( const BlockObjectBase< BlockMatrixType > & M )
+template < typename BlockMatrixType, typename DiagonalType >
+ProductGaussSeidel< BlockMatrixType, DiagonalType >&
+ProductGaussSeidel< BlockMatrixType, DiagonalType >::setMatrix( const BlockObjectBase< BlockMatrixType > & M )
 {
 	m_matrix = &M ;
 
@@ -50,8 +51,8 @@ struct SelfProductAccumulator {
 
 } //block_solvers_impl
 
-template < typename BlockMatrixType >
-void ProductGaussSeidel< BlockMatrixType >::updateLocalMatrices( )
+template < typename BlockMatrixType, typename DiagonalType >
+void ProductGaussSeidel< BlockMatrixType, DiagonalType >::updateLocalMatrices( )
 {
 
 	if( !m_matrix )
@@ -75,9 +76,9 @@ void ProductGaussSeidel< BlockMatrixType >::updateLocalMatrices( )
 	Base::processLocalMatrices() ;
 }
 
-template < typename BlockMatrixType >
+template < typename BlockMatrixType, typename DiagonalType >
 template < typename NSLaw,  typename VecT, typename ResT >
-void ProductGaussSeidel< BlockMatrixType >::innerLoop(
+void ProductGaussSeidel< BlockMatrixType, DiagonalType >::innerLoop(
 		bool parallelize, const NSLaw &law, const VecT& b,
 		std::vector< unsigned char > &skip, Scalar &ndxRef,
 		VecT& Mx, ResT &x	) const
@@ -113,7 +114,12 @@ void ProductGaussSeidel< BlockMatrixType >::innerLoop(
 
 			lx = xSegmenter[ i ] ;
 			lb = bSegmenter[ i ] - m_localMatrices[i] * lx ;
-			m_matrix->derived().template rowMultiply<false>( i, Mx, lb ) ;
+
+			if( m_diagonal )
+				m_matrix->derived().template rowMultiplyPrecompose<false>( i, Mx, lb, *m_diagonal ) ;
+			else
+				m_matrix->derived().template rowMultiply<false>( i, Mx, lb ) ;
+
 			ldx = -lx ;
 
 			const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ i ] ) ;
@@ -147,20 +153,20 @@ void ProductGaussSeidel< BlockMatrixType >::innerLoop(
 
 
 
-template < typename BlockMatrixType >
+template < typename BlockMatrixType, typename DiagonalType >
 template < typename NSLaw, typename RhsT, typename ResT >
-typename ProductGaussSeidel< BlockMatrixType >::Scalar
-ProductGaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
+typename ProductGaussSeidel< BlockMatrixType, DiagonalType >::Scalar
+ProductGaussSeidel< BlockMatrixType, DiagonalType >::solve( const NSLaw &law,
 									   const RhsT &b, ResT &x, bool tryZeroAsWell ) const
 {
 	const bogus::Zero< Scalar > zero( x.rows(), x.rows() ) ;
 	return solveWithLinearConstraints( law, zero, b, x, tryZeroAsWell, 0 ) ;
 }
 
-template < typename BlockMatrixType >
+template < typename BlockMatrixType, typename DiagonalType >
 template < typename NSLaw, typename RhsT, typename ResT, typename LSDerived, typename HDerived >
-typename ProductGaussSeidel< BlockMatrixType >::Scalar
-ProductGaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &law,
+typename ProductGaussSeidel< BlockMatrixType, DiagonalType >::Scalar
+ProductGaussSeidel< BlockMatrixType, DiagonalType >::solveWithLinearConstraints( const NSLaw &law,
 								   const BlockObjectBase< LSDerived >& Cinv,
 								   const BlockObjectBase<  HDerived >& H,
 								   const Scalar alpha,
@@ -174,10 +180,10 @@ ProductGaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &
 }
 
 
-template < typename BlockMatrixType >
+template < typename BlockMatrixType, typename DiagonalType >
 template < typename NSLaw, typename RhsT, typename ResT, typename WDerived >
-typename ProductGaussSeidel< BlockMatrixType >::Scalar
-ProductGaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &law,
+typename ProductGaussSeidel< BlockMatrixType, DiagonalType >::Scalar
+ProductGaussSeidel< BlockMatrixType, DiagonalType >::solveWithLinearConstraints( const NSLaw &law,
 								   const BlockObjectBase < WDerived >& W,
 								   const RhsT &b, ResT &x,
 								   bool tryZeroAsWell, unsigned solveEvery) const
@@ -194,7 +200,10 @@ ProductGaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &
 
 	y = w ;
 	m_matrix->template multiply< true  >( x, Mx, 1, 0 ) ;
-	m_matrix->template multiply< false >( Mx, y, 1, 1 ) ;
+			if( m_diagonal )
+				m_matrix->template multiply< false >( (*m_diagonal)*Mx, y, 1, 1 ) ;
+			else
+				m_matrix->template multiply< false >( Mx, y, 1, 1 ) ;
 	Base::evalAndKeepBest( law, x, y, x_best, err_best ) ;
 
 	if( tryZeroAsWell && Base::tryZero( law, b, x, x_best, err_best ) ) {
@@ -229,7 +238,10 @@ ProductGaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &
 		{
 			y = w ;
 			m_matrix->template multiply< true  >( x, Mx, 1, 0 ) ;
-			m_matrix->template multiply< false >( Mx, y, 1, 1 ) ;
+			if( m_diagonal )
+				m_matrix->template multiply< false >( (*m_diagonal)*Mx, y, 1, 1 ) ;
+			else
+				m_matrix->template multiply< false >( Mx, y, 1, 1 ) ;
 			const Scalar err = Base::evalAndKeepBest( law, x, y, x_best, err_best ) ;
 
 			this->m_callback.trigger( GSIter, err ) ;

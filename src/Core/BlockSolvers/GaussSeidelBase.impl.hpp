@@ -20,7 +20,7 @@
 namespace bogus
 {
 
-template < template <typename> class GaussSeidelImpl, typename BlockMatrixType >
+template < typename GaussSeidelImpl, typename BlockMatrixType >
 void GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::processLocalMatrices( )
 {
 
@@ -47,7 +47,7 @@ void GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::processLocalMatrices( 
 	}
 }
 
-template < template <typename> class GaussSeidelImpl, typename BlockMatrixType >
+template < typename GaussSeidelImpl, typename BlockMatrixType >
 template < typename NSLaw, typename ResT >
 typename GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::Scalar
 GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::evalAndKeepBest(
@@ -66,7 +66,7 @@ GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::evalAndKeepBest(
 	return err ;
 }
 
-template < template <typename> class GaussSeidelImpl, typename BlockMatrixType >
+template < typename GaussSeidelImpl, typename BlockMatrixType >
 template < typename NSLaw, typename RhsT, typename ResT >
 bool GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::tryZero(
 		const NSLaw &law, const RhsT &b, ResT &x,

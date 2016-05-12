@@ -57,13 +57,23 @@ public:
 	template < bool DoTranspose, typename RhsT, typename ResT >
 	void rowMultiply( const Index row, const RhsT& rhs, ResT& res ) const
 	{
-		derived().template rowMultiply< DoTranspose >( row, rhs, res ) ;
+		rowMultiplyPrecompose< DoTranspose >( row, rhs, res, make_constant_array(1) ) ;
+	}
+	template < bool DoTranspose, typename RhsT, typename ResT, typename PreOp >
+	void rowMultiplyPrecompose( const Index row, const RhsT& rhs, ResT& res, const PreOp &op ) const
+	{
+		derived().template rowMultiplyPrecompose< DoTranspose >( row, rhs, res, op ) ;
 	}
 
 	template < bool DoTranspose, typename RhsT, typename ResT >
 	void colMultiply( const Index col, const RhsT& rhs, ResT& res ) const
 	{
-		derived().template colMultiply< DoTranspose >( col, rhs, res ) ;
+		colMultiplyPostcompose< DoTranspose >( col, rhs, res, make_constant_array(1) ) ;
+	}
+	template < bool DoTranspose, typename RhsT, typename ResT, typename PostOp >
+	void colMultiplyPostcompose( const Index col, const RhsT& rhs, ResT& res, const PostOp &op ) const
+	{
+		derived().template colMultiplyPostcompose< DoTranspose >( col, rhs, res, op ) ;
 	}
 
 	//! Return a BlockPtr to the block a (row, col) or InvalidBlockPtr if it does not exist
