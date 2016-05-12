@@ -115,10 +115,7 @@ void ProductGaussSeidel< BlockMatrixType, DiagonalType >::innerLoop(
 			lx = xSegmenter[ i ] ;
 			lb = bSegmenter[ i ] - m_localMatrices[i] * lx ;
 
-			if( m_diagonal )
-				m_matrix->derived().template rowMultiplyPrecompose<false>( i, Mx, lb, *m_diagonal ) ;
-			else
-				m_matrix->derived().template rowMultiply<false>( i, Mx, lb ) ;
+			m_matrix->derived().template rowMultiplyPrecompose<false>( i, Mx, lb, m_diagonal.get() ) ;
 
 			ldx = -lx ;
 
@@ -189,6 +186,7 @@ ProductGaussSeidel< BlockMatrixType, DiagonalType >::solveWithLinearConstraints(
 								   bool tryZeroAsWell, unsigned solveEvery) const
 {
 	assert( m_matrix ) ;
+	assert( m_diagonal.valid() ) ;
 	assert( solveEvery == 0 || 0 == m_evalEvery % solveEvery ) ;
 
 	typename GlobalProblemTraits::DynVector Mx( m_matrix->cols() ), y, x_best ;
@@ -200,10 +198,7 @@ ProductGaussSeidel< BlockMatrixType, DiagonalType >::solveWithLinearConstraints(
 
 	y = w ;
 	m_matrix->template multiply< true  >( x, Mx, 1, 0 ) ;
-			if( m_diagonal )
-				m_matrix->template multiply< false >( (*m_diagonal)*Mx, y, 1, 1 ) ;
-			else
-				m_matrix->template multiply< false >( Mx, y, 1, 1 ) ;
+	m_matrix->template multiply< false >( m_diagonal.get()*Mx, y, 1, 1 ) ;
 	Base::evalAndKeepBest( law, x, y, x_best, err_best ) ;
 
 	if( tryZeroAsWell && Base::tryZero( law, b, x, x_best, err_best ) ) {
@@ -238,10 +233,7 @@ ProductGaussSeidel< BlockMatrixType, DiagonalType >::solveWithLinearConstraints(
 		{
 			y = w ;
 			m_matrix->template multiply< true  >( x, Mx, 1, 0 ) ;
-			if( m_diagonal )
-				m_matrix->template multiply< false >( (*m_diagonal)*Mx, y, 1, 1 ) ;
-			else
-				m_matrix->template multiply< false >( Mx, y, 1, 1 ) ;
+			m_matrix->template multiply< false >( m_diagonal.get()*Mx, y, 1, 1 ) ;
 			const Scalar err = Base::evalAndKeepBest( law, x, y, x_best, err_best ) ;
 
 			this->m_callback.trigger( GSIter, err ) ;

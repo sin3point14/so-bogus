@@ -44,7 +44,7 @@ static inline void innerRowMultiply( const BlockT* blocks, const IndexT &index,
 
 	for( typename IndexT::InnerIterator it( index, outerIdx ) ; it ; ++ it )
 	{
-		mv_add_pre< Transpose >( blocks[ it.ptr() ], segmenter[ it.inner() ], res, alpha.diagonal( it.inner() ) ) ;
+		mv_add_pre< Transpose >( blocks[ it.ptr() ], segmenter[ it.inner() ], res, alpha.block( it.inner() ) ) ;
 	}
 }
 
@@ -58,7 +58,7 @@ static inline void innerColMultiply( const BlockT* blocks, const IndexT &index,
 	for( typename IndexT::InnerIterator it( index, outerIdx ) ; it ; ++ it )
 	{
 		typename ResSegmenter::ReturnType res_seg(segmenter[ it.inner() ] ) ;
-		mv_add_post< Transpose >( blocks[ it.ptr() ], rhs, res_seg, alpha.diagonal( it.inner() ) ) ;
+		mv_add_post< Transpose >( blocks[ it.ptr() ], rhs, res_seg, alpha.block( it.inner() ) ) ;
 	}
 }
 

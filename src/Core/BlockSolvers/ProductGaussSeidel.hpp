@@ -20,14 +20,53 @@
 namespace bogus
 {
 
+namespace block_solvers_impl {
+//! Wrapper for the block-diagonal matrix of the ProductGaussSeidel solve
+/*! Specialization allows to:
+ *   - Default to using a the Identity matrix without requiring the user to
+ *     call any function
+ *   - Yet allows the user to specify a pointer to an arbitrary matrix
+ *     when explictely requesting it
+ */
+template < typename MainMatrixType, typename Type>
+struct DiagonalMatrixWrapper {
+
+	const Type* ptr ;
+
+	DiagonalMatrixWrapper()
+		: ptr( BOGUS_NULL_PTR(const Type) ) {}
+	DiagonalMatrixWrapper( const Type& diag)
+		: ptr(&diag) { }
+
+	bool valid() const { return ptr; }
+	const Type& get() const {
+		return *ptr ;
+	}
+} ;
+template< typename MainMatrixType >
+struct DiagonalMatrixWrapper < MainMatrixType, typename MainMatrixType::Scalar >
+{
+	typedef typename MainMatrixType::Scalar Scalar;
+	ConstantArray<Scalar> ptr ;
+	DiagonalMatrixWrapper( const Scalar& s = 1)
+		: ptr(s) { }
+
+	bool valid() const { return true; }
+	const ConstantArray<Scalar>& get() const {
+		return ptr ;
+	}
+} ;
+} //block_solvers_impl
+
 //! Matrix-free version of the GaussSeidel iterative solver.
 /*!
   Assumes that the system matrix is defines as the product (M D M')
   \warning Parallelization is supported, but dangerous. If in doubt, use setMaxThreads(1)
   \sa GaussSeidel
   */
-template < typename BlockMatrixType, typename DiagonalType = ConstantArray< typename BlockMatrixType::Scalar> >
-class ProductGaussSeidel : public GaussSeidelBase< ProductGaussSeidel<BlockMatrixType, DiagonalType>, BlockMatrixType >
+template < typename BlockMatrixType, typename DiagonalType = typename BlockMatrixType::Scalar >
+class ProductGaussSeidel
+		: public GaussSeidelBase< ProductGaussSeidel<BlockMatrixType, DiagonalType>, BlockMatrixType >
 {
 public:
 	typedef GaussSeidelBase< ProductGaussSeidel, BlockMatrixType > Base ;
@@ -35,17 +74,19 @@ public:
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 
+	typedef block_solvers_impl::DiagonalMatrixWrapper<BlockMatrixType, DiagonalType> DiagWrapper ;
+
 	//! Default constructor -- you will have to call setMatrix() before using the solve() function
-	ProductGaussSeidel( )
-		: Base(), m_diagonal( BOGUS_NULL_PTR(const DiagonalType) )
+	ProductGaussSeidel()
+		: Base()
 	{ }
 	//! Constructor with the system matrix
 	explicit ProductGaussSeidel( const BlockObjectBase< BlockMatrixType > & matrix )
-		: Base(), m_diagonal( BOGUS_NULL_PTR(const DiagonalType) )
+		: Base()
 	{  setMatrix( matrix ) ; }
 	//! Constructor with both
 	ProductGaussSeidel( const BlockObjectBase< BlockMatrixType > & matrix, const DiagonalType& diagonal )
-		: Base(), m_diagonal( &diagonal )
+		: Base(), m_diagonal( DiagWrapper( diagonal ) )
 	{  setMatrix( matrix ) ; }
 
 	//! Sets the system matrix (B) and initializes internal structures
@@ -53,7 +94,7 @@ public:
 
 	//! Sets the system diagonal (D) and initializes internal structures
 	ProductGaussSeidel& setDiagonal( const DiagonalType &diagonal )
-	{ m_diagonal = &diagonal ; }
+	{ m_diagonal = DiagWrapper( diagonal ) ; }
 
 	//! Finds an approximate solution for a constrained linear problem
 	template < typename NSLaw, typename RhsT, typename ResT >
@@ -91,7 +132,7 @@ public:
 
 protected:
 
-	const DiagonalType* m_diagonal ;
+	DiagWrapper m_diagonal ;
 
 	void updateLocalMatrices();
 

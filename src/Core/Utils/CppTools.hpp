@@ -209,9 +209,9 @@ template< typename Scalar>
 struct ConstantArray {
 	const Scalar s ;
 	explicit ConstantArray( Scalar s_=1 ) : s(s_) {}
-	inline Scalar diagonal( int ) const { return s ; }
 
-	operator Scalar () const { return s ; }
+	inline Scalar   block( int ) const { return s ; }
+	inline operator Scalar()     const { return s ; }
 };
 template< typename Scalar>
 inline ConstantArray<Scalar> make_constant_array( Scalar s) { return ConstantArray<Scalar>(s) ; }
