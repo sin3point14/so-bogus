@@ -45,11 +45,8 @@ public:
 	typedef typename Traits::BlockPtr               BlockPtr ;
 	typedef typename Base::Index                    Index ;
 
-	typedef typename Base::MajorIndexType           MajorIndexType ;
-	typedef typename Base::MinorIndexType           MinorIndexType ;
 
-	typedef typename Base::RowIndexType             RowIndexType ;
-	typedef typename Base::ColIndexType             ColIndexType ;
+	typedef typename Traits::MajorIndexType  		MajorIndexType ;
 
 	typedef typename Base::BlockType                BlockType ;
 	typedef typename Base::Scalar                   Scalar ;
@@ -59,8 +56,14 @@ public:
 	typedef SparseBlockIndex< false, Index, BlockPtr > UncompressedIndexType ;
 	typedef SparseBlockIndex<  true, Index, BlockPtr > CompressedIndexType ;
 
+	// Minor index is always uncompressed, as the blocks cannot be contiguous
+	// For a symmetric matrix, it does not store diagonal block in the minor and transpose index
+	typedef UncompressedIndexType MinorIndexType ;
 	// Transpose index is compressed for perf, as we always create it in a compressed-compatible way
 	typedef CompressedIndexType TransposeIndexType ;
+
+	typedef typename TypeSwapIf< Traits::is_col_major, MajorIndexType, MinorIndexType >::First  RowIndexType ;
+	typedef typename TypeSwapIf< Traits::is_col_major, MajorIndexType, MinorIndexType >::Second ColIndexType ;
 
 	// Canonical type for a mutable matrix with different block type
 	template < typename OtherBlockType, bool PreserveSymmetry = true >
@@ -236,6 +239,10 @@ public:
 	BlockPtr blockPtr( Index row, Index col ) const ;
 	//! Return a BlockPtr to the block a (row, row) or InvalidBlockPtr if it does not exist
 	BlockPtr diagonalBlockPtr( Index row  ) const ;
+
+	//! Iterates over each block of a given row or col. Calls func( inner, block )
+	template <bool ColWise, typename Func>
+	void eachBlockOf( const Index outer, Func &func ) const ;
 
 	///@}
 
@@ -504,8 +511,6 @@ protected:
 
 	MajorIndexType m_majorIndex ;
 
-	// Minor index is always uncompressed, as the blocks cannot be contiguous
-	// For a symmetric matrix, it does not store diagonal block in the minor and transpose index
 	MinorIndexType m_minorIndex ;
 
 	TransposeIndexType   m_transposeIndex ;

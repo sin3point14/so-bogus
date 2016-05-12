@@ -522,6 +522,22 @@ Derived& SparseBlockMatrixBase< Derived >::setBlocksToZero(  )
 	return derived() ;
 }
 
+template < typename Derived >
+template < bool ColWise, typename Func>
+void SparseBlockMatrixBase< Derived >::eachBlockOf( const Index outer, Func &func ) const
+{
+	typedef SparseBlockIndexComputer< Derived, ColWise, false > IndexComputer ;
+	typedef typename IndexComputer::ReturnType IndexType ;
+
+	IndexComputer cptr( *this ) ;
+	const IndexType& index = cptr.get() ;
+
+	for( typename IndexType::InnerIterator it ( index, outer ) ; it ; ++it ) {
+		func( it.inner(), block(it.ptr() ) ) ;
+	}
+}
+
+
 } //namespace bogus
 
 #endif

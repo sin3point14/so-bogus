@@ -9,8 +9,8 @@
 */
 
 
-#ifndef BOGUS_BLOCK_GAUSS_SEIDEL_HPP
-#define BOGUS_BLOCK_GAUSS_SEIDEL_HPP
+#ifndef BOGUS_PRODUCT_GAUSS_SEIDEL_HPP
+#define BOGUS_PRODUCT_GAUSS_SEIDEL_HPP
 
 #include "GaussSeidelBase.hpp"
 #include "Coloring.hpp"

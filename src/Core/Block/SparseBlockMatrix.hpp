@@ -41,7 +41,6 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
 	} ;
 
 	typedef SparseBlockIndex< is_compressed, Index, BlockPtr > MajorIndexType ;
-	typedef SparseBlockIndex<        false , Index, BlockPtr > MinorIndexType ;
 
 } ;
 

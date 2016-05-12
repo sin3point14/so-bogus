@@ -1,7 +1,7 @@
 /*
  * This file is part of bogus, a C++ sparse block matrix library.
  *
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
+ * Copyright 2016 Gilles Daviet <gdaviet@gmail.com>
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +9,8 @@
 */
 
 
-#ifndef BOGUS_BLOCK_GAUSS_SEIDEL_IMPL_HPP
-#define BOGUS_BLOCK_GAUSS_SEIDEL_IMPL_HPP
+#ifndef BOGUS_PRODUCT_GAUSS_SEIDEL_IMPL_HPP
+#define BOGUS_PRODUCT_GAUSS_SEIDEL_IMPL_HPP
 
 #include "ProductGaussSeidel.hpp"
 #include "GaussSeidelBase.impl.hpp"
@@ -32,6 +32,24 @@ ProductGaussSeidel< BlockMatrixType >& ProductGaussSeidel< BlockMatrixType >::se
 	return *this ;
 }
 
+namespace block_solvers_impl {
+
+template <typename T>
+struct SelfProductAccumulator {
+
+	T& acc ;
+	SelfProductAccumulator( T& mat ) : acc(mat)
+	{}
+
+	template <typename Index, typename Matrix >
+	void operator() (const Index, const Matrix &block )
+	{
+		acc += block * block.transpose() ;
+	}
+};
+
+} //block_solvers_impl
+
 template < typename BlockMatrixType >
 void ProductGaussSeidel< BlockMatrixType >::updateLocalMatrices( )
 {
@@ -42,8 +60,6 @@ void ProductGaussSeidel< BlockMatrixType >::updateLocalMatrices( )
 	const Index n = m_matrix->rowsOfBlocks() ;
 	m_localMatrices.resize( n ) ;
 
-	const BlockMatrixBase< BlockMatrixType >& mat = Base::explicitMatrix() ;
-
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
@@ -51,10 +67,9 @@ void ProductGaussSeidel< BlockMatrixType >::updateLocalMatrices( )
 	{
 		m_localMatrices[i].setZero() ;
 
-		for( typename BlockMatrixType::RowIndexType::InnerIterator it( mat.rowMajorIndex(), i ) ;
-			 it ; ++it ) {
-			m_localMatrices[i].noalias() += mat.block(it.ptr()) * mat.block(it.ptr()).transpose() ;
-		}
+		block_solvers_impl::SelfProductAccumulator< typename Base::DiagonalMatrixType >
+				acc( m_localMatrices[i] ) ;
+		m_matrix->derived().eachBlockOfRow( i, acc ) ;
 	}
 
 	Base::processLocalMatrices() ;
@@ -98,7 +113,7 @@ void ProductGaussSeidel< BlockMatrixType >::innerLoop(
 
 			lx = xSegmenter[ i ] ;
 			lb = bSegmenter[ i ] - m_localMatrices[i] * lx ;
-			Base::explicitMatrix().template rowMultiply<false>( i, Mx, lb ) ;
+			m_matrix->derived().template rowMultiply<false>( i, Mx, lb ) ;
 			ldx = -lx ;
 
 			const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ i ] ) ;
@@ -107,7 +122,7 @@ void ProductGaussSeidel< BlockMatrixType >::innerLoop(
 			if( !ok ) { ldx *= .5 ; }
 			xSegmenter[ i ] += ldx ;
 
-			Base::explicitMatrix().template colMultiply<true >( i, ldx, Mx ) ;
+			m_matrix->derived().template colMultiply<true >( i, ldx, Mx ) ;
 
 			const Scalar nx2 = m_scaling[ i ] * m_scaling[ i ] * lx.squaredNorm() ;
 			const Scalar ndx2 = m_scaling[ i ] * m_scaling[ i ] * ldx.squaredNorm() ;

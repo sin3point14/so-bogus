@@ -29,11 +29,6 @@ public:
 	typedef typename Traits::Scalar    Scalar ;
 	typedef typename Traits::BlockPtr  BlockPtr ;
 
-	typedef typename Traits::MajorIndexType  MajorIndexType ;
-	typedef typename Traits::MinorIndexType  MinorIndexType ;
-	typedef typename TypeSwapIf< Traits::is_col_major, MajorIndexType, MinorIndexType >::First  RowIndexType ;
-	typedef typename TypeSwapIf< Traits::is_col_major, MajorIndexType, MinorIndexType >::Second ColIndexType ;
-
 	typedef BlockMatrixBase BlockMatrixType ;
 	typedef BlockObjectBase< Derived > Base;
 	using Base::derived ;
@@ -93,6 +88,31 @@ public:
 		return derived().block(ptr) ;
 	}
 
+	//! Returns the total number of rows of the matrix ( expanding blocks )
+	Index rows() const { return m_rows ; }
+	//! Returns the total number of columns of the matrix ( expanding blocks )
+	Index cols() const { return m_cols ; }
+
+	//! Returns the total number of blocks of the matrix
+	Index size() const ;
+
+	//! Iterates over each block of a given row. Calls func( col, block )
+	template <typename Func>
+	void eachBlockOfRow( const Index row, Func &func ) const
+	{ derived().template eachBlockOf<false, Func>(row, func) ; }
+
+	//! Iterates over each block of a given col. Calls func( row, block )
+	template <typename Func>
+	void eachBlockOfCol( const Index col, Func &func ) const
+	{ derived().template eachBlockOf<true , Func>(col, func) ; }
+
+	//! Access to blocks data
+	const typename Traits::BlocksArrayType& blocks() const { return  m_blocks ; }
+	//! Access to blocks data as a raw pointer
+	const BlockType* data() const { return  data_pointer(m_blocks) ; }
+	//! Access to blocks data as a raw pointer
+	BlockType* data() { return data_pointer(m_blocks) ; }
+
 	//! \warning block has to exist
 	BlockType& diagonal( const Index row )
 	{ return block( diagonalBlockPtr( row ) ) ; }
@@ -106,32 +126,6 @@ public:
 	//! \warning block has to exist
 	const BlockType& block( Index row, Index col ) const
 	{ return block( blockPtr( row, col ) ) ; }
-
-	//! Returns the total number of rows of the matrix ( expanding blocks )
-	Index rows() const { return m_rows ; }
-	//! Returns the total number of columns of the matrix ( expanding blocks )
-	Index cols() const { return m_cols ; }
-
-	//! Returns the total number of blocks of the matrix
-	Index size() const ;
-
-	//! Access to blocks data
-	const typename Traits::BlocksArrayType& blocks() const { return  m_blocks ; }
-	//! Access to blocks data as a raw pointer
-	const BlockType* data() const { return  data_pointer(m_blocks) ; }
-	//! Access to blocks data as a raw pointer
-	BlockType* data() { return data_pointer(m_blocks) ; }
-
-	//! Access to row-major index of blocks
-	/*! Useful for iterating over the blocks using RowIndexType::InnerIterator
-	 * \warning May be costly for column-major matrices */
-	const RowIndexType& rowMajorIndex() const
-	{ return derived().rowMajorIndex() ; }
-	//! Access to column-major index of blocks
-	/*! Useful for iterating over the blocks using ColIndexType::InnerIterator
-	 * \warning May be costly for col-major matrices */
-	const ColIndexType& colMajorIndex() const
-	{ return derived().colMajorIndex() ; }
 
 	//! Compile-time block properties
 	enum CompileTimeProperties
