@@ -108,12 +108,12 @@ public:
 
 	//! Iterates over each block of a given row. Calls func( col, block )
 	template <typename Func>
-	void eachBlockOfRow( const Index row, Func &func ) const
+	void eachBlockOfRow( const Index row, Func func ) const
 	{ derived().template eachBlockOf<false, Func>(row, func) ; }
 
 	//! Iterates over each block of a given col. Calls func( row, block )
 	template <typename Func>
-	void eachBlockOfCol( const Index col, Func &func ) const
+	void eachBlockOfCol( const Index col, Func func ) const
 	{ derived().template eachBlockOf<true , Func>(col, func) ; }
 
 	//! Access to blocks data

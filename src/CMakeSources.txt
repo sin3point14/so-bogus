@@ -51,6 +51,8 @@ Core/BlockSolvers/LCPLaw.hpp
 Core/BlockSolvers/LCPLaw.impl.hpp
 Core/BlockSolvers/Preconditioners.hpp
 Core/BlockSolvers/Preconditioners.impl.hpp
+Core/BlockSolvers/ProductGaussSeidel.hpp
+Core/BlockSolvers/ProductGaussSeidel.impl.hpp
 Core/BlockSolvers/ProjectedGradient.hpp
 Core/BlockSolvers/ProjectedGradient.impl.hpp
 Core/BlockSolvers/PyramidLaw.hpp

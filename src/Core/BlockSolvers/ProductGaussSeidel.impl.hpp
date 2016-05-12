@@ -35,19 +35,25 @@ ProductGaussSeidel< BlockMatrixType, DiagonalType >::setMatrix( const BlockObjec
 
 namespace block_solvers_impl {
 
-template <typename T>
+template <typename D, typename T>
 struct SelfProductAccumulator {
 
+	const D& diag ;
 	T& acc ;
-	SelfProductAccumulator( T& mat ) : acc(mat)
+	SelfProductAccumulator( const D &diag_, T& mat )
+		: diag(diag_), acc(mat)
 	{}
 
 	template <typename Index, typename Matrix >
-	void operator() (const Index, const Matrix &block )
+	void operator() (const Index i, const Matrix &block )
 	{
-		acc += block * block.transpose() ;
+		acc += block * diag.block(i) * block.transpose() ;
 	}
 };
+
+template <typename D, typename T>
+SelfProductAccumulator<D,T> accumulate( const D& diag, T &res )
+{ return SelfProductAccumulator<D,T>(diag, res) ; }
 
 } //block_solvers_impl
 
@@ -68,9 +74,8 @@ void ProductGaussSeidel< BlockMatrixType, DiagonalType >::updateLocalMatrices( )
 	{
 		m_localMatrices[i].setZero() ;
 
-		block_solvers_impl::SelfProductAccumulator< typename Base::DiagonalMatrixType >
-				acc( m_localMatrices[i] ) ;
-		m_matrix->derived().eachBlockOfRow( i, acc ) ;
+		m_matrix->derived().eachBlockOfRow(
+					i, block_solvers_impl::accumulate( m_diagonal.get(), m_localMatrices[i] ) ) ;
 	}
 
 	Base::processLocalMatrices() ;

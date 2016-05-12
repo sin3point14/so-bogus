@@ -242,7 +242,7 @@ public:
 
 	//! Iterates over each block of a given row or col. Calls func( inner, block )
 	template <bool ColWise, typename Func>
-	void eachBlockOf( const Index outer, Func &func ) const ;
+	void eachBlockOf( const Index outer, Func func ) const ;
 
 	///@}
 

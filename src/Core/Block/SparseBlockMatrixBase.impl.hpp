@@ -524,7 +524,7 @@ Derived& SparseBlockMatrixBase< Derived >::setBlocksToZero(  )
 
 template < typename Derived >
 template < bool ColWise, typename Func>
-void SparseBlockMatrixBase< Derived >::eachBlockOf( const Index outer, Func &func ) const
+void SparseBlockMatrixBase< Derived >::eachBlockOf( const Index outer, Func func ) const
 {
 	typedef SparseBlockIndexComputer< Derived, ColWise, false > IndexComputer ;
 	typedef typename IndexComputer::ReturnType IndexType ;
