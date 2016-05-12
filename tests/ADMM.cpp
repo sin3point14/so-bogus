@@ -5,106 +5,38 @@
 
 #include "Extra/SecondOrder.impl.hpp"
 
-#include <Eigen/Cholesky>
+#include "ResidualInfo.hpp"
+#include "SmallFrictionPb.hpp"
+
 #include <gtest/gtest.h>
-
-void admm_ack( unsigned iter, double err ) {
-	std::cout << "ADMM : " << iter << " ==> " << err << std::endl ;
-}
-
 
 #define TEST_PRIMAL
 #define TEST_DUAL
 
 
-TEST( ADMM, Small )
+#ifdef TEST_PRIMAL
+TEST_F( SmallFrictionPb, ADMM )
 {
-
-	typedef bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::SYMMETRIC > MType ;
-	MType MassMat, InvMassMat ;
-
-	const unsigned dofs[2] = { 4, 2 } ;
-
-	MassMat.setRows( 2, dofs ) ;
-	MassMat.setCols( 2, dofs ) ;
-
-	MassMat.insertBackAndResize( 0, 0 ) << 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 ;
-	MassMat.insertBackAndResize( 1 ,1 ) << 2, 0, 0, 2 ;
-
-	MassMat.finalize() ;
-
-	InvMassMat.cloneStructure( MassMat ) ;
-	for( unsigned i = 0 ; i < MassMat.nBlocks() ; ++i )
-	{
-		InvMassMat.block( i ) = MassMat.block( i ).inverse() ;
-	}
-
-
-	typedef Eigen::Matrix< double, 3, Eigen::Dynamic > GradBlockT ;
-	typedef bogus::SparseBlockMatrix< GradBlockT > HType ;
-	HType H ;
-
-	H.setCols( 2, dofs ) ;
-	H.setRows( 2 ) ;
-	H.insertBackAndResize( 0, 0 ) << 3, 5, 7, -1, 2, 4, 5, 4, 1, 6, 9, 1 ;
-	H.insertBackAndResize( 0, 1 ) << -3, -6, -6, -5, -5, -8 ;
-	H.insertBackAndResize( 1, 0 ) << 3, 7, 1, -1, 3, 6, 3, 2, 4, 4, 7, -1 ;
-
-	GradBlockT H2B( 3, dofs[0] ) ;
-	H2B << 6, 7, 10, 9, 5, 8, 11, 8, 4, 9, 12, 7 ;
-	H.block( 2 ) -= H2B ;
-
-	Eigen::Matrix3d E ;
-	E << 0, 0, 1, 1, 0, 0, 0, 1, 0 ;
-
-	H.block( 2 ) = E.transpose() * H.block( 2 ) ;
-	H.finalize() ;
-
-	//std::cout << MassMat << std::endl ;
-//	std::cout << InvMassMat << std::endl ;
-//	std::cout << H << std::endl ;
-
-	typedef bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::SYMMETRIC > WType ;
-	WType W ;
-	W = H * InvMassMat * H.transpose() ;
-
-	Eigen::VectorXd f( 6 ) ;
-	f << 1, 2, 3, 4, 5, 6 ;
-	Eigen::VectorXd w( 6 ) ;
-	w << 2, 1, 2, 1, 3, 3 ;
-//	w.setZero() ;
-
-	Eigen::VectorXd b = w - H * ( InvMassMat * f );
-
-	double mu[2] = { 0.5, 0.7 } ;
-
-	Eigen::VectorXd sol( 6 ) ;
-	sol << 0.0152695, 0.0073010, 0.0022325, 0.0, 0.0, 0.0 ;
-
-	Eigen::VectorXd r( W.rows() ), v (MassMat.rows()) ;
-	double res = -1 ;
-
-	Eigen::ArrayXd imu = 1./Eigen::ArrayXd::Map( mu, 2 ) ;
-
-	bogus::SOC3D Pkmu ( imu.size(), mu ) ;
-	bogus::Coulomb3D Cmu ( imu.size(), mu ) ;
-	bogus::SOC3D Pkimu( imu.size(), imu.data() ) ;
-
-
-	// Test ADMM
+	ResidualInfo ri ;
 
 	// J = .5 * vMv + f'v
 	// g = I(C)(v), C = (Hv \in Kimu)
 
-#ifdef TEST_PRIMAL
+	Eigen::VectorXd r( H.rows() ), v ( MassMat.rows() ) ;
+	double res = -1 ;
+
+	Eigen::ArrayXd imu = 1./mu.array() ;
+	bogus::SOC3D Pkimu( imu.size(), imu.data() ) ;
+
 	double lambda = 1.e-1 ;
 
 	MType InvMLambda ;
 	InvMLambda.cloneStructure( MassMat ) ;
 	for( unsigned i = 0 ; i < MassMat.nBlocks() ; ++i )
 	{
+		const unsigned dofs = MassMat.blockRows( i ) ;
 		Eigen::MatrixXd Mi =
-				MassMat.block( i ) + 1./lambda * Eigen::MatrixXd::Identity( dofs[i], dofs[i] ) ;
+				MassMat.block( i ) + 1./lambda * Eigen::MatrixXd::Identity( dofs, dofs ) ;
 
 		InvMLambda.block( i ) = Mi.inverse() ;
 	}
@@ -114,11 +46,12 @@ TEST( ADMM, Small )
 	admm.setStepSize(1.e-2);
 	admm.setTol(1.e-8);
 
-//	admm.callback().connect( &ack );
+	ri.bindTo( admm.callback() ) ;
 
 	r.setOnes() ;
 	v = InvMassMat * ( H.transpose() * r - f ) ;
 
+	ri.setMethodName("AMA");
 	bogus::QuadraticProxOp< MType > prox0( InvMassMat, 0, f ) ;
 	res = admm.solve< bogus::admm::Accelerated >( Pkimu, prox0, w, v, r ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
@@ -126,13 +59,14 @@ TEST( ADMM, Small )
 	r.setOnes() ;
 	v = InvMassMat * ( H.transpose() * r - f ) ;
 
-	bogus::QuadraticProxOp< MType > prox( InvMLambda, 1.e-1, f ) ;
+	ri.setMethodName("ADMM");
+	bogus::QuadraticProxOp< MType > prox( InvMLambda, lambda, f ) ;
 	res = admm.solve< bogus::admm::Accelerated >( Pkimu, prox, w, v, r ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
+}
 #endif
 
 #ifdef TEST_DUAL
-
 	// Rationale
 	/*
 	 * min J(r) + IKmu(r)
@@ -202,8 +136,21 @@ TEST( ADMM, Small )
 	 *           = v - s ( M^-1 + s I )^-1 ( x'(M^-1 f + v) )
 	 *
 	 */
+TEST_F( SmallFrictionPb, DualAMA )
+{
+	ResidualInfo ri ;
+
+
+	Eigen::VectorXd r( H.rows() ), v ( MassMat.rows() ) ;
+	double res = -1 ;
+
+	bogus::SOC3D Pkmu ( mu.size(), mu.data() ) ;
+	bogus::Coulomb3D Cmu ( mu.size(), mu.data() ) ;
+
 
 	bogus::DualAMA< HType > dama( H ) ;
+	ri.bindTo( dama.callback() ) ;
+
 //	dama.callback().connect( &ack );
 
 	dama.setFpStepSize(1.e-1);
@@ -213,13 +160,13 @@ TEST( ADMM, Small )
 	dama.setLineSearchIterations(4);
 	dama.setLineSearchOptimisticFactor(1.25);
 
-
+	ri.setMethodName("DualAMA-Std-Kmu");
 	r.setZero() ;
 	v = InvMassMat * ( H.transpose() * r - f ) ;
 	res = dama.solve< bogus::admm::Standard >( Pkmu, MassMat, f, w, v, r ) ;
 	ASSERT_LT( res, 1.e-8 ) ;
 
-
+	ri.setMethodName("DualAMA-Std-Pkmu");
 	r.setZero() ;
 	v = InvMassMat * ( H.transpose() * r - f ) ;
 	res = dama.solve< bogus::admm::Standard >( Cmu, MassMat, f, w, v, r ) ;
@@ -229,6 +176,7 @@ TEST( ADMM, Small )
 	dama.setLineSearchIterations(0);
 	dama.setProjStepSize(1.e-1);
 
+	ri.setMethodName("DualAMA-Acc-Kmu");
 	r.setZero() ;
 	v = InvMassMat * ( H.transpose() * r - f ) ;
 	res = dama.solve< bogus::admm::Accelerated >( Pkmu, MassMat, f, w, v, r ) ;
@@ -236,8 +184,8 @@ TEST( ADMM, Small )
 
 
 	dama.setProjStepSize(1.e-2);
-//	dama.callback().connect( &admm_ack );
 
+	ri.setMethodName("DualAMA-Acc-Cmu");
 	r.setZero() ;
 	v = InvMassMat * ( H.transpose() * r - f ) ;
 	res = dama.solve< bogus::admm::Accelerated >( Cmu, MassMat, f, w, v, r ) ;
@@ -246,5 +194,6 @@ TEST( ADMM, Small )
 
 //	 std::cout << v.transpose() << std::endl ;
 //	 std::cout << r.transpose() << std::endl ;
-#endif
 }
+#endif
+
