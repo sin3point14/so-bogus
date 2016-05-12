@@ -29,6 +29,11 @@ public:
 	typedef typename Traits::Scalar    Scalar ;
 	typedef typename Traits::BlockPtr  BlockPtr ;
 
+	typedef typename Traits::MajorIndexType  MajorIndexType ;
+	typedef typename Traits::MinorIndexType  MinorIndexType ;
+	typedef typename TypeSwapIf< Traits::is_col_major, MajorIndexType, MinorIndexType >::First  RowIndexType ;
+	typedef typename TypeSwapIf< Traits::is_col_major, MajorIndexType, MinorIndexType >::Second ColIndexType ;
+
 	typedef BlockMatrixBase BlockMatrixType ;
 	typedef BlockObjectBase< Derived > Base;
 	using Base::derived ;
@@ -52,6 +57,18 @@ public:
 	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const
 	{
 		derived().splitRowMultiply( row, rhs, res ) ;
+	}
+
+	template < bool DoTranspose, typename RhsT, typename ResT >
+	void rowMultiply( const Index row, const RhsT& rhs, ResT& res ) const
+	{
+		derived().template rowMultiply< DoTranspose >( row, rhs, res ) ;
+	}
+
+	template < bool DoTranspose, typename RhsT, typename ResT >
+	void colMultiply( const Index col, const RhsT& rhs, ResT& res ) const
+	{
+		derived().template colMultiply< DoTranspose >( col, rhs, res ) ;
 	}
 
 	//! Return a BlockPtr to the block a (row, col) or InvalidBlockPtr if it does not exist
@@ -105,6 +122,16 @@ public:
 	//! Access to blocks data as a raw pointer
 	BlockType* data() { return data_pointer(m_blocks) ; }
 
+	//! Access to row-major index of blocks
+	/*! Useful for iterating over the blocks using RowIndexType::InnerIterator
+	 * \warning May be costly for column-major matrices */
+	const RowIndexType& rowMajorIndex() const
+	{ return derived().rowMajorIndex() ; }
+	//! Access to column-major index of blocks
+	/*! Useful for iterating over the blocks using ColIndexType::InnerIterator
+	 * \warning May be costly for col-major matrices */
+	const ColIndexType& colMajorIndex() const
+	{ return derived().colMajorIndex() ; }
 
 	//! Compile-time block properties
 	enum CompileTimeProperties

@@ -45,23 +45,22 @@ public:
 	typedef typename Traits::BlockPtr               BlockPtr ;
 	typedef typename Base::Index                    Index ;
 
-	typedef typename Traits::MajorIndexType         MajorIndexType ;
+	typedef typename Base::MajorIndexType           MajorIndexType ;
+	typedef typename Base::MinorIndexType           MinorIndexType ;
+
+	typedef typename Base::RowIndexType             RowIndexType ;
+	typedef typename Base::ColIndexType             ColIndexType ;
+
+	typedef typename Base::BlockType                BlockType ;
+	typedef typename Base::Scalar                   Scalar ;
+
 	typedef typename MajorIndexType::InnerIterator  InnerIterator ;
 
 	typedef SparseBlockIndex< false, Index, BlockPtr > UncompressedIndexType ;
 	typedef SparseBlockIndex<  true, Index, BlockPtr > CompressedIndexType ;
 
-	// Minor index is always uncompressed, as the blocks cannot be contiguous
-	// For a symmetric matrix, it does not store diagonal block in the minor and transpose index
-	typedef UncompressedIndexType MinorIndexType ;
 	// Transpose index is compressed for perf, as we always create it in a compressed-compatible way
 	typedef CompressedIndexType TransposeIndexType ;
-
-	typedef typename TypeSwapIf< Traits::is_col_major, MajorIndexType, MinorIndexType >::First  RowIndexType ;
-	typedef typename TypeSwapIf< Traits::is_col_major, MajorIndexType, MinorIndexType >::Second ColIndexType ;
-
-	typedef typename Base::BlockType                BlockType ;
-	typedef typename Base::Scalar                   Scalar ;
 
 	// Canonical type for a mutable matrix with different block type
 	template < typename OtherBlockType, bool PreserveSymmetry = true >
@@ -347,6 +346,12 @@ public:
 	template < typename RhsT, typename ResT >
 	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
 
+	template < typename RhsT, typename ResT >
+	void rowMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
+
+	template < typename RhsT, typename ResT >
+	void colMultiply( const Index row, const RhsT& rhs, ResT& res ) const ;
+
 	template < bool ColWise, typename LhsT, typename RhsT >
 	void setFromProduct( const Product< LhsT, RhsT > &prod ) ;
 
@@ -481,9 +486,9 @@ protected:
 	template< bool EnforceThreadSafety >
 	BlockType& allocateBlock( BlockPtr &ptr ) ;
 
-	void computeMinorIndex( UncompressedIndexType &cmIndex) const ;
+	void computeMinorIndex( MinorIndexType &cmIndex) const ;
 
-	const UncompressedIndexType& getOrComputeMinorIndex( UncompressedIndexType &tempIndex) const ;
+	const MinorIndexType& getOrComputeMinorIndex( MinorIndexType &tempIndex) const ;
 
 	ColIndexType& colMajorIndex() ;
 	RowIndexType& rowMajorIndex() ;
@@ -498,9 +503,12 @@ protected:
 	TransposeArrayType m_transposeBlocks ;
 
 	MajorIndexType m_majorIndex ;
-	UncompressedIndexType m_minorIndex ;
 
-	CompressedIndexType   m_transposeIndex ;
+	// Minor index is always uncompressed, as the blocks cannot be contiguous
+	// For a symmetric matrix, it does not store diagonal block in the minor and transpose index
+	MinorIndexType m_minorIndex ;
+
+	TransposeIndexType   m_transposeIndex ;
 
 	Lock m_lock ;
 } ;

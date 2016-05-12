@@ -12,8 +12,7 @@
 #ifndef BOGUS_BLOCK_GAUSS_SEIDEL_IMPL_HPP
 #define BOGUS_BLOCK_GAUSS_SEIDEL_IMPL_HPP
 
-#include "GaussSeidel.hpp"
-#include "Coloring.impl.hpp"
+#include "ProductGaussSeidel.hpp"
 #include "GaussSeidelBase.impl.hpp"
 
 #ifndef BOGUS_DONT_PARALLELIZE
@@ -24,13 +23,8 @@ namespace bogus
 {
 
 template < typename BlockMatrixType >
-GaussSeidel< BlockMatrixType >& GaussSeidel< BlockMatrixType >::setMatrix( const BlockObjectBase< BlockMatrixType > & M )
+ProductGaussSeidel< BlockMatrixType >& ProductGaussSeidel< BlockMatrixType >::setMatrix( const BlockObjectBase< BlockMatrixType > & M )
 {
-	if( m_matrix != &M && ( m_matrix != BOGUS_NULL_PTR( const BlockObjectBase< BlockMatrixType >) ||
-							m_coloring.size() != (std::size_t) M.rowsOfBlocks() )) {
-		m_coloring.update( false, M.derived() );
-	}
-
 	m_matrix = &M ;
 
 	updateLocalMatrices() ;
@@ -39,7 +33,7 @@ GaussSeidel< BlockMatrixType >& GaussSeidel< BlockMatrixType >::setMatrix( const
 }
 
 template < typename BlockMatrixType >
-void GaussSeidel< BlockMatrixType >::updateLocalMatrices( )
+void ProductGaussSeidel< BlockMatrixType >::updateLocalMatrices( )
 {
 
 	if( !m_matrix )
@@ -48,37 +42,36 @@ void GaussSeidel< BlockMatrixType >::updateLocalMatrices( )
 	const Index n = m_matrix->rowsOfBlocks() ;
 	m_localMatrices.resize( n ) ;
 
+	const BlockMatrixBase< BlockMatrixType >& mat = Base::explicitMatrix() ;
+
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
 	for( Index i = 0 ; i <  n ; ++i )
 	{
-		const typename BlockMatrixType::BlockPtr ptr = Base::explicitMatrix().diagonalBlockPtr( i ) ;
+		m_localMatrices[i].setZero() ;
 
-		if( ptr == BlockMatrixType::InvalidBlockPtr ) {
-			resize( m_localMatrices[i], m_matrix->blockRows(i), m_matrix->blockCols(i) ) ;
-			set_zero( m_localMatrices[i] ) ;
-		} else {
-			m_localMatrices[i] = GlobalProblemTraits::asConstMatrix( Base::explicitMatrix().block( ptr ) ) ;
+		for( typename BlockMatrixType::RowIndexType::InnerIterator it( mat.rowMajorIndex(), i ) ;
+			 it ; ++it ) {
+			m_localMatrices[i].noalias() += mat.block(it.ptr()) * mat.block(it.ptr()).transpose() ;
 		}
 	}
 
 	Base::processLocalMatrices() ;
 }
 
-
 template < typename BlockMatrixType >
-template < typename NSLaw,  typename RhsT, typename ResT >
-void GaussSeidel< BlockMatrixType >::innerLoop(
-		bool parallelize, const NSLaw &law, const RhsT& b,
+template < typename NSLaw,  typename VecT, typename ResT >
+void ProductGaussSeidel< BlockMatrixType >::innerLoop(
+		bool parallelize, const NSLaw &law, const VecT& b,
 		std::vector< unsigned char > &skip, Scalar &ndxRef,
-		ResT &x	) const
+		VecT& Mx, ResT &x	) const
 {
 	typedef typename NSLaw::Traits LocalProblemTraits ;
 
 	Segmenter< NSLaw::dimension, ResT, typename BlockMatrixType::Index >
 			xSegmenter( x, m_matrix->rowOffsets() ) ;
-	const Segmenter< NSLaw::dimension, const RhsT, typename BlockMatrixType::Index >
+	const Segmenter< NSLaw::dimension, const VecT, typename BlockMatrixType::Index >
 			bSegmenter( b, m_matrix->rowOffsets() ) ;
 
 	const Scalar absSkipTol = std::min( m_skipTol, m_tol ) ;
@@ -89,49 +82,46 @@ void GaussSeidel< BlockMatrixType >::innerLoop(
 	{
 #endif
 		typename LocalProblemTraits::Vector lb, lx, ldx ;
-		for( unsigned c = 0 ; c+1 < m_coloring.colors.size() ; ++ c )
-		{
 
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp for
 #endif
-			for( std::ptrdiff_t pi = m_coloring.colors[c] ; pi < m_coloring.colors[c+1] ; ++ pi )
-			{
+		for( std::ptrdiff_t i = 0 ; i < m_matrix->rows() ; ++ i )
+		{
 
-				const std::size_t i = m_coloring.permutation[ pi ] ;
-
-				if( skip[i] ) {
-					--skip[i] ;
-					continue ;
-				}
-
-				lx = xSegmenter[ i ] ;
-				lb = bSegmenter[ i ] - m_regularization(i) * lx ;
-				Base::explicitMatrix().splitRowMultiply( i, x, lb ) ;
-				ldx = -lx ;
-
-				const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ i ] ) ;
-				ldx += lx ;
-
-				if( !ok ) { ldx *= .5 ; }
-				xSegmenter[ i ] += ldx ;
-
-				const Scalar nx2 = m_scaling[ i ] * m_scaling[ i ] * lx.squaredNorm() ;
-				const Scalar ndx2 = m_scaling[ i ] * m_scaling[ i ] * ldx.squaredNorm() ;
-				// Thread-safety:
-				// we do not care if we lose an update of ndxRef to a data race,
-				// but we need its bytes to be consistent.
-				// Ok on x86(_64) if ndxRef is aligned as assignment is atomic
-				if( ndx2 > ndxRef ) ndxRef = ndx2 ;
-
-				if(  std::min(nx2, ndx2) < absSkipTol ||
-					 ndx2 < m_skipTol * std::min( nx2, ndxRef ) )
-				{
-					skip[i] = absSkipIters ;
-				}
+			if( skip[i] ) {
+				--skip[i] ;
+				continue ;
 			}
 
+			lx = xSegmenter[ i ] ;
+			lb = bSegmenter[ i ] - m_localMatrices[i] * lx ;
+			Base::explicitMatrix().template rowMultiply<false>( i, Mx, lb ) ;
+			ldx = -lx ;
+
+			const bool ok = law.solveLocal( i, m_localMatrices[i], lb, lx, m_scaling[ i ] ) ;
+			ldx += lx ;
+
+			if( !ok ) { ldx *= .5 ; }
+			xSegmenter[ i ] += ldx ;
+
+			Base::explicitMatrix().template colMultiply<true >( i, ldx, Mx ) ;
+
+			const Scalar nx2 = m_scaling[ i ] * m_scaling[ i ] * lx.squaredNorm() ;
+			const Scalar ndx2 = m_scaling[ i ] * m_scaling[ i ] * ldx.squaredNorm() ;
+			// Thread-safety:
+			// we do not care if we lose an update of ndxRef to a data race,
+			// but we need its bytes to be consistent.
+			// Ok on x86(_64) if ndxRef is aligned as assignment is atomic
+			if( ndx2 > ndxRef ) ndxRef = ndx2 ;
+
+			if(  std::min(nx2, ndx2) < absSkipTol ||
+				 ndx2 < m_skipTol * std::min( nx2, ndxRef ) )
+			{
+				skip[i] = absSkipIters ;
+			}
 		}
+
 #ifndef BOGUS_DONT_PARALLELIZE
 		}
 #endif
@@ -142,8 +132,8 @@ void GaussSeidel< BlockMatrixType >::innerLoop(
 
 template < typename BlockMatrixType >
 template < typename NSLaw, typename RhsT, typename ResT >
-typename GaussSeidel< BlockMatrixType >::Scalar
-GaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
+typename ProductGaussSeidel< BlockMatrixType >::Scalar
+ProductGaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
 									   const RhsT &b, ResT &x, bool tryZeroAsWell ) const
 {
 	const bogus::Zero< Scalar > zero( x.rows(), x.rows() ) ;
@@ -152,8 +142,8 @@ GaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
 
 template < typename BlockMatrixType >
 template < typename NSLaw, typename RhsT, typename ResT, typename LSDerived, typename HDerived >
-typename GaussSeidel< BlockMatrixType >::Scalar
-GaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &law,
+typename ProductGaussSeidel< BlockMatrixType >::Scalar
+ProductGaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &law,
 								   const BlockObjectBase< LSDerived >& Cinv,
 								   const BlockObjectBase<  HDerived >& H,
 								   const Scalar alpha,
@@ -169,8 +159,8 @@ GaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &law,
 
 template < typename BlockMatrixType >
 template < typename NSLaw, typename RhsT, typename ResT, typename WDerived >
-typename GaussSeidel< BlockMatrixType >::Scalar
-GaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &law,
+typename ProductGaussSeidel< BlockMatrixType >::Scalar
+ProductGaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &law,
 								   const BlockObjectBase < WDerived >& W,
 								   const RhsT &b, ResT &x,
 								   bool tryZeroAsWell, unsigned solveEvery) const
@@ -178,7 +168,7 @@ GaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &law,
 	assert( m_matrix ) ;
 	assert( solveEvery == 0 || 0 == m_evalEvery % solveEvery ) ;
 
-	typename GlobalProblemTraits::DynVector y, x_best ;
+	typename GlobalProblemTraits::DynVector Mx, y, x_best ;
 
 	typename GlobalProblemTraits::DynVector w = b;
 	W.template multiply< false >(x, w, 1, 1) ;
@@ -186,7 +176,8 @@ GaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &law,
 	Scalar err_best = std::numeric_limits< Scalar >::max() ;
 
 	y = w ;
-	m_matrix->template multiply< false >( x, y, 1, 1 ) ;
+	m_matrix->template multiply< true  >( x, Mx, 1, 0 ) ;
+	m_matrix->template multiply< false >( Mx, y, 1, 1 ) ;
 	Base::evalAndKeepBest( law, x, y, x_best, err_best ) ;
 
 	if( tryZeroAsWell && Base::tryZero( law, b, x, x_best, err_best ) ) {
@@ -208,7 +199,7 @@ GaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &law,
 	for( GSIter = 1 ; GSIter <= m_maxIters ; ++GSIter )
 	{
 
-		innerLoop( parallelize, law, w, skip, ndxRef, x ) ;
+		innerLoop( parallelize, law, w, skip, ndxRef, Mx, x ) ;
 
 		if( solveEvery > 0 && 0 == ( GSIter % solveEvery ) )
 		{
@@ -219,7 +210,8 @@ GaussSeidel< BlockMatrixType >::solveWithLinearConstraints( const NSLaw &law,
 		if( 0 == ( GSIter % m_evalEvery ) )
 		{
 			y = w ;
-			m_matrix->template multiply< false >( x, y, 1, 1 ) ;
+			m_matrix->template multiply< true  >( x, Mx, 1, 0 ) ;
+			m_matrix->template multiply< false >( Mx, y, 1, 1 ) ;
 			const Scalar err = Base::evalAndKeepBest( law, x, y, x_best, err_best ) ;
 
 			this->m_callback.trigger( GSIter, err ) ;

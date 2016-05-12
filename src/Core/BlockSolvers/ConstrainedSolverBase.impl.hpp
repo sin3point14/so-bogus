@@ -82,33 +82,45 @@ ConstrainedSolverBase< Derived, BlockMatrixType >::eval( const NSLaw &law,
 	}
 }
 
-template< typename Derived >
-typename BlockObjectBase< Derived >::Scalar estimate_row_scaling( const BlockObjectBase< Derived >& ,
-					 typename BlockObjectBase< Derived >::Index )
+namespace block_solvers_impl {
+
+template< typename MatrixT >
+typename MatrixT::Scalar estimate_block_scaling( const MatrixT& block )
 {
-	return 1. ;
+	return std::max( (typename MatrixT::Scalar) 1, block.trace()/block.rows() ) ;
 }
 
 template< typename Derived >
-typename Derived::BlockMatrixType::Scalar estimate_row_scaling( const typename Derived::BlockMatrixType& mat,
-					 typename Derived::BlockMatrixType::Index row )
+void estimate_row_scaling( const BlockObjectBase< Derived >& ,
+					   typename BlockObjectBase< Derived >::Scalar* )
+{
+}
+
+template< typename Derived >
+void estimate_row_scaling( const typename Derived::BlockMatrixType& mat,
+					 typename Derived::BlockMatrixType::Scalar* scalings )
 {
 	typedef typename BlockMatrixTraits< Derived >::BlockType LocalMatrixType ;
 	typedef ProblemTraits< LocalMatrixType > GlobalProblemTraits ;
 
-	if ( mat.rows() != mat.cols() || mat.rowsOfBlocks() != mat.colsOfBlocks() ) {
-		// Non-square matrix
-		return 1. ;
-	}
+	// For square matrices, estimate diag block
+	if ( mat.rows() == mat.cols() && mat.rowsOfBlocks() == mat.colsOfBlocks() )
+	{
 
-	const typename Derived::BlockPtr ptr = mat.diagonalBlockPtr( row ) ;
-	if( ptr == Derived::InvalidBlockPtr ) {
-		// Empty diagonal block
-		return 1. ;
-	} else {
-		return std::max( 1., GlobalProblemTraits::asConstMatrix( mat.block( ptr ) ).trace() ) ;
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
+		for( typename Derived::BlockMatrixType::Index row = 0 ; row <   mat.rowsOfBlocks() ; ++ row)
+		{
+			const typename Derived::BlockPtr ptr = mat.diagonalBlockPtr( row ) ;
+			if( ptr != Derived::InvalidBlockPtr ) {
+				scalings[row] = estimate_block_scaling( GlobalProblemTraits::asConstMatrix( mat.block( ptr ) ) ) ;
+			}
+		}
 	}
 }
+
+} //block_solvers_impl
 
 template < typename Derived, typename BlockMatrixType >
 void ConstrainedSolverBase< Derived,BlockMatrixType >::updateScalings()
@@ -119,15 +131,9 @@ void ConstrainedSolverBase< Derived,BlockMatrixType >::updateScalings()
 	}
 
 	const Index n = m_matrix->rowsOfBlocks() ;
-	m_scaling.resize( n ) ;
+	m_scaling.setOnes( n ) ;
 
-#ifndef BOGUS_DONT_PARALLELIZE
-#pragma omp parallel for
-#endif
-	for( Index i = 0 ; i <  n ; ++i )
-	{
-		m_scaling[i] = estimate_row_scaling( m_matrix->derived(), i ) ;
-	}
+	block_solvers_impl::estimate_row_scaling( m_matrix->derived(), m_scaling.data() ) ;
 
 }
 

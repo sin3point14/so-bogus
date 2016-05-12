@@ -21,7 +21,7 @@ namespace bogus
 {
 
 template < template <typename> class GaussSeidelImpl, typename BlockMatrixType >
-void GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::updateLocalMatrices( )
+void GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::processLocalMatrices( )
 {
 
 	Base::updateScalings() ;
@@ -30,7 +30,6 @@ void GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::updateLocalMatrices( )
 		return ;
 
 	const Index n = m_matrix->rowsOfBlocks() ;
-	m_localMatrices.resize( n ) ;
 	m_regularization.resize( n ) ;
 
 #ifndef BOGUS_DONT_PARALLELIZE
@@ -38,35 +37,24 @@ void GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::updateLocalMatrices( )
 #endif
 	for( Index i = 0 ; i <  n ; ++i )
 	{
-		const typename BlockMatrixType::BlockPtr ptr = explicitMatrix().diagonalBlockPtr( i ) ;
-
-		if( ptr == BlockMatrixType::InvalidBlockPtr ) {
-			resize( m_localMatrices[i], m_matrix->blockRows(i), m_matrix->blockCols(i) ) ;
-			set_zero( m_localMatrices[i] ) ;
-		} else {
-			m_localMatrices[i] = GlobalProblemTraits::asConstMatrix( explicitMatrix().block( ptr ) ) ;
-		}
+		m_scaling[i] = block_solvers_impl::estimate_block_scaling( m_localMatrices[i] ) ;
 
 		if( m_autoRegularization > 0. )
 		{
 			m_regularization(i) = std::max( 0., m_autoRegularization - m_localMatrices[i].eigenvalues().real().minCoeff() ) ;
 			m_localMatrices[i].diagonal().array() += m_regularization(i) ;
 		} else m_regularization(i) = 0. ;
-
 	}
 }
 
 template < template <typename> class GaussSeidelImpl, typename BlockMatrixType >
-template < typename NSLaw, typename RhsT, typename ResT >
+template < typename NSLaw, typename ResT >
 typename GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::Scalar
 GaussSeidelBase< GaussSeidelImpl, BlockMatrixType >::evalAndKeepBest(
-		const NSLaw &law, const RhsT &b, const ResT &x,
-		typename GlobalProblemTraits::DynVector& y,
+		const NSLaw &law, const ResT &x,
+		const typename GlobalProblemTraits::DynVector& y,
 		typename GlobalProblemTraits::DynVector& x_best, Scalar &err_best ) const
 {
-
-	y = b ;
-	m_matrix->template multiply< false >( x, y, 1, 1 ) ;
 	const Scalar err = Base::eval( law, y, x ) ;
 
 	if( err < err_best )

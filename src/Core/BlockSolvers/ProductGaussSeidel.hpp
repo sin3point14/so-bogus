@@ -40,22 +40,22 @@ namespace bogus
    See also solve() and \cite JAJ98.
   */
 template < typename BlockMatrixType >
-class GaussSeidel : public GaussSeidelBase< GaussSeidel, BlockMatrixType >
+class ProductGaussSeidel : public GaussSeidelBase< ProductGaussSeidel, BlockMatrixType >
 {
 public:
-	typedef GaussSeidelBase< bogus::GaussSeidel, BlockMatrixType > Base ;
+	typedef GaussSeidelBase< bogus::ProductGaussSeidel, BlockMatrixType > Base ;
 
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 
 	//! Default constructor -- you will have to call setMatrix() before using the solve() function
-	GaussSeidel( ) : Base() { }
+	ProductGaussSeidel( ) : Base() { }
 	//! Constructor with the system matrix
-	explicit GaussSeidel( const BlockObjectBase< BlockMatrixType > & matrix ) : Base()
+	explicit ProductGaussSeidel( const BlockObjectBase< BlockMatrixType > & matrix ) : Base()
 	{  setMatrix( matrix ) ; }
 
 	//! Sets the system matrix and initializes internal structures
-	GaussSeidel& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix ) ;
+	ProductGaussSeidel& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix ) ;
 
 	//! Finds an approximate solution for a constrained linear problem
 	/*!
@@ -112,20 +112,15 @@ public:
 									   const RhsT &b, ResT &x,
 									   bool tryZeroAsWell = true, unsigned solveEvery = 1 ) const ;
 
-	//! Access to the current Coloring. Will be reset whenever the matrix is changed.
-	/*! Determiniticy is achieved through the mean of contact coloring ;
-	  contacts that do not interact directly together can chare the same color,
-	  and all contacts within a given color can be solver in parallel */
-	Coloring& coloring( ) { return m_coloring ; }
-
 protected:
-	void updateLocalMatrices() ;
 
-	template < typename NSLaw,  typename RhsT, typename ResT >
+	void updateLocalMatrices();
+
+	template < typename NSLaw,  typename VecT, typename ResT >
 	void innerLoop (
-		bool parallelize, const NSLaw &law, const RhsT& b,
+		bool parallelize, const NSLaw &law, const VecT& b,
 		std::vector< unsigned char > &skip, Scalar &ndxRef,
-		ResT &x	) const ;
+		VecT& Mx, ResT &x	) const ;
 
 	typedef typename Base::Index Index ;
 
@@ -140,8 +135,6 @@ protected:
 	using Base::m_localMatrices ;
 	using Base::m_regularization ;
 
-	//! \sa coloring()
-	Coloring m_coloring ;
 } ;
 
 } //namespace bogus

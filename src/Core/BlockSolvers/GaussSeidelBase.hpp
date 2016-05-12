@@ -100,12 +100,13 @@ protected:
 		return m_matrix->derived() ;
 	}
 
-	void updateLocalMatrices() ;
+	// Add regularization, compute scalings from diagonal block matrices
+	void processLocalMatrices() ;
 
-	template < typename NSLaw, typename RhsT, typename ResT >
+	template < typename NSLaw, typename ResT >
 	Scalar evalAndKeepBest(
-			const NSLaw &law, const RhsT &b, const ResT &x,
-			typename GlobalProblemTraits::DynVector& buffer,
+			const NSLaw &law, const ResT &x,
+			const typename GlobalProblemTraits::DynVector& y,
 			typename GlobalProblemTraits::DynVector& x_best, Scalar &err_best ) const ;
 
 	template < typename NSLaw, typename RhsT, typename ResT >

@@ -184,7 +184,7 @@ bool SparseBlockMatrixBase< Derived >::computeMinorIndex()
 }
 
 template < typename Derived >
-void SparseBlockMatrixBase< Derived >::computeMinorIndex( UncompressedIndexType &cmIndex) const
+void SparseBlockMatrixBase< Derived >::computeMinorIndex( MinorIndexType &cmIndex) const
 {
 	cmIndex.clear() ;
 	cmIndex.innerOffsets = m_minorIndex.innerOffsets ;
@@ -193,8 +193,8 @@ void SparseBlockMatrixBase< Derived >::computeMinorIndex( UncompressedIndexType 
 }
 
 template < typename Derived >
-const typename SparseBlockMatrixBase< Derived >::UncompressedIndexType&
-SparseBlockMatrixBase< Derived >::getOrComputeMinorIndex( UncompressedIndexType &cmIndex) const
+const typename SparseBlockMatrixBase< Derived >::MinorIndexType&
+SparseBlockMatrixBase< Derived >::getOrComputeMinorIndex( MinorIndexType &cmIndex) const
 {
 	if( m_minorIndex.valid ) return m_minorIndex ;
 	computeMinorIndex( cmIndex ) ;
