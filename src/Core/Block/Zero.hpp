@@ -12,16 +12,10 @@ template < typename Scalar_ >
 struct BlockMatrixTraits< Zero< Scalar_ > >
 		: public BlockMatrixTraits< BlockObjectBase< Zero< Scalar_ > > >
 {
-	typedef BlockMatrixTraits< BlockObjectBase< Zero< Scalar_ > > > BaseTraits ;
-	typedef typename BaseTraits::Index      Index;
-	typedef typename BaseTraits::BlockPtr   BlockPtr;
-
 	typedef Scalar_ Scalar ;
 
 	enum {
 		is_symmetric  = 1,
-		is_transposed = 0,
-		is_temporary  = 0
 	} ;
 
 	typedef Zero<Scalar>           PlainObjectType ;
@@ -39,12 +33,15 @@ public:
 	typedef typename Base::Index Index ;
 	typedef typename Base::ConstTransposeReturnType ConstTransposeReturnType ;
 
-	Zero( Index rows, Index cols )
-		: m_rows(rows), m_cols(cols), m_offset(0)
-	{}
+	explicit Zero( Index rows = 0 )
+		: m_rows(rows)
+	{
+		m_offsets[0] = 0 ;
+		m_offsets[1] = rows ;
+	}
 
-	Index rows() const { return rows() ; }
-	Index cols() const { return cols() ; }
+	Index rows() const { return m_rows ; }
+	Index cols() const { return m_rows ; }
 
 	Index blockRows( Index ) const { return rows() ; }
 	Index blockCols( Index ) const { return cols() ; }
@@ -52,8 +49,8 @@ public:
 	Index rowsOfBlocks() const { return 1 ; }
 	Index colsOfBlocks() const { return 1 ; }
 
-	const Index *rowOffsets( ) const { return &m_offset ; }
-	const Index *colOffsets( ) const { return &m_offset ; }
+	const Index *rowOffsets( ) const { return &m_offsets ; }
+	const Index *colOffsets( ) const { return &m_offsets ; }
 
 	ConstTransposeReturnType transpose() const { *this; }
 
@@ -68,8 +65,7 @@ public:
 
 private:
 	const Index m_rows ;
-	const Index m_cols ;
-	const Index m_offset ;
+		  Index m_offsets[2] ;
 
 };
 

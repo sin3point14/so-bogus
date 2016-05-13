@@ -93,15 +93,17 @@ struct BlockObjectBase
 template< typename Derived  >
 struct BlockMatrixTraits< BlockObjectBase< Derived > > {
 
-	typedef BOGUS_DEFAULT_INDEX_TYPE     Index ;
-	typedef BOGUS_DEFAULT_BLOCK_PTR_TYPE BlockPtr ;
+	typedef BOGUS_DEFAULT_INDEX_TYPE Index ;
 
-	typedef Derived PlainObjectType ;
-
-	typedef Transpose< Derived > ConstTransposeReturnType ;
+	typedef Derived                  PlainObjectType ;
+	typedef Transpose< Derived >     ConstTransposeReturnType ;
 	typedef ConstTransposeReturnType TransposeObjectType ;
 
-	enum { is_symmetric = 0 } ;
+	enum {
+		is_symmetric  = 0,
+		is_transposed = 0,
+		is_temporary  = 0
+	} ;
 } ;
 
 }

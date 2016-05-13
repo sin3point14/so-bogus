@@ -59,7 +59,6 @@ struct BlockMatrixTraits< Transpose< MatrixT > >
 
 	typedef BlockMatrixTraits< MatrixT > OrigTraits;
 	typedef typename OrigTraits::Index Index ;
-	typedef typename OrigTraits::BlockPtr BlockPtr ;
 	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
 	typedef typename OrigTraits::Scalar Scalar ;
 
@@ -169,7 +168,6 @@ struct BlockMatrixTraits< Product< LhsMatrixT, RhsMatrixT > >
 	typedef BlockMatrixTraits< RhsMatrixT > RhsTraits;
 
 	typedef typename LhsTraits::Index Index ;
-	typedef typename LhsTraits::BlockPtr BlockPtr ;
 
 	typedef Product< LhsMatrixT, RhsMatrixT > ProductType ;
 	typedef typename LhsTraits::PlainObjectType::BlockType LhsBlockType ;
@@ -237,7 +235,6 @@ struct BlockMatrixTraits< Addition< LhsMatrixT, RhsMatrixT > >
 
 	typedef BlockMatrixTraits< LhsMatrixT > OrigTraits;
 	typedef typename OrigTraits::Index Index ;
-	typedef typename OrigTraits::BlockPtr BlockPtr ;
 
 	typedef typename OrigTraits::PlainObjectType::BlockType ResBlockType ;
 
@@ -301,7 +298,6 @@ struct BlockMatrixTraits< Scaling< MatrixT > >
 
 	typedef BlockMatrixTraits< MatrixT > OrigTraits;
 	typedef typename OrigTraits::Index Index ;
-	typedef typename OrigTraits::BlockPtr BlockPtr ;
 	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
 	typedef typename OrigTraits::Scalar Scalar ;
 

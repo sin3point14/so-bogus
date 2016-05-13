@@ -202,7 +202,7 @@ DualAMA< BlockMatrixType>::solve(
 {
 	const typename LocalProblemTraits< 0, Scalar >::Vector k ;
 	typename LocalProblemTraits< 0, Scalar >::Vector p ;
-	Zero< Scalar > zero( 0, 0 ) ;
+	const Zero< Scalar > zero ;
 
 	TrivialPreconditioner< BlockObjectBase<MatrixT> > precond ;
 	precond.setMatrix( A.derived() ) ;

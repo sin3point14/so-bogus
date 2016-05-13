@@ -74,7 +74,7 @@ void ProductGaussSeidel< BlockMatrixType, DiagonalType >::updateLocalMatrices( )
 	{
 		m_localMatrices[i].setZero() ;
 
-		m_matrix->derived().eachBlockOfRow(
+		Base::iterableMatrix().eachBlockOfRow(
 					i, block_solvers_impl::accumulate( m_diagonal.get(), m_localMatrices[i] ) ) ;
 	}
 
@@ -122,7 +122,7 @@ void ProductGaussSeidel< BlockMatrixType, DiagonalType >::innerLoop(
 			lx = xSegmenter[ i ] ;
 			lb = bSegmenter[ i ] - m_localMatrices[i] * lx ;
 
-			m_matrix->derived().template rowMultiplyPrecompose<false>( i, Mx, lb, m_diagonal.get() ) ;
+			Base::iterableMatrix().template rowMultiplyPrecompose<false>( i, Mx, lb, m_diagonal.get() ) ;
 
 			ldx = -lx ;
 
@@ -132,7 +132,7 @@ void ProductGaussSeidel< BlockMatrixType, DiagonalType >::innerLoop(
 			if( !ok ) { ldx *= .5 ; }
 			xSegmenter[ i ] += ldx ;
 
-			m_matrix->derived().template colMultiply<true >( i, ldx, Mx ) ;
+			Base::iterableMatrix().template colMultiply<true >( i, ldx, Mx ) ;
 
 			const Scalar nx2 = m_scaling[ i ] * m_scaling[ i ] * lx.squaredNorm() ;
 			const Scalar ndx2 = m_scaling[ i ] * m_scaling[ i ] * ldx.squaredNorm() ;
@@ -163,7 +163,7 @@ typename ProductGaussSeidel< BlockMatrixType, DiagonalType >::Scalar
 ProductGaussSeidel< BlockMatrixType, DiagonalType >::solve( const NSLaw &law,
 									   const RhsT &b, ResT &x, bool tryZeroAsWell ) const
 {
-	const bogus::Zero< Scalar > zero( x.rows(), x.rows() ) ;
+	const bogus::Zero< Scalar > zero ;
 	return solveWithLinearConstraints( law, zero, b, x, tryZeroAsWell, 0 ) ;
 }
 

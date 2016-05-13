@@ -47,29 +47,5 @@ TEST_F( SmallFrictionPb, ProductGaussSeidel )
 		ASSERT_LT( res, 1.e-8 ) ;
 		ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
 	}
-	///////////
-
-
-	Eigen::VectorXd exp = H*f ;
-	Eigen::VectorXd tst  = Eigen::VectorXd::Zero( exp.rows() ) ;
-
-	bogus::Segmenter< 3, Eigen::VectorXd, HType::Index >
-			tstSeg( tst, H.rowOffsets() ) ;
-
-	for( int i = 0 ; i < H.rowsOfBlocks() ; ++i ) {
-		Eigen::Vector3d lx = tstSeg[i] ;
-		H.rowMultiply< false >( i, f, lx ) ;
-		tstSeg[i] = lx ;
-	}
-
-	EXPECT_EQ( exp, tst ) ;
-	Eigen::VectorXd v = H.transpose() * tst ;
-	Eigen::VectorXd u = Eigen::VectorXd::Zero( v.rows() ) ;
-
-	for( int i = 0 ; i < H.rowsOfBlocks() ; ++i ) {
-		H.colMultiply< true >( i, tstSeg[i], u ) ;
-	}
-
-	EXPECT_EQ( v, u ) ;
 
 }

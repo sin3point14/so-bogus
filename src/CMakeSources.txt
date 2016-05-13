@@ -5,12 +5,15 @@ Core/Block.io.hpp
 Core/Block/Access.hpp
 Core/Block/BlockMatrixBase.hpp
 Core/Block/BlockObjectBase.hpp
+Core/Block/CompoundMatrix.hpp
+Core/Block/CompoundMatrix.impl.hpp
 Core/Block/CompoundSparseBlockIndex.hpp
 Core/Block/CompressedSparseBlockIndex.hpp
 Core/Block/Constants.hpp
 Core/Block/DynamicExpressions.hpp
 Core/Block/Evaluators.hpp
 Core/Block/Expressions.hpp
+Core/Block/IterableBlockObject.hpp
 Core/Block/MappedSparseBlockMatrix.hpp
 Core/Block/MklBindings.hpp
 Core/Block/Operators.hpp

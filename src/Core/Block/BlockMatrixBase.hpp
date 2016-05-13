@@ -12,15 +12,14 @@
 #ifndef BOGUS_BLOCKMATRIX_HPP
 #define BOGUS_BLOCKMATRIX_HPP
 
-#include "BlockObjectBase.hpp"
-#include "../Utils/CppTools.hpp"
+#include "IterableBlockObject.hpp"
 
 namespace bogus
 {
 
 //! Base class for dense and sparse block matrices, thought dense don't exist yet
 template < typename Derived >
-class BlockMatrixBase : public BlockObjectBase< Derived >
+class BlockMatrixBase : public IterableBlockObject< Derived >
 {
 public:
 	typedef BlockMatrixTraits< Derived > Traits ;
@@ -30,7 +29,7 @@ public:
 	typedef typename Traits::BlockPtr  BlockPtr ;
 
 	typedef BlockMatrixBase BlockMatrixType ;
-	typedef BlockObjectBase< Derived > Base;
+	typedef IterableBlockObject< Derived > Base;
 	using Base::derived ;
 
 	//! Return value of blockPtr( Index, Index ) for non-existing block
@@ -52,28 +51,6 @@ public:
 	void splitRowMultiply( const Index row, const RhsT& rhs, ResT& res ) const
 	{
 		derived().splitRowMultiply( row, rhs, res ) ;
-	}
-
-	template < bool DoTranspose, typename RhsT, typename ResT >
-	void rowMultiply( const Index row, const RhsT& rhs, ResT& res ) const
-	{
-		rowMultiplyPrecompose< DoTranspose >( row, rhs, res, make_constant_array(1) ) ;
-	}
-	template < bool DoTranspose, typename RhsT, typename ResT, typename PreOp >
-	void rowMultiplyPrecompose( const Index row, const RhsT& rhs, ResT& res, const PreOp &op ) const
-	{
-		derived().template rowMultiplyPrecompose< DoTranspose >( row, rhs, res, op ) ;
-	}
-
-	template < bool DoTranspose, typename RhsT, typename ResT >
-	void colMultiply( const Index col, const RhsT& rhs, ResT& res ) const
-	{
-		colMultiplyPostcompose< DoTranspose >( col, rhs, res, make_constant_array(1) ) ;
-	}
-	template < bool DoTranspose, typename RhsT, typename ResT, typename PostOp >
-	void colMultiplyPostcompose( const Index col, const RhsT& rhs, ResT& res, const PostOp &op ) const
-	{
-		derived().template colMultiplyPostcompose< DoTranspose >( col, rhs, res, op ) ;
 	}
 
 	//! Return a BlockPtr to the block a (row, col) or InvalidBlockPtr if it does not exist
@@ -106,16 +83,6 @@ public:
 	//! Returns the total number of blocks of the matrix
 	Index size() const ;
 
-	//! Iterates over each block of a given row. Calls func( col, block )
-	template <typename Func>
-	void eachBlockOfRow( const Index row, Func func ) const
-	{ derived().template eachBlockOf<false, Func>(row, func) ; }
-
-	//! Iterates over each block of a given col. Calls func( row, block )
-	template <typename Func>
-	void eachBlockOfCol( const Index col, Func func ) const
-	{ derived().template eachBlockOf<true , Func>(col, func) ; }
-
 	//! Access to blocks data
 	const typename Traits::BlocksArrayType& blocks() const { return  m_blocks ; }
 	//! Access to blocks data as a raw pointer
@@ -136,6 +103,17 @@ public:
 	//! \warning block has to exist
 	const BlockType& block( Index row, Index col ) const
 	{ return block( blockPtr( row, col ) ) ; }
+
+
+	//! Iterates over each block of a given row. Calls func( col, block )
+	template <typename Func>
+	void eachBlockOfRow( const Index row, Func func ) const
+	{ derived().template eachBlockOf<false, Func>(row, func) ; }
+
+	//! Iterates over each block of a given col. Calls func( row, block )
+	template <typename Func>
+	void eachBlockOfCol( const Index col, Func func ) const
+	{ derived().template eachBlockOf<true ,Func>(col, func) ; }
 
 	//! Compile-time block properties
 	enum CompileTimeProperties

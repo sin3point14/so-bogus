@@ -25,17 +25,14 @@ struct BlockMatrixTraits< MappedSparseBlockMatrix< BlockT, Flags, Index_ > >
 		: public BlockMatrixTraits< BlockObjectBase< MappedSparseBlockMatrix< BlockT, Flags, Index_ > > >
 {
 	typedef BlockMatrixTraits< BlockObjectBase< MappedSparseBlockMatrix< BlockT, Flags, Index_ > > > BaseTraits ;
-	typedef Index_      Index;
-	typedef typename BaseTraits::BlockPtr   BlockPtr;
+	typedef typename BaseTraits::Index   Index;
+	typedef BOGUS_DEFAULT_BLOCK_PTR_TYPE BlockPtr ;
 
 	typedef BlockT BlockType ;
 	typedef typename BlockTraits< BlockT >::Scalar Scalar ;
 	typedef typename ConstMappedArray< BlockType >::Type BlocksArrayType ;
 
 	enum {
-		is_transposed  = 0,
-		is_temporary   = 0,
-
 		is_compressed  = 1,
 		is_symmetric   = !!( Flags & flags::SYMMETRIC ),
 		is_col_major   = !!( Flags & flags::COL_MAJOR ),

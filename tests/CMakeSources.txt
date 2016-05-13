@@ -1,4 +1,5 @@
 ADMM.cpp
+BlockMV.cpp
 GaussSeidel.cpp
 Krylov.cpp
 Map.cpp

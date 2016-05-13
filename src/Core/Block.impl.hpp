@@ -20,6 +20,7 @@
 #include "Block/SparseAssign.impl.hpp"
 #include "Block/SparseMatrixVectorProduct.impl.hpp"
 #include "Block/SparseBlockMatrixBase.impl.hpp"
+#include "Block/CompoundMatrix.impl.hpp"
 
 #ifdef BOGUS_WITH_MKL
 #include "Block/MklBindings.hpp"

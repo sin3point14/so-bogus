@@ -96,7 +96,13 @@ protected:
 	const BlockMatrixBase< BlockMatrixType >& explicitMatrix() const
 	{
 		// Will cause a compile error if BlockMatrixType does not derive from BlockMatrixBase
-		// This is voluntary, this GaussSeidel implementation does not handle arbitrary expressions yet
+		// This is voluntary, GaussSeidel implementations does not handle arbitrary expressions yet
+		return m_matrix->derived() ;
+	}
+	const IterableBlockObject< BlockMatrixType >& iterableMatrix() const
+	{
+		// Will cause a compile error if BlockMatrixType does not derive from IterableObjectBase
+		// This is voluntary, GaussSeidel implementations does not handle arbitrary expressions yet
 		return m_matrix->derived() ;
 	}
 

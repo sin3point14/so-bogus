@@ -148,7 +148,7 @@ typename GaussSeidel< BlockMatrixType >::Scalar
 GaussSeidel< BlockMatrixType >::solve( const NSLaw &law,
 									   const RhsT &b, ResT &x, bool tryZeroAsWell ) const
 {
-	const bogus::Zero< Scalar > zero( x.rows(), x.rows() ) ;
+	const Zero< Scalar > zero ;
 	return solveWithLinearConstraints( law, zero, b, x, tryZeroAsWell, 0 ) ;
 }
 
