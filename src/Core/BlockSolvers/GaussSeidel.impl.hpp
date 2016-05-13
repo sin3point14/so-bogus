@@ -84,7 +84,9 @@ void GaussSeidel< BlockMatrixType >::innerLoop(
 	const Scalar absSkipTol = std::min( m_skipTol, m_tol ) ;
 	const Scalar absSkipIters = std::min( m_skipIters, (unsigned) std::sqrt( (Scalar) skip.size() ) ) ;
 
-#ifndef BOGUS_DONT_PARALLELIZE
+#ifdef BOGUS_DONT_PARALLELIZE
+	(void) parallelize ;
+#else
 #pragma omp parallel if ( parallelize )
 	{
 #endif

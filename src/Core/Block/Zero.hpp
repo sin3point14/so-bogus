@@ -46,8 +46,8 @@ public:
 	Index rows() const { return rows() ; }
 	Index cols() const { return cols() ; }
 
-	Index blockRows( Index row ) const { return rows() ; }
-	Index blockCols( Index col ) const { return cols() ; }
+	Index blockRows( Index ) const { return rows() ; }
+	Index blockCols( Index ) const { return cols() ; }
 
 	Index rowsOfBlocks() const { return 1 ; }
 	Index colsOfBlocks() const { return 1 ; }

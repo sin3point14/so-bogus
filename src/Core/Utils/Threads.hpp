@@ -11,13 +11,14 @@ namespace bogus {
 
 #ifdef BOGUS_DONT_PARALLELIZE
 	struct WithMaxThreads {
+		explicit WithMaxThreads( int ) {}
 		int nThreads() const { return 1 ; }
 	} ;
 
 #else
 	struct WithMaxThreads {
 
-		WithMaxThreads( int maxThreads )
+		explicit WithMaxThreads( int maxThreads )
 			: m_prevMaxThreads( omp_get_max_threads() )
 			,  m_newMaxThreads( maxThreads == 0 ? m_prevMaxThreads : maxThreads )
 		{

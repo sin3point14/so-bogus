@@ -9,19 +9,16 @@
 #include "Core/Block.impl.hpp"
 #include "Core/BlockSolvers/Krylov.impl.hpp"
 
+#include "ResidualInfo.hpp"
+
 #include <Eigen/Eigenvalues>
 
 #include <gtest/gtest.h>
 
-static const char* g_meth  ;
-
-static void ackCurrentResidual( unsigned GSIter, double err )
-{
-	std::cout << g_meth << " " << GSIter << " ==> " << err << std::endl ;
-}
 
 TEST( Krylov, CG )
 {
+	ResidualInfo ri ;
 
 	const Eigen::Vector3d expected_1( .5, .5, .5 ) ;
 	const Eigen::Vector3d expected_2( 2, 1, 3 ) ;
@@ -34,28 +31,28 @@ TEST( Krylov, CG )
 	sbm.finalize() ;
 
 	bogus::Krylov< Mat > cg( sbm ) ;
-	cg.callback().connect( &ackCurrentResidual );
+	ri.bindTo( cg.callback() );
 
 	Eigen::Vector3d rhs, res ;
 	rhs.setOnes( ) ;
 
 	res.setZero() ;
-	g_meth = "CG" ;
+	ri.setMethodName("CG");
 	cg.solve( rhs, res ) ;
 	EXPECT_EQ( expected_1, res ) ;
 
 	res.setZero() ;
-	g_meth = "BiCG" ;
+	ri.setMethodName("BiCG");
 	cg.solve_BiCG( rhs, res ) ;
 	EXPECT_EQ( expected_1, res ) ;
 
 	res.setZero() ;
-	g_meth = "CGS" ;
+	ri.setMethodName("CGS");
 	cg.solve_CGS( rhs, res ) ;
 	EXPECT_EQ( expected_1, res ) ;
 
 	res.setZero() ;
-	g_meth = "BiCGSTAB" ;
+	ri.setMethodName("BiCGSTAB");
 	cg.solve_BiCGSTAB( rhs, res ) ;
 	EXPECT_EQ( expected_1, res ) ;
 
@@ -63,34 +60,35 @@ TEST( Krylov, CG )
 	rhs << 1, 2, 3 ;
 
 	res.setZero() ;
-	g_meth = "BiCG" ;
+	ri.setMethodName("BiCG");
 	cg.solve( rhs, res, bogus::krylov::BiCG ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 
 	res.setZero() ;
-	g_meth = "CGS" ;
+	ri.setMethodName("CGS");
 	cg.solve_CGS( rhs, res ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 
 	res.setOnes() ;
-	g_meth = "GMRES" ;
+	ri.setMethodName("GMRES");
 	cg.solve_GMRES( rhs, res ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 
 	res.setOnes() ;
-	g_meth = "TFQMR" ;
+	ri.setMethodName("TFQMR");
 	cg.solve_TFQMR( rhs, res ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 
 	res.setZero() ;
 	cg.setMaxIters( 12 );
-	g_meth = "BiCGSTAB" ;
+	ri.setMethodName("BiCGSTAB");
 	cg.solve_BiCGSTAB( rhs, res ) ;
 	EXPECT_TRUE( expected_2.isApprox( res, 1.e-6 ) ) ;
 }
 
 TEST( Krylov, Preconditioner )
 {
+	ResidualInfo ri ;
 
 	typedef Eigen::Matrix< double, 5, 5 > Block ;
 	Block M_L ;
@@ -113,46 +111,46 @@ TEST( Krylov, Preconditioner )
 
 	res.setZero() ;
 	bogus::Krylov< Mat > cg( sbm ) ;
-	g_meth = "CG" ;
+	ri.setMethodName("CG");
 	err = cg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 
 	res.setZero() ;
 	bogus::Krylov< Mat, bogus::DiagonalPreconditioner > pcg( sbm ) ;
-	pcg.callback().connect( &ackCurrentResidual );
+	ri.bindTo( pcg.callback() );
 
-	g_meth = "CG" ;
+	ri.setMethodName("CG");
 	err = pcg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
-	g_meth = "BiCG" ;
+	ri.setMethodName("BiCG");
 	err = pcg.solve_BiCG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
-	g_meth = "CGS" ;
+	ri.setMethodName("CGS");
 	err = pcg.solve_CGS( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
-	g_meth = "GMRES" ;
+	ri.setMethodName("GMRES");
 	err = pcg.solve_GMRES( rhs, res ) ;
 	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 
 	res.setZero() ;
 	pcg.setMaxIters( 40 ) ;
-	g_meth = "GMRES(3)" ;
+	ri.setMethodName("GMRES(3)");
 	err = pcg.asGMRES().setRestart(3).solve( rhs, res ) ;
 	EXPECT_GT( 1.e-15, err ) ;
 	EXPECT_GT( 1.e-14, ( sbm*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
-	g_meth = "TFQMR" ;
+	ri.setMethodName("TFQMR");
 	err = pcg.solve_TFQMR( rhs, res ) ;
 	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 	EXPECT_GT( 1.e-16, err ) ;
@@ -161,7 +159,7 @@ TEST( Krylov, Preconditioner )
 	res.setZero() ;
 	bogus::Krylov< Mat, bogus::DiagonalLUPreconditioner > lucg( sbm ) ;
 	lucg.setMaxIters( 1 );
-	g_meth = "CG" ;
+	ri.setMethodName("CG");
 	err = lucg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
@@ -172,14 +170,14 @@ TEST( Krylov, Preconditioner )
 	res.setZero() ;
 	bogus::Krylov< Mat, bogus::DiagonalLDLTPreconditioner > ldltcg( sbm ) ;
 	ldltcg.setMaxIters( 1 );
-	g_meth = "CG" ;
+	ri.setMethodName("CG");
 	err = ldltcg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
 	ldltcg.setMaxIters( 10 );
-	g_meth = "GMRES" ;
+	ri.setMethodName("GMRES");
 	err = ldltcg.solve_GMRES( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
@@ -193,7 +191,7 @@ TEST( Krylov, Preconditioner )
 
 	res.setZero() ;
 	bogus::Krylov< SparseMat > scg( ssbm ) ;
-	g_meth = "CG" ;
+	ri.setMethodName("CG");
 	err = scg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
@@ -202,7 +200,7 @@ TEST( Krylov, Preconditioner )
 
 	res.setZero() ;
 	bogus::Krylov< SparseMat, bogus::DiagonalPreconditioner > spcg( ssbm ) ;
-	g_meth = "CG" ;
+	ri.setMethodName("CG");
 	err = spcg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
@@ -211,13 +209,13 @@ TEST( Krylov, Preconditioner )
 	res.setZero() ;
 	bogus::Krylov< SparseMat, bogus::DiagonalLDLTPreconditioner > sldltcg( ssbm ) ;
 	sldltcg.setMaxIters( 1 );
-	sldltcg.callback().connect( &ackCurrentResidual );
-	g_meth = "CG" ;
+	ri.bindTo( sldltcg.callback() );
+	ri.setMethodName("CG");
 	err = sldltcg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 	res.setZero() ;
-	g_meth = "BiCGSTAB" ;
+	ri.setMethodName("BiCGSTAB");
 	err = sldltcg.solve_BiCGSTAB( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
@@ -227,13 +225,13 @@ TEST( Krylov, Preconditioner )
 	res.setZero() ;
 	bogus::Krylov< SparseMat, bogus::DiagonalLUPreconditioner > slucg( ssbm ) ;
 	slucg.setMaxIters( 1 );
-	slucg.callback().connect( &ackCurrentResidual );
-	g_meth = "CG" ;
+	ri.bindTo( slucg.callback() );
+	ri.setMethodName("CG");
 	err = slucg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
 	res.setZero() ;
-	g_meth = "BiCGSTAB" ;
+	ri.setMethodName("BiCGSTAB");
 	err = slucg.solve_BiCGSTAB( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	EXPECT_GT( 1.e-16, ( sbm*res - rhs ).squaredNorm() ) ;
@@ -246,6 +244,8 @@ TEST( Krylov, Preconditioner )
 
 TEST( Krylov, MultipleRhs )
 {
+	ResidualInfo ri ;
+
 	typedef Eigen::Matrix< double, 10, 10 > Block ;
 	Block A ;
 	A <<
@@ -268,26 +268,26 @@ TEST( Krylov, MultipleRhs )
 	//callback.connect( &ackCurrentResidual );
 
 	res.setZero() ;
-	g_meth = "BiCG" ;
+	ri.setMethodName("BiCG");
 	err = bogus::krylov::solvers::BiCG< Block >( A, 10 ).solve( rhs, res ) ;
 	EXPECT_GT( 1.e-15, err ) ;
 	EXPECT_GT( 1.e-15, ( A*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
-	g_meth = "CGS" ;
+	ri.setMethodName("CGS");
 	err = bogus::krylov::solvers::CGS< Block >( A, 10 ).solve( rhs, res ) ;
 	EXPECT_GT( 1.e-15, err ) ;
 	EXPECT_GT( 1.e-15, ( A*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
-	g_meth =  "GMRES" ;
+	ri.setMethodName("GMRES");
 	err = bogus::krylov::solvers::GMRES< Block >( A, 10 )
 			.parallelizeRhs(true).solve( rhs, res ) ;
 	EXPECT_GT( 1.e-15, err ) ;
 	EXPECT_GT( 1.e-15, ( A*res - rhs ).squaredNorm() ) ;
 
 	res.setZero() ;
-	g_meth =  "TFQMR" ;
+	ri.setMethodName("TFQMR");
 	err = bogus::krylov::solvers::TFQMR< Block >( A, 20 ).solve( rhs, res ) ;
 	EXPECT_GT( 1.e-15, err ) ;
 	EXPECT_GT( 1.e-15, ( A*res - rhs ).squaredNorm() ) ;
@@ -304,7 +304,7 @@ TEST( Krylov, MultipleRhs )
 	bogus::SparseBlockMatrix< Block > mrhs ;
 	mrhs.cloneStructure( sbm ) ;
 	mrhs.block( 0 ) = rhs ;
-	
+
 	bogus::SparseBlockMatrix< Block > mres =  sbm*mrhs ;
 	EXPECT_TRUE ( ( A * mres.block( 0 ) ).isApprox( rhs ) ) ;
 
@@ -312,7 +312,7 @@ TEST( Krylov, MultipleRhs )
 
 TEST( Krylov, ProductLhs )
 {
-
+	ResidualInfo ri ;
 
 	typedef Eigen::Matrix< double, 5, 5 > Block ;
 	Block M_L ;
@@ -339,8 +339,8 @@ TEST( Krylov, ProductLhs )
 
 	res.setZero() ;
 	bogus::Krylov< Prod > cg( prod ) ;
-	cg.callback().connect( &ackCurrentResidual );
-	g_meth = "CG" ;
+	ri.bindTo( cg.callback() );
+	ri.setMethodName("CG");
 	err = cg.solve_CG( rhs, res ) ;
 	EXPECT_GT( 1.e-16, err ) ;
 	EXPECT_GT( 1.e-8, (prod * res - rhs).lpNorm<Eigen::Infinity>() ) ;

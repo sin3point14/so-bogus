@@ -16,7 +16,7 @@
 
 TEST_F( SmallFrictionPb, ProductGaussSeidel )
 {
-	ResidualInfo ri(true) ;
+	ResidualInfo ri ;
 
 	// End problem definition
 
@@ -53,7 +53,7 @@ TEST_F( SmallFrictionPb, ProductGaussSeidel )
 	Eigen::VectorXd exp = H*f ;
 	Eigen::VectorXd tst  = Eigen::VectorXd::Zero( exp.rows() ) ;
 
-	bogus::Segmenter< 3, Eigen::VectorXd, typename HType::Index >
+	bogus::Segmenter< 3, Eigen::VectorXd, HType::Index >
 			tstSeg( tst, H.rowOffsets() ) ;
 
 	for( int i = 0 ; i < H.rowsOfBlocks() ; ++i ) {

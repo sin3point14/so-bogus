@@ -269,7 +269,6 @@ struct PgMethod< projected_gradient::Conjugated > {
 
 		// Unconstrained objective function
 		Mx = M*x ;
-		Scalar J = x.dot( .5 * Mx + b ) ;
 
 		prev_proj_grad = x ;
 

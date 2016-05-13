@@ -100,7 +100,9 @@ void ProductGaussSeidel< BlockMatrixType, DiagonalType >::innerLoop(
 
 	const std::ptrdiff_t n = m_matrix->rowsOfBlocks() ;
 
-#ifndef BOGUS_DONT_PARALLELIZE
+#ifdef BOGUS_DONT_PARALLELIZE
+	(void) parallelize ;
+#else
 #pragma omp parallel if ( parallelize )
 	{
 #endif
