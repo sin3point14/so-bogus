@@ -203,7 +203,7 @@ ProductGaussSeidel< BlockMatrixType, DiagonalType >::solveWithLinearConstraints(
 
 	y = w ;
 	m_matrix->template multiply< true  >( x, Mx, 1, 0 ) ;
-	m_matrix->template multiply< false >( m_diagonal.get()*Mx, y, 1, 1 ) ;
+	y += (*m_matrix) * m_diagonal.get() * Mx ;
 	Base::evalAndKeepBest( law, x, y, x_best, err_best ) ;
 
 	if( tryZeroAsWell && Base::tryZero( law, b, x, x_best, err_best ) ) {
@@ -238,7 +238,7 @@ ProductGaussSeidel< BlockMatrixType, DiagonalType >::solveWithLinearConstraints(
 		{
 			y = w ;
 			m_matrix->template multiply< true  >( x, Mx, 1, 0 ) ;
-			m_matrix->template multiply< false >( m_diagonal.get()*Mx, y, 1, 1 ) ;
+			y += (*m_matrix) * m_diagonal.get() * Mx ;
 			const Scalar err = Base::evalAndKeepBest( law, x, y, x_best, err_best ) ;
 
 			this->m_callback.trigger( GSIter, err ) ;
