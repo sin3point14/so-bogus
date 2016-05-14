@@ -122,6 +122,10 @@ template <typename Expression>
 struct BlockMatrixTraits< NarySum< Expression > >
 		: public BlockMatrixTraits< Addition< Expression, Expression > >
 {
+	enum {
+		is_temporary = 0
+	};
+
 	typedef typename Expression::PlainObjectType PlainObjectType ;
 	typedef NarySum< typename Expression::TransposeObjectType > ConstTransposeReturnType ;
 	typedef ConstTransposeReturnType TransposeObjectType ;

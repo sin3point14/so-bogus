@@ -23,10 +23,13 @@ class BlockMatrixBase : public IterableBlockObject< Derived >
 {
 public:
 	typedef BlockMatrixTraits< Derived > Traits ;
-	typedef typename Traits::BlockType BlockType ;
 	typedef typename Traits::Index     Index ;
 	typedef typename Traits::Scalar    Scalar ;
-	typedef typename Traits::BlockPtr  BlockPtr ;
+
+	// Supplemental Traits interface for BlockMatrixBase
+	typedef typename Traits::BlockType       BlockType ;
+	typedef typename Traits::BlockPtr        BlockPtr ;
+	typedef typename Traits::BlocksArrayType BlocksArrayType ;
 
 	typedef BlockMatrixBase BlockMatrixType ;
 	typedef IterableBlockObject< Derived > Base;
@@ -118,9 +121,8 @@ public:
 	//! Compile-time block properties
 	enum CompileTimeProperties
 	{
-		RowsPerBlock = BlockTraits< BlockType >::RowsAtCompileTime,
-		ColsPerBlock = BlockTraits< BlockType >::ColsAtCompileTime,
-
+		RowsPerBlock = Traits::RowsPerBlock,
+		ColsPerBlock = Traits::ColsPerBlock,
 		has_row_major_blocks = BlockTraits< BlockType >::is_row_major,
 		has_square_or_dynamic_blocks = ColsPerBlock == RowsPerBlock,
 		has_fixed_rows_blocks = ((int) RowsPerBlock != internal::DYNAMIC ),
@@ -132,7 +134,7 @@ protected:
 	Index m_rows ;
 	Index m_cols ;
 
-	typename Traits::BlocksArrayType m_blocks ;
+	BlocksArrayType m_blocks ;
 } ;
 
 }

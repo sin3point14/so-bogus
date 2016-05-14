@@ -10,17 +10,6 @@ namespace bogus {
 template< bool ColWise, typename MatrixT1, typename MatrixT2  >
 class CompoundBlockMatrix ;
 
-template< bool ColWise, typename MatrixT1, typename MatrixT2  >
-struct BlockMatrixTraits< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > >
-		: public BlockMatrixTraits< BlockObjectBase< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > > >
-{
-	typedef BlockMatrixTraits< MatrixT1 > BaseTraits;
-
-	typedef typename BaseTraits::Scalar     Scalar;
-	typedef typename BaseTraits::Index      Index;
-
-	typedef typename MatrixT1::BlockType  BlockType ; //FIXME: BlockSolverBase / PlainObjectType
-} ;
 
 // side-by-side (ColWise = true)
 template< bool ColWise, typename MatrixT1, typename MatrixT2  >
@@ -95,6 +84,29 @@ private:
 	std::vector< Index > m_offsets ;
 
 };
+
+template< bool ColWise, typename MatrixT1, typename MatrixT2  >
+struct BlockMatrixTraits< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > >
+		: public BlockMatrixTraits< BlockObjectBase< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > > >
+{
+	typedef BlockMatrixTraits< MatrixT1 > OrigTraits;
+	typedef BlockMatrixTraits< MatrixT2 > OthrTraits;
+
+	typedef typename OrigTraits::Scalar   Scalar;
+	typedef typename OrigTraits::Index    Index;
+
+	enum {
+		RowsPerBlock = SwapIf<
+			 ColWise || ((int)OrigTraits::RowsPerBlock) == (int)OthrTraits::RowsPerBlock,
+			internal::DYNAMIC, OrigTraits::RowsPerBlock >::First,
+		ColsPerBlock = SwapIf<
+			!ColWise || ((int)OrigTraits::ColsPerBlock) == (int)OthrTraits::ColsPerBlock,
+			internal::DYNAMIC, OrigTraits::ColsPerBlock >::First
+	};
+
+
+	typedef typename MatrixT1::BlockType  BlockType ; //FIXME: BlockSolverBase / PlainObjectType
+} ;
 
 template< typename MatrixT1, typename MatrixT2  >
 class CompoundBlockMatrix<false,MatrixT1, MatrixT2>

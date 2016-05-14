@@ -54,18 +54,24 @@ struct Transpose : public BlockObjectBase< Transpose< MatrixT > >
 template <typename MatrixT>
 struct BlockMatrixTraits< Transpose< MatrixT > >
 {
-	enum { is_transposed = 1 } ;
-	enum { is_temporary = 1 } ;
-
 	typedef BlockMatrixTraits< MatrixT > OrigTraits;
 	typedef typename OrigTraits::Index Index ;
-	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
 	typedef typename OrigTraits::Scalar Scalar ;
 
-	enum { is_symmetric = OrigTraits::is_symmetric } ;
+	enum {
+		is_transposed = 1,
+		is_temporary  = 1,
+		is_symmetric = OrigTraits::is_symmetric
+	} ;
+	enum {
+		RowsPerBlock = OrigTraits::ColsPerBlock,
+		ColsPerBlock = OrigTraits::RowsPerBlock
+	};
 
+	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
 	typedef const PlainObjectType& ConstTransposeReturnType ;
 	typedef PlainObjectType TransposeObjectType ;
+
 } ;
 
 template < typename ObjectT, bool IsTemporary >
@@ -160,16 +166,18 @@ struct Product : public BinaryBlockOp< Product, LhsMatrixT, RhsMatrixT >
 template <typename LhsMatrixT, typename RhsMatrixT>
 struct BlockMatrixTraits< Product< LhsMatrixT, RhsMatrixT > >
 {
-	enum { is_transposed = 0,
-		   is_temporary = 1,
-		   is_symmetric = 0 } ;
-
 	typedef BlockMatrixTraits< LhsMatrixT > LhsTraits;
 	typedef BlockMatrixTraits< RhsMatrixT > RhsTraits;
 
 	typedef typename LhsTraits::Index Index ;
+	typedef typename LhsTraits::Scalar Scalar ;
+
+	enum { is_transposed = 0,
+		   is_temporary = 1,
+		   is_symmetric = 0 } ;
 
 	typedef Product< LhsMatrixT, RhsMatrixT > ProductType ;
+
 	typedef typename LhsTraits::PlainObjectType::BlockType LhsBlockType ;
 	typedef typename RhsTraits::PlainObjectType::BlockType RhsBlockType ;
 
@@ -179,7 +187,10 @@ struct BlockMatrixTraits< Product< LhsMatrixT, RhsMatrixT > >
 	typedef typename LhsTraits::PlainObjectType
 		::template MutableImpl< ResBlockType, false >::Type PlainObjectType ;
 
-	typedef typename LhsTraits::Scalar Scalar ;
+	enum {
+		RowsPerBlock = LhsTraits::RowsPerBlock,
+		ColsPerBlock = RhsTraits::ColsPerBlock
+	};
 
 	typedef Product< typename BlockOperand< RhsMatrixT >::ObjectType::TransposeObjectType,
 					typename BlockOperand< LhsMatrixT >::ObjectType::TransposeObjectType >
@@ -227,21 +238,25 @@ struct Addition : public BinaryBlockOp< Addition, LhsMatrixT, RhsMatrixT >
 template <typename LhsMatrixT, typename RhsMatrixT>
 struct BlockMatrixTraits< Addition< LhsMatrixT, RhsMatrixT > >
 {
-	enum { is_transposed = 0,
-		   is_temporary = 1,
-		   is_symmetric = ( BlockMatrixTraits< LhsMatrixT >::is_symmetric
-						 && BlockMatrixTraits< RhsMatrixT >::is_symmetric )
-		 } ;
 
 	typedef BlockMatrixTraits< LhsMatrixT > OrigTraits;
 	typedef typename OrigTraits::Index Index ;
+	typedef typename OrigTraits::Scalar Scalar ;
 
 	typedef typename OrigTraits::PlainObjectType::BlockType ResBlockType ;
 
 	typedef typename OrigTraits::PlainObjectType
 		::template MutableImpl< ResBlockType, false >::Type PlainObjectType ;
 
-	typedef typename OrigTraits::Scalar Scalar ;
+	enum { is_transposed = 0,
+		   is_temporary = 1,
+		   is_symmetric = ( BlockMatrixTraits< LhsMatrixT >::is_symmetric
+						 && BlockMatrixTraits< RhsMatrixT >::is_symmetric )
+		 } ;
+	enum {
+		RowsPerBlock = OrigTraits::RowsPerBlock,
+		ColsPerBlock = OrigTraits::ColsPerBlock
+	};
 
 	typedef Addition< typename BlockOperand< LhsMatrixT >::ObjectType::TransposeObjectType,
 					typename BlockOperand< RhsMatrixT >::ObjectType::TransposeObjectType >
@@ -293,15 +308,20 @@ struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
 template <typename MatrixT>
 struct BlockMatrixTraits< Scaling< MatrixT > >
 {
-	enum { is_transposed = 0,
-		   is_temporary = 1 } ;
 
 	typedef BlockMatrixTraits< MatrixT > OrigTraits;
 	typedef typename OrigTraits::Index Index ;
-	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
 	typedef typename OrigTraits::Scalar Scalar ;
 
-	enum { is_symmetric = OrigTraits::is_symmetric } ;
+	enum { is_symmetric = OrigTraits::is_symmetric,
+		   is_transposed = 0,
+		   is_temporary = 1 } ;
+	enum {
+		RowsPerBlock = OrigTraits::RowsPerBlock,
+		ColsPerBlock = OrigTraits::ColsPerBlock
+	};
+
+	typedef typename OrigTraits::PlainObjectType PlainObjectType ;
 
 	typedef Scaling< typename BlockOperand< MatrixT >::ObjectType::TransposeObjectType >
 	ConstTransposeReturnType ;

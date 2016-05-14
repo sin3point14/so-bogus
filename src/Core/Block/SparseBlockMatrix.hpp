@@ -24,15 +24,21 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
 {
 	typedef BlockMatrixTraits< BlockObjectBase< SparseBlockMatrix< BlockT, Flags > > > BaseTraits ;
 	typedef typename BaseTraits::Index   Index;
-	typedef BOGUS_DEFAULT_BLOCK_PTR_TYPE BlockPtr ;
-
-	typedef BlockT BlockType ;
 	typedef typename BlockTraits< BlockT >::Scalar Scalar ;
+
+	enum {
+		is_symmetric  =  !!(  Flags & flags::SYMMETRIC    ),
+		RowsPerBlock = BlockTraits< BlockT >::RowsAtCompileTime,
+		ColsPerBlock = BlockTraits< BlockT >::ColsAtCompileTime
+	} ;
+
+
+	typedef BOGUS_DEFAULT_BLOCK_PTR_TYPE BlockPtr ;
+	typedef BlockT BlockType ;
 	typedef typename ResizableSequenceContainer< BlockType >::Type BlocksArrayType ;
 
 	enum {
 		is_compressed =  !!( ~Flags & flags::UNCOMPRESSED ),
-		is_symmetric  =  !!(  Flags & flags::SYMMETRIC    ),
 		is_col_major  =  !!(  Flags & flags::COL_MAJOR    ),
 		flags         =  Flags
 	} ;

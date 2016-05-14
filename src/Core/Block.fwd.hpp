@@ -21,7 +21,7 @@ template < typename Derived >
 struct BlockObjectBase ;
 
 template < typename Derived >
-struct IterableBlockObject;
+class IterableBlockObject;
 
 template < typename Derived >
 struct Transpose ;

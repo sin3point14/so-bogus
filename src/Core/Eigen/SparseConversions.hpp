@@ -36,10 +36,10 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 
 	const Index RowsPerBlock = destRowsPerBlock
 			? (Index) destRowsPerBlock
-			: (Index) BlockTraits< typename Traits::BlockType >::RowsAtCompileTime ;
+			: (Index) Traits::RowsPerBlock ;
 	const Index ColsPerBlock = destColsPerBlock
 			? (Index) destColsPerBlock
-			: (Index) BlockTraits< typename Traits::BlockType >::ColsAtCompileTime ;
+			: (Index) Traits::ColsPerBlock ;
 
 	assert( RowsPerBlock != (Index) -1 ) ;
 	assert( ColsPerBlock != (Index) -1 ) ;

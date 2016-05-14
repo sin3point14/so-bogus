@@ -89,21 +89,34 @@ struct BlockObjectBase
 };
 
 //! Default specialization of traits for BlockMatrices
-/*! Re-specialiazed for derived classes, see e.g. BlockMatrixTraits< SparseBlockMatrix > */
+/*! Re-specialized for derived classes, see e.g. BlockMatrixTraits< SparseBlockMatrix > */
 template< typename Derived  >
 struct BlockMatrixTraits< BlockObjectBase< Derived > > {
 
+	//! Index type -- for accessing elements, defining offsets, etc
 	typedef BOGUS_DEFAULT_INDEX_TYPE Index ;
 
-	typedef Derived                  PlainObjectType ;
-	typedef Transpose< Derived >     ConstTransposeReturnType ;
-	typedef ConstTransposeReturnType TransposeObjectType ;
+	//! Type representing the transpose of this object
+	typedef Transpose< Derived >  TransposeObjectType ;
+	//! Type returned by the transpose() method
+	/*! Generally a TransposeObjectType or a const reference to it */
+	typedef TransposeObjectType   ConstTransposeReturnType ;
 
 	enum {
-		is_symmetric  = 0,
-		is_transposed = 0,
-		is_temporary  = 0
+		is_symmetric  = 0,  //!< Whether the object is self-transpose
+		is_transposed = 0,  //!< Whether this object represents a transposition
+		is_temporary  = 0   //!< Whether this object should be copied or ref'd to
 	} ;
+
+	enum {
+		//! Number of rows per block at compile time, or DYNAMIC if unknown
+		RowsPerBlock = internal::DYNAMIC,
+		//! Number of cols per block at compile time, or DYNAMIC if unknown
+		ColsPerBlock = internal::DYNAMIC
+	};
+
+	//! Type in which the expression may be evaluated into
+	typedef Derived                  PlainObjectType ;
 } ;
 
 }
