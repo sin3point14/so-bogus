@@ -17,12 +17,10 @@
 namespace bogus
 {
 
-template < typename LocalMatrixType >
-struct ProblemTraits : public MatrixTraits< LocalMatrixType >
+template < typename Scalar_ >
+struct ProblemTraits
 {
-	typedef MatrixTraits< LocalMatrixType > Base ;
-	typedef typename Base::Scalar Scalar ;
-	enum{ dimension = Base::dimension } ;
+	typedef Scalar_ Scalar ;
 
 	typedef Eigen::Matrix< Scalar, Eigen::Dynamic, 1 > DynVector ;
 	typedef Eigen::Matrix< Scalar, Eigen::Dynamic, Eigen::Dynamic > DynMatrix ;
@@ -34,22 +32,27 @@ struct ProblemTraits : public MatrixTraits< LocalMatrixType >
 			OtherMatrix::ColsAtCompileTime > Type ;
 	} ;
 
-	template< typename VectorType >
-	static typename VectorType::template FixedSegmentReturnType< dimension >::Type segment( const unsigned i, VectorType& v )
-	{ return v.template segment< dimension > ( i * dimension ) ; }
-	template< typename VectorType >
-	static typename VectorType::template ConstFixedSegmentReturnType< dimension >::Type segment( const unsigned i, const VectorType& v )
-	{ return v.template segment< dimension > ( i * dimension ) ; }
+//	template< typename VectorType >
+//	static typename VectorType::template FixedSegmentReturnType< dimension >::Type segment( const unsigned i, VectorType& v )
+//	{ return v.template segment< dimension > ( i * dimension ) ; }
+//	template< typename VectorType >
+//	static typename VectorType::template ConstFixedSegmentReturnType< dimension >::Type segment( const unsigned i, const VectorType& v )
+//	{ return v.template segment< dimension > ( i * dimension ) ; }
 
 } ;
 
-template< DenseIndexType Dimension, typename Scalar >
-struct LocalProblemTraits : public ProblemTraits< Eigen::Matrix< Scalar, Dimension, Dimension > >
+template< DenseIndexType Dimension, typename Scalar_ >
+struct LocalProblemTraits : public ProblemTraits< Scalar_ >
 {
+	enum { dimension = Dimension } ;
 
+	typedef Scalar_ Scalar ;
 	typedef Eigen::Matrix< Scalar, Dimension, 1 > Vector ;
 	typedef Eigen::Array< Scalar, Dimension, 1 > Array  ;
 	typedef Eigen::Matrix< Scalar, Dimension, Dimension > Matrix ;
+
+	typedef typename MatrixTraits< Matrix >::LUType LUType ;
+	typedef typename MatrixTraits< Matrix >::LDLTType LDLTType ;
 
 	typedef Eigen::Matrix< Scalar, Dimension-1, Dimension-1 > TgMatrix ;
 

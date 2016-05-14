@@ -29,10 +29,9 @@ template < typename BlockMatrixType >
 class BlockSolverBase
 {
 public:
-
-	typedef typename BlockMatrixTraits< typename BlockMatrixType::PlainObjectType >::BlockType LocalMatrixType ;
-	typedef ProblemTraits< LocalMatrixType > GlobalProblemTraits ;
-	typedef typename GlobalProblemTraits::Scalar Scalar ;
+	typedef BlockMatrixTraits< BlockMatrixType > BlockTraits ;
+	typedef typename BlockTraits::Scalar Scalar ;
+	typedef ProblemTraits< Scalar > GlobalProblemTraits ;
 	typedef Signal< unsigned, Scalar > CallBackType ;
 
 	virtual ~BlockSolverBase() { }

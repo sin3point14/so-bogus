@@ -184,8 +184,11 @@ public:
 		and a std::sort will be performed on each inner vector so we
 		can keep efficient block( row, col ) look-up functions.
 
-		\note An long as concurrent insertion is done in different outer vectors,
-		this methd is thread-safe
+		\note This method is thread-safe if and only if:
+		  - Concurrent insertion is done in different outer vectors,
+		  - A sufficient number of blocks has been allocated by calling reserve(),
+			so that the block array never has to be resized. Otherwise, the block
+			reference return by insert() may be invalidated.
 	*/
 	BlockType& insert( Index row, Index col )
 	{

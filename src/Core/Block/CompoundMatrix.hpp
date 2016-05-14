@@ -90,22 +90,19 @@ struct BlockMatrixTraits< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > >
 		: public BlockMatrixTraits< BlockObjectBase< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > > >
 {
 	typedef BlockMatrixTraits< MatrixT1 > OrigTraits;
-	typedef BlockMatrixTraits< MatrixT2 > OthrTraits;
+	typedef BlockMatrixTraits< MatrixT2 > OtherTraits;
 
 	typedef typename OrigTraits::Scalar   Scalar;
 	typedef typename OrigTraits::Index    Index;
 
 	enum {
 		RowsPerBlock = SwapIf<
-			 ColWise || ((int)OrigTraits::RowsPerBlock) == (int)OthrTraits::RowsPerBlock,
+			 ColWise || ((int)OrigTraits::RowsPerBlock) == (int)OtherTraits::RowsPerBlock,
 			internal::DYNAMIC, OrigTraits::RowsPerBlock >::First,
 		ColsPerBlock = SwapIf<
-			!ColWise || ((int)OrigTraits::ColsPerBlock) == (int)OthrTraits::ColsPerBlock,
+			!ColWise || ((int)OrigTraits::ColsPerBlock) == (int)OtherTraits::ColsPerBlock,
 			internal::DYNAMIC, OrigTraits::ColsPerBlock >::First
 	};
-
-
-	typedef typename MatrixT1::BlockType  BlockType ; //FIXME: BlockSolverBase / PlainObjectType
 } ;
 
 template< typename MatrixT1, typename MatrixT2  >

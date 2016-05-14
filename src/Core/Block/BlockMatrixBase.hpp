@@ -31,7 +31,6 @@ public:
 	typedef typename Traits::BlockPtr        BlockPtr ;
 	typedef typename Traits::BlocksArrayType BlocksArrayType ;
 
-	typedef BlockMatrixBase BlockMatrixType ;
 	typedef IterableBlockObject< Derived > Base;
 	using Base::derived ;
 

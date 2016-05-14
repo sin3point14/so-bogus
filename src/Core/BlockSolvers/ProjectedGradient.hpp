@@ -42,9 +42,7 @@ class ProjectedGradient : public ConstrainedSolverBase< ProjectedGradient<BlockM
 {
 public:
 	typedef ConstrainedSolverBase< ProjectedGradient, BlockMatrixType > Base ;
-
-	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
-	typedef typename GlobalProblemTraits::Scalar Scalar ;
+	typedef typename Base::Scalar Scalar ;
 
 	//! Default constructor -- you will have to call setMatrix() before using the solve() function
 	ProjectedGradient( ) : Base() { init() ; }

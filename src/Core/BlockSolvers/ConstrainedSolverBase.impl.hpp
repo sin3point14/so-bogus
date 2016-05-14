@@ -25,9 +25,11 @@ typename ConstrainedSolverBase< Derived, BlockMatrixType >::Scalar
 ConstrainedSolverBase< Derived, BlockMatrixType >::eval( const NSLaw &law,
 							const ResT &y, const RhsT &x ) const
 {
-	const Segmenter< NSLaw::dimension, const RhsT, typename BlockMatrixType::Index >
+	const Index dimension = BlockProblemTraits::dimension ;
+
+	const Segmenter< dimension, const RhsT, typename BlockMatrixType::Index >
 			xSegmenter( x, m_matrix->rowOffsets() ) ;
-	const Segmenter< NSLaw::dimension, const ResT, typename BlockMatrixType::Index >
+	const Segmenter< dimension, const ResT, typename BlockMatrixType::Index >
 			ySegmenter( y, m_matrix->rowOffsets() ) ;
 
 	typedef typename BlockMatrixTraits< BlockMatrixType >::Index Index ;
@@ -97,11 +99,12 @@ void estimate_row_scaling( const BlockObjectBase< Derived >& ,
 }
 
 template< typename Derived >
-void estimate_row_scaling( const typename Derived::BlockMatrixType& mat,
-					 typename Derived::BlockMatrixType::Scalar* scalings )
+void estimate_row_scaling( const BlockMatrixBase< Derived >& mat,
+					 typename Derived::Scalar* scalings )
 {
-	typedef typename BlockMatrixTraits< Derived >::BlockType LocalMatrixType ;
-	typedef ProblemTraits< LocalMatrixType > GlobalProblemTraits ;
+	typedef BlockMatrixTraits< Derived > BlockTraits ;
+	typedef typename BlockTraits::BlockType LocalMatrixType ;
+	typedef MatrixTraits< LocalMatrixType > Traits ;
 
 	// For square matrices, estimate diag block
 	if ( mat.rows() == mat.cols() && mat.rowsOfBlocks() == mat.colsOfBlocks() )
@@ -110,11 +113,11 @@ void estimate_row_scaling( const typename Derived::BlockMatrixType& mat,
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
-		for( typename Derived::BlockMatrixType::Index row = 0 ; row <   mat.rowsOfBlocks() ; ++ row)
+		for( typename BlockTraits::Index row = 0 ; row <   mat.rowsOfBlocks() ; ++ row)
 		{
-			const typename Derived::BlockPtr ptr = mat.diagonalBlockPtr( row ) ;
+			const typename BlockTraits::BlockPtr ptr = mat.diagonalBlockPtr( row ) ;
 			if( ptr != Derived::InvalidBlockPtr ) {
-				scalings[row] = estimate_block_scaling( GlobalProblemTraits::asConstMatrix( mat.block( ptr ) ) ) ;
+				scalings[row] = estimate_block_scaling( Traits::asConstMatrix( mat.block( ptr ) ) ) ;
 			}
 		}
 	}
@@ -123,7 +126,7 @@ void estimate_row_scaling( const typename Derived::BlockMatrixType& mat,
 } //block_solvers_impl
 
 template < typename Derived, typename BlockMatrixType >
-void ConstrainedSolverBase< Derived,BlockMatrixType >::updateScalings()
+void ConstrainedSolverBase< Derived, BlockMatrixType >::updateScalings()
 {
 	if( !m_matrix )
 	{

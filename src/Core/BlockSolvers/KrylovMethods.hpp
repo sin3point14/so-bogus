@@ -176,7 +176,7 @@ namespace solvers {
 	*/
 template < typename Matrix,
 		   typename Preconditioner = TrivialPreconditioner< Matrix >,
-		   typename Traits = ProblemTraits< Matrix > >
+		   typename Traits = ProblemTraits< typename MatrixTraits<Matrix>::Scalar > >
 struct CG : public KrylovSolverBase< CG, Matrix, Preconditioner, Traits >
 {
 
@@ -195,7 +195,7 @@ struct CG : public KrylovSolverBase< CG, Matrix, Preconditioner, Traits >
 	*/
 template < typename Matrix,
 		   typename Preconditioner = TrivialPreconditioner< Matrix >,
-		   typename Traits = ProblemTraits< Matrix > >
+		   typename Traits = ProblemTraits< typename MatrixTraits<Matrix>::Scalar > >
 struct BiCG : public KrylovSolverBase< BiCG, Matrix, Preconditioner, Traits>
 {
 
@@ -216,7 +216,7 @@ struct BiCG : public KrylovSolverBase< BiCG, Matrix, Preconditioner, Traits>
 	*/
 template < typename Matrix,
 		   typename Preconditioner = TrivialPreconditioner< Matrix >,
-		   typename Traits = ProblemTraits< Matrix > >
+		   typename Traits = ProblemTraits< typename MatrixTraits<Matrix>::Scalar > >
 struct BiCGSTAB : public KrylovSolverBase< BiCGSTAB, Matrix, Preconditioner, Traits>
 {
 
@@ -234,7 +234,7 @@ struct BiCGSTAB : public KrylovSolverBase< BiCGSTAB, Matrix, Preconditioner, Tra
 	*/
 template < typename Matrix,
 		   typename Preconditioner = TrivialPreconditioner< Matrix >,
-		   typename Traits = ProblemTraits< Matrix > >
+		   typename Traits = ProblemTraits< typename MatrixTraits<Matrix>::Scalar > >
 struct CGS : public KrylovSolverBase< CGS, Matrix, Preconditioner, Traits>
 {
 
@@ -259,7 +259,7 @@ struct CGS : public KrylovSolverBase< CGS, Matrix, Preconditioner, Traits>
 	*/
 template < typename Matrix,
 		   typename Preconditioner = TrivialPreconditioner< Matrix >,
-		   typename Traits = ProblemTraits< Matrix > >
+		   typename Traits = ProblemTraits< typename MatrixTraits<Matrix>::Scalar > >
 struct GMRES : public KrylovSolverBase< GMRES, Matrix, Preconditioner, Traits>
 {
 	BOGUS_MAKE_KRYLOV_SOLVER_TYPEDEFS( GMRES )
@@ -302,7 +302,7 @@ protected:
 	*/
 template < typename Matrix,
 		   typename Preconditioner = TrivialPreconditioner< Matrix >,
-		   typename Traits = ProblemTraits< Matrix > >
+		   typename Traits = ProblemTraits< typename MatrixTraits<Matrix>::Scalar > >
 struct TFQMR : public KrylovSolverBase< TFQMR, Matrix, Preconditioner, Traits>
 {
 	BOGUS_MAKE_KRYLOV_SOLVER_HEADER( TFQMR )

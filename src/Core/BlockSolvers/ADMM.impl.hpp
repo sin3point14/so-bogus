@@ -32,10 +32,9 @@ namespace bogus
 template< typename ObjectType >
 struct QuadraticProxOp
 {
-	// Usual defs
-	typedef typename BlockMatrixTraits< typename ObjectType::PlainObjectType >::BlockType LocalMatrixType ;
-	typedef ProblemTraits< LocalMatrixType > GlobalProblemTraits ;
-	typedef typename GlobalProblemTraits::Scalar Scalar ;
+	typedef BlockMatrixTraits< ObjectType > BlockTraits;
+	typedef typename BlockTraits::Scalar Scalar ;
+	typedef ProblemTraits< Scalar > GlobalProblemTraits ;
 
 	typedef BlockObjectBase< ObjectType > LinearOp ;
 	typedef typename GlobalProblemTraits::DynVector AffineVec ;

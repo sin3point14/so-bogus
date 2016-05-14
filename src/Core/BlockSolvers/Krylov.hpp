@@ -38,7 +38,6 @@ public:
 	typedef BlockSolverBase< BlockMatrixType > Base ;
 		typedef PreconditionerType< BlockObjectBase< BlockMatrixType > > PreconditionerImplType ;
 
-	typedef typename Base::LocalMatrixType LocalMatrixType ;
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 

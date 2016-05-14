@@ -60,7 +60,9 @@ struct DiagonalMatrixWrapper < MainMatrixType, typename MainMatrixType::Scalar >
 
 //! Matrix-free version of the GaussSeidel iterative solver.
 /*!
-  Assumes that the system matrix is defines as the product (M D M')
+  Assumes that the system matrix is defines as the product (M D M'),
+  with D a block-diagonal matrix whose block sizes coincide with those of
+  the columns of M
   \warning Parallelization is supported, but dangerous. If in doubt, use setMaxThreads(1)
   \sa GaussSeidel
   */

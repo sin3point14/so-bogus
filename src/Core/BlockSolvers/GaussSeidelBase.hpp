@@ -127,8 +127,8 @@ protected:
 	using Base::m_scaling ;
 
 	typedef typename Base::Index Index ;
-	typedef typename LocalProblemTraits< GlobalProblemTraits::dimension, Scalar >::Matrix DiagonalMatrixType ;
-	typename ResizableSequenceContainer< DiagonalMatrixType >::Type m_localMatrices ;
+	typedef typename Base::BlockProblemTraits::Matrix DiagonalBlockType ;
+	typename ResizableSequenceContainer< DiagonalBlockType >::Type m_localMatrices ;
 	typename GlobalProblemTraits::DynVector m_regularization ;
 
 	//! See setMaxThreads(). Defaults to 0 .

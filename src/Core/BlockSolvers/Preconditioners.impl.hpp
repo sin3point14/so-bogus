@@ -20,15 +20,15 @@ template < typename BlockMatrixType >
 class DiagonalPreconditioner< BlockObjectBase< BlockMatrixType > >
 {
 public:
-	typedef BlockMatrixTraits< typename BlockMatrixType::PlainObjectType > Traits ;
+	typedef BlockMatrixTraits< BlockMatrixType > Traits ;
+	typedef typename Traits::Scalar    Scalar ;
 	typedef typename Traits::BlockType BlockType ;
-	typedef ProblemTraits< BlockType > GlobalProblemTraits ;
+	typedef ProblemTraits< Scalar > GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::DynVector Vector ;
 
 	void setMatrix( const BlockMatrixBase< BlockMatrixType > &matrix )
 	{
 		typedef typename Traits::Index Index ;
-		typedef typename MatrixTraits< BlockType >::Scalar Scalar ;
 
 		m_diagonal.resize( matrix.rows() ) ;
 		for( Index i = 0, cur_row = 0 ; i < matrix.rowsOfBlocks() ; ++i )
@@ -59,8 +59,8 @@ template < typename BlockMatrixType, typename FactorizationType >
 class DiagonalFactorizationPreconditioner
 {
 public:
-	typedef typename BlockMatrixTraits< typename BlockMatrixType::PlainObjectType >::BlockType BlockType ;
-	typedef typename BlockMatrixTraits< typename BlockMatrixType::PlainObjectType >::Index Index ;
+	typedef typename BlockMatrixTraits< BlockMatrixType >::BlockType BlockType ;
+	typedef typename BlockMatrixTraits< BlockMatrixType >::Index Index ;
 
 	template < bool transpose, typename ResT, typename RhsT >
 	void apply( const RhsT& rhs, ResT &res ) const

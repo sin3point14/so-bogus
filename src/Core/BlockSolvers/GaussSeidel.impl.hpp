@@ -59,7 +59,8 @@ void GaussSeidel< BlockMatrixType >::updateLocalMatrices( )
 			resize( m_localMatrices[i], m_matrix->blockRows(i), m_matrix->blockCols(i) ) ;
 			set_zero( m_localMatrices[i] ) ;
 		} else {
-			m_localMatrices[i] = GlobalProblemTraits::asConstMatrix( Base::explicitMatrix().block( ptr ) ) ;
+			m_localMatrices[i] = MatrixTraits<typename BlockMatrixType::BlockType>
+					::asConstMatrix( Base::explicitMatrix().block( ptr ) ) ;
 		}
 	}
 
@@ -75,10 +76,11 @@ void GaussSeidel< BlockMatrixType >::innerLoop(
 		ResT &x	) const
 {
 	typedef typename NSLaw::Traits LocalProblemTraits ;
+	const Index dimension = Base::BlockProblemTraits::dimension ;
 
-	Segmenter< NSLaw::dimension, ResT, typename BlockMatrixType::Index >
+	Segmenter< dimension, ResT, typename BlockMatrixType::Index >
 			xSegmenter( x, m_matrix->rowOffsets() ) ;
-	const Segmenter< NSLaw::dimension, const RhsT, typename BlockMatrixType::Index >
+	const Segmenter< dimension, const RhsT, typename BlockMatrixType::Index >
 			bSegmenter( b, m_matrix->rowOffsets() ) ;
 
 	const Scalar absSkipTol = std::min( m_skipTol, m_tol ) ;

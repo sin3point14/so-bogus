@@ -27,6 +27,8 @@ public:
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 	typedef typename BlockMatrixTraits< BlockMatrixType >::Index Index ;
 
+	typedef LocalProblemTraits< Base::BlockTraits::RowsPerBlock, Scalar > BlockProblemTraits ;
+
 	//! Sets whether the solver will use the infinity norm instead of the l1 one to compute the global residual from the local ones
 	void useInfinityNorm( bool useInfNorm ) { m_useInfinityNorm = useInfNorm ; }
 	bool usesInfinityNorm( ) const { return m_useInfinityNorm ; }
