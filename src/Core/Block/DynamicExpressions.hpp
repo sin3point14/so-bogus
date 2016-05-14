@@ -26,7 +26,6 @@ struct NarySum : public BlockObjectBase< NarySum< Expression > > {
 	typedef BlockObjectBase  < NarySum< Expression > > Base ;
 	typedef BlockMatrixTraits< NarySum< Expression > > Traits ;
 
-	typedef typename Traits::PlainObjectType PlainObjectType ;
 	typedef typename Traits::Index Index ;
 	typedef typename Base::Scalar Scalar ;
 
@@ -99,18 +98,7 @@ struct NarySum : public BlockObjectBase< NarySum< Expression > > {
 	}
 
 	template < bool DoTranspose, typename RhsT, typename ResT >
-	void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const
-	{
-		if( ( Scalar ) 0 == beta )
-			res.setZero() ;
-		if( ( Scalar ) 1 != beta )
-			res *= beta ;
-
-		for( typename Sum::const_iterator it = members.begin() ; it != members.end() ; ++ it )
-		{
-			it->template multiply< DoTranspose >( rhs, res, alpha, 1) ;
-		}
-	}
+	void multiply( const RhsT& rhs, ResT& res, Scalar alpha = 1, Scalar beta = 0 ) const ;
 
 	bool empty() const { return members.begin() == members.end() ; }
 
@@ -134,6 +122,7 @@ template <typename Expression>
 struct BlockMatrixTraits< NarySum< Expression > >
 		: public BlockMatrixTraits< Addition< Expression, Expression > >
 {
+	typedef typename Expression::PlainObjectType PlainObjectType ;
 	typedef NarySum< typename Expression::TransposeObjectType > ConstTransposeReturnType ;
 	typedef ConstTransposeReturnType TransposeObjectType ;
 } ;

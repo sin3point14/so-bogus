@@ -22,6 +22,14 @@ namespace bogus {
 
 namespace mv_impl {
 
+template < typename ResT, typename Scalar >
+void scale_vector( ResT& res, const Scalar beta )
+{
+	if( ( Scalar ) 0 == beta )
+		res.setZero() ;
+	if( ( Scalar ) 1 != beta )
+		res *= beta ;
+}
 
 template < bool DoTranspose, typename Matrix, typename RhsT, typename ResT, typename Scalar >
 inline void mv_add_pre( const Matrix& matrix, const RhsT& rhs, ResT& res, Scalar alpha )
@@ -421,11 +429,7 @@ struct SparseBlockMatrixOpProxy
 	static void multiply( const SparseBlockMatrixBase< Derived >& matrix,  const RhsT& rhs, ResT& res,
 							Scalar alpha, Scalar beta )
 	{
-
-		if( ( Scalar ) 0 == beta )
-			res.setZero() ;
-		if( ( Scalar ) 1 != beta )
-			res *= beta ;
+		mv_impl::scale_vector( res, beta ) ;
 
 		typedef BlockMatrixTraits< Derived > Traits ;
 		mv_impl::SparseBlockMatrixVectorMultiplier
@@ -507,6 +511,25 @@ void Product< LhsMatrixT, RhsMatrixT>::multiply( const RhsT& rhs, ResT& res, Sca
 				beta ) ;
 }
 
+template <typename Expression>
+template < bool DoTranspose, typename RhsT, typename ResT >
+void NarySum< Expression >::multiply( const RhsT& rhs, ResT& res, Scalar alpha, Scalar beta ) const
+{
+	mv_impl::scale_vector( res, beta ) ;
+
+	for( typename Sum::const_iterator it = members.begin() ; it != members.end() ; ++ it )
+	{
+		it->template multiply< DoTranspose >( rhs, res, alpha, 1) ;
+	}
 }
+
+template <typename Scalar>
+template < bool DoTranspose, typename RhsT, typename ResT >
+void Zero<Scalar>::multiply( const RhsT&, ResT& res, Scalar, Scalar beta ) const
+{
+	mv_impl::scale_vector( res, beta ) ;
+}
+
+} //namespace bogus
 
 #endif
