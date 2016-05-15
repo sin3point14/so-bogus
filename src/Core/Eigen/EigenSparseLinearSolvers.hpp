@@ -94,6 +94,10 @@ struct LDLT< Eigen::SparseMatrixBase< Derived > >
 		return m_fact->solve( rhs ) ;
 	}
 
+	const typename Traits::FactType& factorization() const {
+		return *m_fact ;
+	}
+
   private:
 	BOGUS_SHARED_PTR( typename Traits::FactType, m_fact ) ;
 } ;
@@ -170,6 +174,10 @@ struct LU< Eigen::SparseMatrixBase< Derived > >
 	{
 		assert( m_fact ) ;
 		return m_fact->solve( rhs ) ;
+	}
+
+	const typename Traits::FactType& factorization() const {
+		return *m_fact ;
 	}
 
   private:

@@ -32,13 +32,6 @@ struct ProblemTraits
 			OtherMatrix::ColsAtCompileTime > Type ;
 	} ;
 
-//	template< typename VectorType >
-//	static typename VectorType::template FixedSegmentReturnType< dimension >::Type segment( const unsigned i, VectorType& v )
-//	{ return v.template segment< dimension > ( i * dimension ) ; }
-//	template< typename VectorType >
-//	static typename VectorType::template ConstFixedSegmentReturnType< dimension >::Type segment( const unsigned i, const VectorType& v )
-//	{ return v.template segment< dimension > ( i * dimension ) ; }
-
 } ;
 
 template< DenseIndexType Dimension, typename Scalar_ >
