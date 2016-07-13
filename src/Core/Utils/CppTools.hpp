@@ -86,20 +86,20 @@ struct DisableIf< false, ReturnType_ >
 #define BOGUS_DEFINE_HAS_TYPE( TypeName ) \
 	template < typename BaseType > 	      \
 	struct Has##TypeName	              \
-	{	                                  \
+    {	                                  \
 	private:                              \
-		enum { True = 1, False = 2 } ;    \
-		typedef char  TrueType[  True ] ; \
-		typedef char FalseType[ False ] ; \
-		template <typename T > struct Some { typedef int Type ; } ;  \
-										  \
-		template< typename T >			  \
-		static const  TrueType& check( typename Some<typename T::TypeName>::Type ) ; \
-		template< typename >			  \
-		static const FalseType& check( ... ) ; \
+	    enum { True = 1, False = 2 } ;    \
+	    typedef char  TrueType[  True ] ; \
+	    typedef char FalseType[ False ] ; \
+	    template <typename T > struct Some { typedef int Type ; } ;  \
+	                                      \
+	    template< typename T >			  \
+	    static const  TrueType& check( typename Some<typename T::TypeName>::Type ) ; \
+	    template< typename >			  \
+	    static const FalseType& check( ... ) ; \
 	public:								  \
-		enum { Value = ( True == sizeof( check< BaseType >( 0 ) ) ) } ;\
-	}
+	    enum { Value = ( True == sizeof( check< BaseType >( 0 ) ) ) } ;\
+    }
 
 BOGUS_DEFINE_HAS_TYPE( ReturnType ) ;
 BOGUS_DEFINE_HAS_TYPE( ConstTransposeReturnType ) ;
@@ -117,7 +117,8 @@ struct StaticAssert
 		TRANSPOSE_MAKES_NO_SENSE_IN_THIS_CONTEXT,
 		TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE,
 		OPERANDS_HAVE_INCONSISTENT_FLAGS,
-		UNORDERED_INSERTION_WITH_COMPRESSED_INDEX
+		UNORDERED_INSERTION_WITH_COMPRESSED_INDEX,
+		NOT_IMPLEMENTED
 	} ;
 } ;
 
@@ -138,11 +139,11 @@ public:
 	enum { is_mutable = 0 } ;
 
 	ConstMappedArray ( )
-		: m_data( 0 ), m_size( 0 )
+	    : m_data( 0 ), m_size( 0 )
 	{}
 
 	ConstMappedArray ( const Element* data, std::size_t size )
-		: m_data( data ), m_size( size )
+	    : m_data( data ), m_size( size )
 	{}
 
 	void setData( const Element* data, std::size_t size )

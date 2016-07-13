@@ -143,7 +143,7 @@ TEST( GaussSeidel, Pyramid )
 {
 	double mu = 0.4 ;
 
-	bogus::PyramidLaw< 3u, double > Plaw( 1, &mu ) ;
+	bogus::PyramidLaw< 3u, double, true > Plaw( 1, &mu ) ;
 
 	Eigen::Vector3d r  ;
 	r.setOnes() ;
@@ -162,12 +162,12 @@ TEST( GaussSeidel, Pyramid )
 	rperp[0] = 0 ;
 	rperp.tail<2>() = -r.tail<2>() ;
 
-	ASSERT_NEAR( 0, Plaw.eval( 0, r, rperp), 1.e-16 ) ;
+	EXPECT_NEAR( 0, Plaw.eval( 0, r, rperp), 1.e-16 ) ;
 	r2 *= -1 ;
 
 	r = r2 ;
 	r[0] = 0 ;
-	ASSERT_NEAR( 0, Plaw.eval( 0, u, r), 1.e-16 ) ;
+	EXPECT_NEAR( 0, Plaw.eval( 0, u, r), 1.e-16 ) ;
 
 	Plaw.projectOnConstraint(0,r2);
 	ASSERT_TRUE( r2.isZero() ) ;
@@ -196,4 +196,20 @@ TEST( GaussSeidel, Pyramid )
 	Plaw.solveLocal(0,A,b,r,1) ;
 	u = A*r + b ;
 	ASSERT_NEAR( 0, Plaw.eval( 0, r, u), 1.e-6 ) ;
+	ASSERT_NEAR( mu*r[0], r.segment<2>(1).lpNorm<Eigen::Infinity>(), 1.e-6 ) ;
+
+	// Test change of variable
+	Eigen::Vector3d ut ;
+	Plaw.dualityCOV(0,u,ut) ;
+	ut += u ;
+
+	ASSERT_NEAR( 0, ut.dot(r), 1.e-12 ) ;
+
+	Eigen::Vector3d ds = r - ut ;
+
+	Plaw.projectOnConstraint(0,ds);
+
+	ASSERT_NEAR( mu * ds[0], ds.segment<2>(1).lpNorm<Eigen::Infinity>(), 1.e-6 ) ;
+
+	ASSERT_NEAR( 0, (r - ds).squaredNorm(), 1.e-6 ) ;
 }

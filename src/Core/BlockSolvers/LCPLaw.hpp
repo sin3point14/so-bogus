@@ -35,24 +35,29 @@ public:
 
 	//! \return \f$ \vert fb( x, y ) \vert^2_2 \f$, where fb is the scalar Fischer-Burmeister function
 	Scalar eval( const unsigned problemIndex,
-				 const typename Traits::Vector &x,
-				 const typename Traits::Vector &y ) const ;
+	             const typename Traits::Vector &x,
+	             const typename Traits::Vector &y ) const ;
 
 	//! Solves the local problem
 	/*!
-		0 \leq y \perp a x + b \geq 0
+		\f$ 0 \leq x \perp a x + b \geq 0 \f$
 	*/
 	bool solveLocal(
-			const unsigned problemIndex,
-			const typename Traits::Matrix &A,
-			const typename Traits::Vector &b,
-			typename Traits::Vector &x,
-			const Scalar scaling
-			) const ;
+	        const unsigned problemIndex,
+	        const typename Traits::Matrix &A,
+	        const typename Traits::Vector &b,
+	        typename Traits::Vector &x,
+	        const Scalar scaling
+	        ) const ;
 
 	//! Projects x on \f$ R^+ \f$
 	void projectOnConstraint( const unsigned problemIndex, typename Traits::Vector &x ) const ;
 
+	//! This NSLaw is always associated, so dualityCOV is null.
+	template< typename Segment >
+	void dualityCOV( const unsigned , const Segment& ,
+	                 typename Traits::Vector& s ) const
+	{ s->setZero() ; }
 } ;
 
 

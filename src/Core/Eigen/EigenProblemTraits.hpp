@@ -28,8 +28,8 @@ struct ProblemTraits
 	struct MutableClone
 	{
 		typedef Eigen::Matrix< Scalar,
-			OtherMatrix::RowsAtCompileTime,
-			OtherMatrix::ColsAtCompileTime > Type ;
+		    OtherMatrix::RowsAtCompileTime,
+		    OtherMatrix::ColsAtCompileTime > Type ;
 	} ;
 
 } ;

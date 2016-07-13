@@ -39,7 +39,7 @@ namespace bogus
 	\tparam Strat local_soc_solver::Strategy for solving the local problems. Unavailable for dimensions other than 2 and 3.
   */
 template < DenseIndexType Dimension, typename Scalar, bool DeSaxceCOV,
-		   local_soc_solver::Strategy Strat >
+           local_soc_solver::Strategy Strat >
 class SOCLaw
 {
 public:
@@ -55,8 +55,8 @@ public:
 
 	//! \return \f$ \vert fb( mu, x, y ) \vert^2_2 \f$, where fb is the SOC Fischer-Burmeister function
 	Scalar eval( const unsigned problemIndex,
-				 const typename Traits::Vector &x,
-				 const typename Traits::Vector &y ) const
+	             const typename Traits::Vector &x,
+	             const typename Traits::Vector &y ) const
 	{
 		typedef FischerBurmeister< Traits::dimension, typename Traits::Scalar, DeSaxceCOV > FBFunction ;
 
@@ -85,23 +85,26 @@ public:
 	  \param scaling Used as a scaling factor for \p x when calculating the error function
 	*/
 	bool solveLocal(
-			const unsigned problemIndex,
-			const typename Traits::Matrix &A,
-			const typename Traits::Vector &b,
-			typename Traits::Vector &x,
-			const Scalar scaling
-			) const ;
+	        const unsigned problemIndex,
+	        const typename Traits::Matrix &A,
+	        const typename Traits::Vector &b,
+	        typename Traits::Vector &x,
+	        const Scalar scaling
+	        ) const ;
 
 	//! Projects x on \f$ K_{ \mu } \f$
 	void projectOnConstraint( const unsigned problemIndex, typename Traits::Vector &x ) const ;
 
-	//! Computes the change of variable \p s so that (u + s) obey an associated rule
+	//! Computes the change of variable \p s(y) so that (x, y+s(y)) obeys an associated law.
+	/*! ie \f$ y + s(y) \in - N_C(x) \f$.
+	 *  Here C = K_{mu}, and if \tparam DeSaxceCOV is true, \f$ s_i(y) =  mu_i |y_{i,T}| n \f$
+	 */
 	template< typename Segment >
-	void dualityCOV( const unsigned problemIndex, const Segment& u,
-					 typename Traits::Vector& s ) const
+	void dualityCOV( const unsigned problemIndex, const Segment& y,
+	                 typename Traits::Vector& s ) const
 	{
 		if( DeSaxceCOV ) {
-			Traits::np( s ) = m_mu[problemIndex] * Traits::tp(u).norm() ;
+			Traits::np( s ) = m_mu[problemIndex] * Traits::tp(y).norm() ;
 			Traits::tp( s ).setZero() ;
 		} else	s.setZero() ;
 	}
