@@ -73,6 +73,7 @@ endif()
 
 if ( GCC OR CLANG )
 				SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra " )
+				SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-ignored-attributes " ) #gcc 6 + eigen
 				if( CPP11 )
 						SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated-declarations " )
 				endif()
