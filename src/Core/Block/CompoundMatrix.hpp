@@ -7,14 +7,19 @@
 
 namespace bogus {
 
-template< bool ColWise, typename MatrixT1, typename MatrixT2  >
-class CompoundBlockMatrix ;
-
-
-// side-by-side (ColWise = true)
+//! A matrix made by concatenating two other matrices of possibly different types
+/*! \tparam ColWise If true, the two matrices are side-by-side (column concatenation),
+ *          otherwise they are on top of another
+ *
+ *  If ColWise, the two matrices must have the same number and size of rows of blocks.
+ *  Otherwise, they must have the same number and size of columns of blocks.
+ *
+ *  Implements IterableBlockObject
+ */
 template< bool ColWise, typename MatrixT1, typename MatrixT2  >
 class CompoundBlockMatrix : public IterableBlockObject<CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > > {
 public:
+	// side-by-side (ColWise = true)
 	typedef IterableBlockObject< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > > Base ;
 
 	typedef typename Base::Index  Index ;
@@ -87,7 +92,7 @@ private:
 
 template< bool ColWise, typename MatrixT1, typename MatrixT2  >
 struct BlockMatrixTraits< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > >
-		: public BlockMatrixTraits< BlockObjectBase< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > > >
+        : public BlockMatrixTraits< BlockObjectBase< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > > >
 {
 	typedef BlockMatrixTraits< MatrixT1 > OrigTraits;
 	typedef BlockMatrixTraits< MatrixT2 > OtherTraits;
@@ -97,17 +102,17 @@ struct BlockMatrixTraits< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > >
 
 	enum {
 		RowsPerBlock = SwapIf<
-			 ColWise || ((int)OrigTraits::RowsPerBlock) == (int)OtherTraits::RowsPerBlock,
-			internal::DYNAMIC, OrigTraits::RowsPerBlock >::First,
+		     ColWise || ((int)OrigTraits::RowsPerBlock) == (int)OtherTraits::RowsPerBlock,
+		    internal::DYNAMIC, OrigTraits::RowsPerBlock >::First,
 		ColsPerBlock = SwapIf<
-			!ColWise || ((int)OrigTraits::ColsPerBlock) == (int)OtherTraits::ColsPerBlock,
-			internal::DYNAMIC, OrigTraits::ColsPerBlock >::First
+		    !ColWise || ((int)OrigTraits::ColsPerBlock) == (int)OtherTraits::ColsPerBlock,
+		    internal::DYNAMIC, OrigTraits::ColsPerBlock >::First
 	};
 } ;
 
 template< typename MatrixT1, typename MatrixT2  >
 class CompoundBlockMatrix<false,MatrixT1, MatrixT2>
-		: public IterableBlockObject<CompoundBlockMatrix< false, MatrixT1, MatrixT2 > > {
+        : public IterableBlockObject<CompoundBlockMatrix< false, MatrixT1, MatrixT2 > > {
 	//TODO
 } ;
 

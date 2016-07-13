@@ -21,8 +21,8 @@ namespace bogus
 
 //! Options for ADMM solvers
 namespace admm {
-	//! Variants of ADMM algorithm
-	enum Variant {
+    //! Variants of ADMM algorithm
+    enum Variant {
 		//! Standard ADMM
 		Standard,
 		//! ADDM with \cite Nesterov1983 acceleration (see Goldstein 2014)
@@ -30,11 +30,15 @@ namespace admm {
 	} ;
 }
 
-//! ADMM iterative solver.
+//! ADMM (Alternating Direction Method of Multipliers ) iterative solver.
 /*!
 	Minimizes J(v) with ( M v + w ) in C
 
-	Requires ability to evaluate prox_J( x )
+	Requires ability to evaluate
+   \f$ prox_{\lambda} J( x ) := min_y J(y) + \frac 1 {2 \lambda} \Vert x - y \Vert^2  \f$
+	(\sa QuadraticProxOp)
+
+	\warning Experimental
 */
 template < typename BlockMatrixType >
 class ADMM : public ConstrainedSolverBase< ADMM<BlockMatrixType >, BlockMatrixType >
@@ -54,18 +58,17 @@ public:
 	/*!
 	 *  Find the minimizer of J(v),  ( Mv + w \in C )
 	 *  with J(v) defined through its proximal operator, \p op
-	 *
 	 */
 	template < admm::Variant variant, typename NSLaw, typename ProxOp, typename RhsT, typename ResT >
 	Scalar solve(
-			const NSLaw &law, const ProxOp& op,
-			const RhsT &w, ResT &v, ResT &r ) const ;
+	        const NSLaw &law, const ProxOp& op,
+	        const RhsT &w, ResT &v, ResT &r ) const ;
 
 	//! Solve function using default variant
 	template < typename NSLaw, typename ProxOp, typename RhsT, typename ResT >
 	Scalar solve(
-			const NSLaw &law, const ProxOp& op,
-			const RhsT &w, ResT &v, ResT &r ) const ;
+	        const NSLaw &law, const ProxOp& op,
+	        const RhsT &w, ResT &v, ResT &r ) const ;
 
 	//! Sets the problem matrix -- the one defining the constraints
 	ADMM& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix )
@@ -111,18 +114,25 @@ protected:
 } ;
 
 
-//! Dual AMA iterative solver.
+//! Dual AMA iterative solver (Alternating Minimization Algorithm  on dual formuation of quadratic optimization problem).
 /*!
-	Minimizes .5 r' M A^-1 M' r + r' ( w - M A^-1 f ) + Ic( r )
+
+	Minimizes .5 r' M A^-1 M' r + r' ( w - M A^-1 f ) for r in C
 
 	as min H(x) + G(r)  , x = M' r
 	with H(x) = .5 x' A^-1 x - x' A^-1 f
-		 G(r) = Ic(r) + r'w
+		 G(r) = I_C(r) + r'w
 
 	thanks to the identities
 	 prox_{l,G} (y) = prox_{l,Ic}( y - lw ) = Pi_C ( y - lw )
-
+	and
 	 inf_x  H(x) - < v, x > = A v + f
+
+
+	Main advantage of this solver is that it does not require inverting or
+	solving linear system with the stiffness matrix A.
+
+	\warning Experimental
 
 */
 template < typename BlockMatrixType >
@@ -143,30 +153,30 @@ public:
 	//! Solve function using default variant
 	template < typename NSLaw, typename MatrixT, typename RhsT, typename ResT >
 	Scalar solve(
-			const NSLaw &law, const BlockObjectBase< MatrixT >& A,
-			const RhsT &f, const RhsT &w,
-			ResT &v, ResT &r ) const ;
+	        const NSLaw &law, const BlockObjectBase< MatrixT >& A,
+	        const RhsT &f, const RhsT &w,
+	        ResT &v, ResT &r ) const ;
 
 	//! Solve function with variant as template argument
 	template < admm::Variant variant, typename NSLaw, typename MatrixT,
-			   typename RhsT, typename ResT >
+	           typename RhsT, typename ResT >
 	Scalar solve(
-			const NSLaw &law, const BlockObjectBase< MatrixT >& A,
-			const RhsT &f, const RhsT &w,
-			ResT &v, ResT &r ) const ;
+	        const NSLaw &law, const BlockObjectBase< MatrixT >& A,
+	        const RhsT &f, const RhsT &w,
+	        ResT &v, ResT &r ) const ;
 
 	//! Idem  with constraint  ( B v + k = 0 )
 	template < admm::Variant variant, typename NSLaw,
-			   typename AType, typename BType, typename HType, typename PrecondT,
-			   typename RhsT, typename ORhsT, typename ResT, typename OResT >
+	           typename AType, typename BType, typename HType, typename PrecondT,
+	           typename RhsT, typename ORhsT, typename ResT, typename OResT >
 	Scalar solveWithLinearConstraints(
-			const NSLaw &law,
-			const BlockObjectBase< AType >& A,
-			const BlockObjectBase< BType >& B,
-			const BlockObjectBase< HType >& H,
-			const PrecondT& preconditioner,
-			const RhsT &f, const ORhsT& k, const RhsT &w,
-			ResT &v, OResT &p, ResT &r, Scalar stepRatio = 1 ) const ;
+	        const NSLaw &law,
+	        const BlockObjectBase< AType >& A,
+	        const BlockObjectBase< BType >& B,
+	        const BlockObjectBase< HType >& H,
+	        const PrecondT& preconditioner,
+	        const RhsT &f, const ORhsT& k, const RhsT &w,
+	        ResT &v, OResT &p, ResT &r, Scalar stepRatio = 1 ) const ;
 
 	//! Sets the problem matrix -- the one defining the constraints
 	DualAMA& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix )

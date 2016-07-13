@@ -53,12 +53,12 @@ public:
 		double tolerance ;      //!< Solver tolerance
 		bool useInfinityNorm ;  //!< Whether to use the infinity norm to evaluate the residual of the friction problem,
 
-		Algorithm algorithm ;   //! Solver algorithm
+		Algorithm algorithm ;   //! Solver algorithm; \sa GaussSeidel \sa ProjectedGradient
 
 		// Solver-specific options
 
-		double gsRegularization ; //!< GS regularization coefficient for friction problems
-		bool   gsColoring ;
+		double gsRegularization ; //!< GS proximal regularization coefficient
+		bool   gsColoring ;       //!< Use coloring for parallel GS; slower but deterministic
 
 		double admmProjStepSize ;
 		double admmFpStepSize ;
@@ -88,9 +88,9 @@ public:
 	        const double *const HB[] //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjB[i] </c> (\c NULL for an external object)
 	        );
 
-	//! Solves the friction problem ; \sa GaussSeidel \sa ProjectedGradient
+	//! Solves the friction problem
 	double solve(double * r, //!< length \a nd : initialization for \a r (in world space coordinates) + used to return computed r
-	        double * v, //!< length \a m: to return computed v ( or NULL if not needed )
+	        double * v,      //!< length \a m: to return computed v ( or NULL if not needed )
 	        bool staticProblem ,          //!< If true, do not use DeSaxce change of variable
 	        double problemRegularization, //!< Amount to add on the diagonal of the Delassus operator
 	        const Options & options       //!< Solver options
@@ -99,14 +99,14 @@ public:
 	//! Solves the friction problem (old interface)
 	double solve(double * r, //!< length \a nd : initialization for \a r (in world space coordinates) + used to return computed r
 	        double * v, //!< length \a m: to return computed v ( or NULL if not needed )
-	        int maxThreads = 0,       //!< Maximum number of threads that the GS will use. If 0, use OpenMP default. If > 1, enable coloring to ensure deterministicity
+	        int maxThreads = 0,               //!< Maximum number of threads that the GS will use. If 0, use OpenMP default. If > 1, enable coloring to ensure deterministicity
 	        double tol = 0.,                  //!< Gauss-Seidel tolerance. 0. means GS's default
 	        unsigned maxIters = 0,            //!< Max number of iterations. 0 means GS's default
 	        bool staticProblem = false,       //!< If true, do not use DeSaxce change of variable
-	        double regularization = 0.,  //!< Coefficient to add to the diagonal of static problems / GS regularization coefficient for friction problems
-	        bool useInfinityNorm = false, //!< Whether to use the infinity norm to evaluate the residual of the friction problem,
-	        bool useProjectedGradient = false,  //!< 0 = GS, 1 = PG, 2 = ADMM, 3 = DualAMA.
-	        unsigned cadouxIters = 0 //!< If staticProblem is false and cadouxIters is greater than zero, use the Cadoux algorithm to solve the friction problem.
+	        double regularization = 0.,       //!< Coefficient to add to the diagonal of static problems / GS regularization coefficient for friction problems
+	        bool useInfinityNorm = false,     //!< Whether to use the infinity norm to evaluate the residual of the friction problem,
+	        bool useProjectedGradient = false,//!< 0 = GS, 1 = PG, 2 = ADMM, 3 = DualAMA.
+	        unsigned cadouxIters = 0          //!< If staticProblem is false and cadouxIters is greater than zero, use the Cadoux algorithm to solve the friction problem.
 	             );
 
 	//! Computes the dual from the primal
