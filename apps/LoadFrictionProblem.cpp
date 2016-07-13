@@ -18,8 +18,8 @@ int main( int argc, const char* argv[] )
 	{
 		std::cerr << " Please provide a problem data file " << std::endl ;
 		std::cerr << " Syntax: " << argv[0] << " dataFile "
-				  << " [ deterministic ] [ tol ] [ maxIters ] [ staticPb ] [ regul ] [ useInfNorm ] [algorithm] [cadouxIterations]"
-				  << std::endl ;
+		          << " [ deterministic ] [ tol ] [ maxIters ] [ staticPb ] [ regul ] [ useInfNorm ] [algorithm] [cadouxIterations]"
+		          << std::endl ;
 		return 1 ;
 	}
 
@@ -29,17 +29,29 @@ int main( int argc, const char* argv[] )
 	if( mfp.fromFile( argv[1], r ) )
 	{
 
-		const int maxThreads    = argc > 2 ? std::atoi( argv[2] ) : 0 ;
-		const double tol        = argc > 3 ? std::strtod( argv[3], NULL ) : 0 ;
-		const int maxIters      = argc > 4 ? std::atoi( argv[4] ) : 0 ;
-		const int staticPb      = argc > 5 ? std::atoi( argv[5] ) : 0 ;
-		const double regul      = argc > 6 ? std::strtod( argv[6], NULL ) : 0 ;
-		const int useInfNorm    = argc > 7 ? std::atoi( argv[7] ) : 0 ;
-		const int usePG         = argc > 8 ? std::atoi( argv[8] ) : 0 ;
-		const int cadoux        = argc > 9 ? std::atoi( argv[9] ) : 0 ;
+		bogus::MecheFrictionProblem::Options options ;
 
-		mfp.solve( r, NULL, maxThreads, tol, maxIters, staticPb, regul, useInfNorm,
-				   (bogus::MecheFrictionProblem::Algorithm) usePG, cadoux ) ;
+		options.maxThreads    = argc > 2 ? std::atoi( argv[2] ) : 0 ;
+		if( options.maxThreads > 1 )
+			options.gsColoring = true ;
+
+		options.tolerance     = argc > 3 ? std::strtod( argv[3], NULL ) : 0 ;
+		options.maxIters      = argc > 4 ? std::atoi( argv[4] ) : 0 ;
+
+		const bool staticPb   = argc > 5 ? std::atoi( argv[5] ) : 0 ;
+		double problemRegularization  = argc > 6 ? std::strtod( argv[6], NULL ) : 0 ;
+
+		if( !staticPb ) {
+			options.gsRegularization = problemRegularization ;
+			problemRegularization = 0 ;
+		}
+
+		options.useInfinityNorm = argc > 7 ? std::atoi( argv[7] ) : 0 ;
+		options.algorithm =   (bogus::MecheFrictionProblem::Algorithm)
+		        ( argc > 8 ? std::atoi( argv[8] ) : 0 ) ;
+		options.cadouxIters    = argc > 9 ? std::atoi( argv[9] ) : 0 ;
+
+		mfp.solve( r, NULL, staticPb, problemRegularization, options ) ;
 		std::cout << "Solver timer: " << mfp.lastSolveTime() << " seconds" << std::endl ;
 
 

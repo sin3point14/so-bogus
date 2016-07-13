@@ -47,16 +47,15 @@ namespace bogus
 {
 
 MecheFrictionProblem::MecheFrictionProblem()
-	: m_primal( BOGUS_NULL_PTR(PrimalFrictionProblem<3u>) ),
-	  m_dual( BOGUS_NULL_PTR(DualFrictionProblem<3u>) ),
-		m_lastSolveTime( 0 ),
-		m_f( BOGUS_NULL_PTR(double) ),
-		m_w( BOGUS_NULL_PTR(double) ),
-		m_mu( BOGUS_NULL_PTR(double) ),
-		m_out( &std::cout )
+    : m_primal( BOGUS_NULL_PTR(PrimalFrictionProblem<3u>) ),
+      m_dual( BOGUS_NULL_PTR(DualFrictionProblem<3u>) ),
+        m_lastSolveTime( 0 ),
+        m_f( BOGUS_NULL_PTR(double) ),
+        m_w( BOGUS_NULL_PTR(double) ),
+        m_mu( BOGUS_NULL_PTR(double) ),
+        m_out( &std::cout )
 {
 }
-
 
 MecheFrictionProblem::~MecheFrictionProblem()
 {
@@ -82,8 +81,8 @@ void MecheFrictionProblem::ackCurrentResidual( unsigned GSIter, double err )
 	if( m_out )
 	{
 		*m_out << "Finished iteration " << GSIter
-				 << " with residual " << err
-				 << std::endl ;
+		         << " with residual " << err
+		         << std::endl ;
 	}
 	m_callback.trigger( GSIter, err, m_timer.elapsed() );
 }
@@ -97,19 +96,19 @@ void MecheFrictionProblem::reset ()
 }
 
 void MecheFrictionProblem::fromPrimal (
-		unsigned int NObj, //!< number of subsystems
-		const unsigned int * ndof, //!< array of size \a NObj, the number of degree of freedom of each subsystem
-		const double *const * MassMat, //!< array of pointers to the mass matrix of each subsystem
-		const double * f_in, //!< the constant term in \f$ M v + f= {}^t \! H r \f$
-		unsigned int n_in, //!< number of contact points
-		const double * mu_in, //!< array of size \a n giving the friction coeffs
-		const double * E_in, //!< array of size \f$ n \times d \times d \f$ giving the \a n normals followed by the \a n tangent vectors (and by again \a n tangent vectors if \a d is 3). Said otherwise, \a E is a \f$ (nd) \times d \f$ matrix, stored column-major, formed by \a n blocks of size \f$ d \times d \f$ with each block being an orthogonal matrix (the transition matrix from the world space coordinates \f$ (x_1, x_2, x_3) \f$ to the local coordinates \f$ (x_N, x_{T1}, x_{T2}) \f$
-		const double * w_in, //!< array of size \a nd, the constant term in \f$ u = H v + w \f$
-		const int * const ObjA, //!< array of size \a n, the first object involved in the \a i-th contact (must be an internal object) (counted from 0)
-		const int * const ObjB, //!< array of size \a n, the second object involved in the \a i-th contact (-1 for an external object) (counted from 0)
-		const double *const HA[], //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjA[i] </c>
-		const double *const HB[] //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjB[i] </c> (\c NULL for an external object)
-		)
+        unsigned int NObj, //!< number of subsystems
+        const unsigned int * ndof, //!< array of size \a NObj, the number of degree of freedom of each subsystem
+        const double *const * MassMat, //!< array of pointers to the mass matrix of each subsystem
+        const double * f_in, //!< the constant term in \f$ M v + f= {}^t \! H r \f$
+        unsigned int n_in, //!< number of contact points
+        const double * mu_in, //!< array of size \a n giving the friction coeffs
+        const double * E_in, //!< array of size \f$ n \times d \times d \f$ giving the \a n normals followed by the \a n tangent vectors (and by again \a n tangent vectors if \a d is 3). Said otherwise, \a E is a \f$ (nd) \times d \f$ matrix, stored column-major, formed by \a n blocks of size \f$ d \times d \f$ with each block being an orthogonal matrix (the transition matrix from the world space coordinates \f$ (x_1, x_2, x_3) \f$ to the local coordinates \f$ (x_N, x_{T1}, x_{T2}) \f$
+        const double * w_in, //!< array of size \a nd, the constant term in \f$ u = H v + w \f$
+        const int * const ObjA, //!< array of size \a n, the first object involved in the \a i-th contact (must be an internal object) (counted from 0)
+        const int * const ObjB, //!< array of size \a n, the second object involved in the \a i-th contact (-1 for an external object) (counted from 0)
+        const double *const HA[], //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjA[i] </c>
+        const double *const HB[] //!< array of size \a n, containing pointers to a dense, colum-major matrix of size <c> d*ndof[ObjA[i]] </c> corresponding to the H-matrix of <c> ObjB[i] </c> (\c NULL for an external object)
+        )
 {
 	reset() ;
 
@@ -154,17 +153,17 @@ void MecheFrictionProblem::fromPrimal (
 		if( ObjB[i] == -1 )
 		{
 			m_primal->H.insert( i, ObjA[i] ) =  Et *
-					Eigen::MatrixXd::Map( HA[i], 3, ndof[ ObjA[i] ] ) ;
+			        Eigen::MatrixXd::Map( HA[i], 3, ndof[ ObjA[i] ] ) ;
 		} else if( ObjB[i] == ObjA[i] )
 		{
 			m_primal->H.insert( i, ObjA[i] ) =  Et *
-					( Eigen::MatrixXd::Map( HA[i], 3, ndof[ ObjA[i] ] ) -
-					Eigen::MatrixXd::Map( HB[i], 3, ndof[ ObjA[i] ] ) ) ;
+			        ( Eigen::MatrixXd::Map( HA[i], 3, ndof[ ObjA[i] ] ) -
+			        Eigen::MatrixXd::Map( HB[i], 3, ndof[ ObjA[i] ] ) ) ;
 		} else {
 			m_primal->H.insert( i, ObjA[i] ) =  Et *
-					Eigen::MatrixXd::Map( HA[i], 3, ndof[ ObjA[i] ] ) ;
+			        Eigen::MatrixXd::Map( HA[i], 3, ndof[ ObjA[i] ] ) ;
 			m_primal->H.insert( i, ObjB[i] ) =  - Et *
-					Eigen::MatrixXd::Map( HB[i], 3, ndof[ ObjB[i] ] ) ;
+			        Eigen::MatrixXd::Map( HB[i], 3, ndof[ ObjB[i] ] ) ;
 		}
 	}
 	m_primal->H.finalize() ;
@@ -199,18 +198,57 @@ void MecheFrictionProblem::computeDual( double regularization )
 }
 
 
+MecheFrictionProblem::Options::Options()
+    : maxThreads(0), maxIters(0), cadouxIters(0),
+      tolerance(0), useInfinityNorm( false ),
+      algorithm( GaussSeidel ),
+      gsRegularization( 0 ), gsColoring( false ),
+      admmProjStepSize( 1 ), admmFpStepSize(1.e-3)
+{
+}
+
 double MecheFrictionProblem::solve(
-		double *r,
-		double *v,
-		int maxThreads,
-		double tol,
-		unsigned maxIters,
-		bool staticProblem,
-		double regularization,
-		bool useInfinityNorm,
-		Algorithm algorithm,
-		unsigned cadouxIters
-									 )
+        double *r,
+        double *v,
+        int maxThreads,
+        double tol,
+        unsigned maxIters,
+        bool staticProblem,
+        double regularization,
+        bool useInfinityNorm,
+        bool useProjectedGradient,
+        unsigned cadouxIters
+                                     )
+{
+	Options options ;
+	double problemRegularization = 0 ;
+
+	options.maxThreads = maxThreads ;
+	options.maxIters = maxIters ;
+	options.cadouxIters = cadouxIters ;
+
+	options.tolerance = tol ;
+	options.useInfinityNorm = useInfinityNorm ;
+
+	if( useProjectedGradient )
+		options.algorithm = ProjectedGradient ;
+
+	if( staticProblem ) {
+		problemRegularization = regularization ;
+	} else {
+		options.gsRegularization = regularization ;
+	}
+
+	return solve( r, v, staticProblem, problemRegularization, options ) ;
+}
+
+
+double MecheFrictionProblem::solve(
+        double *r,
+        double *v,
+        bool staticProblem,
+        double problemRegularization,
+        const Options& options )
 {
 	assert( m_primal ) ;
 	const unsigned m = m_primal->H.cols() ;
@@ -223,45 +261,45 @@ double MecheFrictionProblem::solve(
 	double res ;
 
 
-	if( algorithm == ADMM || algorithm == DualAMA ) //FIXME make proper interface
+	if( options.algorithm == ADMM || options.algorithm == DualAMA )
 	{
-
 		// Primal-dual solve
 
 		Eigen::VectorXd v_data  ;
 		if( !v ) {
 			v_data = m_primal->MInv * ( m_primal->H.transpose() * r_loc -
-										Eigen::VectorXd::Map( m_primal->f, m_primal->H.cols() ) ) ;
+			                            Eigen::VectorXd::Map( m_primal->f, m_primal->H.cols() ) ) ;
 			v = v_data.data() ;
 		}
 
 		m_timer.reset();
 
-		if( algorithm == DualAMA ) //FIXME make proper interface
+		if( options.algorithm == DualAMA )
 		{
 
 			bogus::DualAMA< bogus::PrimalFrictionProblem<3u>::HType > dama ;
 			dama.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual ) ;
 
+			if( options.tolerance != 0. ) dama.setTol( options.tolerance );
+			if( options.maxIters  != 0  ) dama.setMaxIters( options.maxIters );
+			dama.useInfinityNorm( options.useInfinityNorm );
+
 			dama.setLineSearchIterations( 0 );
-			dama.setFpStepSize(1.e-3);
-			dama.setProjStepSize(10.);
-			dama.setTol( tol );
-			dama.setMaxIters( maxIters );
-			dama.useInfinityNorm( useInfinityNorm );
+			dama.setFpStepSize( options.admmFpStepSize );
+			dama.setProjStepSize( options.admmProjStepSize );
 
 			res = m_primal->solveWith( dama, v, r_loc.data(), staticProblem ) ;
 		} else {
 			bogus::ADMM< bogus::PrimalFrictionProblem<3u>::HType > admm ;
 			admm.callback().connect( *this, &MecheFrictionProblem::ackCurrentResidual ) ;
 
-			admm.setStepSize(1.);
+			admm.setStepSize( options.admmProjStepSize );
 
-			admm.setTol( tol );
-			admm.setMaxIters( maxIters );
-			admm.useInfinityNorm( useInfinityNorm );
+			if( options.tolerance != 0. ) admm.setTol( options.tolerance );
+			if( options.maxIters  != 0  ) admm.setMaxIters( options.maxIters );
+			admm.useInfinityNorm( options.useInfinityNorm );
 
-			res = m_primal->solveWith( admm, 1.e-1, v, r_loc.data() ) ;
+			res = m_primal->solveWith( admm, 0., v, r_loc.data() ) ;
 		}
 
 	} else {
@@ -270,7 +308,7 @@ double MecheFrictionProblem::solve(
 		// If dual has not been computed yet
 		if( !m_dual )
 		{
-			computeDual( staticProblem ? regularization : 0. );
+			computeDual( problemRegularization );
 		}
 
 		Signal< unsigned, double > callback ;
@@ -279,36 +317,37 @@ double MecheFrictionProblem::solve(
 		// Proper solving
 
 		m_timer.reset();
-		if( algorithm == ProjectedGradient ) {
+		if( options.algorithm == ProjectedGradient ) {
 
 			DualFrictionProblem< 3u >::ProjectedGradientType pg ;
-			if( tol != 0. ) pg.setTol( tol );
-			if( maxIters != 0 ) pg.setMaxIters( maxIters );
-			pg.useInfinityNorm( useInfinityNorm ) ;
+			if( options.tolerance != 0. ) pg.setTol( options.tolerance );
+			if( options.maxIters  != 0  ) pg.setMaxIters( options.maxIters );
 
+			pg.useInfinityNorm( options.useInfinityNorm ) ;
 			pg.setDefaultVariant( projected_gradient::Conjugated );
 
-			if( staticProblem || cadouxIters == 0 )
+			if( staticProblem || options.cadouxIters == 0 )
 			{
 				pg.callback().connect( callback );
 				res = m_dual->solveWith( pg, r_loc.data() ) ;
 			} else {
-				res = m_dual->solveCadoux( pg, r_loc.data(), cadouxIters, &callback ) ;
+				res = m_dual->solveCadoux( pg, r_loc.data(), options.cadouxIters, &callback ) ;
 			}
 		} else {
 			// Setup GS parameters
 			bogus::DualFrictionProblem<3u>::GaussSeidelType gs ;
 
-			if( tol != 0. ) gs.setTol( tol );
-			if( maxIters != 0 ) gs.setMaxIters( maxIters );
+			if( options.tolerance != 0. ) gs.setTol( options.tolerance );
+			if( options.maxIters  != 0  ) gs.setMaxIters( options.maxIters );
 
-			gs.setMaxThreads( maxThreads );
-			gs.setAutoRegularization( regularization ) ;
-			gs.useInfinityNorm( useInfinityNorm ) ;
+			gs.setMaxThreads( options.maxThreads );
+			gs.setAutoRegularization( options.gsRegularization ) ;
+			gs.useInfinityNorm( options.useInfinityNorm ) ;
 
 			m_dual->undoPermutation() ;
 
-			const bool useColoring = maxThreads > 1 ;
+			const bool useColoring =
+			        options.maxThreads != 1 && options.gsColoring ;
 			gs.coloring().update( useColoring, m_dual->W );
 
 			if( useColoring )
@@ -318,12 +357,12 @@ double MecheFrictionProblem::solve(
 			}
 			m_dual->W.cacheTranspose() ;
 
-			if( staticProblem || cadouxIters == 0 )
+			if( staticProblem || options.cadouxIters == 0 )
 			{
 				gs.callback().connect( callback );
 				res = m_dual->solveWith( gs, r_loc.data(), staticProblem ) ;
 			} else {
-				res = m_dual->solveCadoux( gs, r_loc.data(), cadouxIters, &callback ) ;
+				res = m_dual->solveCadoux( gs, r_loc.data(), options.cadouxIters, &callback ) ;
 			}
 
 		}
@@ -332,8 +371,8 @@ double MecheFrictionProblem::solve(
 		if( v )
 		{
 			Eigen::VectorXd::Map( v, m ) = m_primal->MInv * (
-						m_primal->H.transpose() * r_loc -
-						Eigen::VectorXd::Map( m_primal->f, m_primal->H.cols() ) ) ;
+			            m_primal->H.transpose() * r_loc -
+			            Eigen::VectorXd::Map( m_primal->f, m_primal->H.cols() ) ) ;
 		}
 	}
 
