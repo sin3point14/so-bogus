@@ -1,7 +1,7 @@
 /*
  * This file is part of bogus, a C++ sparse block matrix library.
  *
- * Copyright 2013 Gilles Daviet <gdaviet@gmail.com>
+ * Copyright 2016 Gilles Daviet <gdaviet@gmail.com>
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this

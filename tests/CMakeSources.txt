@@ -7,5 +7,7 @@ Mkl.cpp
 Polynomial.cpp
 ProductGaussSeidel.cpp
 ProjectedGradient.cpp
+ResidualInfo.hpp
 Serialization.cpp
+SmallFrictionPb.hpp
 SparseBlock.cpp
