@@ -32,12 +32,12 @@ namespace admm {
 
 //! ADMM (Alternating Direction Method of Multipliers ) iterative solver.
 /*!
-	Minimizes J(v) with ( M v + w ) in C
+	Minimizes J(v) with ( M v + w ) in C, C defined by the NSLaw in the solve() function.
 
 	Requires ability to evaluate
-   \f$ prox_{\lambda} J( x ) := min_y J(y) + \frac 1 {2 \lambda} \Vert x - y \Vert^2  \f$
-	(\sa QuadraticProxOp)
+   \f$ prox_{\lambda} J( x ) := \min_y J(y) + \frac 1 {2 \lambda} \Vert x - y \Vert^2  \f$
 
+	\sa QuadraticProxOp
 	\warning Experimental
 */
 template < typename BlockMatrixType >
@@ -56,8 +56,9 @@ public:
 	{ init() ; Base::setMatrix( matrix ) ; }
 
 	/*!
-	 *  Find the minimizer of J(v),  ( Mv + w \in C )
+	 *  Find the minimizer of J(v),  ( Mv + w in C )
 	 *  with J(v) defined through its proximal operator, \p op
+	 *  and C defined by \p law
 	 */
 	template < admm::Variant variant, typename NSLaw, typename ProxOp, typename RhsT, typename ResT >
 	Scalar solve(
@@ -117,6 +118,7 @@ protected:
 //! Dual AMA iterative solver (Alternating Minimization Algorithm  on dual formuation of quadratic optimization problem).
 /*!
 
+	\verbatim
 	Minimizes .5 r' M A^-1 M' r + r' ( w - M A^-1 f ) for r in C
 
 	as min H(x) + G(r)  , x = M' r
@@ -127,7 +129,7 @@ protected:
 	 prox_{l,G} (y) = prox_{l,Ic}( y - lw ) = Pi_C ( y - lw )
 	and
 	 inf_x  H(x) - < v, x > = A v + f
-
+	\endverbatim
 
 	Main advantage of this solver is that it does not require inverting or
 	solving linear system with the stiffness matrix A.

@@ -64,6 +64,11 @@ struct DiagonalMatrixWrapper < MainMatrixType, typename MainMatrixType::Scalar >
   Assumes that the system matrix is defined as the product (M D M'),
   with D a block-diagonal matrix whose block sizes coincide with those of
   the columns of M.
+
+  \tparam BlockMatrixType The type of the main solver matrix M (the constructor's first argument).
+  \tparam DiagonalType The type of the diagonal matrix D. The default value means
+  using the identity matrix.
+
   \warning Parallelization is supported, but dangerous. If in doubt, use setMaxThreads(1)
   \note Works best when D and the columns of M are quite sparse
   \sa GaussSeidel
@@ -84,11 +89,11 @@ public:
 	ProductGaussSeidel()
 	    : Base()
 	{ }
-	//! Constructor with the system matrix
+	//! Constructor with the main system matrix M
 	explicit ProductGaussSeidel( const BlockObjectBase< BlockMatrixType > & matrix )
 	    : Base()
 	{  setMatrix( matrix ) ; }
-	//! Constructor with both
+	//! Constructor with both the main matrix M and the diagonal D
 	ProductGaussSeidel( const BlockObjectBase< BlockMatrixType > & matrix, const DiagonalType& diagonal )
 	    : Base(), m_diagonal( DiagWrapper( diagonal ) )
 	{  setMatrix( matrix ) ; }
@@ -105,11 +110,19 @@ public:
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x, bool tryZeroAsWell = true ) const ;
 
 	/*!
-	 *  Solves
-	 *   y = M x +         p + b
-	 *   0 = H'x + C/alpha p + c
-	 *   s.t. law(x,y)
-	 *  \warning Requires: m_evalEvery multiple of solveEvery ;
+	   Solves
+	   \f[
+		\left\{
+		  \begin{array}{rclll}
+			y &=& MDM^T x   &+ p &+ b \\
+			0 &=& H^T x &+ \frac{1}{\alpha}C p &+ c \\
+			&s.t.& law (x,y)
+		  \end{array}
+		\right.
+	  \f]
+	   where \p Cinv is such that \p Cinv * x =  \f$ C^{-1} x \f$
+
+	   \warning Requires: m_evalEvery multiple of solveEvery ;
 	 */
 	template < typename NSLaw, typename RhsT, typename ResT, typename LSDerived, typename HDerived >
 	Scalar solveWithLinearConstraints( const NSLaw &law,
@@ -121,12 +134,17 @@ public:
 	                                   bool tryZeroAsWell = true, unsigned solveEvery = 1) const ;
 
 	/*!
-	 *  Solves
-	 *   y = M x + W x + b
-	 *   s.t. law(x,y)
-	 *
-	 *  with W arbitrary linear operator ( matrix or expression )
-	 *  \warning Requires: m_evalEvery multiple of solveEvery ;
+	   Solves
+	   \f[
+		\left\{
+		  \begin{array}{rcl}
+			y &=& MDM^T x + W x + b \\
+			&s.t.& law (x,y)
+		  \end{array}
+		\right.
+	  \f]
+	   with W arbitrary linear operator ( matrix or expression )
+	   \warning Requires: m_evalEvery multiple of solveEvery ;
 	 */
 	template < typename NSLaw, typename RhsT, typename ResT, typename WDerived >
 	Scalar solveWithLinearConstraints( const NSLaw &law,

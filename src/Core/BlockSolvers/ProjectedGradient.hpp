@@ -21,8 +21,8 @@ namespace bogus
 
 //! Options for ProjectedGradient solvers
 namespace projected_gradient {
-	//! Variants of Projected Gradient algorithm
-	enum Variant {
+    //! Variants of Projected Gradient algorithm
+    enum Variant {
 		//! Standard projected gradient
 		Standard,
 		//! Projected gradient descent
@@ -55,9 +55,20 @@ public:
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const ;
 
 	//! Finds an approximate minimum for a constrained quadratic problem
+	/*!
+	 * Find an approximate solution to
+	 * \f[ \min_{x \in C}  \frac 1 2 x^T M x + x^T b \f]
+	 * where C is defined through the orthogonal projection operation on C
+	 * by NSLaw::projectOnConstraint().
+	 * \return an evalutation of the optimality error computed using NSLaw::eval()
+	 *
+	 * \tparam variant Which variant of the algorithm to use.
+	 */
 	template < projected_gradient::Variant variant, typename NSLaw, typename RhsT, typename ResT >
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const ;
 
+	//! Sets the matrix M defining the quadratic objective function.
+	/*! M should be symmetric, positive */
 	ProjectedGradient& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix )
 	{
 		m_matrix = &matrix ;

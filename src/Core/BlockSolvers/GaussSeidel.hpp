@@ -83,34 +83,47 @@ public:
 	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x, bool tryZeroAsWell = true ) const ;
 
 	/*!
-	 *  Solves
-	 *   y = M x +         p + b
-	 *   0 = H'x + C/alpha p + c
-	 *   s.t. law(x,y)
-	 *  \warning Requires: m_evalEvery multiple of solveEvery ;
+	   Solves
+	   \f[
+		\left\{
+		  \begin{array}{rclll}
+			y &=& M x   &+ p &+ b \\
+			0 &=& H^T x &+ \frac{1}{\alpha}C p &+ c \\
+			&s.t.& law (x,y)
+		  \end{array}
+		\right.
+	  \f]
+	   where \p Cinv is such that \p Cinv * x =  \f$ C^{-1} x \f$
+
+	   \warning Requires: m_evalEvery multiple of solveEvery ;
 	 */
 	template < typename NSLaw, typename RhsT, typename ResT, typename LSDerived, typename HDerived >
 	Scalar solveWithLinearConstraints( const NSLaw &law,
-									   const BlockObjectBase< LSDerived >& Cinv,
-									   const BlockObjectBase<  HDerived >& H,
-									   const Scalar alpha,
-									   const RhsT &b, const RhsT &c,
-									   ResT &x,
-									   bool tryZeroAsWell = true, unsigned solveEvery = 1) const ;
+	                                   const BlockObjectBase< LSDerived >& Cinv,
+	                                   const BlockObjectBase<  HDerived >& H,
+	                                   const Scalar alpha,
+	                                   const RhsT &b, const RhsT &c,
+	                                   ResT &x,
+	                                   bool tryZeroAsWell = true, unsigned solveEvery = 1) const ;
 
 	/*!
-	 *  Solves
-	 *   y = M x + W x + b
-	 *   s.t. law(x,y)
-	 *
-	 *  with W arbitrary linear operator ( matrix or expression )
-	 *  \warning Requires: m_evalEvery multiple of solveEvery ;
+	   Solves
+	   \f[
+		\left\{
+		  \begin{array}{rcl}
+			y &=& M x + W x + b \\
+			&s.t.& law (x,y)
+		  \end{array}
+		\right.
+	  \f]
+	   with W arbitrary linear operator ( matrix or expression )
+	   \warning Requires: m_evalEvery multiple of solveEvery ;
 	 */
 	template < typename NSLaw, typename RhsT, typename ResT, typename WDerived >
 	Scalar solveWithLinearConstraints( const NSLaw &law,
-									   const BlockObjectBase < WDerived >& W,
-									   const RhsT &b, ResT &x,
-									   bool tryZeroAsWell = true, unsigned solveEvery = 1 ) const ;
+	                                   const BlockObjectBase < WDerived >& W,
+	                                   const RhsT &b, ResT &x,
+	                                   bool tryZeroAsWell = true, unsigned solveEvery = 1 ) const ;
 
 	//! Access to the current Coloring. Will be reset whenever the matrix is changed.
 	/*! Determiniticy is achieved through the mean of contact coloring ;
@@ -123,9 +136,9 @@ protected:
 
 	template < typename NSLaw,  typename RhsT, typename ResT >
 	void innerLoop (
-		bool parallelize, const NSLaw &law, const RhsT& b,
-		std::vector< unsigned char > &skip, Scalar &ndxRef,
-		ResT &x	) const ;
+	    bool parallelize, const NSLaw &law, const RhsT& b,
+	    std::vector< unsigned char > &skip, Scalar &ndxRef,
+	    ResT &x	) const ;
 
 	typedef typename Base::Index Index ;
 
