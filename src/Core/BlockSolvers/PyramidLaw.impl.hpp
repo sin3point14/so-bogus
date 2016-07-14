@@ -96,7 +96,7 @@ bool PyramidLaw< Dimension, Scalar, DeSaxceCOV >::solveLocal(const unsigned prob
 
 	const Scalar mu  = m_mu[ problemIndex ] ;
 
-	typename Traits::Vector xp = x.array().max( 0 ) ;
+	typename Traits::Vector xp = x.cwiseMax( 0 ).array() ;
 	typename Traits::Vector xm = xp - x ;
 
 	// Solve dxd problem using GS
@@ -143,8 +143,8 @@ Scalar PyramidLaw< Dimension, Scalar, DeSaxceCOV >::eval( const unsigned problem
 
 	// Evaluate error as summ of Fischer-Burmeister residual on each comp
 
-	TgComp xp = Traits::tp(x).array().max( 0 ) ;
-	TgComp yp = Traits::tp(y).array().max( 0 ) ;
+	TgComp xp = Traits::tp(x).array().max( TgComp::Zero(Dimension-1) ) ;
+	TgComp yp = Traits::tp(y).array().max( TgComp::Zero(Dimension-1) ) ;
 	TgComp xm = xp - Traits::tp(x).array() ;
 	TgComp ym = yp - Traits::tp(y).array() ;
 
