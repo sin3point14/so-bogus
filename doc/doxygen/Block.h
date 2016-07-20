@@ -321,7 +321,20 @@ it might choose a row-major matrix when a column-major one would be more approri
 Explicit parenthesisation will also help performance. Otherwise, bogus may 
 perform matrix-matrix products in an inefficient order, or allocate
 unnecessary temporary matrices.
+
+\section block_objects Other useful objects
+
+
+\subsection block_iterable_objects Matrix-like objects
+The Zero class is a useful placeholder for matrix arguments that are not always useful.
+For instance, in the GaussSeidel solver, problems with and without linear constraints use
+the same code; in the latter case, the constraint matrix is represented with the Zero class.
+
+CompoundBlockMatrix is a utility class representing the concatenation of two objects, which
+may have different block types.
+
 */
+
 
 
 } //namespace bogus

@@ -1,3 +1,15 @@
+## Version 1.3.0
+July XX, 2016
+
+### Notable new features
+ - ProductGaussSeidel avoids explicitely assembling the Delassus operator
+ - GaussSeidel can now handle systems with linear equality constraints
+ - Experimental ADMM and DualAMA solvers
+ - ProjectedGradient may be used to solve non-optimization problems (risky)
+
+### Bugfixes
+ - Fix bug when using infinity norm without constraints
+
 ## Version 1.2.0
 December 31, 2015
 

@@ -56,9 +56,14 @@ public:
 	{ init() ; Base::setMatrix( matrix ) ; }
 
 	/*!
-	 *  Find the minimizer of J(v),  ( Mv + w in C )
-	 *  with J(v) defined through its proximal operator, \p op
-	 *  and C defined by \p law
+	   Find the minimizer of J(v),  ( Mv + w in C )
+	   with J(v) defined through its proximal operator, \p op
+	   and C defined by \p law
+	   \param law should define projectOnConstraints()
+	   \param op should define a \c eval(Rhs& rhs, Res& res) function computing \p res as
+	   \f$ prox_{J, 1/\lambda}( rhs/\lambda ) \f$ and \c coefficient() returning \f$\lambda\f$
+
+	   \sa QuadraticProxOp
 	 */
 	template < admm::Variant variant, typename NSLaw, typename ProxOp, typename RhsT, typename ResT >
 	Scalar solve(
@@ -113,6 +118,51 @@ protected:
 	admm::Variant m_defaultVariant ;
 
 } ;
+
+//! Evaluation of prox_{1/c} J  with J(x) = 1/2 xM'x + f'x
+/*! Requires a way to solve linear systems with LHS ( M + c I)
+ * \tparam ObjectType the type of the expression representing the inverse of (M + c I)
+ */
+template< typename ObjectType >
+struct QuadraticProxOp
+{
+	typedef BlockMatrixTraits< ObjectType > BlockTraits;
+	typedef typename BlockTraits::Scalar Scalar ;
+	typedef ProblemTraits< Scalar > GlobalProblemTraits ;
+
+	typedef BlockObjectBase< ObjectType > LinearOp ;
+	typedef typename GlobalProblemTraits::DynVector AffineVec ;
+
+	//! Construct the proximal evaluator of a quadratic function
+	/*!
+	  \param lambda the inverse of the proximal function coefficient
+	  \param linearExpr Mutliplying by \p linearExpr should be equivalent to solving
+			 a linear system with LHS ( M + \p lambda * I )
+	  \param affinePart The term f in the quadratic function J
+	*/
+	//!
+	QuadraticProxOp( const LinearOp& linearExpr, const Scalar lambda,
+	                 const AffineVec& affinePart )
+	    : m_coefficient( lambda ), m_linearOp( linearExpr ),
+	      m_affinePart( affinePart )
+	{
+	}
+
+	//! Evaluates prox_{1/coeff} J ( rhs/coeff )
+	/*! \warning may modify rhs */
+	template < typename RhsT, typename ResT >
+	void eval( RhsT & rhs, ResT & res ) const ;
+
+	//! \returns coeff so that eval() computes prox_{1/coeff}
+	Scalar coefficient() const {
+		return m_coefficient ;
+	}
+
+private:
+	const Scalar     m_coefficient ;
+	const LinearOp&  m_linearOp ;
+	const AffineVec& m_affinePart ;
+};
 
 
 //! Dual AMA iterative solver (Alternating Minimization Algorithm  on dual formuation of quadratic optimization problem).

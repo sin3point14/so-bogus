@@ -16,15 +16,18 @@ This free software consist of two complementary libraries, the first being fairl
  - Complex arithmetic expressions using standard C++ operators
  - Lazy evaluation
  - Parallelization of most sparse block matrix operations using OpenMP (if available)
- - Generic Projected Gauss-Seidel and Projected Gradient solvers for linear problems with non-differentiable constraints
+ - Generic Gauss-Seidel and Projected Gradient solvers for linear problems 
+ under normal cone inclusions 
+ (such as LCP or Coulomb friction problems; see the [documentation](http://gdaviet.fr/doc/bogus/master/doxygen/block_solvers.html#block_solvers_ns))
  - Several linear iterative solvers ( Conjugate Gradient and variations, GMRES, ...)  
- - Support for matrix-free iterative solvers 
+ - Support for matrix-free iterative solvers (using [expression templates](http://gdaviet.fr/doc/bogus/master/doxygen/block.html#block_expressions)) 
  - Optional serialization using `boost::serialization`
  - Compatibility with standard Block Sparse Row storage
 
 #### So-bogus
 
- - Second Order Cones complementarity function with local solvers
+ - Second Order Cone complementarity function with local root-finding solver
+ - Analytical solver for local Coulomb friction and SOC complementarity problems in 2d and 3d
  - Global Coulomb friction and SOCQP solvers for arbitrary dimensions
 
 ###License

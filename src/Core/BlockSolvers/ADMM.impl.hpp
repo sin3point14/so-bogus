@@ -26,55 +26,26 @@
 namespace bogus
 {
 
-//! Evaluation of prox_{1/l} (J) with J = 1/2 xM'x + f'x
-/*! Requires way to solve linear system with lhs ( M + l I)
+//! Evaluation of prox_{1/c} (J) with J = 1/2 xM'x + f'x
+/*! Requires way to solve linear system with lhs ( M + c I)
  */
 template< typename ObjectType >
-struct QuadraticProxOp
-{
-	typedef BlockMatrixTraits< ObjectType > BlockTraits;
-	typedef typename BlockTraits::Scalar Scalar ;
-	typedef ProblemTraits< Scalar > GlobalProblemTraits ;
-
-	typedef BlockObjectBase< ObjectType > LinearOp ;
-	typedef typename GlobalProblemTraits::DynVector AffineVec ;
-
-	//! Mutliplying by linearExpr should be equivalent to solving with lhs ( M + lambda I )
-	QuadraticProxOp( const LinearOp& linearExpr, const Scalar lambda,
-					 const AffineVec& affinePart )
-		: m_coefficient( lambda ), m_linearOp( linearExpr ), m_affinePart( affinePart )
-	{
-		//assert( ( m_coefficient > 0 ) ^ ( ForAMA ) ) ;
-	}
-
-	//! Evaluates prox_{J, 1/coeff}( rhs/coeff )
-	/*! \warning may modify rhs */
-	//  =  min J(x) + coeff/{2} || x  - tmp/coeff ||^2
-	//  =  min J(x) + coeff/{2} || x ||^2 - <tmp, x>
-	//  =  min 1/2 ( x'(M + coeff I)x  ) + <f - tmp, x>
-	//  = (M + coeff I)^{-1} ( tmp - f )
-	template < typename RhsT, typename ResT >
-	void eval( RhsT & rhs, ResT & res ) const {
-		rhs -= m_affinePart ;
-		m_linearOp.template multiply< false >( rhs, res, 1, 0 ) ;
-	}
-
-	Scalar coefficient() const {
-		return m_coefficient ;
-	}
-
-private:
-	const Scalar     m_coefficient ;
-	const LinearOp&  m_linearOp ;
-	const AffineVec& m_affinePart ;
-};
+template< typename RhsT, typename ResT >
+void QuadraticProxOp<ObjectType>::eval( RhsT & rhs, ResT & res ) const {
+	//  =  min J(x) + coeff/{2} || x  - rhs/coeff ||^2
+	//  =  min J(x) + coeff/{2} || x ||^2 - <rhs, x>
+	//  =  min 1/2 ( x'(M + coeff I)x  ) + <f - rhs, x>
+	//  = (M + coeff I)^{-1} ( rhs - f )
+	rhs -= m_affinePart ;
+	m_linearOp.template multiply< false >( rhs, res, 1, 0 ) ;
+}
 
 template < typename BlockMatrixType >
 template < typename NSLaw, typename ProxOp, typename RhsT, typename ResT >
 typename ADMM< BlockMatrixType >::Scalar
 ADMM< BlockMatrixType >::solve(
-		const NSLaw &law, const ProxOp& op,
-		const RhsT &w, ResT &v, ResT &r ) const
+        const NSLaw &law, const ProxOp& op,
+        const RhsT &w, ResT &v, ResT &r ) const
 {
 	switch ( m_defaultVariant )
 	{
@@ -91,8 +62,8 @@ template < typename BlockMatrixType >
 template < admm::Variant variant, typename NSLaw, typename ProxOp, typename RhsT, typename ResT >
 typename ADMM< BlockMatrixType >::Scalar
 ADMM< BlockMatrixType >::solve(
-		const NSLaw &law, const ProxOp& op,
-		const RhsT &w, ResT &x, ResT &r ) const
+        const NSLaw &law, const ProxOp& op,
+        const RhsT &w, ResT &x, ResT &r ) const
 {
 
 	const Scalar lambda = op.coefficient() ;
@@ -131,10 +102,10 @@ ADMM< BlockMatrixType >::solve(
 		m_matrix->template multiply<false>( x, ut, 1, 1 ) ;
 
 		res = this->eval( law, r, ut )
-				+ (	this->usesInfinityNorm()
-					? (ut-z).template lpNorm< Eigen::Infinity >()
-					: (ut-z).squaredNorm() / (1 + ut.rows() ) ) ;
-				;
+		        + (	this->usesInfinityNorm()
+		            ? (ut-z).template lpNorm< Eigen::Infinity >()
+		            : (ut-z).squaredNorm() / (1 + ut.rows() ) ) ;
+		        ;
 		this->callback().trigger( adIter, res );
 
 		if( res < this->tol() )
@@ -178,14 +149,14 @@ template < typename BlockMatrixType >
 template < typename NSLaw, typename MatrixT, typename RhsT, typename ResT >
 typename DualAMA< BlockMatrixType >::Scalar
 DualAMA< BlockMatrixType>::solve(
-		const NSLaw &law, const BlockObjectBase< MatrixT >& A,
-		const RhsT &f, const RhsT &w, ResT &v, ResT &r ) const
+        const NSLaw &law, const BlockObjectBase< MatrixT >& A,
+        const RhsT &f, const RhsT &w, ResT &v, ResT &r ) const
 {
 	switch( m_defaultVariant ) {
-		case admm::Accelerated:
-			return solve<admm::Accelerated>( law, A, f, w, v, r) ;
-		case admm::Standard:
-			return solve<admm::Standard>( law, A, f, w, v, r) ;
+	    case admm::Accelerated:
+		    return solve<admm::Accelerated>( law, A, f, w, v, r) ;
+	    case admm::Standard:
+		    return solve<admm::Standard>( law, A, f, w, v, r) ;
 	}
 
 	return -1 ;
@@ -193,11 +164,11 @@ DualAMA< BlockMatrixType>::solve(
 
 template < typename BlockMatrixType >
 template < admm::Variant variant, typename NSLaw, typename MatrixT,
-		   typename RhsT, typename ResT >
+           typename RhsT, typename ResT >
 typename DualAMA< BlockMatrixType >::Scalar
 DualAMA< BlockMatrixType>::solve(
-		const NSLaw &law, const BlockObjectBase< MatrixT >& A,
-		const RhsT &f, const RhsT &w, ResT &v, ResT &r ) const
+        const NSLaw &law, const BlockObjectBase< MatrixT >& A,
+        const RhsT &f, const RhsT &w, ResT &v, ResT &r ) const
 {
 	const typename LocalProblemTraits< 0, Scalar >::Vector k ;
 	typename LocalProblemTraits< 0, Scalar >::Vector p ;
@@ -211,17 +182,17 @@ DualAMA< BlockMatrixType>::solve(
 
 template < typename BlockMatrixType >
 template < admm::Variant variant, typename NSLaw,
-		   typename AType, typename BType, typename HType, typename PrecondT,
-		   typename RhsT, typename ORhsT, typename ResT, typename OResT >
+           typename AType, typename BType, typename HType, typename PrecondT,
+           typename RhsT, typename ORhsT, typename ResT, typename OResT >
 typename DualAMA< BlockMatrixType >::Scalar
 DualAMA< BlockMatrixType>::solveWithLinearConstraints(
-			const NSLaw &law,
-			const BlockObjectBase< AType >& A,
-			const BlockObjectBase< BType >& B,
-			const BlockObjectBase< HType >& H,
-			const PrecondT& preconditioner,
-			const RhsT &f, const ORhsT& k,const RhsT &w,
-			ResT &v, OResT &p, ResT &r, Scalar stepRatio ) const
+            const NSLaw &law,
+            const BlockObjectBase< AType >& A,
+            const BlockObjectBase< BType >& B,
+            const BlockObjectBase< HType >& H,
+            const PrecondT& preconditioner,
+            const RhsT &f, const ORhsT& k,const RhsT &w,
+            ResT &v, OResT &p, ResT &r, Scalar stepRatio ) const
 {
 	typedef typename GlobalProblemTraits::DynVector DynVec ;
 
@@ -232,14 +203,14 @@ DualAMA< BlockMatrixType>::solveWithLinearConstraints(
 
 	typename GlobalProblemTraits::DynVector r_best( r ), v_best( v ), p_best( p ) ;
 	typename GlobalProblemTraits::DynVector z( v.rows() ), x, ut, gap,
-			HrBp ( v.rows() ),
-			g, g2,
-			s( r.rows() ) ;
+	        HrBp ( v.rows() ),
+	        g, g2,
+	        s( r.rows() ) ;
 
 	const Segmenter< NSLaw::dimension, const DynVec, typename BlockMatrixType::Index >
-			 utSegmenter( ut, m_matrix->rowOffsets() ) ;
+	         utSegmenter( ut, m_matrix->rowOffsets() ) ;
 	Segmenter< NSLaw::dimension, DynVec, typename BlockMatrixType::Index >
-			 sSegmenter( s, m_matrix->rowOffsets() ) ;
+	         sSegmenter( s, m_matrix->rowOffsets() ) ;
 
 	// Nesterov acceleration
 	DynVec y, y_prev = v ;
@@ -269,13 +240,13 @@ DualAMA< BlockMatrixType>::solveWithLinearConstraints(
 		// Eval current reisual,  exit if small enough
 		res = this->eval( law, ut, r ) ;      // Complementarity
 		res	+= ( this->usesInfinityNorm()     // Gap
-				  ? z.template lpNorm< Eigen::Infinity >()
-				  : z.squaredNorm() / (1 + z.rows() ) ) ;
+		          ? z.template lpNorm< Eigen::Infinity >()
+		          : z.squaredNorm() / (1 + z.rows() ) ) ;
 		if( g2.rows() > 0 )
 			res += ( this->usesInfinityNorm() // Linear constraints
-					 ? g2.template lpNorm< Eigen::Infinity >()
-					 : g2.squaredNorm() / (1 + g2.rows() ) )
-					;
+			         ? g2.template lpNorm< Eigen::Infinity >()
+			         : g2.squaredNorm() / (1 + g2.rows() ) )
+			        ;
 
 		this->callback().trigger( adIter, res );
 
