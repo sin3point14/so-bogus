@@ -1,5 +1,5 @@
 ## Version 1.3.0
-July XX, 2016
+July 21, 2016
 
 ### Notable new features
  - ProductGaussSeidel avoids explicitely assembling the Delassus operator
