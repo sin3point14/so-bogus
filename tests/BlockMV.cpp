@@ -299,7 +299,7 @@ TEST( BlockMV, Symmetric )
 	EXPECT_EQ( expected_2, res ) ;
 
 	bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::flags::COL_MAJOR | bogus::flags::SYMMETRIC > resbm
-			= nsbm.transpose() ;
+	        = nsbm.transpose() ;
 	res.setZero() ;
 	for( unsigned k = 0 ; k < 3 ; ++ k )
 	{
@@ -401,7 +401,7 @@ TEST_F( SmallSBM, RowMultiply )
 	res.setZero() ; res2.setZero() ;
 
 	typedef bogus::Segmenter< bogus::internal::DYNAMIC, Eigen::VectorXd, SBMT::Index >
-			SegmenterType ;
+	        SegmenterType ;
 	SegmenterType resSeg( res, sbm.rowOffsets() ), rhsSeg( rhs, sbm.colOffsets() ) ;
 
 	typedef SegmenterType::ReturnType Seg ;
@@ -474,7 +474,7 @@ TEST_F( SmallSBM, Compound )
 	Eigen::VectorXd res2 = res ;
 
 	typedef bogus::Segmenter< bogus::internal::DYNAMIC, Eigen::VectorXd, SBMT::Index >
-			SegmenterType ;
+	        SegmenterType ;
 	SegmenterType resSeg( res, comp.rowOffsets() ), rhsSeg( rhs, comp.colOffsets() ) ;
 
 	typedef SegmenterType::ReturnType Seg ;
@@ -504,5 +504,77 @@ TEST_F( SmallSBM, Compound )
 	}
 	EXPECT_EQ( rhs, u ) ;
 
+
+}
+
+TEST_F( SmallSBM, CompoundRow )
+{
+	typedef Eigen::Matrix< double, 4, 4> OBlockT ;
+	typedef bogus::SparseBlockMatrix< OBlockT > OSBMT ;
+
+	OSBMT osbm ;
+	osbm.setRows( 3 );
+	osbm.setCols( 2 );
+
+	osbm.insertBack(0,0).setIdentity() ;
+	osbm.insertBack(1,1).setOnes() ;
+	osbm.insertBack(2,1).setConstant(2) ;
+	osbm.finalize();
+
+	bogus::CompoundBlockMatrix< false, SBMT, OSBMT > comp ( sbm, osbm) ;
+	ASSERT_EQ( comp.cols(), sbm.cols() ) ;
+	ASSERT_EQ( comp.cols(), osbm.cols() ) ;
+	ASSERT_EQ( comp.rows(), sbm.rows() + osbm.rows() ) ;
+	ASSERT_EQ( comp.colsOfBlocks(), sbm.colsOfBlocks() ) ;
+	ASSERT_EQ( comp.colsOfBlocks(), osbm.colsOfBlocks() ) ;
+	ASSERT_EQ( comp.rowsOfBlocks(), sbm.rowsOfBlocks() + osbm.rowsOfBlocks() ) ;
+
+	rhs.setOnes( comp.rows() ) ;
+	Eigen::VectorXd res( sbm.cols() )	 ;
+
+	res = comp.transpose() * rhs ;
+	Eigen::VectorXd exp = sbm.transpose()*rhs.head( sbm.rows() )  + osbm.transpose()*rhs.tail( osbm.rows() ) ;
+	ASSERT_EQ( res, exp ) ;
+
+	rhs.head( sbm.rows() ) = sbm * res ;
+	rhs.tail( osbm.rows() ) = osbm * res ;
+	ASSERT_EQ( rhs, comp * res ) ;
+
+	// row, col-multiply
+
+	rhs = res ;
+	res.setZero( comp.rows() ) ;
+	Eigen::VectorXd res2 = res ;
+
+	typedef bogus::Segmenter< bogus::internal::DYNAMIC, Eigen::VectorXd, SBMT::Index >
+	        SegmenterType ;
+	SegmenterType resSeg( res, comp.rowOffsets() ), rhsSeg( rhs, comp.colOffsets() ) ;
+
+	typedef SegmenterType::ReturnType Seg ;
+	for( int i = 0 ; i < comp.rowsOfBlocks() ; ++i ) {
+		Seg seg = resSeg[i] ;
+		comp.rowMultiply< false >( i, rhs, seg ) ;
+	}
+
+	EXPECT_EQ( comp*rhs, res ) ;
+
+	for( int i = 0 ; i < comp.colsOfBlocks() ; ++i ) {
+		comp.colMultiply< false >( i, rhsSeg[i], res2 ) ;
+	}
+	EXPECT_EQ( res, res2 ) ;
+
+	Eigen::VectorXd u = Eigen::VectorXd::Zero( rhs.rows() ) ;
+
+	for( int i = 0 ; i < comp.rowsOfBlocks() ; ++i ) {
+		comp.colMultiply< true >( i, resSeg[i], u ) ;
+	}
+	EXPECT_EQ( u, comp.transpose() * res ) ;
+
+	rhs.setZero() ;
+	for( int i = 0 ; i < comp.colsOfBlocks() ; ++i ) {
+		Seg seg = rhsSeg[i] ;
+		comp.rowMultiply< true >( i, res, seg ) ;
+	}
+	EXPECT_EQ( rhs, u ) ;
 
 }
