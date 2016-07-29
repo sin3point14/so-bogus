@@ -24,41 +24,7 @@ namespace bogus
 
 namespace block_solvers_impl {
 
-
-template< typename Type >
-struct DiagonalMatrixWrapper < Type, false >
-{
-	typedef typename Type::Index Index ;
-	typedef typename Type::BlockPtr BlockPtr ;
-
-	DiagonalMatrixWrapper()
-	    : m_matrixPtr( BOGUS_NULL_PTR(const Type) )
-	{ }
-	DiagonalMatrixWrapper( const Type& diag)
-	    : m_matrixPtr(&diag)
-	{ computeBlockIndices() ; }
-
-	bool valid() const { return m_matrixPtr; }
-	const Type& get() const {
-		return *m_matrixPtr ;
-	}
-	const DiagonalMatrixWrapper& asArray() const {
-		return *this ;
-	}
-
-	void computeBlockIndices() ;
-
-	inline bool has_element( const Index i ) const
-	{ return m_blockIndices[i] != Type::InvalidBlockPtr ; }
-
-	// \warning has_block(i) must be true
-	inline const typename Type::BlockType& operator[]( const Index i ) const
-	{ return m_matrixPtr->block(m_blockIndices[i]) ; }
-
-private:
-	const Type* m_matrixPtr ;
-	std::vector< BlockPtr > m_blockIndices ;
-} ;
+// Utils
 
 template < typename Type>
 void DiagonalMatrixWrapper<Type, false>::computeBlockIndices( )
@@ -75,43 +41,7 @@ void DiagonalMatrixWrapper<Type, false>::computeBlockIndices( )
 	}
 }
 
-template <typename MType, typename DType >
-struct DMtStorage< MType, DType, true >
-{
-	DMtStorage()
-	    : m_M( BOGUS_NULL_PTR( const MType) )
-	{}
-
-	void compute( const MType& M, const DType& D )
-	{
-		m_DMt = D.get() * M.transpose() ;
-		m_M = &M ;
-	}
-
-	template< typename Rhs, typename Intermediate, typename Res >
-	void multiply( const Rhs& rhs, Intermediate &itm, Res& res ) const
-	{
-		m_DMt.template multiply< false >( rhs, itm, 1, 0 ) ;
-		res += (*m_M) * itm ;
-	}
-
-	template< typename Rhs, typename Res >
-	void colMultiply( typename MType::Index col, const Rhs& rhs, Res & itm ) const
-	{
-		m_DMt.template colMultiply< false >( col, rhs, itm ) ;
-	}
-
-	template< typename Rhs, typename Res >
-	void rowMultiply( typename MType::Index row, const Rhs& itm, Res & res ) const
-	{
-		m_M->template rowMultiply< false >( row, itm, res ) ;
-	}
-
-private:
-	const MType* m_M ;
-	typedef typename MType::template MutableImpl< typename MType::TransposeBlockType, false, true >::Type DMtType ;
-	DMtType m_DMt ;
-};
+// DMtStorage w/o precomputing
 
 template <typename MType, typename DType, bool Precompute >
 template< typename Rhs, typename Intermediate, typename Res >
@@ -134,6 +64,37 @@ template< typename Rhs, typename Res >
 void DMtStorage<MType, DType, Precompute>::rowMultiply( typename MType::Index row, const Rhs& itm, Res & res ) const
 {
 	m_M->template rowMultiplyPrecompose<false>( row, itm, res, m_D->asArray() ) ;
+}
+
+// DMtStorgae w/ precomputing
+
+template <typename MType, typename DType>
+void DMtStorage<MType, DType, true>::compute( const MType& M, const DType& D )
+{
+	m_DMt = D.get() * M.transpose() ;
+	m_M = &M ;
+}
+
+template <typename MType, typename DType >
+template< typename Rhs, typename Intermediate, typename Res >
+void DMtStorage<MType, DType, true>::multiply( const Rhs& rhs, Intermediate &itm, Res& res ) const
+{
+	m_DMt.template multiply< false >( rhs, itm, 1, 0 ) ;
+	res += (*m_M) * itm ;
+}
+
+template <typename MType, typename DType >
+template< typename Rhs, typename Res >
+void DMtStorage<MType, DType, true>::colMultiply( typename MType::Index col, const Rhs& rhs, Res & itm ) const
+{
+	m_DMt.template colMultiply< false >( col, rhs, itm ) ;
+}
+
+template <typename MType, typename DType >
+template< typename Rhs, typename Res >
+void DMtStorage<MType, DType, true>::rowMultiply( typename MType::Index row, const Rhs& itm, Res & res ) const
+{
+	m_M->template rowMultiply< false >( row, itm, res ) ;
 }
 
 

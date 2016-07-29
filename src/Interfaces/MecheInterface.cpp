@@ -26,7 +26,7 @@
 #include "../Core/Block.io.hpp"
 
 #include "../Core/BlockSolvers/GaussSeidel.hpp"
-#include "../Core/BlockSolvers/ProductGaussSeidel.impl.hpp"
+#include "../Core/BlockSolvers/ProductGaussSeidel.hpp"
 #include "../Core/BlockSolvers/ProjectedGradient.hpp"
 #include "../Core/BlockSolvers/Coloring.impl.hpp"
 
