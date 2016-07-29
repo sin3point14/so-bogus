@@ -66,16 +66,31 @@ public:
 	typedef typename TypeSwapIf< Traits::is_col_major, MajorIndexType, MinorIndexType >::Second ColIndexType ;
 
 	// Canonical type for a mutable matrix with different block type
-	template < typename OtherBlockType, bool PreserveSymmetry = true >
+	template < typename OtherBlockType, bool PreserveSymmetry = true, bool SwitchDirection = false >
 	struct MutableImpl
 	{
-		typedef SparseBlockMatrix< OtherBlockType, Traits::flags & ~flags::UNCOMPRESSED > Type ;
+		typedef SparseBlockMatrix< OtherBlockType,
+		    Traits::flags & ~flags::UNCOMPRESSED > Type ;
 	} ;
 	template < typename OtherBlockType >
-	struct MutableImpl< OtherBlockType, false >
+	struct MutableImpl< OtherBlockType, false, false >
 	{
 		typedef SparseBlockMatrix< OtherBlockType,
-			Traits::flags & ~flags::UNCOMPRESSED & ~flags::SYMMETRIC > Type ;
+		    Traits::flags & ~flags::UNCOMPRESSED & ~flags::SYMMETRIC > Type ;
+	} ;
+	template < typename OtherBlockType >
+	struct MutableImpl< OtherBlockType, true, true >
+	{
+		typedef SparseBlockMatrix< OtherBlockType,
+		    (Traits::flags & ~flags::UNCOMPRESSED &
+		    ~flags::COL_MAJOR) | ((~Traits::flags)&flags::COL_MAJOR) > Type ;
+	} ;
+	template < typename OtherBlockType >
+	struct MutableImpl< OtherBlockType, false, true >
+	{
+		typedef SparseBlockMatrix< OtherBlockType,
+		    (Traits::flags & ~flags::UNCOMPRESSED & ~flags::SYMMETRIC&
+		    ~flags::COL_MAJOR) | ((~Traits::flags)&flags::COL_MAJOR) > Type ;
 	} ;
 	typedef typename MutableImpl< BlockType, true >::Type CopyResultType ;
 

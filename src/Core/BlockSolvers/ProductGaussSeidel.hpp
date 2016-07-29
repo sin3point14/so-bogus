@@ -24,39 +24,54 @@ namespace block_solvers_impl {
 
 //! Wrapper for the block-diagonal matrix of the ProductGaussSeidel solver
 /*! Specializations allows to:
- *   - Use the Identity matrix by default without requiring the user to
+ *   - Use a constant times the Identity matrix by default without requiring the user to
  *     call any function or specify template parameters
- *   - Specify a pointer to an arbitrary matrix when the third template
- *     parameter of ProductGaussSeidel is explicitely set
+ *   - Specify a pointer to an arbitrary block-diagonal matrix when the second template
+ *     parameter of ProductGaussSeidel is explicitely set, and precompute
+ *     the indices of its diagonal blocks
  */
-template < typename MainMatrixType, typename Type>
+template < typename Type, bool IsScalar >
 struct DiagonalMatrixWrapper {
 
-	const Type* ptr ;
-
-	DiagonalMatrixWrapper()
-	    : ptr( BOGUS_NULL_PTR(const Type) ) {}
-	DiagonalMatrixWrapper( const Type& diag)
-	    : ptr(&diag) { }
-
-	bool valid() const { return ptr; }
-	const Type& get() const {
-		return *ptr ;
-	}
-} ;
-template< typename MainMatrixType >
-struct DiagonalMatrixWrapper < MainMatrixType, typename MainMatrixType::Scalar >
-{
-	typedef typename MainMatrixType::Scalar Scalar;
-	ConstantArray<Scalar> ptr ;
+	typedef Type Scalar;
+	ConstantArray<Scalar> array ;
 	DiagonalMatrixWrapper( const Scalar& s = 1)
-	    : ptr(s) { }
+	    : array(s) { }
 
 	bool valid() const { return true; }
-	const ConstantArray<Scalar>& get() const {
-		return ptr ;
+	Scalar get() const {
+		return array[0] ;
+	}
+	const ConstantArray<Scalar>& asArray() const {
+		return array ;
 	}
 } ;
+
+//! Utility struct to precompute or reference the (D M') part of the product
+template <typename MType, typename DType, bool Precompute >
+struct DMtStorage {
+
+	DMtStorage()
+	    : m_M( BOGUS_NULL_PTR( const MType) ),
+	      m_D( BOGUS_NULL_PTR( const DType) )
+	{}
+
+	void compute( const MType& M, const DType& D ) {
+		m_M = &M ;
+		m_D = &D ;
+	}
+
+	template< typename Rhs, typename Intermediate, typename Res >
+	void multiply( const Rhs& rhs, Intermediate &itm, Res& res ) const ;
+
+	template< typename Rhs, typename Res >
+	void colMultiply( typename MType::Index col, const Rhs& rhs, Res & res ) const ;
+	template< typename Rhs, typename Res >
+	void rowMultiply( typename MType::Index row, const Rhs& rhs, Res & res ) const ;
+
+	const MType* m_M ;
+	const DType* m_D ;
+};
 } //block_solvers_impl
 
 //! Matrix-free version of the GaussSeidel iterative solver.
@@ -66,16 +81,19 @@ struct DiagonalMatrixWrapper < MainMatrixType, typename MainMatrixType::Scalar >
   the columns of M.
 
   \tparam BlockMatrixType The type of the main solver matrix M (the constructor's first argument).
-  \tparam DiagonalType The type of the diagonal matrix D. The default value means
-  using the identity matrix.
+  \tparam DiagonalType The type of the diagonal matrix D. The default type (M's Scalar type) means
+  using a constant times the identity matrix.
+  \tparam PrecompupeDMt Whether to precompute and store the (D M') part of the product (M D M').
+  Defaults to true if DiagonalType is not the default value.
 
   \warning Parallelization is supported, but dangerous. If in doubt, use setMaxThreads(1)
-  \note Works best when D and the columns of M are quite sparse
+  \note D must be block-diagonal. Works best when M is row-major and its columns are quite sparse
   \sa GaussSeidel
   */
-template < typename BlockMatrixType, typename DiagonalType = typename BlockMatrixType::Scalar >
+template < typename BlockMatrixType, typename DiagonalType = typename BlockMatrixType::Scalar,
+           bool PrecomputeDMt = !( IsSame<DiagonalType, typename BlockMatrixType::Scalar>::Value ) >
 class ProductGaussSeidel
-        : public GaussSeidelBase< ProductGaussSeidel<BlockMatrixType, DiagonalType>, BlockMatrixType >
+        : public GaussSeidelBase< ProductGaussSeidel<BlockMatrixType, DiagonalType, PrecomputeDMt>, BlockMatrixType >
 {
 public:
 	typedef GaussSeidelBase< ProductGaussSeidel, BlockMatrixType > Base ;
@@ -83,7 +101,9 @@ public:
 	typedef typename Base::GlobalProblemTraits GlobalProblemTraits ;
 	typedef typename GlobalProblemTraits::Scalar Scalar ;
 
-	typedef block_solvers_impl::DiagonalMatrixWrapper<BlockMatrixType, DiagonalType> DiagWrapper ;
+	enum {has_trivial_diagonal = IsSame<DiagonalType, typename BlockMatrixType::Scalar>::Value } ;
+	typedef block_solvers_impl::DiagonalMatrixWrapper<DiagonalType, !!has_trivial_diagonal > DiagWrapper ;
+	typedef block_solvers_impl::DMtStorage<BlockMatrixType, DiagWrapper, PrecomputeDMt> DMtStorage ;
 
 	//! Default constructor -- you will have to call setMatrix() before using the solve() function
 	ProductGaussSeidel()
@@ -102,8 +122,7 @@ public:
 	ProductGaussSeidel& setMatrix( const BlockObjectBase< BlockMatrixType > & matrix ) ;
 
 	//! Sets the system diagonal (D) and initializes internal structures
-	ProductGaussSeidel& setDiagonal( const DiagonalType &diagonal )
-	{ m_diagonal = DiagWrapper( diagonal ) ; }
+	ProductGaussSeidel& setDiagonal( const DiagonalType &diagonal ) ;
 
 	//! Finds an approximate solution for a constrained linear problem
 	template < typename NSLaw, typename RhsT, typename ResT >
@@ -155,6 +174,7 @@ public:
 protected:
 
 	DiagWrapper m_diagonal ;
+	DMtStorage  m_DMt ;
 
 	void updateLocalMatrices();
 

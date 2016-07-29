@@ -17,6 +17,7 @@
 TEST_F( SmallFrictionPb, ProductGaussSeidel )
 {
 	ResidualInfo ri ;
+	ri.setVerbose(true);
 
 	// End problem definition
 
@@ -28,6 +29,7 @@ TEST_F( SmallFrictionPb, ProductGaussSeidel )
 	bogus::Coulomb3D law( 2, mu.data()  ) ;
 
 	{
+		ASSERT_TRUE( bogus::ProductGaussSeidel< HType >::has_trivial_diagonal ) ;
 		bogus::ProductGaussSeidel< HType > pgs( H ) ;
 		ri.bindTo( pgs.callback() );
 
@@ -39,10 +41,22 @@ TEST_F( SmallFrictionPb, ProductGaussSeidel )
 		ASSERT_LT( pgs.eval(law, y, x), 1.e-8 ) ;
 	}
 	{
-		bogus::ProductGaussSeidel< HType, MType > pgs( H, InvMassMat ) ;
+		ASSERT_FALSE( (bogus::ProductGaussSeidel< HType, MType >::has_trivial_diagonal) ) ;
+		bogus::ProductGaussSeidel< HType, MType, false > pgs( H, InvMassMat ) ;
+		ri.bindTo( pgs.callback() );
 
 		x.setOnes() ;
-		ri.setMethodName( "Product_GS" );
+		ri.setMethodName( "Product_GS_D" );
+		res = pgs.solve( law, b, x ) ;
+		ASSERT_LT( res, 1.e-8 ) ;
+		ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;
+	}
+	{
+		bogus::ProductGaussSeidel< HType, MType > pgs( H, InvMassMat ) ;
+		ri.bindTo( pgs.callback() );
+
+		x.setOnes() ;
+		ri.setMethodName( "Product_GS_D_precomp" );
 		res = pgs.solve( law, b, x ) ;
 		ASSERT_LT( res, 1.e-8 ) ;
 		ASSERT_TRUE( sol.isApprox( x, 1.e-4 ) ) ;

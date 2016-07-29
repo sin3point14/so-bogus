@@ -22,18 +22,120 @@
 namespace bogus
 {
 
-template < typename BlockMatrixType, typename DiagonalType >
-ProductGaussSeidel< BlockMatrixType, DiagonalType >&
-ProductGaussSeidel< BlockMatrixType, DiagonalType >::setMatrix( const BlockObjectBase< BlockMatrixType > & M )
+namespace block_solvers_impl {
+
+
+template< typename Type >
+struct DiagonalMatrixWrapper < Type, false >
 {
-	m_matrix = &M ;
+	typedef typename Type::Index Index ;
+	typedef typename Type::BlockPtr BlockPtr ;
 
-	updateLocalMatrices() ;
+	DiagonalMatrixWrapper()
+	    : m_matrixPtr( BOGUS_NULL_PTR(const Type) )
+	{ }
+	DiagonalMatrixWrapper( const Type& diag)
+	    : m_matrixPtr(&diag)
+	{ computeBlockIndices() ; }
 
-	return *this ;
+	bool valid() const { return m_matrixPtr; }
+	const Type& get() const {
+		return *m_matrixPtr ;
+	}
+	const DiagonalMatrixWrapper& asArray() const {
+		return *this ;
+	}
+
+	void computeBlockIndices() ;
+
+	inline bool has_element( const Index i ) const
+	{ return m_blockIndices[i] != Type::InvalidBlockPtr ; }
+
+	// \warning has_block(i) must be true
+	inline const typename Type::BlockType& operator[]( const Index i ) const
+	{ return m_matrixPtr->block(m_blockIndices[i]) ; }
+
+private:
+	const Type* const m_matrixPtr ;
+	std::vector< BlockPtr > m_blockIndices ;
+} ;
+
+template < typename Type>
+void DiagonalMatrixWrapper<Type, false>::computeBlockIndices( )
+{
+	// Stores the index of each diagonal block of (*matrixPtr)
+	const Index rows = m_matrixPtr->rowsOfBlocks() ;
+	m_blockIndices.resize( rows ) ;
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for
+#endif
+	for( Index i = 0 ; i < rows ; ++i ) {
+		m_blockIndices[i] = m_matrixPtr->diagonalBlockPtr(i) ;
+	}
 }
 
-namespace block_solvers_impl {
+template <typename MType, typename DType >
+struct DMtStorage< MType, DType, true >
+{
+	DMtStorage()
+	    : m_M( BOGUS_NULL_PTR( const MType) )
+	{}
+
+	void compute( const MType& M, const DType& D )
+	{
+		m_DMt = D.get() * M.transpose() ;
+		m_M = &M ;
+	}
+
+	template< typename Rhs, typename Intermediate, typename Res >
+	void multiply( const Rhs& rhs, Intermediate &itm, Res& res ) const
+	{
+		m_DMt.template multiply< false >( rhs, itm, 1, 0 ) ;
+		res += (*m_M) * itm ;
+	}
+
+	template< typename Rhs, typename Res >
+	void colMultiply( typename MType::Index col, const Rhs& rhs, Res & itm ) const
+	{
+		m_DMt.template colMultiply< false >( col, rhs, itm ) ;
+	}
+
+	template< typename Rhs, typename Res >
+	void rowMultiply( typename MType::Index row, const Rhs& itm, Res & res ) const
+	{
+		m_M->template rowMultiply< false >( row, itm, res ) ;
+	}
+
+private:
+	const MType* m_M ;
+	typedef typename MType::template MutableImpl< typename MType::TransposeBlockType, false, true >::Type DMtType ;
+	DMtType m_DMt ;
+};
+
+template <typename MType, typename DType, bool Precompute >
+template< typename Rhs, typename Intermediate, typename Res >
+void DMtStorage<MType, DType, Precompute>::multiply(
+        const Rhs& rhs, Intermediate &itm, Res& res ) const
+{
+	m_M->template multiply< true  >( rhs, itm, 1, 0 ) ;
+	res += (*m_M) * m_D->get() * itm ;
+}
+
+template <typename MType, typename DType, bool Precompute  >
+template< typename Rhs, typename Res >
+void DMtStorage<MType, DType, Precompute>::colMultiply( typename MType::Index col, const Rhs& rhs, Res & itm ) const
+{
+	m_M->template colMultiply< true >( col, rhs, itm ) ;
+}
+
+template <typename MType, typename DType, bool Precompute  >
+template< typename Rhs, typename Res >
+void DMtStorage<MType, DType, Precompute>::rowMultiply( typename MType::Index row, const Rhs& itm, Res & res ) const
+{
+	m_M->template rowMultiplyPrecompose<false>( row, itm, res, m_D->asArray() ) ;
+}
+
 
 template <typename D, typename T>
 struct SelfProductAccumulator {
@@ -41,13 +143,13 @@ struct SelfProductAccumulator {
 	const D& diag ;
 	T& acc ;
 	SelfProductAccumulator( const D &diag_, T& mat )
-		: diag(diag_), acc(mat)
+	    : diag(diag_), acc(mat)
 	{}
 
 	template <typename Index, typename Matrix >
 	void operator() (const Index i, const Matrix &block )
 	{
-		acc += block * diag.block(i) * block.transpose() ;
+		acc += block * diag[i] * block.transpose() ;
 	}
 };
 
@@ -57,12 +159,36 @@ SelfProductAccumulator<D,T> accumulate( const D& diag, T &res )
 
 } //block_solvers_impl
 
-template < typename BlockMatrixType, typename DiagonalType >
-void ProductGaussSeidel< BlockMatrixType, DiagonalType >::updateLocalMatrices( )
+template < typename BlockMatrixType, typename DiagonalType, bool PrecomputeDMt >
+ProductGaussSeidel< BlockMatrixType, DiagonalType, PrecomputeDMt >&
+ProductGaussSeidel< BlockMatrixType, DiagonalType, PrecomputeDMt >::setMatrix( const BlockObjectBase< BlockMatrixType > & M )
+{
+	m_matrix = &M ;
+
+	updateLocalMatrices() ;
+
+	return *this ;
+}
+
+template < typename BlockMatrixType, typename DiagonalType, bool PrecomputeDMt >
+ProductGaussSeidel< BlockMatrixType, DiagonalType, PrecomputeDMt >&
+ProductGaussSeidel< BlockMatrixType, DiagonalType, PrecomputeDMt >::setDiagonal( const DiagonalType &diagonal )
+{
+	m_diagonal = DiagWrapper( diagonal ) ;
+
+	updateLocalMatrices() ;
+
+	return *this ;
+}
+
+template < typename BlockMatrixType, typename DiagonalType, bool PrecomputeDMt >
+void ProductGaussSeidel< BlockMatrixType, DiagonalType, PrecomputeDMt >::updateLocalMatrices( )
 {
 
-	if( !m_matrix )
+	if( !(m_matrix && m_diagonal.valid()) )
 		return ;
+
+	m_DMt.compute( m_matrix->derived(), m_diagonal ) ;
 
 	const Index n = m_matrix->rowsOfBlocks() ;
 	m_localMatrices.resize( n ) ;
@@ -74,26 +200,27 @@ void ProductGaussSeidel< BlockMatrixType, DiagonalType >::updateLocalMatrices( )
 	{
 		m_localMatrices[i].setZero() ;
 
+		//TODO: use precomputed DMt if available
 		Base::iterableMatrix().eachBlockOfRow(
-					i, block_solvers_impl::accumulate( m_diagonal.get(), m_localMatrices[i] ) ) ;
+		            i, block_solvers_impl::accumulate( m_diagonal.asArray(), m_localMatrices[i] ) ) ;
 	}
 
 	Base::processLocalMatrices() ;
 }
 
-template < typename BlockMatrixType, typename DiagonalType >
+template < typename BlockMatrixType, typename DiagonalType, bool PrecomputeDMt >
 template < typename NSLaw,  typename VecT, typename ResT >
-void ProductGaussSeidel< BlockMatrixType, DiagonalType >::innerLoop(
-		bool parallelize, const NSLaw &law, const VecT& b,
-		std::vector< unsigned char > &skip, Scalar &ndxRef,
-		VecT& Mx, ResT &x	) const
+void ProductGaussSeidel< BlockMatrixType, DiagonalType, PrecomputeDMt >::innerLoop(
+        bool parallelize, const NSLaw &law, const VecT& b,
+        std::vector< unsigned char > &skip, Scalar &ndxRef,
+        VecT& Mx, ResT &x	) const
 {
 	typedef typename NSLaw::Traits LocalProblemTraits ;
 
 	Segmenter< NSLaw::dimension, ResT, typename BlockMatrixType::Index >
-			xSegmenter( x, m_matrix->rowOffsets() ) ;
+	        xSegmenter( x, m_matrix->rowOffsets() ) ;
 	const Segmenter< NSLaw::dimension, const VecT, typename BlockMatrixType::Index >
-			bSegmenter( b, m_matrix->rowOffsets() ) ;
+	        bSegmenter( b, m_matrix->rowOffsets() ) ;
 
 	const Scalar absSkipTol = std::min( m_skipTol, m_tol ) ;
 	const Scalar absSkipIters = std::min( m_skipIters, (unsigned) std::sqrt( (Scalar) skip.size() ) ) ;
@@ -122,7 +249,7 @@ void ProductGaussSeidel< BlockMatrixType, DiagonalType >::innerLoop(
 			lx = xSegmenter[ i ] ;
 			lb = bSegmenter[ i ] - m_localMatrices[i] * lx ;
 
-			Base::iterableMatrix().template rowMultiplyPrecompose<false>( i, Mx, lb, m_diagonal.get() ) ;
+			m_DMt.rowMultiply( i, Mx, lb ) ;
 
 			ldx = -lx ;
 
@@ -132,7 +259,7 @@ void ProductGaussSeidel< BlockMatrixType, DiagonalType >::innerLoop(
 			if( !ok ) { ldx *= .5 ; }
 			xSegmenter[ i ] += ldx ;
 
-			Base::iterableMatrix().template colMultiply<true >( i, ldx, Mx ) ;
+			m_DMt.colMultiply( i, ldx, Mx ) ;
 
 			const Scalar nx2 = m_scaling[ i ] * m_scaling[ i ] * lx.squaredNorm() ;
 			const Scalar ndx2 = m_scaling[ i ] * m_scaling[ i ] * ldx.squaredNorm() ;
@@ -143,40 +270,40 @@ void ProductGaussSeidel< BlockMatrixType, DiagonalType >::innerLoop(
 			if( ndx2 > ndxRef ) ndxRef = ndx2 ;
 
 			if(  std::min(nx2, ndx2) < absSkipTol ||
-				 ndx2 < m_skipTol * std::min( nx2, ndxRef ) )
+			     ndx2 < m_skipTol * std::min( nx2, ndxRef ) )
 			{
 				skip[i] = absSkipIters ;
 			}
 		}
 
 #ifndef BOGUS_DONT_PARALLELIZE
-		}
+	    }
 #endif
 
 }
 
 
 
-template < typename BlockMatrixType, typename DiagonalType >
+template < typename BlockMatrixType, typename DiagonalType, bool PrecomputeDMt >
 template < typename NSLaw, typename RhsT, typename ResT >
-typename ProductGaussSeidel< BlockMatrixType, DiagonalType >::Scalar
-ProductGaussSeidel< BlockMatrixType, DiagonalType >::solve( const NSLaw &law,
-									   const RhsT &b, ResT &x, bool tryZeroAsWell ) const
+typename ProductGaussSeidel< BlockMatrixType, DiagonalType, PrecomputeDMt >::Scalar
+ProductGaussSeidel< BlockMatrixType, DiagonalType, PrecomputeDMt >::solve( const NSLaw &law,
+                                       const RhsT &b, ResT &x, bool tryZeroAsWell ) const
 {
 	const bogus::Zero< Scalar > zero ;
 	return solveWithLinearConstraints( law, zero, b, x, tryZeroAsWell, 0 ) ;
 }
 
-template < typename BlockMatrixType, typename DiagonalType >
+template < typename BlockMatrixType, typename DiagonalType, bool PrecomputeDMt >
 template < typename NSLaw, typename RhsT, typename ResT, typename LSDerived, typename HDerived >
-typename ProductGaussSeidel< BlockMatrixType, DiagonalType >::Scalar
-ProductGaussSeidel< BlockMatrixType, DiagonalType >::solveWithLinearConstraints( const NSLaw &law,
-								   const BlockObjectBase< LSDerived >& Cinv,
-								   const BlockObjectBase<  HDerived >& H,
-								   const Scalar alpha,
-								   const RhsT &b, const RhsT &c,
-								   ResT &x,
-								   bool tryZeroAsWell, unsigned solveEvery ) const
+typename ProductGaussSeidel< BlockMatrixType, DiagonalType, PrecomputeDMt >::Scalar
+ProductGaussSeidel< BlockMatrixType, DiagonalType, PrecomputeDMt >::solveWithLinearConstraints( const NSLaw &law,
+                                   const BlockObjectBase< LSDerived >& Cinv,
+                                   const BlockObjectBase<  HDerived >& H,
+                                   const Scalar alpha,
+                                   const RhsT &b, const RhsT &c,
+                                   ResT &x,
+                                   bool tryZeroAsWell, unsigned solveEvery ) const
 {
 	const typename GlobalProblemTraits::DynVector k = b + H * Cinv * c ;
 
@@ -184,13 +311,13 @@ ProductGaussSeidel< BlockMatrixType, DiagonalType >::solveWithLinearConstraints(
 }
 
 
-template < typename BlockMatrixType, typename DiagonalType >
+template < typename BlockMatrixType, typename DiagonalType, bool PrecomputeDMt >
 template < typename NSLaw, typename RhsT, typename ResT, typename WDerived >
-typename ProductGaussSeidel< BlockMatrixType, DiagonalType >::Scalar
-ProductGaussSeidel< BlockMatrixType, DiagonalType >::solveWithLinearConstraints( const NSLaw &law,
-								   const BlockObjectBase < WDerived >& W,
-								   const RhsT &b, ResT &x,
-								   bool tryZeroAsWell, unsigned solveEvery) const
+typename ProductGaussSeidel< BlockMatrixType, DiagonalType, PrecomputeDMt >::Scalar
+ProductGaussSeidel< BlockMatrixType, DiagonalType, PrecomputeDMt >::solveWithLinearConstraints( const NSLaw &law,
+                                   const BlockObjectBase < WDerived >& W,
+                                   const RhsT &b, ResT &x,
+                                   bool tryZeroAsWell, unsigned solveEvery) const
 {
 	assert( m_matrix ) ;
 	assert( m_diagonal.valid() ) ;
@@ -204,8 +331,7 @@ ProductGaussSeidel< BlockMatrixType, DiagonalType >::solveWithLinearConstraints(
 	Scalar err_best = std::numeric_limits< Scalar >::max() ;
 
 	y = w ;
-	m_matrix->template multiply< true  >( x, Mx, 1, 0 ) ;
-	y += (*m_matrix) * m_diagonal.get() * Mx ;
+	m_DMt.multiply( x, Mx, y ) ;
 	Base::evalAndKeepBest( law, x, y, x_best, err_best ) ;
 
 	if( tryZeroAsWell && Base::tryZero( law, b, x, x_best, err_best ) ) {
@@ -239,8 +365,7 @@ ProductGaussSeidel< BlockMatrixType, DiagonalType >::solveWithLinearConstraints(
 		if( 0 == ( GSIter % m_evalEvery ) )
 		{
 			y = w ;
-			m_matrix->template multiply< true  >( x, Mx, 1, 0 ) ;
-			y += (*m_matrix) * m_diagonal.get() * Mx ;
+			m_DMt.multiply( x, Mx, y ) ;
 			const Scalar err = Base::evalAndKeepBest( law, x, y, x_best, err_best ) ;
 
 			this->m_callback.trigger( GSIter, err ) ;

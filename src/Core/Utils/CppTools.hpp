@@ -57,6 +57,17 @@ struct SwapIf< true, First_, Second_ >
 	enum { First = Second_, Second = First_  } ;
 } ;
 
+// Is Same
+template < typename T1, typename T2>
+struct IsSame
+{
+	enum { Value = 0 } ;
+} ;
+template < typename T1 >
+struct IsSame< T1, T1 >
+{
+	enum { Value = 1 } ;
+} ;
 
 // Enable if (for SFINAE use )
 
@@ -211,8 +222,9 @@ struct ConstantArray {
 	const Scalar s ;
 	explicit ConstantArray( Scalar s_=1 ) : s(s_) {}
 
-	inline Scalar   block( int ) const { return s ; }
-	inline operator Scalar()     const { return s ; }
+	inline bool  has_element( int ) const { return true ; }
+	inline Scalar    element( int ) const { return s ; }
+	inline Scalar operator[]( int ) const { return s ; }
 };
 template< typename Scalar>
 inline ConstantArray<Scalar> make_constant_array( Scalar s) { return ConstantArray<Scalar>(s) ; }
