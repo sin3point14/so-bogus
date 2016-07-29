@@ -15,10 +15,12 @@
 
 namespace bogus {
 
-//! Coloring
+//! Coloring algorithm to determine which rows of a matrix can be treated in parallel
+/*! Computes a permutation of the rows indices so that they become contiguous for each color */
 struct Coloring {
-
+	//! Computed permuation so that each color is contiguous
 	std::vector< std::size_t > 	  permutation ;
+	//! Index of first row for each color
 	std::vector< std::ptrdiff_t > colors ;
 
 	Coloring()

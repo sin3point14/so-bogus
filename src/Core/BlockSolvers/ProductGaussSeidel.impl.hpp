@@ -56,7 +56,7 @@ struct DiagonalMatrixWrapper < Type, false >
 	{ return m_matrixPtr->block(m_blockIndices[i]) ; }
 
 private:
-	const Type* const m_matrixPtr ;
+	const Type* m_matrixPtr ;
 	std::vector< BlockPtr > m_blockIndices ;
 } ;
 
@@ -149,7 +149,7 @@ struct SelfProductAccumulator {
 	template <typename Index, typename Matrix >
 	void operator() (const Index i, const Matrix &block )
 	{
-		acc += block * diag[i] * block.transpose() ;
+		acc += block * ( diag[i] * block.transpose() ) ;
 	}
 };
 

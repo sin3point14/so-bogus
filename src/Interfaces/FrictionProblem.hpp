@@ -31,6 +31,28 @@
 namespace bogus
 {
 
+//! Primal Coulomb friction problem for a block-diagonal mass matrix M with dense blocks
+/*!
+	   \f[
+		\left\{
+		  \begin{array}{rcl}
+			M v &=& H^T r - f \\
+			u &=& H v + E^T w \\
+			&s.t.& law (x,y)
+		  \end{array}
+		\right.
+	  \f]
+	where law is either SOCLaw (meaning solving a SOCQP) or CoulombLaw,
+	and \p v are the velocities, \p r the contact forces and \p u the relative velocities
+	at contact points.
+	E is a rotation matrix transforming local contact basis coordinates into world coordinates ,
+	is is only useful for consistency with legacy interface.
+
+	Useful for solving friction problems in discrete systems with reduced coordinate models.
+	Solving may be performed directly on this formulation,
+	or on the dual formulation by constructing a DualFrictionProblem from this object.
+	See also \ref block_solvers_ns .
+*/
 template< unsigned Dimension >
 struct PrimalFrictionProblem
 {
@@ -39,17 +61,17 @@ struct PrimalFrictionProblem
 	typedef SparseBlockMatrix< Eigen::MatrixXd > MType ;
 	//! M -- mass matrix
 	MType M ;
-	//! E -- local rotation matrix ( world <-> contact basis )
+	//! E -- local rotation matrix ( contact basis coordinates to world coordinates )
 	bogus::SparseBlockMatrix< Eigen::Matrix< double, Dimension, Dimension > > E ;
 
 	typedef Eigen::Matrix< double, Dimension, Eigen::Dynamic > HBlock ;
 	typedef SparseBlockMatrix< HBlock, UNCOMPRESSED > HType ;
-	//! H -- deformation gradient ( generalized coordinates <-> 3D world )
+	//! H -- deformation gradient \f$ \frac{\partial u}{\partial v} \f$ ( generalized coordinates <-> contact basis coordinates )
 	HType H;
 
 	//! External forces
 	const double *f ;
-	//! Free velocity ( such that u = Hv + w )
+	//! Free velocity in world coordinates ( such that u = Hv + E^T w )
 	const double *w ;
 	//! Coulomb friction coefficients
 	const double *mu ;
@@ -60,7 +82,8 @@ struct PrimalFrictionProblem
 	typedef SparseBlockMatrix< LU< Eigen::MatrixBase< Eigen::MatrixXd > > > MInvType ;
 	MInvType MInv ;
 
-	//! Computes MInv from M. Required to build a DualFrictionProblem for the PrimalFrictionProblem
+	//! Computes MInv from M. Required to build a DualFrictionProblem for the PrimalFrictionProblem,
+	//! or to use the ADMM and matrix-free Gauss-Seidel solvers.
 	void computeMInv () ;
 
 
@@ -68,19 +91,46 @@ struct PrimalFrictionProblem
 
 	typedef ADMM   < HType >    ADMMType ;
 	typedef DualAMA< HType > DualAMAType ;
-	//! ADMM on the primal objective function. Requires MInv.
-	/*! \param lambda proximal coefficient of the quadratic part (lambda = 0 means AMA) */
+	typedef ProductGaussSeidel< HType, MInvType, true > ProductGaussSeidelType ;
+
+	//! Matrix-free Gauss-Seidel solver
+	/*! \note Requires the computation of a factorization of M with computeMInv()
+	  \param r Resulting forces and initial guess (in contact basis coordinates)
+	  \param staticProblem If true, solve this problem as a \b SOCQP instead of a Coulomb Friction problem
+	*/
+	double solveWith( ProductGaussSeidelType &pgs, double * r, const bool staticProblem = false ) const ;
+	//! ADMM (Alternating Direction Method of Multipliers) on the primal objective function.
+	/*!
+	  May only be used to solve SOCQP (static problems), not Coulomb friction problems
+	  \param lambda proximal coefficient of the quadratic part (lambda = 0 means AMA)
+	  \param v Resulting velocities and initial guess
+	  \param r Resulting forces and initial guess (in contact basis coordinates)
+	  \note Requires the computation of a factorization of M with computeMInv()
+	*/
 	double solveWith( ADMMType    &admm, double lambda, double* v, double * r ) const ;
-	//! AMA on the dual objective function. Requires only M.
+	//! AMA (Alternating Minimization Algorithm) on the dual objective function. .
+	/*! Does not require a factorization of M
+	  \param v Resulting velocities and initial guess
+	  \param r Resulting forces and initial guess (in contact basis coordinates)
+	  \param staticProblem If true, solve this problem as a \b SOCQP instead of a Coulomb Friction problem
+	*/
 	double solveWith( DualAMAType &dama, double* v, double * r, const bool staticProblem = false ) const ;
 } ;
 
-
+//! Dual representation of a Coulomb friction problem, with explicit Delassus operator
+/*!
+  u = W r + b such that  u and r satisfy CoulombLaw(mu) or SOCLaw(mu),
+  where \p W is a symmetric, positive semi-definite matrix with \f$ d \times d \f$ blocks,
+  \p u are the relative velocities and \p r are the contact forces.
+  May be constructed from a PrimalFrictionProblem, or by directly initializing each data member
+  to accomodate problems with different mass matrix structures.
+  See also \ref block_solvers_ns .
+*/
 template< unsigned Dimension >
 struct DualFrictionProblem
 {
 	typedef SparseBlockMatrix< Eigen::Matrix< double, Dimension, Dimension, Eigen::RowMajor >,
-							   SYMMETRIC > WType ;
+	                           SYMMETRIC > WType ;
 
 	typedef GaussSeidel< WType > GaussSeidelType ;
 	typedef ProjectedGradient< WType > ProjectedGradientType ;
@@ -134,18 +184,23 @@ struct DualFrictionProblem
 	  \returns the error as returned by the GaussSeidel::solve() function
 	  */
 	double solveCadoux( GaussSeidelType &gs, double * r, const unsigned fpIterations,
-		   const SignalType* callback = BOGUS_NULL_PTR(const SignalType) ) const ;
+	       const SignalType* callback = BOGUS_NULL_PTR(const SignalType) ) const ;
 	double solveCadoux( ProjectedGradientType &pg, double * r, const unsigned fpIterations,
-		   const SignalType* callback = BOGUS_NULL_PTR(const SignalType) ) const ;
+	       const SignalType* callback = BOGUS_NULL_PTR(const SignalType) ) const ;
 
 	//! Idem as solveCadoux, but interpreting the problem as r = Wu + b
 	double solveCadouxVel( GaussSeidelType &gs, double * u, const unsigned fpIterations,
-		   const SignalType* callback = BOGUS_NULL_PTR(const SignalType) ) const ;
+	       const SignalType* callback = BOGUS_NULL_PTR(const SignalType) ) const ;
 	double solveCadouxVel( ProjectedGradientType &pg, double * u, const unsigned fpIterations,
-		   const SignalType* callback = BOGUS_NULL_PTR(const SignalType) ) const ;
+	       const SignalType* callback = BOGUS_NULL_PTR(const SignalType) ) const ;
 
 
-	//! \warning To use the permutation releated functions, all the blocks have to have the same size
+	//! Apply a permutation on the contact indices
+	/*!
+	 Useful for achieving better memory locality when using the Coloring functionality
+	 of the GaussSeidel algorithm. \sa Coloring
+	 * \warning To use the permutation releated functions, all the blocks have to have the same size
+	*/
 	void applyPermutation( const std::vector< std::size_t > &permutation ) ;
 	void undoPermutation() ;
 	bool permuted() const { return !m_permutation.empty() ; }

@@ -38,6 +38,9 @@ class ConstrainedSolverBase ;
 template < typename BlockMatrixType >
 class GaussSeidel ;
 
+template < typename BlockMatrixType, typename DiagonalType, bool PrecomputeDMt >
+class ProductGaussSeidel ;
+
 template < typename BlockMatrixType >
 class ProjectedGradient ;
 
@@ -51,7 +54,7 @@ template < typename MatrixType >
 class TrivialPreconditioner ;
 
 template < typename BlockMatrixType,
-		   template< typename BlockMatrixT > class PreconditionerType = TrivialPreconditioner >
+           template< typename BlockMatrixT > class PreconditionerType = TrivialPreconditioner >
 class Krylov ;
 
 }

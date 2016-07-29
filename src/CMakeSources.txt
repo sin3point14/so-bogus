@@ -96,3 +96,5 @@ Interfaces/FrictionProblem.hpp
 Interfaces/FrictionProblem.impl.hpp
 Interfaces/MecheInterface.cpp
 Interfaces/MecheInterface.hpp
+Interfaces/PrimalFrictionProblem.cpp
+

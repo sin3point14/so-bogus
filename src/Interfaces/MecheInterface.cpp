@@ -26,6 +26,7 @@
 #include "../Core/Block.io.hpp"
 
 #include "../Core/BlockSolvers/GaussSeidel.hpp"
+#include "../Core/BlockSolvers/ProductGaussSeidel.impl.hpp"
 #include "../Core/BlockSolvers/ProjectedGradient.hpp"
 #include "../Core/BlockSolvers/Coloring.impl.hpp"
 
@@ -304,67 +305,82 @@ double MecheFrictionProblem::solve(
 
 	} else {
 
-
-		// If dual has not been computed yet
-		if( !m_dual )
-		{
-			computeDual( problemRegularization );
-		}
-
 		Signal< unsigned, double > callback ;
 		callback.connect( *this, &MecheFrictionProblem::ackCurrentResidual );
 
-		// Proper solving
-
-		m_timer.reset();
-		if( options.algorithm == ProjectedGradient ) {
-
-			DualFrictionProblem< 3u >::ProjectedGradientType pg ;
-			if( options.tolerance != 0. ) pg.setTol( options.tolerance );
-			if( options.maxIters  != 0  ) pg.setMaxIters( options.maxIters );
-
-			pg.useInfinityNorm( options.useInfinityNorm ) ;
-			pg.setDefaultVariant( projected_gradient::Conjugated );
-
-			if( staticProblem || options.cadouxIters == 0 )
-			{
-				pg.callback().connect( callback );
-				res = m_dual->solveWith( pg, r_loc.data() ) ;
-			} else {
-				res = m_dual->solveCadoux( pg, r_loc.data(), options.cadouxIters, &callback ) ;
-			}
-		} else {
-			// Setup GS parameters
-			bogus::DualFrictionProblem<3u>::GaussSeidelType gs ;
-
+		if( options.algorithm == MatrixFreeGaussSeidel )
+		{
+			typename PrimalFrictionProblem< 3u >::ProductGaussSeidelType gs ;
 			if( options.tolerance != 0. ) gs.setTol( options.tolerance );
 			if( options.maxIters  != 0  ) gs.setMaxIters( options.maxIters );
 
+			gs.useInfinityNorm( options.useInfinityNorm ) ;
 			gs.setMaxThreads( options.maxThreads );
 			gs.setAutoRegularization( options.gsRegularization ) ;
-			gs.useInfinityNorm( options.useInfinityNorm ) ;
 
-			m_dual->undoPermutation() ;
+			gs.callback().connect( callback );
+			res = m_primal->solveWith( gs, r_loc.data(), staticProblem ) ;
 
-			const bool useColoring =
-			        options.maxThreads != 1 && options.gsColoring ;
-			gs.coloring().update( useColoring, m_dual->W );
+		} else {
 
-			if( useColoring )
+			// If dual has not been computed yet
+			if( !m_dual )
 			{
-				m_dual->applyPermutation( gs.coloring().permutation ) ;
-				gs.coloring().resetPermutation();
+				computeDual( problemRegularization );
 			}
-			m_dual->W.cacheTranspose() ;
 
-			if( staticProblem || options.cadouxIters == 0 )
-			{
-				gs.callback().connect( callback );
-				res = m_dual->solveWith( gs, r_loc.data(), staticProblem ) ;
+			// Proper solving
+
+			m_timer.reset();
+			if( options.algorithm == ProjectedGradient ) {
+
+				DualFrictionProblem< 3u >::ProjectedGradientType pg ;
+				if( options.tolerance != 0. ) pg.setTol( options.tolerance );
+				if( options.maxIters  != 0  ) pg.setMaxIters( options.maxIters );
+
+				pg.useInfinityNorm( options.useInfinityNorm ) ;
+				pg.setDefaultVariant( projected_gradient::Conjugated );
+
+				if( staticProblem || options.cadouxIters == 0 )
+				{
+					pg.callback().connect( callback );
+					res = m_dual->solveWith( pg, r_loc.data() ) ;
+				} else {
+					res = m_dual->solveCadoux( pg, r_loc.data(), options.cadouxIters, &callback ) ;
+				}
 			} else {
-				res = m_dual->solveCadoux( gs, r_loc.data(), options.cadouxIters, &callback ) ;
-			}
+				// Setup GS parameters
+				bogus::DualFrictionProblem<3u>::GaussSeidelType gs ;
 
+				if( options.tolerance != 0. ) gs.setTol( options.tolerance );
+				if( options.maxIters  != 0  ) gs.setMaxIters( options.maxIters );
+
+				gs.setMaxThreads( options.maxThreads );
+				gs.setAutoRegularization( options.gsRegularization ) ;
+				gs.useInfinityNorm( options.useInfinityNorm ) ;
+
+				m_dual->undoPermutation() ;
+
+				const bool useColoring =
+				        options.maxThreads != 1 && options.gsColoring ;
+				gs.coloring().update( useColoring, m_dual->W );
+
+				if( useColoring )
+				{
+					m_dual->applyPermutation( gs.coloring().permutation ) ;
+					gs.coloring().resetPermutation();
+				}
+				m_dual->W.cacheTranspose() ;
+
+				if( staticProblem || options.cadouxIters == 0 )
+				{
+					gs.callback().connect( callback );
+					res = m_dual->solveWith( gs, r_loc.data(), staticProblem ) ;
+				} else {
+					res = m_dual->solveCadoux( gs, r_loc.data(), options.cadouxIters, &callback ) ;
+				}
+
+			}
 		}
 
 		// compute v

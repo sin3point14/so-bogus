@@ -40,6 +40,7 @@ public:
 	enum Algorithm {
 		GaussSeidel = 0,
 		ProjectedGradient = 1,
+		MatrixFreeGaussSeidel,
 		ADMM,
 		DualAMA
 	};
