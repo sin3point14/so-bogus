@@ -24,7 +24,7 @@ template< bool Transpose >
 struct BlockCopier
 {
 	template < typename BlockT1, typename BlockT2, typename ScalarT >
-	static void copy( const BlockT2* source, BlockT1* dest, int n, ScalarT scale )
+	static void copy( const BlockT2& source, BlockT1& dest, int n, ScalarT scale )
 	{
 		typedef TransposeIf< Transpose > Getter ;
 		if( scale == 1 )
@@ -65,7 +65,7 @@ template < bool Transpose, typename OtherDerived >
 Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< OtherDerived > &source, Scalar scale )
 {
 	BOGUS_STATIC_ASSERT( !Transpose || IsTransposable< typename OtherDerived::BlockType >::Value,
-						 TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
+	                     TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
 	) ;
 
 	if( static_cast< const void* >( this ) == static_cast< const void* >( &source ) ) return derived() ;
@@ -115,20 +115,20 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 		{
 			assert( Transpose ) ;
 			assert( m_transposeIndex.valid ) ;
-			m_blocks.resize( source.transposeBlocks().size() ) ;
-			m_transposeBlocks.resize( source.blocks().size() ) ;
-			BlockCopier< !Transpose >::copy( source.transposeData(), this->data(), source.transposeBlocks().size(), scale ) ;
-			BlockCopier< !Transpose >::copy( source.data(), this->transposeData(), source.blocks().size(), scale ) ;
+			derived().template fitBlocks         < !Transpose >( source.transposeBlocks() ) ;
+			derived().template fitTransposeBlocks< !Transpose >( source.blocks() ) ;
+			BlockCopier< !Transpose >::copy( source.transposeBlocks(), this->blocks(), source.transposeBlocks().size(), scale ) ;
+			BlockCopier< !Transpose >::copy( source.blocks(), this->transposeBlocks(), source.blocks().size(), scale ) ;
 		} else {
 			const bool needTranspose = Transpose != ( Traits::is_symmetric && OtherTraits::is_symmetric && !sameMajorness ) ;
 
-			m_blocks.resize( source.blocks().size() ) ;
-			BlockCopier< needTranspose >::copy( source.data(), this->data(), source.blocks().size(), scale ) ;
+			derived().template fitBlocks< needTranspose >( source.blocks() ) ;
+			BlockCopier< needTranspose >::copy( source.blocks(), this->blocks(), source.blocks().size(), scale ) ;
 
 			if( m_transposeIndex.valid )
 			{
-				m_transposeBlocks.resize( source.transposeBlocks().size() ) ;
-				BlockCopier< needTranspose >::copy( source.transposeData(), this->transposeData(), source.transposeBlocks().size(), scale ) ;
+				derived().template fitTransposeBlocks< needTranspose >( source.transposeBlocks() ) ;
+				BlockCopier< needTranspose >::copy( source.transposeBlocks(), this->transposeBlocks(), source.transposeBlocks().size(), scale ) ;
 			}
 		}
 
@@ -144,19 +144,19 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 		const SourceIndexType &sourceIndex = indexComputer.get() ;
 
 		typedef BlockTransposeOption<
-				OtherTraits::is_symmetric && !( BlockTraits< typename OtherTraits::BlockType >::is_self_transpose ),
-				Transpose > TransposeIf ;
+		        OtherTraits::is_symmetric && !( BlockTraits< typename OtherTraits::BlockType >::is_self_transpose ),
+		        Transpose > TransposeIf ;
 
 		assert( sourceIndex.valid ) ;
 
 		for( Index i = 0 ; i < sourceIndex.outerSize() ; ++i )
 		{
 			for( typename SourceIndexType::InnerIterator src_it( sourceIndex, i ) ;
-				 src_it && !( Traits::is_symmetric && i < src_it.inner() ) ; ++ src_it )
+			     src_it && !( Traits::is_symmetric && i < src_it.inner() ) ; ++ src_it )
 			{
+				BlockRef dest = insertByOuterInner< true >( i, src_it.inner() ) ;
 				TransposeIf::assign( source.block( src_it.ptr() ) ,
-									 insertByOuterInner< true >( i, src_it.inner() ),
-									 scale, src_it.after( i ) ) ;
+				                     dest, scale, src_it.after( i ) ) ;
 			}
 		}
 		finalize() ;

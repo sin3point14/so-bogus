@@ -415,7 +415,6 @@ struct evaluator<CwiseBinaryOp<internal::scalar_product_op<Scalar1,Scalar2>,
 
  };
 
-
 } //internal
 } //Eigen
 

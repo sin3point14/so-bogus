@@ -27,6 +27,7 @@
 
 #include "Block/SparseBlockMatrix.hpp"
 #include "Block/MappedSparseBlockMatrix.hpp"
+#include "Block/FlatSparseBlockMatrix.hpp"
 #include "Block/CompoundMatrix.hpp"
 #include "Block/Zero.hpp"
 #include "Block/Operators.hpp"

@@ -49,6 +49,8 @@ public:
 	typedef typename Traits::MajorIndexType  		MajorIndexType ;
 
 	typedef typename Base::BlockType                BlockType ;
+	typedef typename Base::BlockRef                 BlockRef ;
+	typedef typename Base::ConstBlockRef            ConstBlockRef ;
 	typedef typename Base::Scalar                   Scalar ;
 
 	typedef typename MajorIndexType::InnerIterator  InnerIterator ;
@@ -180,7 +182,7 @@ public:
 		That is, if the matrix is row-major, the insertion should be done one row at a time,
 		and for each row from the left-most column to the right most.
 		*/
-	BlockType& insertBack( Index row, Index col )
+	BlockRef insertBack( Index row, Index col )
 	{
 		if( Traits::is_col_major )
 			return insertByOuterInner< true >( col, row ) ;
@@ -189,7 +191,7 @@ public:
 	}
 
 	//! Convenience method that insertBack() a block and immediately resize it according to the dimensions given to setRows() and setCols()
-	BlockType& insertBackAndResize( Index row, Index col ) ;
+	BlockRef insertBackAndResize( Index row, Index col ) ;
 
 	//! Insert a block anywhere in the matrix, and returns a reference to it
 	/*!
@@ -205,7 +207,7 @@ public:
 			so that the block array never has to be resized. Otherwise, the block
 			reference return by insert() may be invalidated.
 	*/
-	BlockType& insert( Index row, Index col )
+	BlockRef insert( Index row, Index col )
 	{
 		BOGUS_STATIC_ASSERT( !Traits::is_compressed, UNORDERED_INSERTION_WITH_COMPRESSED_INDEX ) ;
 		if( Traits::is_col_major )
@@ -215,13 +217,13 @@ public:
 	}
 
 	//! Convenience method that insert() a block and immediately resize it according to the dimensions given to setRows() and setCols()
-	BlockType& insertAndResize( Index row, Index col ) ;
+	BlockRef insertAndResize( Index row, Index col ) ;
 
 	//! Insert a block, specifying directily the outer and inner indices instead of row and column
 	/*! \tparam Ordered If true, then we assume that the insertion is sequential and in stricly increasing order
 		( as defined in insertBack() ) */
 	template< bool Ordered >
-	BlockType& insertByOuterInner( Index outer, Index inner ) ;
+	BlockRef insertByOuterInner( Index outer, Index inner ) ;
 
 	//! Finalizes the matrix.
 	//! \warning Should always be called after all blocks have been inserted, or bad stuff may happen
@@ -243,12 +245,12 @@ public:
 	//! Returns whether the matrix is empty
 	bool empty() const { return 0 == nBlocks() ; }
 
-	const BlockType& block( BlockPtr ptr ) const
+	ConstBlockRef block( BlockPtr ptr ) const
 	{
 		return m_blocks[ ptr ] ;
 	}
 
-	BlockType& block( BlockPtr ptr )
+	BlockRef block( BlockPtr ptr )
 	{
 		return m_blocks[ ptr ] ;
 	}
@@ -472,6 +474,8 @@ public:
 	//! Returns the blocks that have been created by cacheTranspose()
 	const TransposeArrayType& transposeBlocks() const
 	{ return m_transposeBlocks ; }
+	TransposeArrayType& transposeBlocks()
+	{ return m_transposeBlocks ; }
 
 	//! Returns the blocks that have been created by cacheTranspose(), as a raw pointer
 	const TransposeBlockType* transposeData() const
@@ -509,7 +513,7 @@ protected:
 
 	//! Pushes a block at the back of \c m_blocks
 	template< bool EnforceThreadSafety >
-	BlockType& allocateBlock( BlockPtr &ptr ) ;
+	BlockRef allocateBlock( BlockPtr &ptr, Index blockOuterSize, Index blockInnerSize ) ;
 
 	void computeMinorIndex( MinorIndexType &cmIndex) const ;
 
@@ -525,10 +529,17 @@ protected:
 	{ return data_pointer(m_transposeBlocks) ; }
 
 
+	template <bool Transpose, typename BlocksType >
+	void fitBlocks( const BlocksType& blocks )
+	{ m_blocks.resize(blocks.size()) ; }
+
+	template <bool Transpose, typename BlocksType >
+	void fitTransposeBlocks( const BlocksType& blocks )
+	{ m_transposeBlocks.resize(blocks.size()) ; }
+
 	TransposeArrayType m_transposeBlocks ;
 
 	MajorIndexType m_majorIndex ;
-
 	MinorIndexType m_minorIndex ;
 
 	TransposeIndexType   m_transposeIndex ;

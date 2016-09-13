@@ -13,6 +13,7 @@ Core/Block/Constants.hpp
 Core/Block/DynamicExpressions.hpp
 Core/Block/Evaluators.hpp
 Core/Block/Expressions.hpp
+Core/Block/FlatSparseBlockMatrix.hpp
 Core/Block/IterableBlockObject.hpp
 Core/Block/MappedSparseBlockMatrix.hpp
 Core/Block/MklBindings.hpp

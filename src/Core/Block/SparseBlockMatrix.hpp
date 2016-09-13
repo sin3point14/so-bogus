@@ -20,7 +20,7 @@ namespace bogus
 //! Specialization of BlockMatrixTraits for SparseBlockMatrix
 template < typename BlockT, int Flags >
 struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
-		: public BlockMatrixTraits< BlockObjectBase< SparseBlockMatrix< BlockT, Flags > > >
+        : public BlockMatrixTraits< BlockObjectBase< SparseBlockMatrix< BlockT, Flags > > >
 {
 	typedef BlockMatrixTraits< BlockObjectBase< SparseBlockMatrix< BlockT, Flags > > > BaseTraits ;
 	typedef typename BaseTraits::Index   Index;
@@ -34,7 +34,9 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
 
 
 	typedef BOGUS_DEFAULT_BLOCK_PTR_TYPE BlockPtr ;
-	typedef BlockT BlockType ;
+	typedef BlockT  BlockType ;
+	typedef BlockT& BlockRef ;
+	typedef const BlockT& ConstBlockRef ;
 	typedef typename ResizableSequenceContainer< BlockType >::Type BlocksArrayType ;
 
 	enum {
@@ -65,11 +67,11 @@ public:
 
 	template < typename Index >
 	SparseBlockMatrix( Index rowsOfBlocks, Index colsOfBlocks  )
-		: Base()
+	    : Base()
 	{
 		BOGUS_STATIC_ASSERT( Base::has_fixed_size_blocks,
-							 BLOCKS_MUST_HAVE_FIXED_DIMENSIONS
-							 ) ;
+		                     BLOCKS_MUST_HAVE_FIXED_DIMENSIONS
+		                     ) ;
 		Base::setRows( rowsOfBlocks ) ;
 		Base::setCols( colsOfBlocks ) ;
 	}
@@ -96,8 +98,8 @@ struct BlockTraits< SparseBlockMatrix< BlockT, Flags > >
 
 	typedef typename BlockType::Scalar Scalar ;
 	typedef SparseBlockMatrix
-		< typename BlockType::TransposeBlockType, Flags ^ flags::COL_MAJOR >
-		TransposeStorageType ;
+	    < typename BlockType::TransposeBlockType, Flags ^ flags::COL_MAJOR >
+	    TransposeStorageType ;
 
 	enum {
 		RowsAtCompileTime = internal::DYNAMIC,

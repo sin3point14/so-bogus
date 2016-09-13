@@ -28,6 +28,8 @@ public:
 
 	// Supplemental Traits interface for BlockMatrixBase
 	typedef typename Traits::BlockType       BlockType ;
+	typedef typename Traits::BlockRef        BlockRef ;
+	typedef typename Traits::ConstBlockRef   ConstBlockRef ;
 	typedef typename Traits::BlockPtr        BlockPtr ;
 	typedef typename Traits::BlocksArrayType BlocksArrayType ;
 
@@ -67,12 +69,12 @@ public:
 	}
 
 	//! Returns a reference to a block using the result from blockPtr() or diagonalBlockPtr()
-	const BlockType& block( BlockPtr ptr ) const
+	const BlockRef block( BlockPtr ptr ) const
 	{
 		return derived().block(ptr) ;
 	}
 	//! Returns a reference to a block using the result from blockPtr() or diagonalBlockPtr()
-	BlockType& block( BlockPtr ptr )
+	BlockRef block( BlockPtr ptr )
 	{
 		return derived().block(ptr) ;
 	}
@@ -87,23 +89,24 @@ public:
 
 	//! Access to blocks data
 	const typename Traits::BlocksArrayType& blocks() const { return  m_blocks ; }
+	typename Traits::BlocksArrayType& blocks() { return  m_blocks ; }
 	//! Access to blocks data as a raw pointer
 	const BlockType* data() const { return  data_pointer(m_blocks) ; }
 	//! Access to blocks data as a raw pointer
 	BlockType* data() { return data_pointer(m_blocks) ; }
 
 	//! \warning block has to exist
-	BlockType& diagonal( const Index row )
+	BlockRef diagonal( const Index row )
 	{ return block( diagonalBlockPtr( row ) ) ; }
 	//! \warning block has to exist
-	const BlockType& diagonal( const Index row ) const
+	ConstBlockRef diagonal( const Index row ) const
 	{ return block( diagonalBlockPtr( row ) ) ; }
 
 	//! \warning block has to exist
-	BlockType& block( Index row, Index col )
+	BlockRef block( Index row, Index col )
 	{ return block( blockPtr( row, col ) ) ; }
 	//! \warning block has to exist
-	const BlockType& block( Index row, Index col ) const
+	ConstBlockRef block( Index row, Index col ) const
 	{ return block( blockPtr( row, col ) ) ; }
 
 
