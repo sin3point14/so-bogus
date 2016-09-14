@@ -174,6 +174,9 @@ TEST_F( SmallSBM, ExprVector )
 	res.noalias() += sbm*rhs ;
 	res -= sbm*rhs ;
 	EXPECT_EQ( expected_1, sbm*rhs ) ;
+
+	EXPECT_EQ( expected_1, 2*(.5*sbm*rhs) ) ;
+
 	rhs.setZero() ;
 
 	sbm.transpose().multiply< false >( res, rhs ) ;
