@@ -69,7 +69,7 @@ public:
 	}
 
 	//! Returns a reference to a block using the result from blockPtr() or diagonalBlockPtr()
-	const BlockRef block( BlockPtr ptr ) const
+	ConstBlockRef block( BlockPtr ptr ) const
 	{
 		return derived().block(ptr) ;
 	}
@@ -89,7 +89,6 @@ public:
 
 	//! Access to blocks data
 	const typename Traits::BlocksArrayType& blocks() const { return  m_blocks ; }
-	typename Traits::BlocksArrayType& blocks() { return  m_blocks ; }
 	//! Access to blocks data as a raw pointer
 	const BlockType* data() const { return  data_pointer(m_blocks) ; }
 	//! Access to blocks data as a raw pointer

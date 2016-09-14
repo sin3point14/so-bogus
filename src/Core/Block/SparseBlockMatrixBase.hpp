@@ -99,7 +99,7 @@ public:
 	typedef typename Base::ConstTransposeReturnType ConstTransposeReturnType ;
 
 	typedef typename BlockTraits< BlockType >::TransposeStorageType TransposeBlockType ;
-	typedef typename ResizableSequenceContainer< TransposeBlockType >::Type TransposeArrayType ;
+	typedef typename Traits::template ResizableBlockContainer< TransposeBlockType >::Type TransposeArrayType ;
 
 	using Base::rows ;
 	using Base::cols ;
@@ -168,13 +168,6 @@ public:
 
 	//! \name Inserting and accessing blocks
 	///@{
-
-	//! Reserve enouch memory to accomodate \p nBlocks
-	void reserve( std::size_t nBlocks )
-	{
-		m_blocks.reserve( nBlocks ) ;
-		m_majorIndex.reserve( nBlocks ) ;
-	}
 
 	//! Inserts a block at the end of the matrix, and returns a reference to it
 	/*! \warning The insertion order must be such that the pair
@@ -464,17 +457,19 @@ public:
 	//@{
 
 	//! Direct access to major index.
-	/*! Could be used in conjunction with prealloc() to devise a custom way of building the index.
+	/*! Could be used in conjunction with resetFor() to devise a custom way of building the index.
 		Dragons, etc. */
 	MajorIndexType& majorIndex() { return m_majorIndex ; }
 
-	//! Resizes \c m_blocks
-	void prealloc( std::size_t nBlocks ) ;
+	//! Reset the matrix and reserve enough memory to accomate \p blocks
+	template <typename BlocksType>
+	void resetFor( const BlocksType& blocks )
+	{
+		derived().resetFor( blocks ) ;
+	}
 
 	//! Returns the blocks that have been created by cacheTranspose()
 	const TransposeArrayType& transposeBlocks() const
-	{ return m_transposeBlocks ; }
-	TransposeArrayType& transposeBlocks()
 	{ return m_transposeBlocks ; }
 
 	//! Returns the blocks that have been created by cacheTranspose(), as a raw pointer
@@ -528,14 +523,21 @@ protected:
 	TransposeBlockType* transposeData()
 	{ return data_pointer(m_transposeBlocks) ; }
 
+	template <bool Transpose, typename BlocksType >
+	void copyBlockShapes( const BlocksType& blocks )
+	{  derived().template copyBlockShapes<Transpose>(blocks) ; }
 
 	template <bool Transpose, typename BlocksType >
-	void fitBlocks( const BlocksType& blocks )
-	{ m_blocks.resize(blocks.size()) ; }
+	void copyTransposeBlockShapes( const BlocksType& blocks )
+	{  derived().template copyTransposeBlockShapes<Transpose>(blocks) ; }
 
-	template <bool Transpose, typename BlocksType >
-	void fitTransposeBlocks( const BlocksType& blocks )
-	{ m_transposeBlocks.resize(blocks.size()) ; }
+	template< typename IndexType >
+	void createBlockShapes( const BlockPtr nBlocks, const IndexType& index,
+	                     typename Traits::BlocksArrayType& blocks )
+	{
+		derived().createBlockShapes( nBlocks, index, blocks ) ;
+	}
+
 
 	TransposeArrayType m_transposeBlocks ;
 

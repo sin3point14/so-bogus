@@ -115,28 +115,27 @@ Derived& SparseBlockMatrixBase<Derived>::assign( const SparseBlockMatrixBase< Ot
 		{
 			assert( Transpose ) ;
 			assert( m_transposeIndex.valid ) ;
-			derived().template fitBlocks         < !Transpose >( source.transposeBlocks() ) ;
-			derived().template fitTransposeBlocks< !Transpose >( source.blocks() ) ;
-			BlockCopier< !Transpose >::copy( source.transposeBlocks(), this->blocks(), source.transposeBlocks().size(), scale ) ;
-			BlockCopier< !Transpose >::copy( source.blocks(), this->transposeBlocks(), source.blocks().size(), scale ) ;
+			copyBlockShapes         < !Transpose >( source.transposeBlocks() ) ;
+			copyTransposeBlockShapes< !Transpose >( source.blocks() ) ;
+			BlockCopier< !Transpose >::copy( source.transposeBlocks(), m_blocks, source.transposeBlocks().size(), scale ) ;
+			BlockCopier< !Transpose >::copy( source.blocks(), m_transposeBlocks, source.blocks().size(), scale ) ;
 		} else {
 			const bool needTranspose = Transpose != ( Traits::is_symmetric && OtherTraits::is_symmetric && !sameMajorness ) ;
 
-			derived().template fitBlocks< needTranspose >( source.blocks() ) ;
-			BlockCopier< needTranspose >::copy( source.blocks(), this->blocks(), source.blocks().size(), scale ) ;
+			copyBlockShapes< needTranspose >( source.blocks() ) ;
+			BlockCopier< needTranspose >::copy( source.blocks(), m_blocks, source.blocks().size(), scale ) ;
 
 			if( m_transposeIndex.valid )
 			{
-				derived().template fitTransposeBlocks< needTranspose >( source.transposeBlocks() ) ;
-				BlockCopier< needTranspose >::copy( source.transposeBlocks(), this->transposeBlocks(), source.transposeBlocks().size(), scale ) ;
+				copyTransposeBlockShapes< needTranspose >( source.transposeBlocks() ) ;
+				BlockCopier< needTranspose >::copy( source.transposeBlocks(), m_transposeBlocks, source.transposeBlocks().size(), scale ) ;
 			}
 		}
 
 		Finalizer::finalize( *this ) ;
 	} else {
 
-		clear() ;
-		reserve( source.blocks().size() ) ;
+		derived().resetFor( source.blocks() ) ;
 
 		typedef SparseBlockIndexComputer< OtherDerived, Traits::is_col_major, Transpose > IndexComputerType ;
 		IndexComputerType indexComputer( source ) ;

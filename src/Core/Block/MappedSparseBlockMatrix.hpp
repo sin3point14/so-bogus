@@ -38,6 +38,11 @@ struct BlockMatrixTraits< MappedSparseBlockMatrix< BlockT, Flags, Index_ > >
 	typedef BlockT& BlockRef ;
 	typedef const BlockT& ConstBlockRef ;
 	typedef BOGUS_DEFAULT_BLOCK_PTR_TYPE BlockPtr ;
+
+	template <typename OtherBlockType>
+	struct ResizableBlockContainer {
+		typedef typename ResizableSequenceContainer< OtherBlockType >::Type Type ;
+	};
 	typedef typename ConstMappedArray< BlockType >::Type BlocksArrayType ;
 
 	enum {

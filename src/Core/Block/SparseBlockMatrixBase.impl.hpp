@@ -136,25 +136,9 @@ SparseBlockMatrixBase< Derived >::insertByOuterInner( Index outer, Index inner )
 template < typename Derived >
 template < bool EnforceThreadSafety >
 typename SparseBlockMatrixBase< Derived >::BlockRef
-SparseBlockMatrixBase< Derived >::allocateBlock( BlockPtr &ptr, Index, Index )
+SparseBlockMatrixBase< Derived >::allocateBlock( BlockPtr &ptr, Index outer, Index inner )
 {
-
-#ifndef BOGUS_DONT_PARALLELIZE
-	Lock::Guard< EnforceThreadSafety > guard( m_lock ) ;
-#endif
-
-	ptr = m_blocks.size() ;
-	m_blocks.resize( ptr+1 ) ;
-
-	return m_blocks[ptr] ;
-}
-
-template < typename Derived >
-void SparseBlockMatrixBase< Derived >::prealloc ( std::size_t nBlocks )
-{
-	clear() ;
-	m_blocks.resize( nBlocks ) ;
-	m_minorIndex.valid = false ;
+	return derived().allocateBlock( ptr, outer, inner );
 }
 
 template < typename Derived >
@@ -347,8 +331,7 @@ Derived& SparseBlockMatrixBase< Derived >::prune( const Scalar precision )
 	typename Traits::BlocksArrayType old_blocks ;
 	old_blocks.swap( m_blocks ) ;
 
-	reserve( old_blocks.size() ) ;
-	clear() ;
+	derived().resetFor( old_blocks ) ;
 
 	for( Index outer = 0 ; outer < oldIndex.outerSize() ; ++outer )
 	{
@@ -501,14 +484,19 @@ Derived& SparseBlockMatrixBase< Derived >::setIdentity(  )
 
 	Index m = std::min( rowsOfBlocks(), colsOfBlocks() ) ;
 
-	prealloc(m) ;
 	for( Index i = 0 ; i < m ; ++i )
 	{
 		majorIndex().insertBack( i, i, i ) ;
+	}
+	finalize();
+
+	derived().createBlockShapes( m, majorIndex(), m_blocks ) ;
+
+	for( Index i = 0 ; i < m ; ++i )
+	{
 		resize( m_blocks[i], blockRows(i), blockCols(i) ) ;
 		set_identity( m_blocks[i] ) ;
 	}
-	finalize();
 
 	return derived() ;
 }

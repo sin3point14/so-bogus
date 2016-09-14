@@ -51,11 +51,16 @@ TEST(SparseLock, Flat)
 
 	bogus::FlatSparseBlockMatrix< BlockT > ss = 2*sbm ;
 	ss.multiply< false >( rhs,res ) ;
-
 	EXPECT_EQ( 2*expected_1, res ) ;
-//	bogus::FlatSparseBlockMatrix< BlockT > aa = ss + sbm ;
-//	EXPECT_EQ( 3*expected_1, res ) ;
-//	bogus::FlatSparseBlockMatrix< BlockT > mm = sbm*sbm.transpose() ;
+
+	bogus::FlatSparseBlockMatrix< BlockT > aa = ss + sbm ;
+	aa.multiply< false >( rhs,res ) ;
+	EXPECT_EQ( 3*expected_1, res ) ;
+
+	bogus::FlatSparseBlockMatrix< BlockT > mm = aa.transpose()*sbm ;
+	res.resize( mm.rows() ) ;
+	mm.multiply< false >( rhs,res ) ;
+	EXPECT_EQ( aa.transpose()*expected_1, res ) ;
 }
 /*
 

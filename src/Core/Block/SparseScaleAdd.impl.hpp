@@ -25,9 +25,9 @@ Derived& SparseBlockMatrixBase< Derived >::scale( const Scalar alpha )
 	if( alpha != 1 )
 	{
 
-	#ifndef BOGUS_DONT_PARALLELIZE
-	#pragma omp parallel for
-	#endif
+    #ifndef BOGUS_DONT_PARALLELIZE
+    #pragma omp parallel for
+    #endif
 		for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) nBlocks() ;  ++i )
 		{
 			block( i ) *= alpha ;
@@ -42,7 +42,7 @@ template < bool Transpose, typename OtherDerived >
 Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< OtherDerived > &rhs, Scalar alpha )
 {
 	BOGUS_STATIC_ASSERT( !Transpose || IsTransposable< typename OtherDerived::BlockType >::Value,
-						 TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
+	                     TRANSPOSE_IS_NOT_DEFINED_FOR_THIS_BLOCK_TYPE
 	) ;
 
 	typedef typename SparseBlockMatrixBase< OtherDerived >::Traits OtherTraits ;
@@ -55,9 +55,9 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 	{
 
 		SparseBlockIndexComputer< OtherDerived, Traits::is_col_major, Transpose >
-				indexComputer( rhs ) ;
+		        indexComputer( rhs ) ;
 		typedef typename SparseBlockIndexComputer< OtherDerived, Traits::is_col_major, Transpose >::ReturnType
-				SourceIndexType ;
+		        SourceIndexType ;
 		const SourceIndexType &rhsIndex = indexComputer.get() ;
 
 		const MajorIndexType &lhsIndex = majorIndex() ;
@@ -67,9 +67,9 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 
 		nonZeros.resize( lhsIndex.outerSize() ) ;
 
-	#ifndef BOGUS_DONT_PARALLELIZE
-	#pragma omp parallel for
-	#endif
+    #ifndef BOGUS_DONT_PARALLELIZE
+    #pragma omp parallel for
+    #endif
 		for ( Index i = 0 ; i < lhsIndex.outerSize() ; ++i )
 		{
 			typename MajorIndexType::InnerIterator lhs_it ( lhsIndex, i ) ;
@@ -126,12 +126,14 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 			resIndex.insertBack( i, nz.first, ptr ) ;
 		}
 	}
+	resIndex.finalize() ;
 
-	typename Traits::BlocksArrayType resBlocks( offsets.back() ) ;
+	typename Traits::BlocksArrayType resBlocks ;
+	createBlockShapes( offsets.back(), resIndex, resBlocks ) ;
 
 	typedef BlockTransposeOption<
-			OtherTraits::is_symmetric && !( BlockTraits< typename OtherTraits::BlockType >::is_self_transpose ),
-			Transpose > RhsGetter ;
+	        OtherTraits::is_symmetric && !( BlockTraits< typename OtherTraits::BlockType >::is_self_transpose ),
+	        Transpose > RhsGetter ;
 
 	// II - Proper addition
 
@@ -145,9 +147,9 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 			const BlockPtr ptr = offsets[i]+j ;
 			const NonZero &nz = nonZeros[i][j] ;
 
-			BlockType &res = resBlocks[ptr] ;
+			BlockRef res = resBlocks[ptr] ;
 			const bool afterDiag = ( (bool) Traits::is_col_major )  == ( (bool) OtherTraits::is_col_major )
-									? (nz.first > i) : (nz.first < i) ;
+			                        ? (nz.first > i) : (nz.first < i) ;
 			if( nz.second.first == InvalidBlockPtr )
 			{
 				RhsGetter::assign( rhs.block( nz.second.second ), res, alpha, afterDiag ) ;
@@ -160,7 +162,6 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 			}
 		}
 	}
-	resIndex.finalize() ;
 
 	clear() ;
 	m_majorIndex.move( resIndex );

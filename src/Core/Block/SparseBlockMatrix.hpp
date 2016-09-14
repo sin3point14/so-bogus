@@ -37,7 +37,13 @@ struct BlockMatrixTraits< SparseBlockMatrix< BlockT, Flags > >
 	typedef BlockT  BlockType ;
 	typedef BlockT& BlockRef ;
 	typedef const BlockT& ConstBlockRef ;
-	typedef typename ResizableSequenceContainer< BlockType >::Type BlocksArrayType ;
+
+	template <typename OtherBlockType>
+	struct ResizableBlockContainer {
+		typedef typename ResizableSequenceContainer< OtherBlockType >::Type Type ;
+	};
+
+	typedef typename ResizableBlockContainer< BlockType >::Type BlocksArrayType ;
 
 	enum {
 		is_compressed =  !!( ~Flags & flags::UNCOMPRESSED ),
@@ -86,6 +92,67 @@ public:
 	SparseBlockMatrix& operator=( const BlockObjectBase< RhsT >& rhs )
 	{
 		return ( Base::operator= ( rhs.derived() ) ).derived() ;
+	}
+
+	// Allocations and stuff
+
+	using Base::m_blocks ;
+	using Base::m_transposeBlocks ;
+	typedef typename Base::Traits Traits;
+	typedef typename Base::Index Index;
+	typedef typename Base::MajorIndexType MajorIndexType;
+	typedef typename Base::BlockPtr BlockPtr;
+
+	template < bool EnforceThreadSafety >
+	typename Base::BlockRef allocateBlock( typename Base::BlockPtr &ptr,
+	                                       Index , Index )
+	{
+#ifndef BOGUS_DONT_PARALLELIZE
+		Lock::Guard< EnforceThreadSafety > guard( Base::m_lock ) ;
+#endif
+
+		ptr = m_blocks.size() ;
+		m_blocks.resize( ptr+1 ) ;
+
+		return m_blocks[ptr] ;
+	}
+
+	//! Resizes \c m_blocks
+	void prealloc( std::size_t nBlocks ) {
+		Base::clear() ;
+		m_blocks.resize( nBlocks ) ;
+		Base::m_minorIndex.valid = false ;
+	}
+
+	//! Reserve enough memory to accomodate \p nBlocks
+	void reserve( std::size_t nBlocks )
+	{
+		m_blocks.reserve( nBlocks ) ;
+		Base::m_majorIndex.reserve( nBlocks ) ;
+	}
+
+	// Inherited from Base
+
+	template <typename BlocksType>
+	void resetFor( const BlocksType& blocks )
+	{
+		Base::clear() ;
+		reserve(blocks.size()) ;
+	}
+
+	template <bool Transpose, typename BlocksType >
+	void copyBlockShapes( const BlocksType& blocks )
+	{ m_blocks.resize(blocks.size()) ; }
+
+	template <bool Transpose, typename BlocksType >
+	void copyTransposeBlockShapes( const BlocksType& blocks )
+	{ m_transposeBlocks.resize(blocks.size()) ; }
+
+	template< typename IndexType >
+	void createBlockShapes( const BlockPtr nBlocks, const IndexType& ,
+	                     typename Traits::BlocksArrayType& blocks )
+	{
+		blocks.resize( nBlocks ) ;
 	}
 
 } ;
