@@ -461,6 +461,12 @@ public:
 		Dragons, etc. */
 	MajorIndexType& majorIndex() { return m_majorIndex ; }
 
+	//! Reserve enough memory to accomodate \p nBlocks and \p totalNonZeros
+	void reserve( std::size_t nBlocks, std::size_t totalNonZeros )
+	{
+		derived().reserve( nBlocks, totalNonZeros ) ;
+	}
+
 	//! Reset the matrix and reserve enough memory to accomate \p blocks
 	template <typename BlocksType>
 	void resetFor( const BlocksType& blocks )

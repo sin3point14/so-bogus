@@ -125,10 +125,10 @@ public:
 	}
 
 	//! Reserve enough memory to accomodate \p nBlocks
-	void reserve( std::size_t nBlocks )
+	void reserve( std::size_t nBlocks, std::size_t = 0 )
 	{
 		m_blocks.reserve( nBlocks ) ;
-		Base::m_majorIndex.reserve( nBlocks ) ;
+		Base::majorIndex().reserve( nBlocks ) ;
 	}
 
 	// Inherited from Base

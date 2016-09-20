@@ -581,3 +581,14 @@ TEST_F( SmallSBM, CompoundRow )
 	EXPECT_EQ( rhs, u ) ;
 
 }
+
+TEST_F( SmallSBM, Flat )
+{
+	Eigen::VectorXd res ( sbm.rows() ) ;
+
+	bogus::FlatSparseBlockMatrix<Eigen::MatrixXd> flat = sbm ;
+	res.setZero() ;
+	flat.multiply< false >( rhs,res ) ;
+
+	EXPECT_EQ( expected_1, res ) ;
+}

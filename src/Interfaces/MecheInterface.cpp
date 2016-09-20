@@ -142,7 +142,21 @@ void MecheFrictionProblem::fromPrimal (
 
 
 	// Build H
-	m_primal->H.reserve( 2*n_in ) ;
+
+	std::size_t Hnnz = 0 ;
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for reduction( +:Hnnz )
+#endif
+	for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) n_in ; ++i )
+	{
+		Hnnz += 3*ndof[ObjA[i]] ;
+		if( Obj[i] != -1 && ObjB[i] == ObjA[i] )
+		{
+			Hnnz += 3*ndof[ObjB[i]] ;
+		}
+	}
+
+	m_primal->H.reserve( 2*n_in, Hnnz ) ;
 	m_primal->H.setRows( n_in ) ;
 	m_primal->H.setCols( NObj, ndof ) ;
 #ifndef BOGUS_DONT_PARALLELIZE

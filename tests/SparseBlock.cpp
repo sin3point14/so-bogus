@@ -13,57 +13,6 @@
 
 #include <gtest/gtest.h>
 
-TEST(SparseLock, Flat)
-{
-	typedef Eigen::MatrixXd BlockT ;
-	bogus::FlatSparseBlockMatrix< BlockT > sbm ;
-
-	sbm.setRows( 5, 3 ) ;
-	sbm.setCols( 2, 4 ) ;
-
-	sbm.insertBackAndResize( 0, 1 ).setOnes()  ;
-	sbm.insertBack( 3, 0 ) = 2 * BlockT::Ones(3,4) ;
-	sbm.insertBack( 3, 1 ).setConstant(3) ;
-
-	sbm.finalize() ;
-
-	Eigen::VectorXd rhs  ;
-	rhs.resize( sbm.cols() ) ;
-	rhs.setOnes() ;
-
-	Eigen::VectorXd expected_1 ; // sbm * rhs
-	Eigen::VectorXd expected_2 ; // sbm.transpose() * (sbm * rhs)
-	Eigen::VectorXd expected_3 ; // sbm * ( sbm.transpose() * (sbm * rhs) )
-	expected_1.resize(15) ;  // sbm * rhs
-	expected_2.resize(8) ;   //
-	expected_3.resize(15) ;
-
-	expected_1 << 4, 4, 4, 0, 0, 0, 0, 0, 0, 20, 20, 20, 0, 0, 0 ;
-	expected_2 << 120, 120, 120, 120, 192, 192, 192, 192 ;
-	expected_3 << 768, 768, 768, 0, 0, 0, 0, 0, 0, 3264, 3264, 3264, 0, 0, 0 ;
-
-	Eigen::VectorXd res ( sbm.rows() ) ;
-
-	res.setZero() ;
-	sbm.multiply< false >( rhs,res ) ;
-
-	EXPECT_EQ( expected_1, res ) ;
-
-	bogus::FlatSparseBlockMatrix< BlockT > ss = 2*sbm ;
-	ss.multiply< false >( rhs,res ) ;
-	EXPECT_EQ( 2*expected_1, res ) ;
-
-	bogus::FlatSparseBlockMatrix< BlockT > aa = ss + sbm ;
-	aa.multiply< false >( rhs,res ) ;
-	EXPECT_EQ( 3*expected_1, res ) ;
-
-	bogus::FlatSparseBlockMatrix< BlockT > mm = aa.transpose()*sbm ;
-	res.resize( mm.rows() ) ;
-	mm.multiply< false >( rhs,res ) ;
-	EXPECT_EQ( aa.transpose()*expected_1, res ) ;
-}
-/*
-
 TEST( SparseBlock, MMult )
 {
 	typedef Eigen::Matrix< double, 3, 4 > BlockT ;
@@ -111,7 +60,7 @@ TEST( SparseBlock, MMult )
 		EXPECT_EQ( expected_1, mm_t_mt*rhs ) ;
 		EXPECT_EQ( expected_1, mm_t * ( sbm.transpose() * rhs )  ) ;
 		mm_t_mt -= mm_t  * sbm.transpose() ;
-				Eigen::VectorXd one_minus_one = (mm_t_mt*rhs) ;
+		        Eigen::VectorXd one_minus_one = (mm_t_mt*rhs) ;
 		EXPECT_TRUE( one_minus_one.isZero() ) ;
 
 		bogus::SparseBlockMatrix< Eigen::MatrixXd > mm_t_mt_chk = sbm.transpose() * mm;
@@ -392,11 +341,11 @@ TEST( SparseBlock, Add )
 		EXPECT_EQ( -sym_res, ssbm*rhs ) ;
 
 		bogus::SparseBlockMatrix< Eigen::MatrixXd, bogus::flags::COL_MAJOR > sbm_bis
-				= ssbm + sbm.transpose()  ;
+		        = ssbm + sbm.transpose()  ;
 		EXPECT_EQ( sym_res, sbm_bis*rhs ) ;
 
 		bogus::SparseBlockMatrix< Eigen::MatrixXd > sbm_ter
-				= ( sbm_bis.transpose() - ssbm ).transpose()  ;
+		        = ( sbm_bis.transpose() - ssbm ).transpose()  ;
 		EXPECT_EQ( 2*sym_res, sbm_ter*rhs ) ;
 
 		sbm_ter = -sbm_bis ;
@@ -570,7 +519,6 @@ TEST( SparseBlock, Permutation)
 		}
 	}
 }
-*/
 
 TEST(SparseBlock, FixedSize)
 {

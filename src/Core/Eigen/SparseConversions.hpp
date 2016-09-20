@@ -26,28 +26,28 @@ namespace bogus
 
 template< typename EigenDerived, typename BogusDerived >
 void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
-				SparseBlockMatrixBase< BogusDerived >& dest,
-				int destRowsPerBlock = 0, int destColsPerBlock = 0
-			)
+                SparseBlockMatrixBase< BogusDerived >& dest,
+                int destRowsPerBlock = 0, int destColsPerBlock = 0
+            )
 {
 	typedef BlockMatrixTraits< BogusDerived > Traits ;
 	typedef typename Traits::Index Index ;
 	typedef typename Traits::BlockPtr BlockPtr ;
 
 	const Index RowsPerBlock = destRowsPerBlock
-			? (Index) destRowsPerBlock
-			: (Index) Traits::RowsPerBlock ;
+	        ? (Index) destRowsPerBlock
+	        : (Index) Traits::RowsPerBlock ;
 	const Index ColsPerBlock = destColsPerBlock
-			? (Index) destColsPerBlock
-			: (Index) Traits::ColsPerBlock ;
+	        ? (Index) destColsPerBlock
+	        : (Index) Traits::ColsPerBlock ;
 
 	assert( RowsPerBlock != (Index) -1 ) ;
 	assert( ColsPerBlock != (Index) -1 ) ;
 
 	BOGUS_STATIC_ASSERT(
-				( ( (bool) Eigen::SparseMatrixBase< EigenDerived >::IsRowMajor )
-					^ ( (bool) Traits::is_col_major ) ),
-				MATRICES_ORDERING_IS_INCONSISTENT ) ;
+	            ( ( (bool) Eigen::SparseMatrixBase< EigenDerived >::IsRowMajor )
+	                ^ ( (bool) Traits::is_col_major ) ),
+	            MATRICES_ORDERING_IS_INCONSISTENT ) ;
 
 	assert( 0 == ( source.rows() % RowsPerBlock ) ) ;
 	assert( 0 == ( source.cols() % ColsPerBlock ) ) ;
@@ -55,6 +55,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 	dest.clear() ;
 	dest.setRows( source.rows() / RowsPerBlock, RowsPerBlock ) ;
 	dest.setCols( source.cols() / ColsPerBlock, ColsPerBlock ) ;
+	dest.reserve( 1 + (source.nonZeros() / (RowsPerBlock*ColsPerBlock)), source.nonZeros()  );
 
 	const Index blockSize = Traits::is_col_major ? ColsPerBlock : RowsPerBlock ;
 	for( Index outer = 0 ; outer < dest.majorIndex().outerSize() ; ++outer )
@@ -65,7 +66,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 		for( Index i = 0 ; i < blockSize ; ++i )
 		{
 			for( typename EigenDerived::InnerIterator innerIt( source.derived(), outer*blockSize + i ) ;
-				 innerIt ; ++innerIt )
+			     innerIt ; ++innerIt )
 			{
 				const Index blockId = (Index) ( innerIt.index() ) / blockSize  ;
 				if( Traits::is_symmetric && blockId > outer ) break ;
@@ -84,7 +85,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 		for( Index i = 0 ; i < blockSize ; ++i )
 		{
 			for( typename EigenDerived::InnerIterator innerIt( source.derived(), outer*blockSize + i ) ;
-				 innerIt ; ++innerIt )
+			     innerIt ; ++innerIt )
 			{
 				const Index blockId = (Index) ( innerIt.index() ) / blockSize  ;
 				if( Traits::is_symmetric && blockId > outer ) break ;
@@ -115,7 +116,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 
 template< typename BogusDerived, typename EigenScalar, int EigenOptions, typename EigenIndex >
 void convert( const SparseBlockMatrixBase< BogusDerived >& source,
-				Eigen::SparseMatrix< EigenScalar, EigenOptions, EigenIndex >& dest )
+                Eigen::SparseMatrix< EigenScalar, EigenOptions, EigenIndex >& dest )
 {
 	typedef BlockMatrixTraits< BogusDerived > Traits ;
 	typedef typename Traits::Index Index ;
@@ -123,7 +124,7 @@ void convert( const SparseBlockMatrixBase< BogusDerived >& source,
 	typedef Eigen::SparseMatrix< EigenScalar, EigenOptions, EigenIndex > EigenMatrixType ;
 
 	typedef SparseBlockIndexGetter< BogusDerived, Traits::is_symmetric  ||
-			( (bool) EigenMatrixType::IsRowMajor ) != ( (bool) Traits::is_col_major ) > IndexGetter ;
+	        ( (bool) EigenMatrixType::IsRowMajor ) != ( (bool) Traits::is_col_major ) > IndexGetter ;
 
 	dest.setZero() ;
 	dest.resize( source.rows(), source.cols() ) ;
@@ -132,8 +133,8 @@ void convert( const SparseBlockMatrixBase< BogusDerived >& source,
 	const typename IndexGetter::ReturnType& index = IndexGetter::getOrCompute( source, auxIndex )  ;
 
 	const std::vector< Index > &outerOffsets =
-			( (bool) EigenMatrixType::IsRowMajor ) == ( (bool) Traits::is_col_major )
-			? source.majorIndex().innerOffsets : source.minorIndex().innerOffsets ;
+	        ( (bool) EigenMatrixType::IsRowMajor ) == ( (bool) Traits::is_col_major )
+	        ? source.majorIndex().innerOffsets : source.minorIndex().innerOffsets ;
 
 	for( Index outerBlock = 0 ; outerBlock < index.outerSize() ; ++outerBlock )
 	{
@@ -141,7 +142,7 @@ void convert( const SparseBlockMatrixBase< BogusDerived >& source,
 		{
 			dest.startVec( outer ) ;
 			for( typename IndexGetter::ReturnType::InnerIterator it( index, outerBlock ) ;
-				 it ; ++it )
+			     it ; ++it )
 			{
 				for( Index inner = index.innerOffsets[ it.inner() ] ; inner <  index.innerOffsets[ it.inner()+1 ] ; ++inner )
 				{
