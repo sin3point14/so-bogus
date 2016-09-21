@@ -47,6 +47,15 @@
 namespace bogus
 {
 
+MecheFrictionProblem::Options::Options()
+    : maxThreads(0), maxIters(0), cadouxIters(0),
+      tolerance(0), useInfinityNorm( false ),
+      algorithm( GaussSeidel ),
+      gsRegularization( 0 ), gsColoring( false ),
+      admmProjStepSize( 1 ), admmFpStepSize(1.e-3)
+{
+}
+
 MecheFrictionProblem::MecheFrictionProblem()
     : m_primal( BOGUS_NULL_PTR(PrimalFrictionProblem<3u>) ),
       m_dual( BOGUS_NULL_PTR(DualFrictionProblem<3u>) ),
@@ -150,15 +159,16 @@ void MecheFrictionProblem::fromPrimal (
 	for( std::ptrdiff_t i = 0 ; i < (std::ptrdiff_t) n_in ; ++i )
 	{
 		Hnnz += 3*ndof[ObjA[i]] ;
-		if( Obj[i] != -1 && ObjB[i] == ObjA[i] )
+		if( ObjB[i] != -1 && ObjB[i] == ObjA[i] )
 		{
 			Hnnz += 3*ndof[ObjB[i]] ;
 		}
 	}
 
-	m_primal->H.reserve( 2*n_in, Hnnz ) ;
 	m_primal->H.setRows( n_in ) ;
 	m_primal->H.setCols( NObj, ndof ) ;
+	m_primal->H.reserve( 2*n_in, Hnnz ) ;
+
 #ifndef BOGUS_DONT_PARALLELIZE
 #pragma omp parallel for
 #endif
@@ -212,15 +222,6 @@ void MecheFrictionProblem::computeDual( double regularization )
 	}
 }
 
-
-MecheFrictionProblem::Options::Options()
-    : maxThreads(0), maxIters(0), cadouxIters(0),
-      tolerance(0), useInfinityNorm( false ),
-      algorithm( GaussSeidel ),
-      gsRegularization( 0 ), gsColoring( false ),
-      admmProjStepSize( 1 ), admmFpStepSize(1.e-3)
-{
-}
 
 double MecheFrictionProblem::solve(
         double *r,
@@ -428,25 +429,35 @@ void MecheFrictionProblem::setOutStream( std::ostream *out )
 #ifdef BOGUS_WITH_BOOST_SERIALIZATION
 bool MecheFrictionProblem::dumpToFile( const char* fileName, const double * r0 ) const
 {
+	static const int version = 1 ;
+
 	if( !m_primal ) return false ;
 
 	std::ofstream ofs( fileName );
 	boost::archive::binary_oarchive oa(ofs);
-	oa << m_primal->M << m_primal->H << m_primal->E ;
-	oa << boost::serialization::make_array( m_primal->f , nDegreesOfFreedom() ) ;
-	oa << boost::serialization::make_array( m_primal->w , 3 * nContacts() ) ;
-	oa << boost::serialization::make_array( m_primal->mu, nContacts() ) ;
-	bool has_r0 = r0 != 0 ;
-	oa << has_r0 ; ;
-	if( r0 )
-	{
-		oa << boost::serialization::make_array( r0, 3*nContacts() ) ;
+
+	try{
+		oa << version ;
+		oa << m_primal->M << m_primal->H << m_primal->E ;
+		oa << boost::serialization::make_array( m_primal->f , nDegreesOfFreedom() ) ;
+		oa << boost::serialization::make_array( m_primal->w , 3 * nContacts() ) ;
+		oa << boost::serialization::make_array( m_primal->mu, nContacts() ) ;
+		bool has_r0 = r0 != 0 ;
+		oa << has_r0 ; ;
+		if( r0 )
+		{
+			oa << boost::serialization::make_array( r0, 3*nContacts() ) ;
+		}
+
+	} catch (std::exception &e) {
+		std::cerr << "Error writing MecheFrictionProblem to "<< fileName << ":\n> " << e.what() << std::endl ;
+		return false ;
 	}
 
 	return true ;
 }
 
-bool MecheFrictionProblem::fromFile( const char* fileName, double *& r0 )
+bool MecheFrictionProblem::fromFile( const char* fileName, double *& r0, bool old )
 {
 	std::ifstream ifs( fileName );
 	if( !ifs.is_open() ) return false ;
@@ -454,31 +465,56 @@ bool MecheFrictionProblem::fromFile( const char* fileName, double *& r0 )
 	reset() ;
 
 	boost::archive::binary_iarchive ia(ifs);
-	ia >> m_primal->M >> m_primal->H >> m_primal->E ;
+
+	try{
+		if( old ) {
+			bogus::SparseBlockMatrix< PrimalFrictionProblem<3>::HBlock, UNCOMPRESSED > Hold ;
+			ia >> m_primal->M >> Hold >> m_primal->E ;
+			m_primal->H = Hold ;
+		} else {
+			int version ;
+			ia >> version ;
+			ia >> m_primal->M >> m_primal->H >> m_primal->E ;
+		}
+	} catch (std::exception &e) {
+		std::cerr << "Error reading MecheFrictionProblem from "<< fileName << ":\n> " << e.what() << std::endl ;
+		return false ;
+	}
 
 	m_f  = new double[ nDegreesOfFreedom() ] ;
 	m_w  = new double[ 3 * nContacts() ] ;
 	m_mu = new double[ nContacts() ] ;
 
+	r0 = new double[ 3 * nContacts() ] ;
+
 	std::cout << fileName << ": " << nDegreesOfFreedom() << " dofs, " << nContacts() << " contacts" << std::endl ;
 
-	ia >> boost::serialization::make_array( m_f , nDegreesOfFreedom() ) ;
-	ia >> boost::serialization::make_array( m_w , 3 * nContacts() ) ;
-	ia >> boost::serialization::make_array( m_mu, nContacts() ) ;
+	try{
+		ia >> boost::serialization::make_array( m_f , nDegreesOfFreedom() ) ;
+		ia >> boost::serialization::make_array( m_w , 3 * nContacts() ) ;
+		ia >> boost::serialization::make_array( m_mu, nContacts() ) ;
+
+		bool has_r0 ;
+		ia >> has_r0 ;
+		if ( has_r0 ) {
+			ia >> boost::serialization::make_array( r0, 3*nContacts() ) ;
+		} else {
+			Eigen::VectorXd::Map( r0, 3*nContacts() ).setZero() ;
+		}
+
+	} catch (std::exception &e) {
+		std::cerr << "Error reading MecheFrictionProblem from "<< fileName << ":\n> " << e.what() << std::endl ;
+		delete m_f ;
+		delete m_w ;
+		delete m_mu ;
+		delete r0 ;
+		r0 = m_f = m_w = m_mu = BOGUS_NULL_PTR( double ) ;
+		return false ;
+	}
 
 	m_primal->f  = m_f ;
 	m_primal->w  = m_w ;
 	m_primal->mu = m_mu ;
-
-	r0 = new double[ 3 * nContacts() ] ;
-
-	bool has_r0 ;
-	ia >> has_r0 ;
-	if ( has_r0 ) {
-		ia >> boost::serialization::make_array( r0, 3*nContacts() ) ;
-	} else {
-		Eigen::VectorXd::Map( r0, 3*nContacts() ).setZero() ;
-	}
 
 	m_primal->computeMInv();
 

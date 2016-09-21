@@ -132,8 +132,9 @@ public:
 	/*! \param r0 Will be set to ploint to a newly allocated array containing the initial
 		guess, if such one was saved with the problem. Will have to be manually freed
 		by the caller using the delete[] operator.
+		\param old If true, use the old (<1.4) version of the serialization file
 	*/
-	bool fromFile( const char* fileName, double* &r0 ) ;
+	bool fromFile( const char* fileName, double* &r0, bool old = false ) ;
 
 	// solvers Callback
 	void ackCurrentResidual( unsigned GSIter, double err ) ;

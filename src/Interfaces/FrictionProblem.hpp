@@ -65,7 +65,7 @@ struct PrimalFrictionProblem
 	bogus::SparseBlockMatrix< Eigen::Matrix< double, Dimension, Dimension > > E ;
 
 	typedef Eigen::Matrix< double, Dimension, Eigen::Dynamic > HBlock ;
-	typedef SparseBlockMatrix< HBlock, UNCOMPRESSED > HType ;
+	typedef FlatSparseBlockMatrix< HBlock, UNCOMPRESSED > HType ;
 	//! H -- deformation gradient \f$ \frac{\partial u}{\partial v} \f$ ( generalized coordinates <-> contact basis coordinates )
 	HType H;
 

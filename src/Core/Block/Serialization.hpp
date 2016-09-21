@@ -30,9 +30,9 @@ struct version < bogus::SparseBlockMatrix< BlockT, Flags > >
 
 template<typename Archive, typename Index, typename BlockPtr  >
 inline void serialize(
-	   Archive & ar,
-	   bogus::SparseBlockIndex<false, Index, BlockPtr > & index,
-	   const unsigned int file_version
+       Archive & ar,
+       bogus::SparseBlockIndex<false, Index, BlockPtr > & index,
+       const unsigned int file_version
    )
 {
 	(void) file_version ;
@@ -43,9 +43,9 @@ inline void serialize(
 
 template<typename Archive, typename Index, typename BlockPtr  >
 inline void serialize(
-	   Archive & ar,
-	   bogus::SparseBlockIndex<true, Index, BlockPtr > & index,
-	   const unsigned int file_version
+       Archive & ar,
+       bogus::SparseBlockIndex<true, Index, BlockPtr > & index,
+       const unsigned int file_version
    )
 {
 	BlockPtr dummy_base ;
@@ -66,8 +66,8 @@ namespace bogus {
 template < typename Derived >
 template < typename Archive >
 void SparseBlockMatrixBase< Derived >::serialize(
-	   Archive & ar,
-	   const unsigned int file_version
+       Archive & ar,
+       const unsigned int file_version
    )
 {
 	std::size_t dummyNBlocks( 0 ) ;
@@ -85,7 +85,6 @@ void SparseBlockMatrixBase< Derived >::serialize(
 		m_transposeBlocks.clear() ;
 		m_transposeIndex.clear() ;
 		m_transposeIndex.valid = 0 ;
-		m_blocks.resize( dummyNBlocks ) ;
 	} else
 		ar & m_transposeBlocks ;
 }

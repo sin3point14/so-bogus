@@ -17,7 +17,7 @@
 TEST_F( SmallFrictionPb, ProductGaussSeidel )
 {
 	ResidualInfo ri ;
-	ri.setVerbose(true);
+//	ri.setVerbose(true);
 
 	// End problem definition
 

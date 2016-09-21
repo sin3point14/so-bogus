@@ -55,9 +55,10 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 	dest.clear() ;
 	dest.setRows( source.rows() / RowsPerBlock, RowsPerBlock ) ;
 	dest.setCols( source.cols() / ColsPerBlock, ColsPerBlock ) ;
-	dest.reserve( 1 + (source.nonZeros() / (RowsPerBlock*ColsPerBlock)), source.nonZeros()  );
+	dest.reserve( 1 + (source.derived().nonZeros() / (RowsPerBlock*ColsPerBlock)), source.derived().nonZeros()  );
 
 	const Index blockSize = Traits::is_col_major ? ColsPerBlock : RowsPerBlock ;
+	const Index innerBlockSize = Traits::is_col_major ? RowsPerBlock : ColsPerBlock ;
 	for( Index outer = 0 ; outer < dest.majorIndex().outerSize() ; ++outer )
 	{
 		// I - compute non-zero blocks
@@ -68,7 +69,7 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 			for( typename EigenDerived::InnerIterator innerIt( source.derived(), outer*blockSize + i ) ;
 			     innerIt ; ++innerIt )
 			{
-				const Index blockId = (Index) ( innerIt.index() ) / blockSize  ;
+				const Index blockId = (Index) ( innerIt.index() ) / innerBlockSize  ;
 				if( Traits::is_symmetric && blockId > outer ) break ;
 				nzBlocks[ blockId ] = 0 ;
 			}
@@ -78,7 +79,9 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 		for( typename std::map< Index, BlockPtr >::iterator bIt = nzBlocks.begin() ; bIt != nzBlocks.end() ; ++bIt )
 		{
 			bIt->second = (BlockPtr) dest.nBlocks() ;
-			dest.template insertByOuterInner< true >( outer, bIt->first ).setZero( RowsPerBlock, ColsPerBlock ) ;
+			typename BogusDerived::BlockRef block = dest.template insertByOuterInner< true >( outer, bIt->first ) ;
+			resize( block, RowsPerBlock, ColsPerBlock ) ;
+			block.setZero( ) ;
 		}
 
 		// III - copy values
@@ -87,9 +90,9 @@ void convert( const Eigen::SparseMatrixBase< EigenDerived >& source,
 			for( typename EigenDerived::InnerIterator innerIt( source.derived(), outer*blockSize + i ) ;
 			     innerIt ; ++innerIt )
 			{
-				const Index blockId = (Index) ( innerIt.index() ) / blockSize  ;
+				const Index blockId = (Index) ( innerIt.index() ) / innerBlockSize  ;
 				if( Traits::is_symmetric && blockId > outer ) break ;
-				const Index binn = innerIt.index() - blockId * blockSize  ;
+				const Index binn = innerIt.index() - blockId * innerBlockSize  ;
 				const Index brow = Traits::is_col_major ? binn : i ;
 				const Index bcol = Traits::is_col_major ? i : binn ;
 
