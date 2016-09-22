@@ -4,96 +4,99 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#include <Core/Block.impl.hpp>
-#include <Core/Block.io.hpp>
-#include <Core/BlockSolvers/ProjectedGradient.impl.hpp>
-#include <Core/BlockSolvers/GaussSeidel.impl.hpp>
-#include <Interfaces/FrictionProblem.hpp>
+#include "FCLibSolver.hpp"
 
 #include <cstdlib>
-
-extern "C"
-{
-#include <fclib.h>
-}
 
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <sys/stat.h>
 
-//#define USE_PG_FOR_CADOUX
 
 
-static const char* g_meth  = 0;
-
-void ackCurrentResidual( unsigned GSIter, double err )
+void usage(const char* name)
 {
-	std::cout << " .. " << g_meth << ": " <<  GSIter << " ==> " << err << std::endl ;
+	std::cout << "Usage: " << name << " dataFile [options] \n "
+	          << "Options: \n"
+	          << " -a int \t algorithm id in [0,1] \n"
+	          << " -T int \t max number of threads (or 0 for OMP_MAX_THREADS) \n"
+	          << " -m int \t max number of iterations \n"
+	          << " -c int \t max number of Cadoux fixed-point iterations (0 means direct solving) \n"
+	          << " -t real \t tolerance \n"
+	          << " -i bool \t if true, use infinity norm instead of l2 \n"
+	          << " -r real \t proximal regularization for GS algorithm \n"
+	          << " -g int \t projected gradiant variant in [0,4] \n"
+	          << std::endl ;
+
+
 }
 
-template< unsigned Dimension, typename EigenDerived >
-static double solve( const fclib_local* problem, const Eigen::SparseMatrixBase< EigenDerived >& ei_W,
-					 Eigen::VectorXd &r, Eigen::VectorXd &u, const bool useCadoux )
-{
-	bogus::DualFrictionProblem< Dimension > dual ;
-	bogus::convert( ei_W, dual.W, Dimension, Dimension ) ;
-
-	const double tol = 1.e-12 ;
-
-	dual.W.prune( tol ) ;
-	dual.W.cacheTranspose();
-
-	dual.b = Eigen::VectorXd::Map( problem->q, problem->W->n ) ;
-	dual.mu = Eigen::VectorXd::Map( problem->mu, problem->W->n/Dimension ) ;
-
-	typename bogus::DualFrictionProblem< Dimension >::GaussSeidelType gs ;
-	gs.setTol( tol ) ;
-	gs.setAutoRegularization( 1.e-3 ) ;
-
-	bogus::Signal< unsigned, double > callback ;
-	callback.connect( &ackCurrentResidual );
-
-	double res = -1 ;
-
-	if( useCadoux )
-	{
-		g_meth = "Cadoux" ;
-#ifdef USE_PG_FOR_CADOUX
-		typename bogus::DualFrictionProblem< Dimension >::ProjectedGradientType pg ;
-		pg.setTol( tol ) ;
-		pg.setMaxIters( 1000 ) ;
-		res = dual.solveCadoux( pg, r.data(), 100, &callback ) ;
-#else
-		gs.setMaxIters( 1000 ) ;
-		res = dual.solveCadoux( gs, r.data(), 100, &callback ) ;
-#endif
-
-	} else {
-		g_meth = "GS" ;
-		gs.setMaxIters( 1.e5 );
-		gs.callback().connect( callback );
-		res = dual.solveWith( gs, r.data() ) ;
-	}
-
-	u = dual.W * r + dual.b ;
-
-	return res ;
-}
 
 int main( int argc, const char* argv[] )
 {
 #ifdef BOGUS_WITH_EIGEN_STABLE_SPARSE_API
 
-	if( argc < 2 )
+	bogus::fclib::Options options ;
+
+	const char* file = BOGUS_NULL_PTR(const char) ;
+
+	for( int i = 1 ; i < argc ; ++i )
 	{
-		std::cerr << " Please provide a problem data file " << std::endl ;
-		return 1 ;
+		if( argv[i][0] == '-' ){
+			switch(argv[i][1]) {
+			case 'h':
+				usage( argv[0]) ;
+				return 0;
+			case 'T':
+				if( ++i == argc ) break ;
+				options.maxThreads = std::atoi( argv[i] ) ;
+				break ;
+			case 'm':
+				if( ++i == argc ) break ;
+				options.maxIters = std::atoi( argv[i] ) ;
+				break ;
+			case 'c':
+				if( ++i == argc ) break ;
+				options.cadouxIters = std::atoi( argv[i] ) ;
+				break ;
+			case 't':
+				if( ++i == argc ) break ;
+				options.tolerance = std::strtod( argv[i], NULL ) ;
+				break ;
+			case 'i':
+				if( ++i == argc ) break ;
+				options.useInfinityNorm = (bool) std::atoi( argv[i] ) ;
+				break ;
+			case 'a':
+				if( ++i == argc ) break ;
+				options.algorithm =   (bogus::fclib::Options::Algorithm)
+				        std::atoi( argv[i] ) ;
+				break ;
+			case 'g':
+				if( ++i == argc ) break ;
+				options.pgVariant =   (bogus::projected_gradient::Variant)
+				        std::atoi( argv[i] ) ;
+				break ;
+			case 'r':
+				if( ++i == argc ) break ;
+				options.gsRegularization = std::strtod( argv[i], NULL ) ;
+				break ;
+			}
+		} else {
+			file = argv[i] ;
+		}
 	}
 
-	const bool useCadoux = argc > 2 && 0 == strncmp( argv[2], "-c", 3 ) ;
+	if( options.maxThreads > 1 )
+		options.gsColoring = true ;
 
-	const char* file = argv[1] ;
+	if( !file )
+	{
+		std::cerr << " Please provide a problem data file " << std::endl ;
+		usage(argv[0]) ;
+		return 1 ;
+	}
 
 	struct fclib_local *problem = NULL ;
 	struct fclib_solution *solution = NULL ;
@@ -118,7 +121,7 @@ int main( int argc, const char* argv[] )
 		if( problem->W && !problem->V && !problem->R )
 		{
 			std::cout << " Pure " << d << "D Coulomb friction problem with "
-					  << n << " contacts " << std::endl ;
+			          << n << " contacts " << std::endl ;
 
 			if( problem->W->nz == -2 )
 			{
@@ -150,20 +153,22 @@ int main( int argc, const char* argv[] )
 
 				}
 
-
 				double res = -1. ;
 				Eigen::VectorXd r, u ;
 				r.setZero( problem->W->n ) ;
 
+				bogus::fclib::Stats stats ;
+
 				if( problem->spacedim == 3 )
 				{
-					res = solve< 3u >( problem, ei_W, r, u, useCadoux ) ;
+					res = bogus::fclib::solve< 3u >( problem, ei_W, options, r, u, stats ) ;
 				} else {
-					res = solve< 2u >( problem, ei_W, r, u, useCadoux ) ;
+					res = bogus::fclib::solve< 2u >( problem, ei_W, options, r, u, stats ) ;
 				}
 
-				std::cout << " => Res: " << res << std::endl ;
-
+				std::cout << " => Res: \t" << res << std::endl ;
+				std::cout << " => Iters: \t"<< stats.nIters << std::endl ;
+				std::cout << " => Time: \t"<< stats.time << std::endl ;
 
 				fclib_solution sol ;
 				sol.v = NULL ;
