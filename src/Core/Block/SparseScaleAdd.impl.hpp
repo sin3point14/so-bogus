@@ -49,6 +49,9 @@ Derived& SparseBlockMatrixBase<Derived>::add( const SparseBlockMatrixBase< Other
 	typedef std::pair< BlockPtr, typename OtherTraits::BlockPtr > PtrPair ;
 	typedef std::pair< Index, PtrPair > NonZero ;
 
+	if( rhs.empty() )
+		return derived() ;
+
 	std::vector< std::vector< NonZero > > nonZeros ;
 
 	// I - Compute non-zeros
@@ -193,7 +196,9 @@ template < typename Expression >
 Derived& SparseBlockMatrixBase<Derived>::operator=( const NarySum< Expression > &sum )
 {
 
-	if( !sum.empty() ) {
+	if( sum.empty() ) {
+		setZero() ;
+	} else {
 
 		// WARNING -- Not safe w.r.t aliasing
 		typedef typename NarySum< Expression >::Sum::const_iterator Iterator ;
