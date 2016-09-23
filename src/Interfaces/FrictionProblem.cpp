@@ -53,11 +53,11 @@ double DualFrictionProblem< Dimension >::solveWith( GaussSeidelType &gs, double 
 
 template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::solveWith( ProjectedGradientType &pg,
-                                                    double *r ) const
+                                                    double *r, const bool staticProblem ) const
 {
 	pg.setMatrix( W );
 
-	return friction_problem::solve( *this, pg, r, true ) ;
+	return friction_problem::solve( *this, pg, r, staticProblem ) ;
 }
 
 template< unsigned Dimension >
@@ -70,9 +70,9 @@ double DualFrictionProblem< Dimension >::evalWith( const GaussSeidelType &gs,
 
 template< unsigned Dimension >
 double DualFrictionProblem< Dimension >::evalWith( const ProjectedGradientType &gs,
-                                                     const double *r ) const
+                                                   const double *r, const bool staticProblem ) const
 {
-	return friction_problem::eval( *this, gs, r, true) ;
+	return friction_problem::eval( *this, gs, r, staticProblem) ;
 }
 
 

@@ -161,7 +161,9 @@ struct DualFrictionProblem
 	  \returns the error as returned by the GaussSeidel::solve() function
 	  */
 	double solveWith( GaussSeidelType &gs, double * r, const bool staticProblem = false ) const ;
-	double solveWith( ProjectedGradientType &pg, double * r ) const ;
+	//! Same as above
+	/*! \warning staticProblem defaults tp true (as solving Coulomb probles with PG is unreliable)*/
+	double solveWith( ProjectedGradientType &pg, double * r, const bool staticProblem = true ) const ;
 
 	//! Evaluate a residual using the GS's error function
 	/*!
@@ -172,7 +174,9 @@ struct DualFrictionProblem
 	  \returns the error as returned by the GaussSeidel::eval() function
 	  */
 	double evalWith( const GaussSeidelType &gs, const double * r, const bool staticProblem = false ) const ;
-	double evalWith( const ProjectedGradientType &gs, const double * r ) const ;
+	//! Same as above
+	/*! \warning staticProblem defaults tp true (as solving Coulomb probles with PG is unreliable)*/
+	double evalWith( const ProjectedGradientType &gs, const double * r, const bool staticProblem = true ) const ;
 
 	//! Solves this problem using the Cadoux algorithm ( with fixed-point iteration )
 	/*!
