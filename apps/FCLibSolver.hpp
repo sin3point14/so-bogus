@@ -15,16 +15,6 @@
 
 #include <Interfaces/FrictionProblem.hpp>
 
-
-extern "C"
-{
-#include <fclib.h>
-}
-
-extern "C" {
-    struct fclib_local ;
-}
-
 namespace  bogus {
 namespace fclib {
 
@@ -53,8 +43,8 @@ struct Options {
 
 
 	Options()
-	: maxThreads(0), maxIters(10000), cadouxIters(0),
-	  tolerance(1.e-6), useInfinityNorm( false ),
+	: maxThreads(0), maxIters(100000), cadouxIters(0),
+	  tolerance(1.e-16), useInfinityNorm( false ),
 	  algorithm( GaussSeidel ),
 	  gsRegularization( 0 ), gsColoring( false ),
 	  pgVariant( projected_gradient::SPG )
@@ -64,6 +54,8 @@ struct Options {
 
 //! Solver result
 struct Stats {
+	bool verbose ;
+
 	// Last iteration info
 	unsigned nIters ;
 	double   error  ;
@@ -73,8 +65,8 @@ struct Stats {
 	Signal<unsigned, double, double> callback ;
 	Timer    timer ;
 
-	Stats()
-	    : nIters(0), error(-1), time(0)
+	explicit Stats( bool v = false )
+	    : verbose(v), nIters(0), error(-1), time(0)
 	{}
 
 	void reset() {
@@ -83,35 +75,17 @@ struct Stats {
 
 	void update( unsigned it, double err )
 	{
-		std::cout << it << "  sdasd " << err << std::endl ;
 		nIters = it ;
 		error  = err ;
 		time   = timer.elapsed() ;
+		if( verbose )
+			std::cout << it << ":\t" << err << "\t" << time << std::endl ;
 		callback.trigger( it, err, time );
 	}
 };
 
-template< unsigned Dimension, typename EigenDerived >
-static double solve( const fclib_local* problem,
-                     const Eigen::SparseMatrixBase< EigenDerived >& ei_W,
-                     const Options& options,
-                     Eigen::VectorXd &r, Eigen::VectorXd &u,
-                     Stats& stats )
-{
-	bogus::DualFrictionProblem< Dimension > dual ;
-	bogus::convert( ei_W, dual.W, Dimension, Dimension ) ;
-
-//	dual.W.prune( options.tolerance ) ;
-//	dual.W.cacheTranspose();
-
-	dual.b = Eigen::VectorXd::Map( problem->q, problem->W->n ) ;
-	dual.mu = Eigen::VectorXd::Map( problem->mu, problem->W->n/Dimension ) ;
-
-	return solveDual( dual, options, r, u, stats ) ;
-}
-
 template< unsigned Dimension >
-static double solveDual( const DualFrictionProblem<Dimension> &dual,
+double solveDual( const DualFrictionProblem<Dimension> &dual,
                          const Options& options,
                          Eigen::VectorXd &r, Eigen::VectorXd &u,
                          Stats& stats )
@@ -125,6 +99,7 @@ static double solveDual( const DualFrictionProblem<Dimension> &dual,
 
 	if( options.algorithm == Options::GaussSeidel ) {
 		typename bogus::DualFrictionProblem< Dimension >::GaussSeidelType gs ;
+
 		gs.setTol( options.tolerance ) ;
 		gs.useInfinityNorm( options.useInfinityNorm );
 		gs.setMaxIters( options.maxIters ) ;

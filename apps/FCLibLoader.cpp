@@ -5,6 +5,12 @@
 */
 
 #include "FCLibSolver.hpp"
+#include <bogus/Extra/SOC/SOCLaw.impl.hpp>
+
+extern "C"
+{
+#include <fclib.h>
+}
 
 #include <cstdlib>
 
@@ -27,10 +33,69 @@ void usage(const char* name)
 	          << " -i bool \t if true, use infinity norm instead of l2 \n"
 	          << " -r real \t proximal regularization for GS algorithm \n"
 	          << " -g int \t projected gradiant variant in [0,4] \n"
+	          << " -v bool \t if true, print residual at each iteration \n"
 	          << std::endl ;
 
+}
+
+namespace bogus{
+namespace fclib {
+
+// reimplementation of fcmerc. merti function to avoid the accuracy loss
+// from the difference of ordering in the matrix-vector product W*r
+template < unsigned Dim >
+static double merit1( const Eigen::VectorXd&r, const Eigen::VectorXd&u,
+                      const Eigen::VectorXd&b,
+                      const double *mu )
+{
+	const int n = r.rows() / Dim ;
+	typedef SOCLaw< Dim, double, false > SOC ;
+	SOC socLaw( n, mu ) ;
+
+	double err = 0 ;
+
+#ifndef BOGUS_DONT_PARALLELIZE
+#pragma omp parallel for reduction( +:err )
+#endif
+	for( int i = 0 ; i < n ; ++i ) {
+		typename SOC::Traits::Vector x = r.segment<Dim>( Dim*i ) - u.segment<Dim>( Dim*i ) ;
+		x[0] -= mu[i] * u.segment<Dim-1>( Dim*i + 1 ).norm() ;
+		socLaw.projectOnConstraint( i, x ) ;
+		const double lerr = (x - r.segment<Dim>( Dim*i )).squaredNorm() ;
+		err += lerr ;
+	}
+
+	// fcmer use sqrt(b.norm())
+	return std::sqrt(err) / ( 1 + b.norm() ) ;
+}
+
+template< unsigned Dimension, typename EigenDerived >
+static double solve( const fclib_local* problem,
+                     const Eigen::SparseMatrixBase< EigenDerived >& ei_W,
+                     Options& options,
+                     Eigen::VectorXd &r, Eigen::VectorXd &u,
+                     Stats& stats )
+{
+	bogus::DualFrictionProblem< Dimension > dual ;
+	bogus::convert( ei_W, dual.W, Dimension, Dimension ) ;
+
+	dual.W.prune( options.tolerance ) ;
+	dual.W.cacheTranspose();
+
+	dual.b = Eigen::VectorXd::Map( problem->q, problem->W->n ) ;
+	dual.mu = Eigen::VectorXd::Map( problem->mu, problem->W->n/Dimension ) ;
+
+	options.tolerance *= ( 1 + dual.b.norm() )/problem->W->n ;
+	solveDual( dual, options, r, u, stats ) ;
+	stats.error *= problem->W->n/( 1 + dual.b.norm() ) ;
+
+	return merit1< Dimension >( r, u, dual.b, problem->mu ) ;
 
 }
+
+
+} //fclib
+} //bogus
 
 
 int main( int argc, const char* argv[] )
@@ -38,6 +103,7 @@ int main( int argc, const char* argv[] )
 #ifdef BOGUS_WITH_EIGEN_STABLE_SPARSE_API
 
 	bogus::fclib::Options options ;
+	bool verbose = false ;
 
 	const char* file = BOGUS_NULL_PTR(const char) ;
 
@@ -81,6 +147,10 @@ int main( int argc, const char* argv[] )
 			case 'r':
 				if( ++i == argc ) break ;
 				options.gsRegularization = std::strtod( argv[i], NULL ) ;
+				break ;
+			case 'v':
+				if( ++i == argc ) break ;
+				verbose = (bool) std::atoi( argv[i] ) ;
 				break ;
 			}
 		} else {
@@ -157,7 +227,7 @@ int main( int argc, const char* argv[] )
 				Eigen::VectorXd r, u ;
 				r.setZero( problem->W->n ) ;
 
-				bogus::fclib::Stats stats ;
+				bogus::fclib::Stats stats (verbose) ;
 
 				if( problem->spacedim == 3 )
 				{
@@ -166,7 +236,7 @@ int main( int argc, const char* argv[] )
 					res = bogus::fclib::solve< 2u >( problem, ei_W, options, r, u, stats ) ;
 				}
 
-				std::cout << " => Res: \t" << res << std::endl ;
+				std::cout << " => Err: \t" << stats.error << std::endl ;
 				std::cout << " => Iters: \t"<< stats.nIters << std::endl ;
 				std::cout << " => Time: \t"<< stats.time << std::endl ;
 
@@ -175,6 +245,11 @@ int main( int argc, const char* argv[] )
 				sol.u = u.data();
 				sol.r = r.data() ;
 				sol.l = NULL ;
+
+				std::cout << " => .. FCLib Merit1: " << fclib_merit_local( problem, MERIT_1, &sol ) << std::endl ;
+				std::cout << " => ..  True Merit1: " << res << std::endl ;
+
+				//
 
 				std::string fname ( file ) ;
 				const std::size_t dir_pos = fname.rfind( '/' ) ;
@@ -207,8 +282,6 @@ int main( int argc, const char* argv[] )
 						}
 					}
 				}
-
-				std::cout << " => .. FCLib Merit1: " << fclib_merit_local( problem, MERIT_1, &sol ) << std::endl ;
 
 			}
 		}
