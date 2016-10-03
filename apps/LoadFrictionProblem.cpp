@@ -120,7 +120,7 @@ int main( int argc, const char* argv[] )
 		}
 
 
-		mfp.solve( r, NULL, staticPb, problemRegularization, options ) ;
+		mfp.solve( r, NULL, options, staticPb, problemRegularization ) ;
 		std::cout << "Solver timer: " << mfp.lastSolveTime() << " seconds" << std::endl ;
 
 		delete[] r ;

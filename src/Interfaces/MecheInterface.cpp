@@ -255,16 +255,17 @@ double MecheFrictionProblem::solve(
 		options.gsRegularization = regularization ;
 	}
 
-	return solve( r, v, staticProblem, problemRegularization, options ) ;
+	return solve( r, v, options, staticProblem, problemRegularization ) ;
 }
 
 
 double MecheFrictionProblem::solve(
         double *r,
         double *v,
+        const Options& options,
         bool staticProblem,
-        double problemRegularization,
-        const Options& options )
+        double problemRegularization
+        )
 {
 	assert( m_primal ) ;
 	const unsigned m = m_primal->H.cols() ;
