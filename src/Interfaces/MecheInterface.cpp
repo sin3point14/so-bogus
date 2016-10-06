@@ -52,6 +52,9 @@ MecheFrictionProblem::Options::Options()
       tolerance(0), useInfinityNorm( false ),
       algorithm( GaussSeidel ),
       gsRegularization( 0 ), gsColoring( false ),
+      gsSkipIters( -1 ), // -1 means default
+      tryZeroAsWell( true ),
+      pgVariant( projected_gradient::SPG ),
       admmProjStepSize( 1 ), admmFpStepSize(1.e-3)
 {
 }
@@ -327,12 +330,14 @@ double MecheFrictionProblem::solve(
 		if( options.algorithm == MatrixFreeGaussSeidel )
 		{
 			typename PrimalFrictionProblem< 3u >::ProductGaussSeidelType gs ;
-			if( options.tolerance != 0. ) gs.setTol( options.tolerance );
-			if( options.maxIters  != 0  ) gs.setMaxIters( options.maxIters );
+			if( options.tolerance   != 0. ) gs.setTol( options.tolerance );
+			if( options.maxIters    != 0  ) gs.setMaxIters( options.maxIters );
+			if( options.gsSkipIters >= 0  ) gs.setSkipIters( options.gsSkipIters );
 
 			gs.useInfinityNorm( options.useInfinityNorm ) ;
 			gs.setMaxThreads( options.maxThreads );
 			gs.setAutoRegularization( options.gsRegularization ) ;
+			gs.doTryZeroAsWell( options.tryZeroAsWell );
 
 			gs.callback().connect( callback );
 			res = m_primal->solveWith( gs, r_loc.data(), staticProblem ) ;
@@ -355,12 +360,12 @@ double MecheFrictionProblem::solve(
 				if( options.maxIters  != 0  ) pg.setMaxIters( options.maxIters );
 
 				pg.useInfinityNorm( options.useInfinityNorm ) ;
-				pg.setDefaultVariant( projected_gradient::Conjugated );
+				pg.setDefaultVariant( options.pgVariant  );
 
 				if( staticProblem || options.cadouxIters == 0 )
 				{
 					pg.callback().connect( callback );
-					res = m_dual->solveWith( pg, r_loc.data() ) ;
+					res = m_dual->solveWith( pg, r_loc.data(), staticProblem ) ;
 				} else {
 					res = m_dual->solveCadoux( pg, r_loc.data(), options.cadouxIters, &callback ) ;
 				}
@@ -368,8 +373,9 @@ double MecheFrictionProblem::solve(
 				// Setup GS parameters
 				bogus::DualFrictionProblem<3u>::GaussSeidelType gs ;
 
-				if( options.tolerance != 0. ) gs.setTol( options.tolerance );
-				if( options.maxIters  != 0  ) gs.setMaxIters( options.maxIters );
+				if( options.tolerance   != 0. ) gs.setTol( options.tolerance );
+				if( options.maxIters    != 0  ) gs.setMaxIters( options.maxIters );
+				if( options.gsSkipIters >= 0  ) gs.setSkipIters( options.gsSkipIters );
 
 				gs.setMaxThreads( options.maxThreads );
 				gs.setAutoRegularization( options.gsRegularization ) ;
@@ -390,9 +396,11 @@ double MecheFrictionProblem::solve(
 
 				if( staticProblem || options.cadouxIters == 0 )
 				{
+					gs.doTryZeroAsWell( options.tryZeroAsWell );
 					gs.callback().connect( callback );
 					res = m_dual->solveWith( gs, r_loc.data(), staticProblem ) ;
 				} else {
+					gs.doTryZeroAsWell( false );
 					res = m_dual->solveCadoux( gs, r_loc.data(), options.cadouxIters, &callback ) ;
 				}
 

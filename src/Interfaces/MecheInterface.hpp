@@ -24,6 +24,8 @@
 #include "../Core/Utils/Timer.hpp"
 #include "../Core/Utils/CppTools.hpp"
 
+#include "../Core/BlockSolvers.fwd.hpp"
+
 #ifndef BOGUS_MECHE_INTERFACE_HPP
 #define BOGUS_MECHE_INTERFACE_HPP
 
@@ -60,6 +62,10 @@ public:
 
 		double gsRegularization ; //!< GS proximal regularization coefficient
 		bool   gsColoring ;       //!< Use coloring for parallel GS; slower but deterministic
+		int    gsSkipIters;       //!< Number of frozen iterations for sleeping heuristics
+		bool   tryZeroAsWell ;    //!< Try to see if starting at zero yields a lower initial error
+
+		projected_gradient::Variant pgVariant ; //! Variant of the Projected Gradient algorithm
 
 		double admmProjStepSize ;
 		double admmFpStepSize ;

@@ -79,14 +79,25 @@ public:
 	//! Sets the number of iterations for temporarily freezing local problems
 	void setSkipIters( unsigned skipIters ) { m_skipIters = skipIters ; }
 
+	//! If true, the algorithm will reset r to zero if that would result in a lower residual
+	//! ( unless otherwise specified by an explicit argument to the solve function )
+	void doTryZeroAsWell( bool doTry = true ) { m_tryZeroAsWell = doTry ; }
+
+	template < typename NSLaw, typename RhsT, typename ResT >
+	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x ) const
+	{
+		return static_cast< const GaussSeidelImpl& >( *this ).solve( law, b, x, m_tryZeroAsWell ) ;
+	}
+
 
 protected:
 
 	GaussSeidelBase() :
-		m_maxThreads (  0 ),
-		m_evalEvery ( 25  ),
-		m_skipIters ( 10 ),
-		m_autoRegularization ( 0. )
+	    m_maxThreads (  0 ),
+	    m_evalEvery ( 25  ),
+	    m_skipIters ( 10 ),
+	    m_autoRegularization ( 0. ),
+	    m_tryZeroAsWell( true )
 	{
 		m_tol = 1.e-6 ;
 		m_maxIters = 250 ;
@@ -111,14 +122,14 @@ protected:
 
 	template < typename NSLaw, typename ResT >
 	Scalar evalAndKeepBest(
-			const NSLaw &law, const ResT &x,
-			const typename GlobalProblemTraits::DynVector& y,
-			typename GlobalProblemTraits::DynVector& x_best, Scalar &err_best ) const ;
+	        const NSLaw &law, const ResT &x,
+	        const typename GlobalProblemTraits::DynVector& y,
+	        typename GlobalProblemTraits::DynVector& x_best, Scalar &err_best ) const ;
 
 	template < typename NSLaw, typename RhsT, typename ResT >
 	bool tryZero(
-			const NSLaw &law, const RhsT &b, ResT &x,
-			typename GlobalProblemTraits::DynVector& x_best, Scalar &err_best ) const ;
+	        const NSLaw &law, const RhsT &b, ResT &x,
+	        typename GlobalProblemTraits::DynVector& x_best, Scalar &err_best ) const ;
 
 
 	using Base::m_matrix ;
@@ -143,6 +154,9 @@ protected:
 
 	//! \sa setAutoRegularization(). Defaults to 0.
 	Scalar m_autoRegularization ;
+
+	//! \sa doTryZeroAsWell(). Defaults to true.
+	bool m_tryZeroAsWell ;
 
 } ;
 

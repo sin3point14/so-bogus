@@ -18,6 +18,7 @@ void usage(const char* name) {
 	          << " -T int \t max number of threads (or 0 for OMP_MAX_THREADS) \n"
 	          << " -m int \t max number of iterations \n"
 	          << " -c int \t max number of Cadoux fixed-point iterations (0 means direct solving) \n"
+	          << " -g int \t Projected Gradient variant in [0,4] \n"
 	          << " -t real \t tolerance \n"
 	          << " -r real \t problem regularization \n"
 	          << " -p real \t (ADMM only) projection step size\n"
@@ -25,6 +26,8 @@ void usage(const char* name) {
 	          << " -s bool \t if true, solve SOCQP instead of DCFP (static problem) \n"
 	          << " -i bool \t if true, use infinity norm instead of l2 \n"
 	          << " -o bool \t if true, use the old (<1.4) file format\n"
+	          << " -z bool \t if true, GS will try to start at r=zero\n"
+	          << " -k int  \t GS sleeping iterations \n"
 	          << std::endl ;
 
 }
@@ -33,6 +36,7 @@ int main( int argc, const char* argv[] )
 {
 
 	bogus::MecheFrictionProblem::Options options ;
+	options.tryZeroAsWell = false ;
 
 	const char* file = BOGUS_NULL_PTR(const char) ;
 	double problemRegularization = 0. ;
@@ -75,6 +79,11 @@ int main( int argc, const char* argv[] )
 				options.algorithm =   (bogus::MecheFrictionProblem::Algorithm)
 				        std::atoi( argv[i] ) ;
 				break ;
+			case 'g':
+				if( ++i == argc ) break ;
+				options.pgVariant =   (bogus::projected_gradient::Variant)
+				        std::atoi( argv[i] ) ;
+				break ;
 			case 'r':
 				if( ++i == argc ) break ;
 				problemRegularization = std::strtod( argv[i], NULL ) ;
@@ -90,6 +99,14 @@ int main( int argc, const char* argv[] )
 			case 'f':
 				if( ++i == argc ) break ;
 				options.admmFpStepSize = std::strtod( argv[i], NULL ) ;
+				break ;
+			case 'k':
+				if( ++i == argc ) break ;
+				options.gsSkipIters = std::atoi( argv[i] ) ;
+				break ;
+			case 'z':
+				if( ++i == argc ) break ;
+				options.tryZeroAsWell = (bool) std::atoi( argv[i] ) ;
 				break ;
 			}
 		} else {
@@ -120,15 +137,16 @@ int main( int argc, const char* argv[] )
 		}
 
 
-		mfp.solve( r, NULL, options, staticPb, problemRegularization ) ;
-		std::cout << "Solver timer: " << mfp.lastSolveTime() << " seconds" << std::endl ;
+		const double res = mfp.solve( r, NULL, options, staticPb, problemRegularization ) ;
+		std::cout << "Residual:\t "     << res << std::endl ;
+		std::cout << "Solver timer:\t " << mfp.lastSolveTime() << " seconds" << std::endl ;
 
 		delete[] r ;
 
 		return 0 ;
 	}
 
-	std::cerr << " Could not load " << argv[1] << std::endl ;
+	std::cerr << " Could not load " << file << std::endl ;
 
 	return 1 ;
 

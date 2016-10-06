@@ -19,23 +19,6 @@
 namespace bogus
 {
 
-//! Options for ProjectedGradient solvers
-namespace projected_gradient {
-    //! Variants of Projected Gradient algorithm
-    enum Variant {
-		//! Standard projected gradient
-		Standard,
-		//! Projected gradient descent
-		Descent,
-		//! Projected gradient with conjugation of search direction
-		Conjugated,
-		//! Accelerated Projected Gradient Descent based on \cite Nesterov1983 and developed in \cite Heyn13
-		APGD,
-		//! Spectral Projected Gradient, loosely adapted from \cite Tasora13
-		SPG
-	} ;
-}
-
 //! Projected Gradient iterative solver.
 template < typename BlockMatrixType >
 class ProjectedGradient : public ConstrainedSolverBase< ProjectedGradient<BlockMatrixType >, BlockMatrixType >
