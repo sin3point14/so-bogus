@@ -37,10 +37,10 @@ To use this library,
 \endcode
 
 
-The main user-fronting class of this library is SparseBlockMatrix, even if most of its methods are actually implemented by its parent, SparseBlockMatrixBase.
+The main user-fronting class of this library is SparseBlockMatrix, even if most of its methods are actually implemented by its parent, SparseBlockMatrixBase. FlatSparseBlockMatrix provides a more efficient implemtation with a similar interface when the blocks are dynamically-sized matrices.
 Alternatively, the MappedSparseBlockMatrix class allows an externally constructed sparse block matrix to be used inside bogus expressions.
 
-SparseBlockMatrix and MappedSparseBlockMatrix are templated with a block type, and an optional set of \ref flags.
+SparseBlockMatrix, FlatSparseBlockMatrix, and MappedSparseBlockMatrix are templated with a block type, and an optional set of \ref flags.
 The library has been written to mainly accept Eigen dense and sparse matrices as block types, though little effort is required to make it compatible with other types.
 Additionally, scalar types ( such as \c double, \c float or \c int ) are supported out of the box, as well as LU and LDLT factorizations of Eigen matrices.
 
@@ -108,6 +108,21 @@ Alternatively, <b> for matrices with an uncompressed index</b>, the SparseBlockM
 In this case, there are no restrictions on the order in which blocks are inserted.
 However, this is at the cost of poorer performance. Please refere to those methods documentation for more details.
 
+\section block_flat ``Flat'' SparseBlockMatrix
+Internally, the SparseBlockMatrix<BlockT> class uses a \c std::vector<BlockT>
+to store its data. This work great for fixed-size blocks, as the storage is then contiguous.
+However, dynamically-sized blocks will be individually allocated on the heap, which may 
+degrade the caching performance when performing operations such as matrix-vector multiplications.
+
+The class FlatSparseBlockMatrix<BlockT> remedies to this problem. Its public interface is similar to 
+that of SparseBlockMatrix, but internally it uses a contiguous storage even for dynamically sized matrices, which may improve performance in this case. 
+Note that using FlatSparseBlockMatrix to store fixed-size blocks is wasteful, as it involves
+superfluous arithmetic operations keeping track of the individual blocks dimensions.
+SparseBlockMatrix and FlatSparseBlockMatrix should be interchangeable in most cases 
+(e.g., the result of an addition of SparseBlockMatrix can be affected to a FlatSparseBlockMatrix, and vice versa). However, FlatSparseBlockMatrix is much more experimental at this point. 
+Moreover, while SparseBlockMatrix can accomodate arbitrary block types (such as other sparse matrices, or references to linear solvers), the blocks inside a FlatSparseBlockMatrix must be simple dense matrices, such as Eigen::MatrixXd.
+
+
 \section block_map Creating a MappedSparseBlockMatrix
 
 MappedSparseBlockMatrix are const references to either
@@ -173,7 +188,7 @@ Since it is immutbale, a MappedSparseBlockMatrix can only be used in the righ-ha
 
 \subsection block_assign Assignment
 
-Any SparseBlockmatrix can be assigned to another one, as long as their block types are compatible.
+Any SparseBlockMatrix can be assigned to another one (or to a FlatSparseBlockMatrix), as long as their block types are compatible.
 
 \code
 bogus::SparseBlockMatrix< Eigen::Matrix3d, bogus::UNCOMPRESSED  > sbm ;

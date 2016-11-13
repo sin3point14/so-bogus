@@ -1,3 +1,14 @@
+## Version 1.4.0
+November 14, 2016
+
+### Notable new features
+ - ProductGaussSeidel can precompute the right-hand part of the Delassus operator
+ - The FlatSparseBlockMatrix recudes the number of heap allocations for dynamically-sized blocks
+ - Sanitized CLIs of` LoadFrictionProblem` and `FCLibSolver` applications
+
+### Bugfixes
+ - Fix assignment with empty NArySum
+
 ## Version 1.3.0
 July 21, 2016
 
