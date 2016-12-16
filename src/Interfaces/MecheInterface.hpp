@@ -24,6 +24,8 @@
 #include "../Core/Utils/Timer.hpp"
 #include "../Core/Utils/CppTools.hpp"
 
+#include "../Core/BlockSolvers.fwd.hpp"
+
 #ifndef BOGUS_MECHE_INTERFACE_HPP
 #define BOGUS_MECHE_INTERFACE_HPP
 
@@ -60,6 +62,10 @@ public:
 
 		double gsRegularization ; //!< GS proximal regularization coefficient
 		bool   gsColoring ;       //!< Use coloring for parallel GS; slower but deterministic
+		int    gsSkipIters;       //!< Number of frozen iterations for sleeping heuristics
+		bool   tryZeroAsWell ;    //!< Try to see if starting at zero yields a lower initial error
+
+		projected_gradient::Variant pgVariant ; //! Variant of the Projected Gradient algorithm
 
 		double admmProjStepSize ;
 		double admmFpStepSize ;
@@ -92,12 +98,12 @@ public:
 	//! Solves the friction problem
 	double solve(double * r, //!< length \a nd : initialization for \a r (in world space coordinates) + used to return computed r
 	        double * v,      //!< length \a m: to return computed v ( or NULL if not needed )
-	        bool staticProblem ,          //!< If true, do not use DeSaxce change of variable
-	        double problemRegularization, //!< Amount to add on the diagonal of the Delassus operator
-	        const Options & options       //!< Solver options
+	        const Options & options,          //!< Solver options
+	        bool staticProblem = false,       //!< If true, do not use DeSaxce change of variable, ie solve SOCQP -- useful for statics
+	        double problemRegularization = 0. //!< Amount to add to the diagonal of the Delassus operator
 	) ;
 
-	//! Solves the friction problem (old interface)
+	//! Solves the friction problem (\deprecated interface)
 	double solve(double * r, //!< length \a nd : initialization for \a r (in world space coordinates) + used to return computed r
 	        double * v, //!< length \a m: to return computed v ( or NULL if not needed )
 	        int maxThreads = 0,               //!< Maximum number of threads that the GS will use. If 0, use OpenMP default. If > 1, enable coloring to ensure deterministicity

@@ -80,7 +80,7 @@ public:
 	  \param tryZeroAsWell If true, the algorithm will reset r to zero if that would result in a lower residual
 	  */
 	template < typename NSLaw, typename RhsT, typename ResT >
-	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x, bool tryZeroAsWell = true ) const ;
+	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x, bool tryZeroAsWell ) const ;
 
 	/*!
 	   Solves
@@ -131,6 +131,7 @@ public:
 	  and all contacts within a given color can be solver in parallel */
 	Coloring& coloring( ) { return m_coloring ; }
 
+	using Base::solve ;
 protected:
 	void updateLocalMatrices() ;
 

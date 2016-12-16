@@ -72,7 +72,7 @@ public:
 
 	//! Finds an approximate solution for a constrained linear problem
 	template < typename NSLaw, typename RhsT, typename ResT >
-	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x, bool tryZeroAsWell = true ) const ;
+	Scalar solve( const NSLaw &law, const RhsT &b, ResT &x, bool tryZeroAsWell ) const ;
 
 	/*!
 	   Solves
@@ -117,6 +117,7 @@ public:
 	                                   const RhsT &b, ResT &x,
 	                                   bool tryZeroAsWell = true, unsigned solveEvery = 1 ) const ;
 
+	using Base::solve ;
 protected:
 
 	DiagWrapper m_diagonal ;

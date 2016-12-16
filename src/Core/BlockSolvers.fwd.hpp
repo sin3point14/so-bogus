@@ -27,7 +27,24 @@ enum Method
 	TFQMR			//!< Tranpose-free Quasi Minimal Residual \sa krylov::solvers::TFQMR
 } ;
 
-} // namespace iterative_linear_solvers
+} //namespace krylov
+
+//! Options for ProjectedGradient solvers
+namespace projected_gradient {
+//! Variants of Projected Gradient algorithm
+enum Variant {
+	//! Standard projected gradient
+	Standard,
+	//! Projected gradient descent
+	Descent,
+	//! Projected gradient with conjugation of search direction
+	Conjugated,
+	//! Accelerated Projected Gradient Descent based on \cite Nesterov1983 and developed in \cite Heyn13
+	APGD,
+	//! Spectral Projected Gradient, loosely adapted from \cite Tasora13
+	SPG
+} ;
+} //namespace projected_gradient
 
 template < typename MatrixType >
 struct ProblemTraits ;
