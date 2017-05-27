@@ -61,6 +61,12 @@ struct LinearSolverBase
 
 } ;
 
+//! Base class for factorizations
+template < typename MatrixType, typename Impl >
+struct Factorization : public LinearSolverBase< Factorization< MatrixType, Impl > >
+{
+} ;
+
 //! Base class for LU factorizations
 template < typename MatrixType >
 struct LU : public LinearSolverBase< LU< MatrixType > >
@@ -75,6 +81,14 @@ struct LDLT : public LinearSolverBase< LDLT< MatrixType > >
 
 
 //! Block product type deductions
+
+template< typename LhsBlockT,  typename ImplType,typename RhsBlockT, bool TransposeLhs, bool TransposeRhs >
+struct BlockBlockProductTraits < Factorization < LhsBlockT, ImplType >, RhsBlockT, TransposeLhs, TransposeRhs >
+{
+	typedef typename LinearSolverTraits< Factorization < LhsBlockT, ImplType > >::MatrixType LhsMatrixT ;
+	typedef typename BlockBlockProductTraits < LhsMatrixT, RhsBlockT, TransposeLhs, TransposeRhs >::ReturnType
+	ReturnType ;
+} ;
 
 template< typename LhsBlockT, typename RhsBlockT, bool TransposeLhs, bool TransposeRhs >
 struct BlockBlockProductTraits < LU < LhsBlockT >, RhsBlockT, TransposeLhs, TransposeRhs >
