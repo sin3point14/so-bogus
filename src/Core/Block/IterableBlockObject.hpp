@@ -67,6 +67,9 @@ public:
 	void eachBlockOfCol( const Index col, Func func ) const
 	{ derived().template eachBlockOfCol<Func>(col, func) ; }
 
+	//! Should be overidden by mutable types
+	template < typename OtherBlockType, bool PreserveSymmetry = true, bool SwitchDirection = false >
+	struct MutableImpl	{ typedef typename Derived::PlainObjectType Type ; } ;
 } ;
 
 

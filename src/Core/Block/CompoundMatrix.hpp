@@ -27,7 +27,41 @@ namespace bogus {
  *  Implements IterableBlockObject
  */
 template< bool ColWise, typename MatrixT1, typename MatrixT2  >
-class CompoundBlockMatrix : public IterableBlockObject<CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > > {
+class CompoundBlockMatrix ;
+
+namespace internal
+{
+    // Inject a few traits for Compounds with similar blocks
+    template< bool ColWise, typename MatrixT1, typename MatrixT2  >
+    struct CompoundBlockMatrixBase
+	    : public IterableBlockObject<CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > >
+	{} ;
+
+	template< bool ColWise, typename MatrixT1 >
+	struct CompoundBlockMatrixBase< ColWise, MatrixT1, MatrixT1 >
+	    : public IterableBlockObject<CompoundBlockMatrix< ColWise, MatrixT1, MatrixT1  > >
+	{
+
+		template < typename OtherBlockType, bool PreserveSymmetry = true, bool SwitchDirection = false >
+		struct MutableImpl	{
+			typedef typename MatrixT1::template MutableImpl<OtherBlockType, PreserveSymmetry, SwitchDirection>::Type Type ;
+		} ;
+	} ;
+
+	template< typename MatrixT1, typename MatrixT2  >
+	struct SameBlockMatrixTraits {} ;
+	template< typename MatrixT1 >
+	struct SameBlockMatrixTraits<MatrixT1, MatrixT1>
+	{
+		typedef BlockMatrixTraits< MatrixT1 > CommonTraits;
+		typedef typename CommonTraits::BlockType BlockType ;
+	} ;
+}
+
+template< bool ColWise, typename MatrixT1, typename MatrixT2  >
+class CompoundBlockMatrix
+        : public internal::CompoundBlockMatrixBase< ColWise, MatrixT1, MatrixT2 >
+{
 public:
 	// side-by-side (ColWise = true)
 	typedef IterableBlockObject< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > > Base ;
@@ -102,7 +136,8 @@ private:
 
 template< bool ColWise, typename MatrixT1, typename MatrixT2  >
 struct BlockMatrixTraits< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > >
-        : public BlockMatrixTraits< BlockObjectBase< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > > >
+        : public BlockMatrixTraits< BlockObjectBase< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > > >,
+            internal::SameBlockMatrixTraits<MatrixT1, MatrixT2>
 {
 	typedef BlockMatrixTraits< MatrixT1 > OrigTraits;
 	typedef BlockMatrixTraits< MatrixT2 > OtherTraits;
@@ -122,7 +157,8 @@ struct BlockMatrixTraits< CompoundBlockMatrix< ColWise, MatrixT1, MatrixT2 > >
 
 template< typename MatrixT1, typename MatrixT2  >
 class CompoundBlockMatrix<false,MatrixT1, MatrixT2>
-        : public IterableBlockObject<CompoundBlockMatrix< false, MatrixT1, MatrixT2 > > {
+        : public internal::CompoundBlockMatrixBase< false, MatrixT1, MatrixT2  >
+{
 public:
 	// one-atop-the-other (ColWise = false)
 	typedef IterableBlockObject< CompoundBlockMatrix< false, MatrixT1, MatrixT2 > > Base ;

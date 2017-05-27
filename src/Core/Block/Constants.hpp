@@ -42,7 +42,7 @@ namespace bogus
  */
 namespace flags
 {
-	enum {
+    enum {
 		//! Default value: the matrix will use an uncompressed index, will be row-major, and not symmetric
 		NONE = 0,
 		//! Use an uncompressed index
@@ -56,6 +56,7 @@ namespace flags
 		UNCOMPRESSED = 0x1,
 		//! Store and index blocks in a column major way
 		COL_MAJOR = 0x2,
+		ROW_MAJOR = 0, //!< Alias for convenience
 		//! Store only half the matrix, or rather the triangular part for which \c inner \c <= \c outer,
 		/*! \c outer being the row and \c inner the column for row-major matrices.
 			Linear algebra operations such as matrix-vector and matrix-matrix multiplication will work
@@ -69,8 +70,8 @@ using namespace flags ;
 
 namespace internal
 {
-	//! Indicates a value that is not known at compile time
-	enum { DYNAMIC = -1 } ;
+    //! Indicates a value that is not known at compile time
+    enum { DYNAMIC = -1 } ;
 }
 
 typedef BOGUS_DEFAULT_DENSE_INDEX_TYPE DenseIndexType ;

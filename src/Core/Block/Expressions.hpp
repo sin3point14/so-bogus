@@ -100,7 +100,7 @@ struct BlockOperand
 	Scalar scaling ;
 
 	BlockOperand( const ObjectT & o, Scalar s = 1 )
-		: object(o), scaling(s)
+	    : object(o), scaling(s)
 	{}
 } ;
 
@@ -123,8 +123,8 @@ struct BinaryBlockOp : public BlockObjectBase< BlockOp< LhsMatrixT, RhsMatrixT >
 		   transposeRhs = Rhs::do_transpose };
 
 	BinaryBlockOp( const LhsMatrixT& l,const RhsMatrixT& r,
-				   typename Lhs::Scalar lscaling = 1, typename Lhs::Scalar rscaling = 1 )
-		: lhs( l, lscaling ), rhs ( r, rscaling )
+	               typename Lhs::Scalar lscaling = 1, typename Lhs::Scalar rscaling = 1 )
+	    : lhs( l, lscaling ), rhs ( r, rscaling )
 	{}
 
 } ;
@@ -138,15 +138,15 @@ struct Product : public BinaryBlockOp< Product, LhsMatrixT, RhsMatrixT >
 	typedef typename Base::Index Index ;
 
 	Product( const LhsMatrixT& l, const RhsMatrixT &r,
-			  typename Base::Lhs::Scalar lscaling = 1, typename Base::Lhs::Scalar rscaling = 1 )
-		: Base( l, r, lscaling, rscaling )
+	          typename Base::Lhs::Scalar lscaling = 1, typename Base::Lhs::Scalar rscaling = 1 )
+	    : Base( l, r, lscaling, rscaling )
 	{}
 
 	typename Base::ConstTransposeReturnType transpose() const
 	{
 		return typename Base::ConstTransposeReturnType (
-					Base::rhs.object.transpose(), Base::lhs.object.transpose(),
-					Base::rhs.scaling, Base::lhs.scaling ) ;
+		            Base::rhs.object.transpose(), Base::lhs.object.transpose(),
+		            Base::rhs.scaling, Base::lhs.scaling ) ;
 	}
 
 	template < bool DoTranspose, typename RhsT, typename ResT >
@@ -178,14 +178,14 @@ struct BlockMatrixTraits< Product< LhsMatrixT, RhsMatrixT > >
 
 	typedef Product< LhsMatrixT, RhsMatrixT > ProductType ;
 
-	typedef typename LhsTraits::PlainObjectType::BlockType LhsBlockType ;
-	typedef typename RhsTraits::PlainObjectType::BlockType RhsBlockType ;
+	typedef typename BlockMatrixTraits<typename LhsTraits::PlainObjectType>::BlockType LhsBlockType ;
+	typedef typename BlockMatrixTraits<typename RhsTraits::PlainObjectType>::BlockType RhsBlockType ;
 
 	typedef typename BlockBlockProductTraits< LhsBlockType, RhsBlockType,
-		LhsTraits::is_transposed, RhsTraits::is_transposed >::ReturnType ResBlockType ;
+	    LhsTraits::is_transposed, RhsTraits::is_transposed >::ReturnType ResBlockType ;
 
 	typedef typename LhsTraits::PlainObjectType
-		::template MutableImpl< ResBlockType, false >::Type PlainObjectType ;
+	    ::template MutableImpl< ResBlockType, false >::Type PlainObjectType ;
 
 	enum {
 		RowsPerBlock = LhsTraits::RowsPerBlock,
@@ -193,7 +193,7 @@ struct BlockMatrixTraits< Product< LhsMatrixT, RhsMatrixT > >
 	};
 
 	typedef Product< typename BlockOperand< RhsMatrixT >::ObjectType::TransposeObjectType,
-					typename BlockOperand< LhsMatrixT >::ObjectType::TransposeObjectType >
+	                typename BlockOperand< LhsMatrixT >::ObjectType::TransposeObjectType >
 	ConstTransposeReturnType ;
 	typedef ConstTransposeReturnType TransposeObjectType ;
 } ;
@@ -206,15 +206,15 @@ struct Addition : public BinaryBlockOp< Addition, LhsMatrixT, RhsMatrixT >
 	typedef typename Base::Index Index ;
 
 	Addition( const LhsMatrixT& l, const RhsMatrixT &r,
-			  typename Base::Lhs::Scalar lscaling = 1, typename Base::Lhs::Scalar rscaling = 1 )
-		: Base( l, r, lscaling, rscaling )
+	          typename Base::Lhs::Scalar lscaling = 1, typename Base::Lhs::Scalar rscaling = 1 )
+	    : Base( l, r, lscaling, rscaling )
 	{}
 
 	typename Base::ConstTransposeReturnType transpose() const
 	{
 		return typename Base::ConstTransposeReturnType (
-					Base::lhs.object.transpose(), Base::rhs.object.transpose(),
-					Base::lhs.scaling, Base::rhs.scaling ) ;
+		            Base::lhs.object.transpose(), Base::rhs.object.transpose(),
+		            Base::lhs.scaling, Base::rhs.scaling ) ;
 	}
 
 	template < bool DoTranspose, typename RhsT, typename ResT >
@@ -243,23 +243,23 @@ struct BlockMatrixTraits< Addition< LhsMatrixT, RhsMatrixT > >
 	typedef typename OrigTraits::Index Index ;
 	typedef typename OrigTraits::Scalar Scalar ;
 
-	typedef typename OrigTraits::PlainObjectType::BlockType ResBlockType ;
+	typedef typename BlockMatrixTraits<typename OrigTraits::PlainObjectType>::BlockType ResBlockType ;
 
 	typedef typename OrigTraits::PlainObjectType
-		::template MutableImpl< ResBlockType, false >::Type PlainObjectType ;
+	    ::template MutableImpl< ResBlockType, false >::Type PlainObjectType ;
 
 	enum { is_transposed = 0,
 		   is_temporary = 1,
 		   is_symmetric = ( BlockMatrixTraits< LhsMatrixT >::is_symmetric
-						 && BlockMatrixTraits< RhsMatrixT >::is_symmetric )
-		 } ;
+		                 && BlockMatrixTraits< RhsMatrixT >::is_symmetric )
+	     } ;
 	enum {
 		RowsPerBlock = OrigTraits::RowsPerBlock,
 		ColsPerBlock = OrigTraits::ColsPerBlock
 	};
 
 	typedef Addition< typename BlockOperand< LhsMatrixT >::ObjectType::TransposeObjectType,
-					typename BlockOperand< RhsMatrixT >::ObjectType::TransposeObjectType >
+	                typename BlockOperand< RhsMatrixT >::ObjectType::TransposeObjectType >
 	ConstTransposeReturnType ;
 	typedef ConstTransposeReturnType TransposeObjectType ;
 } ;
@@ -279,13 +279,13 @@ struct Scaling : public BlockObjectBase< Scaling< MatrixT > >
 	typedef typename Base::Index Index ;
 
 	Scaling( const MatrixT &object, const typename MatrixT::Scalar scaling )
-		: operand( object, scaling )
+	    : operand( object, scaling )
 	{}
 
 	typename Base::ConstTransposeReturnType transpose() const
 	{
 		return typename Base::ConstTransposeReturnType (
-					operand.object.transpose(), operand.scaling ) ;
+		            operand.object.transpose(), operand.scaling ) ;
 	}
 
 	template < bool DoTranspose, typename RhsT, typename ResT >
@@ -334,10 +334,10 @@ struct BlockOperand< Scaling< ObjectT > > : public BlockOperand< ObjectT >
 	typedef BlockOperand< ObjectT > Base ;
 
 	BlockOperand( const Scaling< ObjectT > & o, typename Base::Scalar s = 1 )
-		: Base(o.operand.object, s*o.operand.scaling)
+	    : Base(o.operand.object, s*o.operand.scaling)
 	{}
 	BlockOperand( const typename Base::ObjectType & o, typename Base::Scalar s = 1 )
-		: Base(o, s)
+	    : Base(o, s)
 	{}
 } ;
 

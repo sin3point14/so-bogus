@@ -507,7 +507,6 @@ TEST_F( SmallSBM, Compound )
 	}
 	EXPECT_EQ( rhs, u ) ;
 
-
 }
 
 TEST_F( SmallSBM, CompoundRow )
