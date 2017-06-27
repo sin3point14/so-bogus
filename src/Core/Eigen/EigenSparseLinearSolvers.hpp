@@ -43,7 +43,7 @@
 #endif
 
 #ifndef BOGUS_EIGEN_SPARSE_LU_IMPL
-#define BOGUS_EIGEN_SPARSE_LU_IMPL(Derived) Eigen::SparseLU<Derived, Eigen::COLAMDOrdering<int>>
+#define BOGUS_EIGEN_SPARSE_LU_IMPL(Derived) Eigen::SparseLU<Derived, Eigen::COLAMDOrdering<int> >
 #endif
 
 namespace bogus {
@@ -65,7 +65,7 @@ struct LinearSolverTraits< Factorization< Eigen::SparseMatrixBase< Derived >, Im
 
 template < typename Derived, typename FactType >
 struct Factorization< Eigen::SparseMatrixBase< Derived >, FactType >
-        : public LinearSolverBase< Factorization< Eigen::SparseMatrixBase< Derived >, FactType > >
+		: public LinearSolverBase< Factorization< Eigen::SparseMatrixBase< Derived >, FactType > >
 {
 	typedef Eigen::SparseMatrixBase< Derived > MatrixType ;
 	typedef LinearSolverTraits< Factorization< MatrixType, FactType > > Traits ;
@@ -73,7 +73,7 @@ struct Factorization< Eigen::SparseMatrixBase< Derived >, FactType >
 	Factorization() {}
 	template< typename OtherDerived >
 	explicit Factorization ( const Eigen::SparseMatrixBase< OtherDerived >& mat )
-	    : m_fact( new typename Traits::FactType( mat ) )
+		: m_fact( new typename Traits::FactType( mat ) )
 	{}
 
 	template< typename OtherDerived >
@@ -108,12 +108,12 @@ struct Factorization< Eigen::SparseMatrixBase< Derived >, FactType >
 
 template < typename Derived, typename FactType >
 struct EigenSparseFactorization : public Factorization<
-        Eigen::SparseMatrixBase< Derived >,
-        FactType >
+		Eigen::SparseMatrixBase< Derived >,
+		FactType >
 {
 	EigenSparseFactorization() {}
 	explicit EigenSparseFactorization ( const Eigen::SparseMatrixBase< Derived >& mat )
-	    : Factorization< Eigen::SparseMatrixBase< Derived >, FactType >( mat )
+		: Factorization< Eigen::SparseMatrixBase< Derived >, FactType >( mat )
 	{}
 } ;
 
@@ -132,19 +132,19 @@ struct EigenSolveResult< Eigen::SimplicialLDLT< MatrixType >, RhsType >
 
 template < typename Derived >
 struct LinearSolverTraits< LDLT< Eigen::SparseMatrixBase< Derived > > >
-        : public LinearSolverTraits< Factorization<Eigen::SparseMatrixBase<Derived>, BOGUS_EIGEN_SPARSE_LDLT_IMPL(Derived) > >
+		: public LinearSolverTraits< Factorization<Eigen::SparseMatrixBase<Derived>, BOGUS_EIGEN_SPARSE_LDLT_IMPL(Derived) > >
 {
 } ;
 template < typename Derived >
 struct LinearSolverTraits< LU< Eigen::SparseMatrixBase< Derived > > >
-        : public LinearSolverTraits< Factorization<Eigen::SparseMatrixBase<Derived>, BOGUS_EIGEN_SPARSE_LU_IMPL(Derived) > >
+		: public LinearSolverTraits< Factorization<Eigen::SparseMatrixBase<Derived>, BOGUS_EIGEN_SPARSE_LU_IMPL(Derived) > >
 {
 } ;
 
 template < typename Derived >
 struct LDLT< Eigen::SparseMatrixBase< Derived > >
-        : public Factorization< Eigen::SparseMatrixBase< Derived >,
-        typename LinearSolverTraits< LDLT< Eigen::SparseMatrixBase< Derived > > >::FactType >
+		: public Factorization< Eigen::SparseMatrixBase< Derived >,
+		typename LinearSolverTraits< LDLT< Eigen::SparseMatrixBase< Derived > > >::FactType >
 {
 	typedef Eigen::SparseMatrixBase< Derived > MatrixType ;
 	typedef LinearSolverTraits< LDLT< MatrixType > > Traits ;
@@ -154,7 +154,7 @@ struct LDLT< Eigen::SparseMatrixBase< Derived > >
 	LDLT() : Base() {}
 	template< typename OtherDerived >
 	explicit LDLT ( const Eigen::SparseMatrixBase< OtherDerived >& mat )
-	    : Base( mat )
+		: Base( mat )
 	{}
 
 } ;
@@ -165,14 +165,14 @@ struct SparseLDLT : public LDLT< Eigen::SparseMatrixBase< Eigen::SparseMatrix< S
 	SparseLDLT() {}
 	template< typename OtherDerived >
 	explicit SparseLDLT ( const Eigen::SparseMatrixBase< OtherDerived >& mat )
-	    : LDLT< Eigen::SparseMatrixBase< Eigen::SparseMatrix< Scalar, _Options, _Index > > >( mat )
+		: LDLT< Eigen::SparseMatrixBase< Eigen::SparseMatrix< Scalar, _Options, _Index > > >( mat )
 	{}
 } ;
 
 template < typename Derived >
 struct LU< Eigen::SparseMatrixBase< Derived > >
-        : public Factorization< Eigen::SparseMatrixBase< Derived >,
-        typename LinearSolverTraits< LU< Eigen::SparseMatrixBase< Derived > > >::FactType >
+		: public Factorization< Eigen::SparseMatrixBase< Derived >,
+		typename LinearSolverTraits< LU< Eigen::SparseMatrixBase< Derived > > >::FactType >
 {
 	typedef Eigen::SparseMatrixBase< Derived > MatrixType ;
 	typedef LinearSolverTraits< LU< MatrixType > > Traits ;
@@ -182,7 +182,7 @@ struct LU< Eigen::SparseMatrixBase< Derived > >
 	LU() : Base() {}
 	template< typename OtherDerived >
 	explicit LU ( const Eigen::SparseMatrixBase< OtherDerived >& mat )
-	    : Base( mat )
+		: Base( mat )
 	{}
 
 } ;
@@ -193,7 +193,7 @@ struct SparseLU : public LU< Eigen::SparseMatrixBase< Eigen::SparseMatrix< Scala
 	SparseLU() {}
 	template< typename OtherDerived >
 	explicit SparseLU ( const Eigen::SparseMatrixBase< OtherDerived >& mat )
-	    : LU< Eigen::SparseMatrixBase< Eigen::SparseMatrix< Scalar, _Options, _Index > > >( mat )
+		: LU< Eigen::SparseMatrixBase< Eigen::SparseMatrix< Scalar, _Options, _Index > > >( mat )
 	{}
 } ;
 

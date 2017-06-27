@@ -22,7 +22,7 @@ namespace bogus
 //! Specialization of BlockMatrixTraits for SparseBlockMatrix
 template < typename BlockT, int Flags, typename Index_ >
 struct BlockMatrixTraits< MappedSparseBlockMatrix< BlockT, Flags, Index_ > >
-        : public BlockMatrixTraits< BlockObjectBase< MappedSparseBlockMatrix< BlockT, Flags, Index_ > > >
+		: public BlockMatrixTraits< BlockObjectBase< MappedSparseBlockMatrix< BlockT, Flags, Index_ > > >
 {
 	typedef BlockMatrixTraits< BlockObjectBase< MappedSparseBlockMatrix< BlockT, Flags, Index_ > > > BaseTraits ;
 	typedef typename BaseTraits::Index   Index;
@@ -35,7 +35,7 @@ struct BlockMatrixTraits< MappedSparseBlockMatrix< BlockT, Flags, Index_ > >
 	} ;
 
 	typedef BlockT BlockType ;
-	typedef BlockT& BlockRef ;
+	typedef const BlockT& BlockRef ;
 	typedef const BlockT& ConstBlockRef ;
 	typedef BOGUS_DEFAULT_BLOCK_PTR_TYPE BlockPtr ;
 
@@ -90,11 +90,11 @@ public:
 	}
 
 	void mapTo(
-	        std::size_t numberOfNonZeros,    //!< Total number of blocks
-	        const BlockT* dataPtr,           //!< Pointer to an array containing the blocks data
-	        const Index*  outerIndexPtr,     //!< A.k.a rowsIndex, pntrb, pntre-1 from BSR format
-	        const Index*  innerIndexPtr      //!< A.k.a columns from BSR format
-	        )
+			std::size_t numberOfNonZeros,    //!< Total number of blocks
+			const BlockT* dataPtr,           //!< Pointer to an array containing the blocks data
+			const Index*  outerIndexPtr,     //!< A.k.a rowsIndex, pntrb, pntre-1 from BSR format
+			const Index*  innerIndexPtr      //!< A.k.a columns from BSR format
+			)
 	{
 		Base::clear() ;
 
@@ -110,14 +110,14 @@ public:
 	void mapTo( const SparseBlockMatrixBase< Derived > &source )
 	{
 		BOGUS_STATIC_ASSERT( (int) Base::Traits::flags == (int) Derived::Traits::flags,
-		                     OPERANDS_HAVE_INCONSISTENT_FLAGS ) ;
+							 OPERANDS_HAVE_INCONSISTENT_FLAGS ) ;
 
 		Base::cloneDimensions( source ) ;
 		mapTo( source.nBlocks(),
-		       source.data(),
-		       source.majorIndex().outerIndexPtr(),
-		       source.majorIndex().innerIndexPtr()
-		       );
+			   source.data(),
+			   source.majorIndex().outerIndexPtr(),
+			   source.majorIndex().innerIndexPtr()
+			   );
 
 	}
 
@@ -130,8 +130,8 @@ struct BlockTraits< MappedSparseBlockMatrix< BlockT, Flags, Index_ > >
 	typedef MappedSparseBlockMatrix< BlockT, Flags, Index_ > BlockType ;
 	typedef typename BlockType::Scalar Scalar ;
 	typedef MappedSparseBlockMatrix
-	    < typename BlockType::TransposeBlockType, Flags ^ flags::COL_MAJOR, Index_ >
-	    TransposeStorageType ;
+		< typename BlockType::TransposeBlockType, Flags ^ flags::COL_MAJOR, Index_ >
+		TransposeStorageType ;
 
 	enum {
 		RowsAtCompileTime = internal::DYNAMIC,

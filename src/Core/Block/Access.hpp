@@ -128,16 +128,49 @@ struct BlockDims
 			   Cols = Dims::Second } ;
 } ;
 
+namespace internal {
+
+template <int dimension, typename VectorType>
+struct SegmenterTraits
+{
+	typedef typename VectorType::template NRowsBlockXpr< dimension >::Type
+	ReturnType ;
+	typedef typename VectorType::template ConstNRowsBlockXpr< dimension >::Type
+	ConstReturnType ;
+};
+
+template <int dimension, typename VectorType>
+struct SegmenterTraits<dimension, const VectorType>
+{
+	typedef typename VectorType::template ConstNRowsBlockXpr< dimension >::Type
+	ConstReturnType ;
+	typedef ConstReturnType ReturnType;
+};
+
+template <typename VectorType>
+struct SegmenterTraits<DYNAMIC, VectorType>
+{
+	typedef typename VectorType::RowsBlockXpr			ReturnType ;
+	typedef typename VectorType::ConstRowsBlockXpr		ConstReturnType ;
+};
+
+template <typename VectorType>
+struct SegmenterTraits<DYNAMIC, const VectorType>
+{
+	typedef typename VectorType::ConstRowsBlockXpr		ConstReturnType ;
+	typedef ConstReturnType ReturnType;
+};
+}
+
 //! Access to segment of a vector corresponding to a given block-row
 template < int DimensionAtCompileTime, typename VectorType, typename Index >
 struct Segmenter
 {
 	enum { dimension = DimensionAtCompileTime } ;
 
-	typedef typename VectorType::template NRowsBlockXpr< dimension >::Type
-	ReturnType ;
-	typedef typename VectorType::template ConstNRowsBlockXpr< dimension >::Type
-	ConstReturnType ;
+	typedef internal::SegmenterTraits< dimension, VectorType > Traits ;
+	typedef typename Traits::ReturnType ReturnType ;
+	typedef typename Traits::ConstReturnType ConstReturnType ;
 
 	Segmenter( VectorType &vec, const Index* ) : m_vec( vec ) {}
 
@@ -158,8 +191,10 @@ private:
 template < typename VectorType, typename Index >
 struct Segmenter< internal::DYNAMIC, VectorType, Index >
 {
-	typedef typename VectorType::RowsBlockXpr			ReturnType ;
-	typedef typename VectorType::ConstRowsBlockXpr		ConstReturnType ;
+
+	typedef internal::SegmenterTraits< internal::DYNAMIC, VectorType > Traits ;
+	typedef typename Traits::ReturnType ReturnType ;
+	typedef typename Traits::ConstReturnType ConstReturnType ;
 
 	Segmenter( VectorType &vec, const Index* offsets ) : m_vec( vec ), m_offsets( offsets ) { }
 
