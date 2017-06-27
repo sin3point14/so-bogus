@@ -1,3 +1,9 @@
+## Version 1.4.2 
+June 28, 2017
+
+### Bugfixes 
+ - Fix compilation on recent Clang
+
 ## Version 1.4.0
 November 14, 2016
 
