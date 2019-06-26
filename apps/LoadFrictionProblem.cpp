@@ -4,7 +4,7 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#include "Interfaces/MecheInterface.hpp"
+#include <bogus/Interfaces/MecheInterface.hpp>
 
 #include <Eigen/Core>
 

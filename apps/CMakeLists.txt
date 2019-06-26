@@ -3,7 +3,7 @@ include_directories( ../src )
 
 if( BOOST_SERIALIZATION )
                 add_executable (LoadFrictionProblem LoadFrictionProblem.cpp)
-                target_link_libraries (LoadFrictionProblem ${CMAKE_PROJECT_NAME} )
+                target_link_libraries (LoadFrictionProblem PUBLIC bogus)
 endif()
 
 find_package(FCLib)

@@ -12,7 +12,7 @@
 #define BOGUS_TIMER_HPP
 
 #ifdef WIN32
-#include <Winbase.h>
+#include <windows.h>
 #else
 #include <sys/time.h>
 #endif
@@ -39,7 +39,7 @@ public:
 #ifdef WIN32
 		LARGE_INTEGER stop;
 		::QueryPerformanceCounter(&stop);
-		return (( stop.QuadPart - m_start.QuadPart) / m_frequency);
+		return ((stop.QuadPart - m_start.QuadPart) / m_freq);
 #else
 		struct timeval stop ;
 		gettimeofday( &stop, 0 ) ;

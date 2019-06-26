@@ -1,5 +1,5 @@
+cmake_minimum_required(VERSION 3.1.2)
 project(bogus)
-cmake_minimum_required(VERSION 2.6)
 
 OPTION( TESTS "Build tests" ON )
 OPTION( APPS "Build apps" ON )
@@ -106,8 +106,10 @@ if ( GCC OR CLANG )
 endif()
 
 if( MSVC )
-		add_definitions( /DBOGUS_DONT_USE_BUILTIN_ATOMICS )
-		add_definitions( /wd4305 )
+	add_definitions( /DBOGUS_DONT_USE_BUILTIN_ATOMICS )
+	add_definitions( /wd4305 )
+	add_definitions( -DWIN32_LEAN_AND_MEAN )
+	add_definitions( -DNOMINMAX )
 endif()
 
 include_directories( ${EXTERNAL_INCLUDES} )
