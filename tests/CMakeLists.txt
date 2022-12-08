@@ -47,9 +47,9 @@ include_directories( ../src ${source_dir}/include)
 ExternalProject_Get_Property(googletest binary_dir)
 link_directories( ${binary_dir} )
 
-add_executable(test${CMAKE_PROJECT_NAME} ${SRC_LIST})
-add_test( ${CMAKE_PROJECT_NAME} test${CMAKE_PROJECT_NAME} )
+add_executable(test${PROJECT_NAME} ${SRC_LIST})
+add_test( ${PROJECT_NAME} test${PROJECT_NAME} )
 
-add_dependencies(test${CMAKE_PROJECT_NAME} googletest)
+add_dependencies(test${PROJECT_NAME} googletest)
 
-target_link_libraries(test${CMAKE_PROJECT_NAME} ${EXTERNAL_LIBRARIES} ${GTEST_LINK_LIBRARIES} )
+target_link_libraries(test${PROJECT_NAME} ${EXTERNAL_LIBRARIES} ${GTEST_LINK_LIBRARIES} )
