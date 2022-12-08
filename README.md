@@ -1,3 +1,7 @@
+# Find the Docs at:
+https://sin3point14.github.io/so-bogus/  
+Since the main so-bogus docs page has been down for a while.
+
 ###Overview
 
 This free software consist of two complementary libraries, the first being fairly generic while the other targets more specific problems. Both are open-source and can be downloaded from the [BitBucket repository](https://bitbucket.org/gdaviet/so-bogus/downloads#tag-downloads). 
