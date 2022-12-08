@@ -536,7 +536,7 @@ bool MecheFrictionProblem::dumpToFile( const char*, const double* ) const
 	std::cerr << "MecheInterface::dumpToFile: Error, bogus compiled without serialization capabilities" ;
 	return false ;
 }
-bool MecheFrictionProblem::fromFile(const char*, double *& ) {
+bool MecheFrictionProblem::fromFile(const char*, double *&, bool ) {
 	std::cerr << "MecheInterface::fromFile: Error, bogus compiled without serialization capabilities" ;
 	return false ;
 }
